@@ -1,0 +1,65 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..900&family=IBM+Plex+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 223 48% 8%; /* ink */
+    --foreground: 0 0% 100%;
+    --card: 224 44% 13%; /* ink-2 */
+    --card-foreground: 0 0% 100%;
+    --popover: 224 44% 13%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 42 57% 53%; /* brass */
+    --primary-foreground: 223 48% 8%;
+    --secondary: 223 38% 19%; /* ink-3 */
+    --secondary-foreground: 0 0% 100%;
+    --muted: 223 38% 19%;
+    --muted-foreground: 223 23% 63%; /* mist */
+    --accent: 223 38% 19%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 8 54% 50%; /* rust */
+    --destructive-foreground: 0 0% 100%;
+    --border: 223 38% 19%;
+    --input: 223 38% 19%;
+    --ring: 42 57% 53%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+
+  /* Custom utility classes */
+  .font-data {
+    @apply font-mono tabular-nums;
+  }
+  
+  .glass-panel {
+    @apply bg-ink-2/80 backdrop-blur-md border border-ink-3 shadow-xl;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-brass to-yellow-200;
+  }
+}
+
+/* Hide scrollbar for tape */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
