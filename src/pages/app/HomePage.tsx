@@ -1,6 +1,4 @@
 import { motion } from 'framer-motion'
-import { Lock, Users } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
 import { Link } from 'react-router'
 
 // vault.png lives in /public — referenced as an absolute URL, no import needed
@@ -28,10 +26,6 @@ const fadeUp = {
 
 /* ── Data ───────────────────────────────────────────────────────── */
 
-const STATS: { label: string; value: string; Icon: LucideIcon; color: 'blue' | 'green' }[] = [
-  { label: 'Total Locked',     value: '₹42.8 Cr+', Icon: Lock,  color: 'green' },
-  { label: 'Active Investors', value: '12.5k+',    Icon: Users, color: 'green' },
-]
 
 const PLANS: { tier: Tier; name: string; returns: string; duration: string; min: string; max: string }[] = [
   { tier: 'silver',  name: 'Silver',  returns: '25%', duration: '36 Hours', min: '₹1,000', max: '₹50,000'   },
