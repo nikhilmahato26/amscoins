@@ -11,15 +11,15 @@ interface FieldProps extends React.HTMLAttributes<HTMLDivElement> {
 export function Field({ label, error, hint, children, className, ...props }: FieldProps) {
   return (
     <div className={cn("space-y-2", className)} {...props}>
-      <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-mist">
+      <label className="text-sm font-semibold leading-none text-asm-navy peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
         {label}
       </label>
       {children}
       {hint && !error && (
-        <p className="text-xs text-mist">{hint}</p>
+        <p className="text-xs text-asm-body">{hint}</p>
       )}
       {error && (
-        <p className="text-xs text-rust font-medium">{error}</p>
+        <p className="text-xs font-medium text-asm-red">{error}</p>
       )}
     </div>
   )

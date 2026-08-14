@@ -37,11 +37,7 @@ export function LandingHeader({
   onMenu?: () => void
 }) {
   return (
-    <header
-      className={cn(
-        'sticky top-0 z-30 border-b border-asm-line/80 bg-white/90 backdrop-blur-md'
-      )}
-    >
+    <header className="border-b border-asm-line/80 bg-white">
       <div className="mx-auto flex w-full max-w-[1180px] items-center justify-between gap-4 px-4 py-3 lg:px-8">
         <Link
           to="/"
@@ -220,11 +216,7 @@ const PAY_METHODS = [
 
 export function LandingFooter() {
   return (
-    /* pb clears the fixed mobile CTA bar so the disclosure is never hidden. */
-    <footer
-      id="contact"
-      className="mt-12 border-t border-asm-line bg-asm-tint pb-24 lg:pb-0"
-    >
+    <footer id="contact" className="mt-12 border-t border-asm-line bg-asm-tint">
       <div className="mx-auto w-full max-w-[1180px] px-4 lg:px-8">
         <ul className="grid grid-cols-2 gap-x-6 gap-y-5 border-b border-asm-line py-7 md:grid-cols-5">
           {TRUST_BAR.map(({ Icon, title, note }) => (

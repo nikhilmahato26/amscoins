@@ -4,7 +4,6 @@ import {
   ChartNoAxesCombined,
   Coins,
   Headphones,
-  MapPin,
   Rocket,
   ShieldCheck,
   TrendingUp,
@@ -16,7 +15,15 @@ import {
 import type { LucideIcon } from 'lucide-react'
 import { Link } from 'react-router'
 
+import asmCoin from '@/assets/asm.jpeg'
+import btcCoin from '@/assets/btc.jpeg'
+import goldCoin from '@/assets/gold.jpeg'
+import silverCoin from '@/assets/market-silver.png'
+import diamondMedallion from '@/assets/plans/diamond.png'
+import goldMedallion from '@/assets/plans/gold.png'
+import silverMedallion from '@/assets/plans/silver.png'
 import { HeroMark } from '@/components/home/HeroMark'
+import { IndiaFlag } from '@/components/home/IndiaFlag'
 import { Sparkline } from '@/components/home/Sparkline'
 import {
   LandingFooter,
@@ -70,9 +77,19 @@ const MARKET: {
   change: string
   positive: boolean
   series: number[]
-  swatch: string
-  glyph: string
+  icon: string
 }[] = [
+  {
+    // ASM is the platform's own coin, so this price cannot be sourced from an
+    // exchange — it has to come from whoever sets it. Placeholder until then.
+    symbol: 'ASM',
+    pair: 'INR',
+    price: '₹12.40',
+    change: '+1.65%',
+    positive: true,
+    series: [40, 42, 41, 45, 44, 47, 46, 50, 52, 51, 55, 58],
+    icon: asmCoin,
+  },
   {
     symbol: 'BTC',
     pair: 'USDT',
@@ -80,8 +97,7 @@ const MARKET: {
     change: '+2.35%',
     positive: true,
     series: [38, 41, 39, 44, 43, 48, 46, 52, 55, 53, 58, 62],
-    swatch: 'bg-[#F7931A]',
-    glyph: '₿',
+    icon: btcCoin,
   },
   {
     symbol: 'GOLD',
@@ -90,8 +106,7 @@ const MARKET: {
     change: '+1.82%',
     positive: true,
     series: [30, 33, 31, 36, 38, 35, 40, 42, 41, 46, 48, 51],
-    swatch: 'bg-[#E8B84B]',
-    glyph: 'Au',
+    icon: goldCoin,
   },
   {
     symbol: 'SILVER',
@@ -100,28 +115,7 @@ const MARKET: {
     change: '-0.42%',
     positive: false,
     series: [52, 51, 53, 50, 48, 49, 47, 48, 45, 46, 44, 43],
-    swatch: 'bg-[#B1B5BB]',
-    glyph: 'Ag',
-  },
-  {
-    symbol: 'CRUDE OIL',
-    pair: 'USOIL',
-    price: '₹6,350.70',
-    change: '-1.08%',
-    positive: false,
-    series: [56, 54, 55, 52, 53, 50, 48, 49, 46, 45, 43, 42],
-    swatch: 'bg-[#1F2937]',
-    glyph: 'Oil',
-  },
-  {
-    symbol: 'USD',
-    pair: 'INR',
-    price: '₹83.32',
-    change: '+0.18%',
-    positive: true,
-    series: [46, 47, 46, 48, 49, 48, 50, 51, 50, 52, 53, 54],
-    swatch: 'bg-[#2563EB]',
-    glyph: '$',
+    icon: silverCoin,
   },
 ]
 
@@ -288,64 +282,23 @@ export function LandingPage() {
       </main>
 
       <LandingFooter />
-
-      <MobileCta />
-    </div>
-  )
-}
-
-/**
- * Persistent primary action on mobile. Almost all traffic is phones, and the
- * hero CTA leaves the viewport within one swipe, so the page keeps one tappable
- * way forward at all times. Hidden from lg up, where the header CTA is visible
- * the whole way down.
- */
-function MobileCta() {
-  return (
-    <div
-      className={cn(
-        'fixed inset-x-0 bottom-0 z-30 border-t border-asm-line bg-white/95 backdrop-blur-md',
-        'pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_-16px_rgb(16_42_92_/_0.25)] lg:hidden'
-      )}
-    >
-      <div className="flex items-center gap-3 px-4 py-2.5">
-        <div className="flex min-w-0 flex-1 flex-col">
-          <span className="truncate text-[13px] font-extrabold leading-tight">
-            Start from ₹1,000
-          </span>
-          <span className="truncate text-[11px] leading-tight text-asm-body">
-            Plans from 36 hours
-          </span>
-        </div>
-        <Link
-          to="/register"
-          className={cn(
-            'flex min-h-11 shrink-0 items-center gap-2 rounded-lg bg-asm-blue px-5',
-            'text-[12px] font-bold uppercase tracking-[0.08em] text-white',
-            'transition-colors hover:bg-asm-blue-dark'
-          )}
-        >
-          Start Investing
-          <ArrowRight className="size-4" strokeWidth={2.4} aria-hidden />
-        </Link>
-      </div>
     </div>
   )
 }
 
 function Hero() {
   return (
-    <section className="grid items-center gap-6 pt-6 lg:grid-cols-[1.05fr_1fr] lg:gap-12 lg:pt-12">
+    <section className="pt-6 lg:pt-10">
       <div className="animate-rise">
-        <h1 className="text-[30px] leading-[1.1] tracking-[-0.02em] sm:text-[38px] lg:text-[46px]">
+        <h1 className="text-[21px] leading-[1.15] tracking-[-0.01em] sm:text-[26px] lg:text-[32px]">
           <span className="block font-semibold text-asm-navy">Smart Investment</span>
-          <span className="block pt-1 font-extrabold">
+          <span className="block pt-0.5 font-extrabold">
             <span className="text-asm-navy">Secure </span>
             <span className="text-asm-green">Future</span>
           </span>
         </h1>
 
-        <p className="max-w-[48ch] pt-4 text-sm leading-relaxed text-asm-body lg:text-base">
+        <p className="max-w-[48ch] pt-3 text-[13px] leading-relaxed text-asm-body sm:text-sm">
           ASM Coins is an investment platform built for people across India who want a clear,
           straightforward way to grow what they have saved.
         </p>
@@ -380,20 +333,23 @@ function Hero() {
           </a>
         </div>
 
-        <div className="mt-6 flex items-center gap-3 rounded-xl border border-asm-line bg-white p-4">
-          <MapPin className="size-6 shrink-0 text-asm-blue" strokeWidth={2.1} aria-hidden />
-          <span className="flex flex-col">
-            <span className="text-sm font-extrabold uppercase leading-tight tracking-[0.06em]">
-              India
+        {/* Flag chip on the left, mark immediately to its right. */}
+        <div className="mt-5 flex items-center gap-3">
+          <div className="flex items-center gap-2.5 rounded-lg border border-asm-line bg-white py-1.5 pl-1.5 pr-3">
+            <IndiaFlag className="h-6 w-9 shrink-0 rounded-[3px] shadow-[0_1px_3px_rgb(16_42_92_/_0.25)]" />
+            <span className="flex flex-col">
+              <span className="text-[12px] font-extrabold uppercase leading-tight tracking-[0.06em]">
+                India
+              </span>
+              <span className="text-[9px] font-semibold uppercase leading-tight tracking-[0.08em] text-asm-body">
+                Our country, our pride
+              </span>
             </span>
-            <span className="pt-0.5 text-[10px] font-semibold uppercase leading-tight tracking-[0.1em] text-asm-body">
-              Our country, our pride, our strength
-            </span>
-          </span>
+          </div>
+
+          <HeroMark variant="compact" className="size-12 shrink-0 animate-rise sm:size-14" />
         </div>
       </div>
-
-      <HeroMark className="mx-auto aspect-square w-full max-w-[220px] animate-rise sm:max-w-[280px] lg:max-w-[380px]" />
     </section>
   )
 }
@@ -453,19 +409,19 @@ function MarketSnapshot() {
           </tr>
         </thead>
         <tbody>
-          {MARKET.map(({ symbol, pair, price, change, positive, series, swatch, glyph }) => (
+          {MARKET.map(({ symbol, pair, price, change, positive, series, icon }) => (
             <tr key={symbol} className="border-b border-asm-line/70 last:border-b-0">
               <th scope="row" className="px-3 py-3 text-left font-normal sm:px-4">
                 <span className="flex items-center gap-2 sm:gap-2.5">
-                  <span
-                    className={cn(
-                      'flex size-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white',
-                      swatch
-                    )}
-                    aria-hidden
-                  >
-                    {glyph}
-                  </span>
+                  <img
+                    src={icon}
+                    alt=""
+                    width={32}
+                    height={32}
+                    loading="lazy"
+                    decoding="async"
+                    className="size-8 shrink-0 rounded-full bg-white object-contain ring-1 ring-asm-line"
+                  />
                   <span className="flex flex-col sm:flex-row sm:items-baseline sm:gap-1">
                     <span className="text-[13px] font-bold leading-tight">{symbol}</span>
                     <span className="text-[10px] leading-tight text-asm-muted sm:text-[11px]">
@@ -499,22 +455,27 @@ function MarketSnapshot() {
   )
 }
 
+/*
+ * The medallions are transparent PNGs and taller than they are wide, because of
+ * the crown. They are sized by height with the width left to follow, and fitted
+ * with object-contain — a circular crop would cut the crown off.
+ */
 const PLAN_ACCENT = {
   silver: {
     ring: 'ring-[#B1B5BB]/50',
-    chip: 'bg-gradient-to-b from-[#E4E8EE] to-[#B1B5BB]',
+    medallion: silverMedallion,
     figure: 'text-asm-blue',
     button: 'bg-asm-blue hover:bg-asm-blue-dark',
   },
   gold: {
     ring: 'ring-[#E8B84B]/60',
-    chip: 'bg-gradient-to-b from-[#F7DE9B] to-[#D9A227]',
+    medallion: goldMedallion,
     figure: 'text-asm-greenInk',
     button: 'bg-asm-greenInk hover:bg-[#0E6E32]',
   },
   diamond: {
     ring: 'ring-[#7DD3FC]/60',
-    chip: 'bg-gradient-to-b from-[#BAE6FD] to-[#38BDF8]',
+    medallion: diamondMedallion,
     figure: 'text-asm-blue',
     button: 'bg-asm-blue hover:bg-asm-blue-dark',
   },
@@ -522,7 +483,7 @@ const PLAN_ACCENT = {
 
 function PlansSection() {
   return (
-    <section id="plans" className="scroll-mt-24 pt-10" aria-labelledby="plans-heading">
+    <section id="plans" className="scroll-mt-4 pt-10" aria-labelledby="plans-heading">
       <div className="flex items-center gap-3">
         <span className="h-px flex-1 bg-gradient-to-r from-transparent to-asm-blue/40" />
         <h2
@@ -558,11 +519,14 @@ function PlansSection() {
                 a.ring
               )}
             >
-              <span
-                className={cn('flex size-10 items-center justify-center rounded-full', a.chip)}
-                aria-hidden
+              <img
+                src={a.medallion}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                className="h-[88px] w-auto max-w-full object-contain sm:h-28"
               />
-              <h3 className="pt-2.5 text-center text-xs font-bold uppercase leading-tight tracking-[0.06em]">
+              <h3 className="pt-3 text-center text-xs font-bold uppercase leading-tight tracking-[0.06em]">
                 {name}
               </h3>
 
@@ -624,7 +588,7 @@ function PlansSection() {
 
 function HowItWorks() {
   return (
-    <section id="about" className="scroll-mt-24 pt-10" aria-labelledby="about-heading">
+    <section id="about" className="scroll-mt-4 pt-10" aria-labelledby="about-heading">
       <div className="flex items-center gap-3">
         <span className="h-px flex-1 bg-gradient-to-r from-transparent to-asm-blue/40" />
         <h2

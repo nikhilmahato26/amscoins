@@ -5,7 +5,34 @@ import { cn } from '@/lib/utils'
  * a column series, over a faint candlestick field. All geometry — exact shapes,
  * no raster, no sketch styling.
  */
-export function HeroMark({ className }: { className?: string }) {
+export function HeroMark({
+  className,
+  variant = 'full',
+}: {
+  className?: string
+  /**
+   * `compact` drops the candlestick field and the column series. Below roughly
+   * 80px those details collapse into noise, so the small size shows the disc
+   * and the mark only.
+   */
+  variant?: 'full' | 'compact'
+}) {
+  if (variant === 'compact') {
+    return (
+      <div className={cn('relative', className)} aria-hidden>
+        <div className="absolute inset-0 rounded-full bg-white shadow-[0_8px_20px_-10px_rgb(16_42_92_/_0.35)]" />
+        <div className="absolute inset-0 rounded-full ring-1 ring-inset ring-asm-line" />
+        <svg viewBox="0 0 100 100" className="absolute inset-0 size-full">
+          <g transform="translate(50 52)">
+            <path d="M-4 -30 26 34H4L-4 14-12 34h-22L-4 -30Z" fill="#102A5C" />
+            <path d="M4 20 25-22l7 3.5-21 42-7-3.5Z" fill="#17A34A" />
+            <path d="M42 -32 21-23l6.5 5.5 4.5 9.5 10-24Z" fill="#17A34A" />
+          </g>
+        </svg>
+      </div>
+    )
+  }
+
   return (
     <div className={cn('relative', className)} aria-hidden>
       {/* Candlestick field behind the disc */}
