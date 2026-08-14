@@ -15,6 +15,13 @@ import {
 import type { LucideIcon } from 'lucide-react'
 import { Link } from 'react-router'
 
+import asmCoin from '@/assets/asm.jpeg'
+import btcCoin from '@/assets/btc.jpeg'
+import goldCoin from '@/assets/gold.jpeg'
+import silverCoin from '@/assets/market-silver.png'
+import diamondMedallion from '@/assets/plans/diamond.jpg'
+import goldMedallion from '@/assets/plans/gold.jpg'
+import silverMedallion from '@/assets/plans/silver.jpg'
 import { HeroMark } from '@/components/home/HeroMark'
 import { IndiaFlag } from '@/components/home/IndiaFlag'
 import { Sparkline } from '@/components/home/Sparkline'
@@ -70,9 +77,19 @@ const MARKET: {
   change: string
   positive: boolean
   series: number[]
-  swatch: string
-  glyph: string
+  icon: string
 }[] = [
+  {
+    // ASM is the platform's own coin, so this price cannot be sourced from an
+    // exchange — it has to come from whoever sets it. Placeholder until then.
+    symbol: 'ASM',
+    pair: 'INR',
+    price: '₹12.40',
+    change: '+1.65%',
+    positive: true,
+    series: [40, 42, 41, 45, 44, 47, 46, 50, 52, 51, 55, 58],
+    icon: asmCoin,
+  },
   {
     symbol: 'BTC',
     pair: 'USDT',
@@ -80,8 +97,7 @@ const MARKET: {
     change: '+2.35%',
     positive: true,
     series: [38, 41, 39, 44, 43, 48, 46, 52, 55, 53, 58, 62],
-    swatch: 'bg-[#F7931A]',
-    glyph: '₿',
+    icon: btcCoin,
   },
   {
     symbol: 'GOLD',
@@ -90,8 +106,7 @@ const MARKET: {
     change: '+1.82%',
     positive: true,
     series: [30, 33, 31, 36, 38, 35, 40, 42, 41, 46, 48, 51],
-    swatch: 'bg-[#E8B84B]',
-    glyph: 'Au',
+    icon: goldCoin,
   },
   {
     symbol: 'SILVER',
@@ -100,28 +115,7 @@ const MARKET: {
     change: '-0.42%',
     positive: false,
     series: [52, 51, 53, 50, 48, 49, 47, 48, 45, 46, 44, 43],
-    swatch: 'bg-[#B1B5BB]',
-    glyph: 'Ag',
-  },
-  {
-    symbol: 'CRUDE OIL',
-    pair: 'USOIL',
-    price: '₹6,350.70',
-    change: '-1.08%',
-    positive: false,
-    series: [56, 54, 55, 52, 53, 50, 48, 49, 46, 45, 43, 42],
-    swatch: 'bg-[#1F2937]',
-    glyph: 'Oil',
-  },
-  {
-    symbol: 'USD',
-    pair: 'INR',
-    price: '₹83.32',
-    change: '+0.18%',
-    positive: true,
-    series: [46, 47, 46, 48, 49, 48, 50, 51, 50, 52, 53, 54],
-    swatch: 'bg-[#2563EB]',
-    glyph: '$',
+    icon: silverCoin,
   },
 ]
 
@@ -456,19 +450,19 @@ function MarketSnapshot() {
           </tr>
         </thead>
         <tbody>
-          {MARKET.map(({ symbol, pair, price, change, positive, series, swatch, glyph }) => (
+          {MARKET.map(({ symbol, pair, price, change, positive, series, icon }) => (
             <tr key={symbol} className="border-b border-asm-line/70 last:border-b-0">
               <th scope="row" className="px-3 py-3 text-left font-normal sm:px-4">
                 <span className="flex items-center gap-2 sm:gap-2.5">
-                  <span
-                    className={cn(
-                      'flex size-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white',
-                      swatch
-                    )}
-                    aria-hidden
-                  >
-                    {glyph}
-                  </span>
+                  <img
+                    src={icon}
+                    alt=""
+                    width={32}
+                    height={32}
+                    loading="lazy"
+                    decoding="async"
+                    className="size-8 shrink-0 rounded-full bg-white object-contain ring-1 ring-asm-line"
+                  />
                   <span className="flex flex-col sm:flex-row sm:items-baseline sm:gap-1">
                     <span className="text-[13px] font-bold leading-tight">{symbol}</span>
                     <span className="text-[10px] leading-tight text-asm-muted sm:text-[11px]">
@@ -502,22 +496,27 @@ function MarketSnapshot() {
   )
 }
 
+/*
+ * The medallions are cropped from the supplied strip and sit on black, so each
+ * one renders inside a dark circle rather than floating on the white card —
+ * clipping to a circle keeps the corners from showing as black wedges.
+ */
 const PLAN_ACCENT = {
   silver: {
     ring: 'ring-[#B1B5BB]/50',
-    chip: 'bg-gradient-to-b from-[#E4E8EE] to-[#B1B5BB]',
+    medallion: silverMedallion,
     figure: 'text-asm-blue',
     button: 'bg-asm-blue hover:bg-asm-blue-dark',
   },
   gold: {
     ring: 'ring-[#E8B84B]/60',
-    chip: 'bg-gradient-to-b from-[#F7DE9B] to-[#D9A227]',
+    medallion: goldMedallion,
     figure: 'text-asm-greenInk',
     button: 'bg-asm-greenInk hover:bg-[#0E6E32]',
   },
   diamond: {
     ring: 'ring-[#7DD3FC]/60',
-    chip: 'bg-gradient-to-b from-[#BAE6FD] to-[#38BDF8]',
+    medallion: diamondMedallion,
     figure: 'text-asm-blue',
     button: 'bg-asm-blue hover:bg-asm-blue-dark',
   },
@@ -561,11 +560,16 @@ function PlansSection() {
                 a.ring
               )}
             >
-              <span
-                className={cn('flex size-10 items-center justify-center rounded-full', a.chip)}
-                aria-hidden
+              <img
+                src={a.medallion}
+                alt=""
+                width={112}
+                height={112}
+                loading="lazy"
+                decoding="async"
+                className="size-20 rounded-full bg-black object-contain sm:size-24"
               />
-              <h3 className="pt-2.5 text-center text-xs font-bold uppercase leading-tight tracking-[0.06em]">
+              <h3 className="pt-3 text-center text-xs font-bold uppercase leading-tight tracking-[0.06em]">
                 {name}
               </h3>
 
