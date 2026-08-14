@@ -43,6 +43,9 @@ const InvestSummaryPage = lazy(() =>
 const SilverTierPage = lazy(() =>
   import('./pages/app/SilverTierPage').then((m) => ({ default: m.SilverTierPage }))
 )
+const AccountPage = lazy(() =>
+  import('./pages/app/AccountPage').then((m) => ({ default: m.AccountPage }))
+)
 const AppPlaceholder = lazy(() =>
   import('./pages/placeholder/AppPlaceholder').then((m) => ({ default: m.AppPlaceholder }))
 )
@@ -158,6 +161,15 @@ export default function App() {
           element={
             <RequireAuth role="user">
               <SilverTierPage />
+            </RequireAuth>
+          }
+        />
+
+        <Route
+          path="/app/account"
+          element={
+            <RequireAuth role="user">
+              <AccountPage />
             </RequireAuth>
           }
         />
