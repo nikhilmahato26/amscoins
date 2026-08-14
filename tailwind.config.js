@@ -93,6 +93,8 @@ module.exports = {
           // is 5.02:1, so it works as a label colour and as a button fill.
           greenInk: "#15803D",
           "green-tint": "#EAF7EF",
+          // Downward movement. 5.74:1 on white, 5.35:1 on tint.
+          red: "#C81E1E",
           navy: "#102A5C",
           // Secondary text tinted from the navy hue rather than neutral gray.
           // Measured against every light surface in this palette: body clears

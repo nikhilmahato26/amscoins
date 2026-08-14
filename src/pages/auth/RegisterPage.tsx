@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import { AuthLayout } from './AuthLayout'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -17,6 +17,11 @@ export function RegisterPage() {
   
   const navigate = useNavigate()
   const { setUser } = useAuth()
+
+  const [searchParams] = useSearchParams()
+  const planParam = searchParams.get('plan')
+  const selectedPlan =
+    planParam && ['silver', 'gold', 'diamond'].includes(planParam) ? planParam : null
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -49,6 +54,17 @@ export function RegisterPage() {
       <div className="text-center mb-8">
         <h2 className="text-2xl font-medium text-paper">Create Your <span className="text-brass">Account</span></h2>
         <p className="text-sm text-mist mt-2">Join ASM Coins and start your journey towards smart investments.</p>
+        {/*
+          The landing plan cards pass ?plan=<slug>. Echoing it back is the
+          minimum: the user picked something, so the next screen should show it
+          rather than silently dropping the choice. Carry it into the first
+          investment once there is a backend to carry it to.
+        */}
+        {selectedPlan ? (
+          <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-brass/40 bg-brass/10 px-3 py-1 text-xs text-brass">
+            Selected plan: <span className="font-bold uppercase">{selectedPlan}</span>
+          </p>
+        ) : null}
       </div>
 
       <Button variant="outline" className="w-full bg-transparent border-ink-3 hover:bg-ink-3 text-paper mb-6">
