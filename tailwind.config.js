@@ -61,9 +61,19 @@ module.exports = {
           dark: "#B8860B",
           bright: "#F4C506",
           antique: "#D4AF37",
+          warm: "#E8B84B",
         },
         plate: "#B1B5BB",
         frost: "#F0F4FF",
+        haze: "#B4C4E0",
+        sheen: "#C8D8EC",
+        abyss: "#080C14",
+        steel: "#B8C8E0",
+        deep: "#0E1520",
+        bluesteel: {
+          from: "#8FA8C0",
+          to: "#6A8AA8",
+        },
         tier: {
           "silver-from": "#CED5E1",
           "silver-to": "#868B95",
@@ -109,6 +119,7 @@ module.exports = {
         // Type system used by the Figma app screens.
         jakarta: ['Plus Jakarta Sans', 'sans-serif'],
         poppins: ['Poppins', 'sans-serif'],
+        dmserif: ['DM Serif Display', 'serif'],
         script: ['Lobster', 'cursive'],
       },
       borderRadius: {
