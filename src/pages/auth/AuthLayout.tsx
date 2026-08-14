@@ -15,16 +15,16 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
           <Link to="/" className="flex items-center gap-3 w-fit mb-12">
             <svg viewBox="0 0 40 40" className="w-10 h-10" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M20 0L40 40H0L20 0Z" fill="url(#paint0_linear)"/>
-              <path d="M20 8L36 40H4L20 8Z" fill="#0B1120"/>
+              <path d="M20 8L36 40H4L20 8Z" fill="#000000"/>
               <path d="M20 16L30.5 37H9.5L20 16Z" fill="url(#paint1_linear)"/>
               <defs>
                 <linearGradient id="paint0_linear" x1="20" y1="0" x2="20" y2="40" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#C4553A"/>
-                  <stop offset="1" stopColor="#C8A24A"/>
+                  <stop stopColor="#8A33D7"/>
+                  <stop offset="1" stopColor="#F59E0B"/>
                 </linearGradient>
                 <linearGradient id="paint1_linear" x1="20" y1="16" x2="20" y2="37" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#C8A24A"/>
-                  <stop offset="1" stopColor="#d9b661"/>
+                  <stop stopColor="#F59E0B"/>
+                  <stop offset="1" stopColor="#FBBF24"/>
                 </linearGradient>
               </defs>
             </svg>

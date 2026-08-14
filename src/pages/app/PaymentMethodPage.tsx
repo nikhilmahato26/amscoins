@@ -11,9 +11,7 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
-import { AppHeader } from '@/components/app/AppHeader'
-import { BottomNav } from '@/components/app/BottomNav'
-import { GridBackdrop } from '@/components/app/GridBackdrop'
+import { AppShell } from '@/components/app/AppShell'
 import { BnbIcon, TetherIcon } from '@/components/app/icons'
 import { cn } from '@/lib/utils'
 
@@ -49,11 +47,8 @@ const SIMPLE_OPTIONS: {
 
 export function PaymentMethodPage() {
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-black font-jakarta text-white">
-      <GridBackdrop />
-      <AppHeader backTo="/app" />
-
-      <main className="relative mx-auto w-full max-w-[375px] px-[15px] pb-28 pt-[102px]">
+    <AppShell backTo="/app" contentClassName="px-[15px]">
+      <div>
         <div className="flex flex-col gap-1">
           <h1 className="text-[30px] font-extrabold leading-9 tracking-[-0.75px]">
             Payment{' '}
@@ -120,10 +115,8 @@ export function PaymentMethodPage() {
             </p>
           </section>
         </div>
-      </main>
-
-      <BottomNav />
-    </div>
+      </div>
+    </AppShell>
   )
 }
 

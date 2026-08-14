@@ -23,29 +23,32 @@ module.exports = {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        // Marketing/auth palette. Repointed from the original navy + brass to
+        // match the Figma app screens, so the landing page and the logged-in
+        // app no longer read as two different products. Names kept so existing
+        // markup keeps working.
         ink: {
-          DEFAULT: "#0B1120",
-          2: "#131B31",
-          3: "#1E2843",
+          DEFAULT: "#000000",
+          2: "#1A1A1A",
+          3: "#2A2A2A",
         },
         brass: {
-          DEFAULT: "#C8A24A",
-          hover: "#d9b661"
+          DEFAULT: "#F59E0B",
+          hover: "#FBBF24",
         },
         patina: {
-          DEFAULT: "#4E9C86",
+          DEFAULT: "#10B981",
         },
         rust: {
-          DEFAULT: "#C4553A",
+          DEFAULT: "#8A33D7",
         },
         paper: {
-          DEFAULT: "#EDF0F5",
+          DEFAULT: "#FCFCFC",
         },
         mist: {
-          DEFAULT: "#8E99B4",
+          DEFAULT: "#9CA3AF",
         },
         // App shell palette (Figma "Ready for dev" mobile screens).
-        // Kept separate from the ink/brass landing palette so the two don't collide.
         brand: {
           DEFAULT: "#8A33D7",
           deep: "#782DBA",

@@ -7,25 +7,25 @@
 
 @layer base {
   :root {
-    --background: 223 48% 8%; /* ink */
-    --foreground: 0 0% 100%;
-    --card: 224 44% 13%; /* ink-2 */
-    --card-foreground: 0 0% 100%;
-    --popover: 224 44% 13%;
-    --popover-foreground: 0 0% 100%;
-    --primary: 42 57% 53%; /* brass */
-    --primary-foreground: 223 48% 8%;
-    --secondary: 223 38% 19%; /* ink-3 */
-    --secondary-foreground: 0 0% 100%;
-    --muted: 223 38% 19%;
-    --muted-foreground: 223 23% 63%; /* mist */
-    --accent: 223 38% 19%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 8 54% 50%; /* rust */
-    --destructive-foreground: 0 0% 100%;
-    --border: 223 38% 19%;
-    --input: 223 38% 19%;
-    --ring: 42 57% 53%;
+    --background: 0 0% 0%; /* ink -> black */
+    --foreground: 0 0% 99%; /* paper */
+    --card: 0 0% 10%; /* ink-2 -> #1A1A1A */
+    --card-foreground: 0 0% 99%;
+    --popover: 240 3% 11%; /* surface-2 */
+    --popover-foreground: 0 0% 99%;
+    --primary: 38 92% 50%; /* brass -> amber-500 */
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 16%; /* ink-3 -> #2A2A2A */
+    --secondary-foreground: 0 0% 99%;
+    --muted: 0 0% 16%;
+    --muted-foreground: 220 9% 65%; /* mist -> gray-400 */
+    --accent: 0 0% 16%;
+    --accent-foreground: 0 0% 99%;
+    --destructive: 0 84% 60%; /* rust -> red-500 */
+    --destructive-foreground: 0 0% 99%;
+    --border: 0 0% 16%;
+    --input: 0 0% 16%;
+    --ring: 272 67% 52%; /* brand violet */
     --radius: 0.5rem;
   }
 }

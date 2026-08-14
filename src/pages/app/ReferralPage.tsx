@@ -12,9 +12,7 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
-import { AppHeader } from '@/components/app/AppHeader'
-import { BottomNav } from '@/components/app/BottomNav'
-import { GridBackdrop } from '@/components/app/GridBackdrop'
+import { AppShell } from '@/components/app/AppShell'
 import { TierBadge, type Tier } from '@/components/app/TierBadge'
 import { cn } from '@/lib/utils'
 
@@ -79,11 +77,8 @@ export function ReferralPage() {
   const progress = Math.min((REFERRAL.count / REFERRAL.nextTierTarget) * 100, 100)
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-black font-jakarta text-white">
-      <GridBackdrop />
-      <AppHeader backTo="/app" />
-
-      <main className="relative mx-auto flex w-full max-w-[375px] flex-col gap-6 px-5 pb-28 pt-[102px]">
+    <AppShell backTo="/app">
+      <div className="flex flex-col gap-6">
         {/* Code + link */}
         <section className="flex flex-col gap-5 rounded-2xl border border-white/[0.08] bg-surface-2 p-[21px]">
           <div className="flex flex-col gap-2">
@@ -281,10 +276,8 @@ export function ReferralPage() {
             </div>
           ))}
         </div>
-      </main>
-
-      <BottomNav />
-    </div>
+      </div>
+    </AppShell>
   )
 }
 

@@ -11,28 +11,28 @@ import { buttonVariants } from '@/components/ui/button'
 
 export function LandingPage() {
   return (
-    <div className="min-h-screen bg-[#060A11] text-foreground font-sans selection:bg-brass/20 relative overflow-hidden flex flex-col">
+    <div className="min-h-screen bg-[#050505] text-foreground font-sans selection:bg-brass/20 relative overflow-hidden flex flex-col">
       {/* Abstract Backgrounds */}
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03] mix-blend-overlay pointer-events-none"></div>
       <div className="absolute top-0 right-0 w-[1000px] h-[800px] bg-rust/10 rounded-full blur-[150px] pointer-events-none translate-x-1/3 -translate-y-1/3"></div>
       
       {/* 1. Navbar */}
-      <nav className="relative z-50 border-b border-ink-3/50 bg-[#060A11]/80 backdrop-blur-md">
+      <nav className="relative z-50 border-b border-ink-3/50 bg-[#050505]/80 backdrop-blur-md">
         <div className="max-w-[1600px] mx-auto px-4 md:px-8 h-24 flex items-center justify-between">
           
           <Link to="/" className="flex items-center gap-3">
-            <svg viewBox="0 0 40 40" className="w-14 h-14 drop-shadow-[0_0_15px_rgba(200,162,74,0.3)]" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg viewBox="0 0 40 40" className="w-14 h-14 drop-shadow-[0_0_15px_rgba(245,158,11,0.3)]" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M20 0L40 40H0L20 0Z" fill="url(#paint0_linear_logo)"/>
-              <path d="M20 8L36 40H4L20 8Z" fill="#0B1120"/>
+              <path d="M20 8L36 40H4L20 8Z" fill="#000000"/>
               <path d="M20 16L30.5 37H9.5L20 16Z" fill="url(#paint1_linear_logo)"/>
               <defs>
                 <linearGradient id="paint0_linear_logo" x1="20" y1="0" x2="20" y2="40" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#C4553A"/>
-                  <stop offset="1" stopColor="#C8A24A"/>
+                  <stop stopColor="#8A33D7"/>
+                  <stop offset="1" stopColor="#F59E0B"/>
                 </linearGradient>
                 <linearGradient id="paint1_linear_logo" x1="20" y1="16" x2="20" y2="37" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#C8A24A"/>
-                  <stop offset="1" stopColor="#d9b661"/>
+                  <stop stopColor="#F59E0B"/>
+                  <stop offset="1" stopColor="#FBBF24"/>
                 </linearGradient>
               </defs>
             </svg>
@@ -79,7 +79,7 @@ export function LandingPage() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center gap-4 mb-14">
-            <Link to="/login" className={cn(buttonVariants({ variant: 'default' }), "bg-gradient-to-r from-rust to-[#a13b24] hover:opacity-90 text-white border-0 px-8 h-14 rounded-md text-sm font-bold tracking-wider group shadow-[0_0_20px_rgba(196,85,58,0.3)] w-full sm:w-auto")}>
+            <Link to="/login" className={cn(buttonVariants({ variant: 'default' }), "bg-gradient-to-r from-rust to-[#5B1E96] hover:opacity-90 text-white border-0 px-8 h-14 rounded-md text-sm font-bold tracking-wider group shadow-[0_0_20px_rgba(138,51,215,0.3)] w-full sm:w-auto")}>
               START INVESTING 
               <ArrowRight className="w-4 h-4 ml-3 group-hover:translate-x-1 transition-transform" />
             </Link>
@@ -132,12 +132,12 @@ export function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             
             {/* Silver */}
-            <div className="relative rounded-xl bg-gradient-to-b from-[#1c2333] to-[#0c121e] border border-mist/30 p-1 flex flex-col">
-              <div className="bg-[#0b1019] rounded-lg p-5 flex-1 flex flex-col h-full relative overflow-hidden">
+            <div className="relative rounded-xl bg-gradient-to-b from-[#1F1F1F] to-[#121212] border border-mist/30 p-1 flex flex-col">
+              <div className="bg-[#111111] rounded-lg p-5 flex-1 flex flex-col h-full relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-mist/5 rounded-full blur-[20px] -translate-y-1/2 translate-x-1/2"></div>
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-mist to-mist/30 flex items-center justify-center p-[1px] shadow-[0_0_15px_rgba(142,153,180,0.3)]">
-                    <div className="w-full h-full bg-[#0b1019] rounded-full flex items-center justify-center text-mist">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-mist to-mist/30 flex items-center justify-center p-[1px] shadow-[0_0_15px_rgba(156,163,175,0.3)]">
+                    <div className="w-full h-full bg-[#111111] rounded-full flex items-center justify-center text-mist">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                     </div>
                   </div>
@@ -170,12 +170,12 @@ export function LandingPage() {
             </div>
 
             {/* Gold */}
-            <div className="relative rounded-xl bg-gradient-to-b from-brass to-[#453613] p-1 flex flex-col shadow-[0_0_30px_rgba(200,162,74,0.15)] -translate-y-2">
-              <div className="bg-[#0b1019] rounded-lg p-5 flex-1 flex flex-col h-full relative overflow-hidden">
+            <div className="relative rounded-xl bg-gradient-to-b from-brass to-[#78350F] p-1 flex flex-col shadow-[0_0_30px_rgba(245,158,11,0.15)] -translate-y-2">
+              <div className="bg-[#111111] rounded-lg p-5 flex-1 flex flex-col h-full relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-brass/10 rounded-full blur-[20px] -translate-y-1/2 translate-x-1/2"></div>
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brass to-[#69531d] flex items-center justify-center p-[1px] shadow-[0_0_15px_rgba(200,162,74,0.5)]">
-                    <div className="w-full h-full bg-[#0b1019] rounded-full flex items-center justify-center text-brass">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brass to-[#92400E] flex items-center justify-center p-[1px] shadow-[0_0_15px_rgba(245,158,11,0.5)]">
+                    <div className="w-full h-full bg-[#111111] rounded-full flex items-center justify-center text-brass">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                     </div>
                   </div>
@@ -208,12 +208,12 @@ export function LandingPage() {
             </div>
 
             {/* Diamond */}
-            <div className="relative rounded-xl bg-gradient-to-b from-rust to-[#4a1811] border border-rust/30 p-1 flex flex-col">
-              <div className="bg-[#0b1019] rounded-lg p-5 flex-1 flex flex-col h-full relative overflow-hidden">
+            <div className="relative rounded-xl bg-gradient-to-b from-rust to-[#3B0764] border border-rust/30 p-1 flex flex-col">
+              <div className="bg-[#111111] rounded-lg p-5 flex-1 flex flex-col h-full relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-rust/10 rounded-full blur-[20px] -translate-y-1/2 translate-x-1/2"></div>
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-rust to-red-900 flex items-center justify-center p-[1px] shadow-[0_0_15px_rgba(196,85,58,0.4)]">
-                    <div className="w-full h-full bg-[#0b1019] rounded-full flex items-center justify-center text-rust">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-rust to-red-900 flex items-center justify-center p-[1px] shadow-[0_0_15px_rgba(138,51,215,0.4)]">
+                    <div className="w-full h-full bg-[#111111] rounded-full flex items-center justify-center text-rust">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                     </div>
                   </div>
@@ -260,18 +260,18 @@ export function LandingPage() {
              <div className="absolute inset-4 bg-rust/10 rounded-full blur-xl"></div>
              
              {/* Big Logo */}
-             <svg viewBox="0 0 40 40" className="w-32 h-32 relative z-10 drop-shadow-[0_0_25px_rgba(200,162,74,0.3)]" fill="none" xmlns="http://www.w3.org/2000/svg">
+             <svg viewBox="0 0 40 40" className="w-32 h-32 relative z-10 drop-shadow-[0_0_25px_rgba(245,158,11,0.3)]" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M20 0L40 40H0L20 0Z" fill="url(#paint0_linear_big)"/>
-                <path d="M20 8L36 40H4L20 8Z" fill="#0B1120"/>
+                <path d="M20 8L36 40H4L20 8Z" fill="#000000"/>
                 <path d="M20 16L30.5 37H9.5L20 16Z" fill="url(#paint1_linear_big)"/>
                 <defs>
                   <linearGradient id="paint0_linear_big" x1="20" y1="0" x2="20" y2="40" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#C4553A"/>
-                    <stop offset="1" stopColor="#C8A24A"/>
+                    <stop stopColor="#8A33D7"/>
+                    <stop offset="1" stopColor="#F59E0B"/>
                   </linearGradient>
                   <linearGradient id="paint1_linear_big" x1="20" y1="16" x2="20" y2="37" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#C8A24A"/>
-                    <stop offset="1" stopColor="#d9b661"/>
+                    <stop stopColor="#F59E0B"/>
+                    <stop offset="1" stopColor="#FBBF24"/>
                   </linearGradient>
                 </defs>
              </svg>
@@ -303,7 +303,7 @@ export function LandingPage() {
              </div>
              
              <div className="flex items-center gap-4 relative z-10">
-               <div className="w-12 h-12 rounded-full bg-rust/20 flex items-center justify-center text-rust shrink-0 shadow-[0_0_15px_rgba(196,85,58,0.3)]">
+               <div className="w-12 h-12 rounded-full bg-rust/20 flex items-center justify-center text-rust shrink-0 shadow-[0_0_15px_rgba(138,51,215,0.3)]">
                   <MapPin className="w-6 h-6" />
                </div>
                <div>
@@ -497,11 +497,11 @@ export function LandingPage() {
             <div className="flex items-center gap-3">
               <svg viewBox="0 0 40 40" className="w-8 h-8 opacity-80" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M20 0L40 40H0L20 0Z" fill="url(#p0)"/>
-                <path d="M20 8L36 40H4L20 8Z" fill="#0B1120"/>
+                <path d="M20 8L36 40H4L20 8Z" fill="#000000"/>
                 <path d="M20 16L30.5 37H9.5L20 16Z" fill="url(#p1)"/>
                 <defs>
-                  <linearGradient id="p0" x1="20" y1="0" x2="20" y2="40" gradientUnits="userSpaceOnUse"><stop stopColor="#C4553A"/><stop offset="1" stopColor="#C8A24A"/></linearGradient>
-                  <linearGradient id="p1" x1="20" y1="16" x2="20" y2="37" gradientUnits="userSpaceOnUse"><stop stopColor="#C8A24A"/><stop offset="1" stopColor="#d9b661"/></linearGradient>
+                  <linearGradient id="p0" x1="20" y1="0" x2="20" y2="40" gradientUnits="userSpaceOnUse"><stop stopColor="#8A33D7"/><stop offset="1" stopColor="#F59E0B"/></linearGradient>
+                  <linearGradient id="p1" x1="20" y1="16" x2="20" y2="37" gradientUnits="userSpaceOnUse"><stop stopColor="#F59E0B"/><stop offset="1" stopColor="#FBBF24"/></linearGradient>
                 </defs>
               </svg>
               <div>

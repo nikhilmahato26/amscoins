@@ -17,7 +17,7 @@ export function BottomNav({ className }: { className?: string }) {
       aria-label="Primary"
       className={cn(
         'fixed bottom-0 left-1/2 z-30 flex w-[370px] max-w-full -translate-x-1/2 items-center justify-between',
-        'border-t border-white/10 bg-surface-nav/90 p-4 backdrop-blur-[20px]',
+        'border-t border-white/10 bg-surface-nav/90 p-4 backdrop-blur-[20px] lg:hidden',
         className
       )}
     >
