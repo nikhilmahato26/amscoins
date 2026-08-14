@@ -22,7 +22,7 @@ const fadeUp = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { type: 'spring', stiffness: 90, damping: 18 },
+    transition: { type: 'spring' as const, stiffness: 90, damping: 18 },
   },
 }
 
