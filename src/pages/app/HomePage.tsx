@@ -1,4 +1,4 @@
-import { ArrowDownToLine, ArrowUpFromLine, CheckCircle2, Clock, History, LifeBuoy } from 'lucide-react'
+import { ArrowDownToLine, ArrowUpFromLine, CheckCircle2, History, LifeBuoy } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Link } from 'react-router'
 
@@ -17,13 +17,18 @@ const STATS = [
 ]
 
 /**
- * Placeholder plans. Figma labels all three cards "SilverPackage", so tier
- * names come from the badge artwork and the return figures are inferred.
+ * Placeholder plans. Return figures come from the desktop plan cards in Figma
+ * (26:8496 / 26:8588), since the mobile cards all carry the same
+ * "SilverPackage" placeholder label.
+ *
+ * Diamond's min/max reads ₹3,000-₹5,000 on the current mobile card, identical
+ * to Gold. Every other Diamond card in the file says ₹5,000-₹5,00,000, so that
+ * looks like a copy-paste slip and we use the latter here.
  */
 const PLANS: { tier: Tier; name: string; returns: string; duration: string; min: string; max: string }[] = [
   { tier: 'silver', name: 'Silver', returns: '25%', duration: '36 Hours', min: '₹1,000', max: '₹5,000' },
   { tier: 'gold', name: 'Gold', returns: '30%', duration: '36 Hours', min: '₹3,000', max: '₹5,000' },
-  { tier: 'diamond', name: 'Diamond', returns: '35%', duration: '36 Hours', min: '₹5,000', max: '₹5,00,000' },
+  { tier: 'diamond', name: 'Diamond', returns: '40%', duration: '36 Hours', min: '₹5,000', max: '₹5,00,000' },
 ]
 
 const FEATURES = [
@@ -163,7 +168,7 @@ function PlanCard({
   max: string
 }) {
   return (
-    <article className="relative flex flex-col gap-3 overflow-hidden rounded-[20px] border-2 border-plate px-[25px] py-4">
+    <article className="relative flex flex-col gap-3 overflow-hidden rounded-[20px] border-2 border-plate bg-plate/10 px-[25px] py-4">
       <span
         aria-hidden
         className="pointer-events-none absolute -top-10 right-[-14px] size-32 rounded-full bg-slate-400/10 blur-[32px]"
@@ -171,15 +176,17 @@ function PlanCard({
 
       <div className="flex flex-col items-center gap-1">
         <TierBadge tier={tier} size={133} />
-        <div className="flex w-full items-end justify-between">
-          <span className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold leading-8">{returns}</span>
-            <span className="text-sm leading-5 text-gray-400">Returns</span>
-          </span>
-          <span className="flex items-center gap-2 pt-1.5">
-            <Clock className="size-4 text-frost" aria-hidden />
+
+        <div className="flex flex-col items-center gap-5">
+          <div className="flex flex-col items-center">
+            <span className="text-[32px] font-bold leading-none">{returns}</span>
+            <span className="text-sm uppercase leading-5 text-gray-400">Returns</span>
+          </div>
+
+          <div className="flex flex-col items-center pt-1.5">
+            <span className="text-sm leading-5 text-haze/45">Duration</span>
             <span className="text-xl font-medium leading-[30px] text-frost">{duration}</span>
-          </span>
+          </div>
         </div>
       </div>
 
@@ -195,17 +202,19 @@ function PlanCard({
         </span>
       </div>
 
-      <Link
-        to="/app/invest"
-        aria-label={`Invest in the ${name} package`}
-        className={cn(
-          'flex h-14 items-center justify-center rounded-xl border border-white/20 bg-white/10',
-          'text-base font-bold uppercase tracking-wide transition-colors hover:bg-white/20',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand'
-        )}
-      >
-        Invest Now
-      </Link>
+      <div className="rounded-xl border-[0.677px] border-slate-400/30">
+        <Link
+          to="/app/invest"
+          aria-label={`Invest in the ${name} package`}
+          className={cn(
+            'flex h-[55px] items-center justify-center rounded-xl bg-plate',
+            'text-sm font-bold uppercase tracking-[0.35px] text-white transition-opacity hover:opacity-90',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand'
+          )}
+        >
+          Invest Now
+        </Link>
+      </div>
     </article>
   )
 }

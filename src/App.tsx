@@ -9,6 +9,8 @@ import { WithdrawPage } from './pages/app/WithdrawPage'
 import { ReferralPage } from './pages/app/ReferralPage'
 import { PackageDetailPage } from './pages/app/PackageDetailPage'
 import { HomePage } from './pages/app/HomePage'
+import { PlanBenefitsPage } from './pages/app/PlanBenefitsPage'
+import { PlansPage } from './pages/plans/PlansPage'
 import { AdminPlaceholder } from './pages/placeholder/AdminPlaceholder'
 import { NotFound } from './pages/placeholder/NotFound'
 import { RequireAuth } from './auth/RequireAuth'
@@ -19,6 +21,7 @@ export default function App() {
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/plans" element={<PlansPage />} />
       
       <Route path="/app/payment" element={
         <RequireAuth role="user">
@@ -47,6 +50,12 @@ export default function App() {
       <Route path="/app/invest" element={
         <RequireAuth role="user">
           <PackageDetailPage />
+        </RequireAuth>
+      } />
+
+      <Route path="/app/benefits" element={
+        <RequireAuth role="user">
+          <PlanBenefitsPage />
         </RequireAuth>
       } />
 
