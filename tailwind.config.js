@@ -44,6 +44,35 @@ module.exports = {
         mist: {
           DEFAULT: "#8E99B4",
         },
+        // App shell palette (Figma "Ready for dev" mobile screens).
+        // Kept separate from the ink/brass landing palette so the two don't collide.
+        brand: {
+          DEFAULT: "#8A33D7",
+          deep: "#782DBA",
+        },
+        surface: {
+          DEFAULT: "#1A1A1A",
+          2: "#1C1C1E",
+          nav: "#0A0A0A",
+        },
+        gold: {
+          light: "#FFF5C2",
+          DEFAULT: "#FFD700",
+          dark: "#B8860B",
+          bright: "#F4C506",
+          antique: "#D4AF37",
+        },
+        plate: "#B1B5BB",
+        frost: "#F0F4FF",
+        tier: {
+          "silver-from": "#CED5E1",
+          "silver-to": "#868B95",
+          "gold-from": "#FF9E45",
+          "gold-to": "#F37400",
+          diamond: "#1E93FE",
+          ribbon: "#BC24A3",
+          "ribbon-alt": "#FFA00F",
+        },
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
@@ -77,6 +106,10 @@ module.exports = {
         display: ['Fraunces', 'serif'],
         sans: ['Instrument Sans', 'sans-serif'],
         mono: ['IBM Plex Mono', 'monospace'],
+        // Type system used by the Figma app screens.
+        jakarta: ['Plus Jakarta Sans', 'sans-serif'],
+        poppins: ['Poppins', 'sans-serif'],
+        script: ['Lobster', 'cursive'],
       },
       borderRadius: {
         lg: "var(--radius)",
