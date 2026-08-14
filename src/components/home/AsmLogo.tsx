@@ -33,12 +33,19 @@ export function AsmLogo({
     <span className={cn('flex items-center gap-2.5', className)}>
       <AsmMark className="h-9 w-10 shrink-0" />
       <span className="flex flex-col">
-        <span className="flex items-baseline gap-1.5 text-[22px] font-extrabold leading-none tracking-[0.02em]">
+        <span className="flex items-baseline gap-1.5 text-[19px] font-extrabold leading-none tracking-[0.02em] sm:text-[22px]">
           <span className="text-asm-navy">ASM</span>
           <span className="text-asm-green">COINS</span>
         </span>
+        {/*
+          data-tagline lets a tight container drop the strapline without a
+          second prop — the header uses it to fit 320px screens.
+        */}
         {showTagline ? (
-          <span className="pt-1 text-[8px] font-semibold uppercase leading-none tracking-[0.28em] text-asm-muted">
+          <span
+            data-tagline
+            className="pt-1 text-[8px] font-semibold uppercase leading-none tracking-[0.28em] text-asm-muted"
+          >
             Invest · Grow · Prosper
           </span>
         ) : null}

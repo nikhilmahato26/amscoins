@@ -288,6 +288,47 @@ export function LandingPage() {
       </main>
 
       <LandingFooter />
+
+      <MobileCta />
+    </div>
+  )
+}
+
+/**
+ * Persistent primary action on mobile. Almost all traffic is phones, and the
+ * hero CTA leaves the viewport within one swipe, so the page keeps one tappable
+ * way forward at all times. Hidden from lg up, where the header CTA is visible
+ * the whole way down.
+ */
+function MobileCta() {
+  return (
+    <div
+      className={cn(
+        'fixed inset-x-0 bottom-0 z-30 border-t border-asm-line bg-white/95 backdrop-blur-md',
+        'pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_-16px_rgb(16_42_92_/_0.25)] lg:hidden'
+      )}
+    >
+      <div className="flex items-center gap-3 px-4 py-2.5">
+        <div className="flex min-w-0 flex-1 flex-col">
+          <span className="truncate text-[13px] font-extrabold leading-tight">
+            Start from ₹1,000
+          </span>
+          <span className="truncate text-[11px] leading-tight text-asm-body">
+            Plans from 36 hours
+          </span>
+        </div>
+        <Link
+          to="/register"
+          className={cn(
+            'flex min-h-11 shrink-0 items-center gap-2 rounded-lg bg-asm-blue px-5',
+            'text-[12px] font-bold uppercase tracking-[0.08em] text-white',
+            'transition-colors hover:bg-asm-blue-dark'
+          )}
+        >
+          Start Investing
+          <ArrowRight className="size-4" strokeWidth={2.4} aria-hidden />
+        </Link>
+      </div>
     </div>
   )
 }
@@ -352,7 +393,7 @@ function Hero() {
         </div>
       </div>
 
-      <HeroMark className="mx-auto aspect-square w-full max-w-[280px] animate-rise lg:max-w-[380px]" />
+      <HeroMark className="mx-auto aspect-square w-full max-w-[220px] animate-rise sm:max-w-[280px] lg:max-w-[380px]" />
     </section>
   )
 }
@@ -377,77 +418,83 @@ function MarketSnapshot() {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[420px] border-collapse text-left">
-          <thead>
-            <tr className="border-y border-asm-line bg-asm-tint/60">
-              <th
-                scope="col"
-                className="px-4 py-2 text-[9px] font-bold uppercase tracking-[0.12em] text-asm-muted"
-              >
-                Asset
+      {/*
+        One table, no horizontal scroll. The chart column is dropped below sm
+        because a sparkline is the least useful thing on a 360px screen, and
+        making the table scroll sideways to keep it would hide the prices.
+      */}
+      <table className="w-full border-collapse text-left">
+        <thead>
+          <tr className="border-y border-asm-line bg-asm-tint/60">
+            <th
+              scope="col"
+              className="px-3 py-2 text-[9px] font-bold uppercase tracking-[0.12em] text-asm-muted sm:px-4"
+            >
+              Asset
+            </th>
+            <th
+              scope="col"
+              className="px-2 py-2 text-right text-[9px] font-bold uppercase tracking-[0.12em] text-asm-muted"
+            >
+              Price
+            </th>
+            <th
+              scope="col"
+              className="px-3 py-2 text-right text-[9px] font-bold uppercase tracking-[0.12em] text-asm-muted sm:px-2"
+            >
+              24h
+            </th>
+            <th
+              scope="col"
+              className="hidden px-4 py-2 text-right text-[9px] font-bold uppercase tracking-[0.12em] text-asm-muted sm:table-cell"
+            >
+              Chart
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {MARKET.map(({ symbol, pair, price, change, positive, series, swatch, glyph }) => (
+            <tr key={symbol} className="border-b border-asm-line/70 last:border-b-0">
+              <th scope="row" className="px-3 py-3 text-left font-normal sm:px-4">
+                <span className="flex items-center gap-2 sm:gap-2.5">
+                  <span
+                    className={cn(
+                      'flex size-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white',
+                      swatch
+                    )}
+                    aria-hidden
+                  >
+                    {glyph}
+                  </span>
+                  <span className="flex flex-col sm:flex-row sm:items-baseline sm:gap-1">
+                    <span className="text-[13px] font-bold leading-tight">{symbol}</span>
+                    <span className="text-[10px] leading-tight text-asm-muted sm:text-[11px]">
+                      <span className="hidden sm:inline">/ </span>
+                      {pair}
+                    </span>
+                  </span>
+                </span>
               </th>
-              <th
-                scope="col"
-                className="px-2 py-2 text-right text-[9px] font-bold uppercase tracking-[0.12em] text-asm-muted"
+              <td className="px-2 py-3 text-right text-[13px] font-semibold tabular-nums">
+                {price}
+              </td>
+              <td
+                className={cn(
+                  'px-3 py-3 text-right text-[12px] font-bold tabular-nums sm:px-2',
+                  positive ? 'text-asm-greenInk' : 'text-asm-red'
+                )}
               >
-                Price
-              </th>
-              <th
-                scope="col"
-                className="px-2 py-2 text-right text-[9px] font-bold uppercase tracking-[0.12em] text-asm-muted"
-              >
-                24h
-              </th>
-              <th
-                scope="col"
-                className="px-4 py-2 text-right text-[9px] font-bold uppercase tracking-[0.12em] text-asm-muted"
-              >
-                Chart
-              </th>
+                {change}
+              </td>
+              <td className="hidden px-4 py-3 sm:table-cell">
+                <span className="flex justify-end">
+                  <Sparkline values={series} positive={positive} />
+                </span>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {MARKET.map(({ symbol, pair, price, change, positive, series, swatch, glyph }) => (
-              <tr key={symbol} className="border-b border-asm-line/70 last:border-b-0">
-                <th scope="row" className="px-4 py-3 text-left font-normal">
-                  <span className="flex items-center gap-2.5">
-                    <span
-                      className={cn(
-                        'flex size-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white',
-                        swatch
-                      )}
-                      aria-hidden
-                    >
-                      {glyph}
-                    </span>
-                    <span className="flex items-baseline gap-1">
-                      <span className="text-[13px] font-bold">{symbol}</span>
-                      <span className="text-[11px] text-asm-muted">/ {pair}</span>
-                    </span>
-                  </span>
-                </th>
-                <td className="px-2 py-3 text-right text-[13px] font-semibold tabular-nums">
-                  {price}
-                </td>
-                <td
-                  className={cn(
-                    'px-2 py-3 text-right text-[12px] font-bold tabular-nums',
-                    positive ? 'text-asm-greenInk' : 'text-asm-red'
-                  )}
-                >
-                  {change}
-                </td>
-                <td className="px-4 py-3">
-                  <span className="flex justify-end">
-                    <Sparkline values={series} positive={positive} />
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          ))}
+        </tbody>
+      </table>
     </section>
   )
 }
@@ -487,14 +534,27 @@ function PlansSection() {
         <span className="h-px flex-1 bg-gradient-to-l from-transparent to-asm-blue/40" />
       </div>
 
-      <div className="grid gap-3 pt-5 sm:grid-cols-3 sm:gap-4">
+      {/*
+        Swipeable on mobile, grid from sm. Stacking three full-width cards put
+        the third plan two screens down, which stops it being a comparison; a
+        snap rail keeps the next card visible at the right edge so it reads as
+        "there are more" without scrolling the page.
+      */}
+      <div
+        className={cn(
+          '-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pt-5',
+          '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+          'sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-4 sm:overflow-visible sm:px-0'
+        )}
+      >
         {PLANS.map(({ slug, name, returns, duration, min, max, accent }) => {
           const a = PLAN_ACCENT[accent]
           return (
             <article
               key={slug}
               className={cn(
-                'flex flex-col items-center rounded-xl bg-white p-4 ring-1 sm:p-5',
+                'flex w-[62%] min-w-[196px] shrink-0 snap-start flex-col items-center rounded-xl bg-white p-4 ring-1',
+                'sm:w-auto sm:min-w-0 sm:p-5',
                 a.ring
               )}
             >

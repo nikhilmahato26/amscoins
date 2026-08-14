@@ -112,7 +112,8 @@ function FeatureCard({
         <span className="block h-px w-full bg-gradient-to-r from-sheen/[0.18] to-transparent" />
       </div>
 
-      <div className="grid grid-cols-4 gap-2 pt-5">
+      {/* 4-up crushes these to ~78px on a 360px screen, so 2-up until sm. */}
+      <div className="grid grid-cols-2 gap-2 pt-5 sm:grid-cols-4">
         {STATS.map(({ label, value, Icon: StatIcon }) => (
           <div
             key={label}

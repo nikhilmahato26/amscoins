@@ -43,7 +43,11 @@ export function LandingHeader({
       )}
     >
       <div className="mx-auto flex w-full max-w-[1180px] items-center justify-between gap-4 px-4 py-3 lg:px-8">
-        <Link to="/" aria-label="ASM Coins, home" className="shrink-0">
+        <Link
+          to="/"
+          aria-label="ASM Coins, home"
+          className="shrink-0 [&_[data-tagline]]:hidden sm:[&_[data-tagline]]:block"
+        >
           <AsmLogo />
         </Link>
 
@@ -216,7 +220,11 @@ const PAY_METHODS = [
 
 export function LandingFooter() {
   return (
-    <footer id="contact" className="mt-12 border-t border-asm-line bg-asm-tint">
+    /* pb clears the fixed mobile CTA bar so the disclosure is never hidden. */
+    <footer
+      id="contact"
+      className="mt-12 border-t border-asm-line bg-asm-tint pb-24 lg:pb-0"
+    >
       <div className="mx-auto w-full max-w-[1180px] px-4 lg:px-8">
         <ul className="grid grid-cols-2 gap-x-6 gap-y-5 border-b border-asm-line py-7 md:grid-cols-5">
           {TRUST_BAR.map(({ Icon, title, note }) => (
