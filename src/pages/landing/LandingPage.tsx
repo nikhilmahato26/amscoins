@@ -282,47 +282,6 @@ export function LandingPage() {
       </main>
 
       <LandingFooter />
-
-      <MobileCta />
-    </div>
-  )
-}
-
-/**
- * Persistent primary action on mobile. Almost all traffic is phones, and the
- * hero CTA leaves the viewport within one swipe, so the page keeps one tappable
- * way forward at all times. Hidden from lg up, where the header CTA is visible
- * the whole way down.
- */
-function MobileCta() {
-  return (
-    <div
-      className={cn(
-        'fixed inset-x-0 bottom-0 z-30 border-t border-asm-line bg-white/95 backdrop-blur-md',
-        'pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_-16px_rgb(16_42_92_/_0.25)] lg:hidden'
-      )}
-    >
-      <div className="flex items-center gap-3 px-4 py-2.5">
-        <div className="flex min-w-0 flex-1 flex-col">
-          <span className="truncate text-[13px] font-extrabold leading-tight">
-            Start from ₹1,000
-          </span>
-          <span className="truncate text-[11px] leading-tight text-asm-body">
-            Plans from 36 hours
-          </span>
-        </div>
-        <Link
-          to="/register"
-          className={cn(
-            'flex min-h-11 shrink-0 items-center gap-2 rounded-lg bg-asm-blue px-5',
-            'text-[12px] font-bold uppercase tracking-[0.08em] text-white',
-            'transition-colors hover:bg-asm-blue-dark'
-          )}
-        >
-          Start Investing
-          <ArrowRight className="size-4" strokeWidth={2.4} aria-hidden />
-        </Link>
-      </div>
     </div>
   )
 }

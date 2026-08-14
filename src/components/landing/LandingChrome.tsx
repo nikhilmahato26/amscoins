@@ -218,11 +218,7 @@ const PAY_METHODS = [
 
 export function LandingFooter() {
   return (
-    /* pb clears the fixed mobile CTA bar so the disclosure is never hidden. */
-    <footer
-      id="contact"
-      className="mt-12 border-t border-asm-line bg-asm-tint pb-24 lg:pb-0"
-    >
+    <footer id="contact" className="mt-12 border-t border-asm-line bg-asm-tint">
       <div className="mx-auto w-full max-w-[1180px] px-4 lg:px-8">
         <ul className="grid grid-cols-2 gap-x-6 gap-y-5 border-b border-asm-line py-7 md:grid-cols-5">
           {TRUST_BAR.map(({ Icon, title, note }) => (
