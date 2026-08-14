@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion'
 import {
   ChevronRight,
   Headphones,
@@ -27,180 +28,202 @@ const SIMPLE_OPTIONS: {
   title: string
   subtitle: string
   Icon: LucideIcon
-  tile: string
+  tone: 'blue' | 'green'
 }[] = [
   {
     id: 'other-wallets',
     title: 'Other Wallets (USDT)',
     subtitle: 'Use any other wallet to pay USDT',
     Icon: Wallet,
-    tile: 'from-purple-500 to-purple-700',
+    tone: 'blue',
   },
   {
     id: 'need-help',
     title: 'Need Help?',
     subtitle: 'Contact our support team anytime',
     Icon: Headphones,
-    tile: 'from-yellow-400 to-yellow-500',
+    tone: 'green',
   },
 ]
 
+/* ── Framer variants ── */
+const container = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.08, delayChildren: 0.03 } },
+}
+const fadeUp = {
+  hidden: { opacity: 0, y: 16 },
+  visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 90, damping: 18 } },
+}
+
 export function PaymentMethodPage() {
   return (
-    <AppShell backTo="/app" contentClassName="px-[15px]">
-      <div>
-        <div className="flex flex-col gap-1">
-          <h1 className="text-[30px] font-extrabold leading-9 tracking-[-0.75px]">
+    <AppShell backTo="/app" contentClassName="px-5">
+      <motion.div
+        variants={container}
+        initial="hidden"
+        animate="visible"
+        className="flex flex-col gap-6"
+      >
+        {/* ── Page title ── */}
+        <motion.div variants={fadeUp} className="flex flex-col gap-1">
+          <h1 className="text-[26px] font-extrabold leading-tight tracking-[-0.02em] text-asm-navy">
             Payment{' '}
-            <span className="bg-gradient-to-br from-gold-light via-gold to-gold-dark bg-clip-text text-transparent">
-              Method
-            </span>
+            <span className="text-asm-blue">Method</span>
           </h1>
-          <p className="text-sm font-medium leading-5 tracking-[-0.16px] text-gray-400">
+          <p className="text-[13px] font-medium leading-relaxed text-asm-body">
             Complete your payment securely to start your investment.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="mt-[22px] flex flex-col gap-6">
+        {/* ── Package summary ── */}
+        <motion.div variants={fadeUp}>
           <PackageSummary />
+        </motion.div>
 
-          <section className="flex flex-col gap-6">
-            <h2 className="px-1 text-base font-bold leading-6 tracking-[-0.16px] text-gray-300">
-              Choose Payment Option
-            </h2>
+        {/* ── Payment options ── */}
+        <motion.section variants={fadeUp} className="flex flex-col gap-4">
+          <h2 className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-asm-muted">
+            Choose Payment Option
+          </h2>
 
-            <div className="flex flex-col gap-3">
-              <CryptoOption />
-              <InrOption />
-              {SIMPLE_OPTIONS.map(({ id, title, subtitle, Icon, tile }) => (
-                <OptionShell key={id}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <IconTile className={tile}>
-                        <Icon className="size-5 text-white" aria-hidden />
-                      </IconTile>
-                      <div className="flex flex-col gap-px pl-4">
-                        <h3 className="text-base font-bold leading-6 tracking-[-0.16px]">{title}</h3>
-                        <p className="text-[11px] font-medium leading-[16.5px] tracking-[-0.16px] text-gray-500">
-                          {subtitle}
-                        </p>
-                      </div>
+          <div className="flex flex-col gap-3">
+            <CryptoOption />
+            <InrOption />
+            {SIMPLE_OPTIONS.map(({ id, title, subtitle, Icon, tone }) => (
+              <OptionShell key={id}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <IconTile tone={tone}>
+                      <Icon className="size-5 text-white" aria-hidden />
+                    </IconTile>
+                    <div className="flex flex-col gap-px">
+                      <h3 className="text-[15px] font-bold leading-snug text-asm-navy">{title}</h3>
+                      <p className="text-[12px] font-medium leading-snug text-asm-body">{subtitle}</p>
                     </div>
-                    <ChevronRight className="size-4 shrink-0 text-gray-500" aria-hidden />
                   </div>
-                </OptionShell>
-              ))}
-            </div>
-          </section>
+                  <ChevronRight className="size-4 shrink-0 text-asm-muted" aria-hidden />
+                </div>
+              </OptionShell>
+            ))}
+          </div>
+        </motion.section>
 
-          <section className="flex items-start gap-4 rounded-2xl border border-emerald-500/10 bg-emerald-500/10 p-[17px]">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10">
-              <ShieldCheck className="size-5 text-emerald-500" aria-hidden />
-            </span>
-            <div className="flex flex-col gap-[3px]">
-              <h3 className="text-sm font-bold leading-5 tracking-[-0.35px] text-emerald-500">
-                100% Secure Payment
-              </h3>
-              <p className="text-[11px] font-normal leading-[17.9px] tracking-[-0.16px] text-gray-500">
-                Your payment is protected with bank-grade encryption and secure gateways.
-              </p>
-            </div>
-          </section>
-
-          <section className="flex items-start gap-4 rounded-2xl border border-amber-500/10 bg-amber-500/10 p-[17px]">
-            <Info className="mt-1 size-4 shrink-0 text-amber-500" aria-hidden />
-            <p className="text-[11px] font-medium leading-[17.9px] tracking-[-0.16px] text-gray-500">
-              <span className="font-bold text-amber-500">Note:</span> This is a secure and monitored
-              payment process. Never share your payment details with anyone.
+        {/* ── Secure payment notice ── */}
+        <motion.section
+          variants={fadeUp}
+          className="flex items-start gap-4 rounded-2xl border border-asm-greenInk/15 bg-asm-green-tint p-4"
+        >
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white/80">
+            <ShieldCheck className="size-5 text-asm-greenInk" aria-hidden />
+          </span>
+          <div className="flex flex-col gap-1">
+            <h3 className="text-[13px] font-bold leading-tight text-asm-greenInk">
+              100% Secure Payment
+            </h3>
+            <p className="text-[12px] leading-relaxed text-asm-body">
+              Your payment is protected with bank-grade encryption and secure gateways.
             </p>
-          </section>
-        </div>
-      </div>
+          </div>
+        </motion.section>
+
+        {/* ── Note ── */}
+        <motion.section
+          variants={fadeUp}
+          className="flex items-start gap-3 rounded-2xl border border-asm-blue/15 bg-asm-blue-tint p-4"
+        >
+          <Info className="mt-0.5 size-4 shrink-0 text-asm-blue" aria-hidden />
+          <p className="text-[12px] leading-relaxed text-asm-body">
+            <span className="font-bold text-asm-blue">Note:</span> This is a secure and monitored
+            payment process. Never share your payment details with anyone.
+          </p>
+        </motion.section>
+      </motion.div>
     </AppShell>
   )
 }
 
+/* ── Package Summary ── */
 function PackageSummary() {
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-surface-2 p-[21px]">
+    <section className="relative overflow-hidden rounded-2xl border border-asm-line bg-white p-5 shadow-[0_4px_20px_-6px_rgba(16,42,92,0.10)]">
+      {/* Decorative rupee watermark */}
       <IndianRupee
-        className="pointer-events-none absolute right-4 top-[17px] h-[60px] w-[45px] opacity-5"
+        className="pointer-events-none absolute right-4 top-4 h-[56px] w-[42px] text-asm-blue opacity-[0.05]"
         strokeWidth={2.5}
         aria-hidden
       />
 
       <div className="flex items-start justify-between">
-        <div className="flex flex-col gap-1.5 pt-1.5">
-          <span className="text-[10px] font-bold uppercase leading-[15px] tracking-[1px] text-gray-500">
+        <div className="flex flex-col gap-1">
+          <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-asm-muted">
             Selected package
           </span>
-          <span className="text-xl font-bold uppercase leading-7 tracking-[-0.5px]">
+          <span className="text-[20px] font-extrabold uppercase leading-tight tracking-[-0.02em] text-asm-navy">
             {SELECTED_PACKAGE.name}
           </span>
         </div>
-        <div className="flex flex-col items-end gap-1.5 pt-1.5">
-          <span className="text-[10px] font-bold uppercase leading-[15px] tracking-[1px] text-gray-500">
+        <div className="flex flex-col items-end gap-1">
+          <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-asm-muted">
             Amount
           </span>
-          <span className="text-2xl font-extrabold leading-8 tracking-[-0.16px] text-amber-500">
+          <span className="text-[22px] font-extrabold leading-tight tabular-nums text-asm-blue">
             {SELECTED_PACKAGE.amount}
           </span>
         </div>
       </div>
 
-      <div className="mt-6 flex items-end justify-between border-t border-white/5 pt-[17px]">
-        <div className="flex flex-col gap-px">
-          <span className="text-[10px] font-medium leading-[15px] tracking-[-0.16px] text-gray-500">
+      <div className="mt-5 flex items-end justify-between border-t border-asm-line pt-4">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-[10px] font-medium tracking-[-0.01em] text-asm-muted">
             You are investing
           </span>
-          <span className="text-[11px] font-semibold uppercase italic leading-[16.5px] tracking-[-0.16px] text-gray-300">
+          <span className="text-[12px] font-semibold italic text-asm-body">
             {SELECTED_PACKAGE.amountInWords}
           </span>
         </div>
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-amber-500/20 bg-amber-500/10">
-          <Info className="size-3 text-amber-500" aria-hidden />
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-asm-blue/20 bg-asm-blue-tint">
+          <Info className="size-3 text-asm-blue" aria-hidden />
         </span>
       </div>
     </section>
   )
 }
 
+/* ── Crypto option ── */
 function CryptoOption() {
   return (
     <OptionShell className="gap-5">
       <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          {/* Tether brand green — outside the Tailwind palette. */}
-          <IconTile className="w-[41px] from-[#26A17B] to-[#1A7A5D] shadow-lg shadow-emerald-900/20">
+        <div className="flex items-center gap-4">
+          <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#26A17B] to-[#1A7A5D]">
             <TetherIcon className="h-6 w-[15px] text-white" />
-          </IconTile>
-          <div className="flex flex-col gap-0.5 pl-4">
-            <div className="flex items-start gap-2">
-              <h3 className="text-base font-bold leading-6 tracking-[-0.16px]">
+          </span>
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-2">
+              <h3 className="text-[15px] font-bold leading-snug text-asm-navy">
                 Pay with USDT (Crypto)
               </h3>
-              <span className="mt-1 shrink-0 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-[9px] py-[3px] text-[8px] font-extrabold uppercase leading-3 tracking-[-0.16px] text-emerald-500">
+              <span className="shrink-0 rounded-full border border-asm-greenInk/20 bg-asm-green-tint px-2 py-0.5 text-[8px] font-extrabold uppercase tracking-[0.06em] text-asm-greenInk">
                 Recommended
               </span>
             </div>
-            <p className="text-xs font-medium leading-4 tracking-[-0.16px] text-gray-400">
-              Fast • Secure • 24/7
-            </p>
+            <p className="text-[12px] font-medium leading-snug text-asm-body">Fast · Secure · 24/7</p>
           </div>
         </div>
-        <ChevronRight className="size-4 shrink-0 text-gray-500" aria-hidden />
+        <ChevronRight className="size-4 shrink-0 text-asm-muted" aria-hidden />
       </div>
 
-      <div className="flex flex-col gap-4 pl-16">
-        <p className="text-xs font-medium leading-[19.5px] tracking-[-0.16px] text-gray-500">
+      <div className="flex flex-col gap-3 pl-16">
+        <p className="text-[12px] leading-relaxed text-asm-body">
           Pay using USDT (TRC20 / BEP20) via trusted crypto gateways.
         </p>
-        <div className="flex items-center gap-3">
-          <Chip className="border-white/5 bg-white/5 text-gray-300">
+        <div className="flex flex-wrap items-center gap-2">
+          <Chip tone="navy">
             <Shield className="size-3" aria-hidden />
             Trust Wallet
           </Chip>
-          <Chip className="border-white/5 bg-white/5 text-gray-300">
+          <Chip tone="navy">
             <BnbIcon className="size-3" />
             Binance Pay
           </Chip>
@@ -210,34 +233,35 @@ function CryptoOption() {
   )
 }
 
+/* ── INR option ── */
 function InrOption() {
   return (
     <OptionShell className="gap-5">
       <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <IconTile className="from-orange-500 to-orange-600 shadow-lg shadow-orange-900/20">
+        <div className="flex items-center gap-4">
+          <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600">
             <IndianRupee className="size-5 text-white" strokeWidth={2.5} aria-hidden />
-          </IconTile>
-          <div className="flex flex-col gap-0.5 pl-4">
-            <h3 className="text-base font-bold leading-6 tracking-[-0.16px]">Pay with INR</h3>
-            <p className="text-xs font-medium leading-4 tracking-[-0.16px] text-gray-400">
-              Simple • Safe • Convenient
+          </span>
+          <div className="flex flex-col gap-0.5">
+            <h3 className="text-[15px] font-bold leading-snug text-asm-navy">Pay with INR</h3>
+            <p className="text-[12px] font-medium leading-snug text-asm-body">
+              Simple · Safe · Convenient
             </p>
           </div>
         </div>
-        <ChevronRight className="size-4 shrink-0 text-gray-500" aria-hidden />
+        <ChevronRight className="size-4 shrink-0 text-asm-muted" aria-hidden />
       </div>
 
-      <div className="flex flex-col gap-4 pl-16">
-        <p className="text-xs font-medium leading-[19.5px] tracking-[-0.16px] text-gray-500">
+      <div className="flex flex-col gap-3 pl-16">
+        <p className="text-[12px] leading-relaxed text-asm-body">
           Pay in INR and our team will help you complete the payment.
         </p>
-        <div className="flex items-center gap-3">
-          <Chip className="border-emerald-500/20 bg-emerald-500/10 text-emerald-500">
+        <div className="flex flex-wrap items-center gap-2">
+          <Chip tone="green">
             <MessageCircle className="size-3.5" aria-hidden />
             Chat on WhatsApp
           </Chip>
-          <Chip className="border-sky-500/20 bg-sky-500/10 text-sky-500">
+          <Chip tone="blue">
             <Send className="size-3.5" aria-hidden />
             Chat on Telegram
           </Chip>
@@ -247,27 +271,34 @@ function InrOption() {
   )
 }
 
+/* ── Primitives ── */
 function OptionShell({ className, children }: { className?: string; children: React.ReactNode }) {
   return (
-    <button
+    <motion.button
       type="button"
+      whileHover={{ scale: 1.005, transition: { type: 'spring' as const, stiffness: 400, damping: 30 } }}
+      whileTap={{ scale: 0.995 }}
       className={cn(
-        'flex w-full flex-col rounded-2xl border border-white/[0.08] bg-surface p-[21px] text-left',
-        'transition-colors hover:border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
+        'flex w-full flex-col rounded-2xl border border-asm-line bg-white p-5 text-left',
+        'shadow-[0_2px_12px_-4px_rgba(16,42,92,0.07)]',
+        'transition-colors hover:border-asm-blue/30 hover:bg-asm-blue-tint/30',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-2',
         className
       )}
     >
       {children}
-    </button>
+    </motion.button>
   )
 }
 
-function IconTile({ className, children }: { className?: string; children: React.ReactNode }) {
+function IconTile({ tone, children }: { tone: 'blue' | 'green'; children: React.ReactNode }) {
   return (
     <span
       className={cn(
         'flex size-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br',
-        className
+        tone === 'blue'
+          ? 'from-asm-blue to-asm-blue-dark'
+          : 'from-asm-greenInk to-[#0E6E32]'
       )}
     >
       {children}
@@ -275,13 +306,21 @@ function IconTile({ className, children }: { className?: string; children: React
   )
 }
 
-function Chip({ className, children }: { className?: string; children: React.ReactNode }) {
+function Chip({
+  tone,
+  children,
+}: {
+  tone: 'blue' | 'green' | 'navy'
+  children: React.ReactNode
+}) {
   return (
     <span
       className={cn(
-        'flex items-center gap-2 rounded-xl border px-[13px] py-[9px]',
-        'text-[10px] font-bold leading-[15px] tracking-[-0.16px]',
-        className
+        'flex items-center gap-1.5 rounded-xl border px-3 py-2',
+        'text-[11px] font-bold leading-none',
+        tone === 'green' && 'border-asm-greenInk/20 bg-asm-green-tint text-asm-greenInk',
+        tone === 'blue'  && 'border-asm-blue/20 bg-asm-blue-tint text-asm-blue',
+        tone === 'navy'  && 'border-asm-line bg-asm-tint text-asm-navy'
       )}
     >
       {children}
