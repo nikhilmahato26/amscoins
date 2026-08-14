@@ -64,3 +64,59 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/*
+ * Browser surfaces for the light home: selection, caret, scrollbar and focus
+ * ring come from the palette instead of the platform defaults.
+ */
+.theme-light-home {
+  color-scheme: light;
+  caret-color: #0b4fd8;
+  scrollbar-color: #c8d3e8 transparent;
+  scrollbar-width: thin;
+}
+
+.theme-light-home ::selection {
+  background-color: rgb(11 79 216 / 0.16);
+  color: #102a5c;
+}
+
+.theme-light-home ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.theme-light-home ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.theme-light-home ::-webkit-scrollbar-thumb {
+  background-color: #c8d3e8;
+  border: 3px solid #ffffff;
+  border-radius: 999px;
+}
+
+.theme-light-home ::-webkit-scrollbar-thumb:hover {
+  background-color: #a9b8d6;
+}
+
+.theme-light-home :focus-visible {
+  outline: 2px solid #0b4fd8;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.theme-light-home a {
+  text-underline-offset: 3px;
+}
+
+/* Keep the entrance from firing for anyone who has asked it not to. */
+@media (prefers-reduced-motion: reduce) {
+  .theme-light-home *,
+  .theme-light-home *::before,
+  .theme-light-home *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

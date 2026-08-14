@@ -80,6 +80,28 @@ module.exports = {
           deep: "#800020",
         },
         night: "#050505",
+        // Light home palette. Sampled by eye from the supplied PNG mockup, so
+        // these are approximations — replace with the real brand values.
+        asm: {
+          blue: "#0B4FD8",
+          "blue-dark": "#0740B8",
+          "blue-tint": "#EDF3FF",
+          // Decorative only — 3.29:1 on white, so never use it for text or for
+          // a fill that carries white text. Pulse dots, swatches, chart strokes.
+          green: "#17A34A",
+          // Text-safe green: 5.02:1 on white, 4.68:1 on tint, and white on it
+          // is 5.02:1, so it works as a label colour and as a button fill.
+          greenInk: "#15803D",
+          "green-tint": "#EAF7EF",
+          navy: "#102A5C",
+          // Secondary text tinted from the navy hue rather than neutral gray.
+          // Measured against every light surface in this palette: body clears
+          // 5.5:1 and muted 5.16:1 on the worst case (asm-tint).
+          body: "#546582",
+          muted: "#55698E",
+          line: "#E5EAF3",
+          tint: "#F4F7FE",
+        },
         bluesteel: {
           from: "#8FA8C0",
           to: "#6A8AA8",
@@ -150,12 +172,24 @@ module.exports = {
         scroll: {
           "0%": { transform: "translateY(0)" },
           "100%": { transform: "translateY(-50%)" },
-        }
+        },
+        rise: {
+          from: { opacity: "0", transform: "translateY(14px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        "live-pulse": {
+          "0%, 100%": { opacity: "1", transform: "scale(1)" },
+          "50%": { opacity: "0.45", transform: "scale(0.82)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "scroll": "scroll 30s linear infinite",
+        // Exponential ease-out, from a default that is already visible if
+        // animations never run.
+        rise: "rise 0.62s cubic-bezier(0.16, 1, 0.3, 1) both",
+        "live-pulse": "live-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
       },
     },
   },
