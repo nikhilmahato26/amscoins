@@ -17,7 +17,7 @@ export function BottomNav({ className }: { className?: string }) {
       aria-label="Primary"
       className={cn(
         'fixed bottom-0 left-1/2 z-30 flex w-[370px] max-w-full -translate-x-1/2 items-center justify-between',
-        'border-t border-white/10 bg-surface-nav/90 p-4 backdrop-blur-[20px] lg:hidden',
+        'border-t border-asm-line bg-white/95 px-4 pt-4 [padding-bottom:max(1rem,env(safe-area-inset-bottom))] backdrop-blur-[20px] shadow-[0_-4px_16px_-4px_rgba(16,42,92,0.08)] lg:hidden',
         className
       )}
     >
@@ -28,9 +28,9 @@ export function BottomNav({ className }: { className?: string }) {
           end={end}
           className={({ isActive }) =>
             cn(
-              'flex flex-col items-center gap-1 rounded-lg px-2 py-0.5 transition-colors',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
-              isActive ? 'text-brand-deep' : 'text-gray-500 hover:text-gray-300'
+              'flex flex-col items-center gap-1 rounded-lg px-2 py-[5px] transition-colors',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue',
+              isActive ? 'text-asm-blue' : 'text-asm-muted hover:text-asm-navy'
             )
           }
         >

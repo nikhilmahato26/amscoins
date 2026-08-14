@@ -43,6 +43,9 @@ const InvestSummaryPage = lazy(() =>
 const SilverTierPage = lazy(() =>
   import('./pages/app/SilverTierPage').then((m) => ({ default: m.SilverTierPage }))
 )
+const AccountPage = lazy(() =>
+  import('./pages/app/AccountPage').then((m) => ({ default: m.AccountPage }))
+)
 const AppPlaceholder = lazy(() =>
   import('./pages/placeholder/AppPlaceholder').then((m) => ({ default: m.AppPlaceholder }))
 )
@@ -60,12 +63,12 @@ function RouteFallback() {
     <div
       role="status"
       aria-live="polite"
-      className="flex min-h-screen items-center justify-center bg-ink"
+      className="flex min-h-screen items-center justify-center bg-asm-tint"
     >
       <span className="sr-only">Loading</span>
       <span
         aria-hidden
-        className="size-8 animate-spin rounded-full border-2 border-white/15 border-t-brand"
+        className="size-8 animate-spin rounded-full border-2 border-asm-blue/20 border-t-asm-blue"
       />
     </div>
   )
@@ -158,6 +161,15 @@ export default function App() {
           element={
             <RequireAuth role="user">
               <SilverTierPage />
+            </RequireAuth>
+          }
+        />
+
+        <Route
+          path="/app/account"
+          element={
+            <RequireAuth role="user">
+              <AccountPage />
             </RequireAuth>
           }
         />
