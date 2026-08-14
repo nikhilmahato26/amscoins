@@ -236,7 +236,7 @@ export function LandingFooter() {
 
         <div className="flex flex-col items-center justify-between gap-6 py-7 lg:flex-row">
           <div className="flex items-center gap-3">
-            <AsmMark className="h-8 w-9 shrink-0" />
+            <AsmMark className="size-8" />
             <span className="flex flex-col">
               <span className="text-sm font-extrabold uppercase leading-none tracking-[0.06em] text-asm-navy">
                 ASM Coins

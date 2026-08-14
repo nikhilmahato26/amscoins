@@ -4,7 +4,6 @@ import {
   ChartNoAxesCombined,
   Coins,
   Headphones,
-  Rocket,
   ShieldCheck,
   TrendingUp,
   UserPlus,
@@ -18,11 +17,12 @@ import { Link } from 'react-router'
 import asmCoin from '@/assets/asm.jpeg'
 import btcCoin from '@/assets/btc.jpeg'
 import goldCoin from '@/assets/gold.jpeg'
-import silverCoin from '@/assets/market-silver.png'
+// sliver.jpeg is the green mark supplied for the silver coin row.
+import silverCoin from '@/assets/sliver.jpeg'
 import diamondMedallion from '@/assets/plans/diamond.png'
 import goldMedallion from '@/assets/plans/gold.png'
 import silverMedallion from '@/assets/plans/silver.png'
-import { HeroMark } from '@/components/home/HeroMark'
+import { AsmMark } from '@/components/home/AsmLogo'
 import { IndiaFlag } from '@/components/home/IndiaFlag'
 import { Sparkline } from '@/components/home/Sparkline'
 import {
@@ -303,27 +303,13 @@ function Hero() {
           straightforward way to grow what they have saved.
         </p>
 
-        <div className="flex flex-col gap-3 pt-6 sm:flex-row">
-          <Link
-            to="/register"
-            className={cn(
-              'group flex min-h-12 flex-1 items-center justify-center gap-3 rounded-xl bg-asm-blue px-6',
-              'text-[14px] font-bold uppercase tracking-[0.08em] text-white',
-              'shadow-[0_12px_24px_-12px_rgb(11_79_216_/_0.75)]',
-              'transition-colors hover:bg-asm-blue-dark'
-            )}
-          >
-            Start Investing
-            <Rocket
-              className="size-[18px] transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-              strokeWidth={2.2}
-              aria-hidden
-            />
-          </Link>
+        {/* Start Investing removed on request. The header Get Started button
+            is now the only direct route to registration from the hero area. */}
+        <div className="flex pt-6">
           <a
             href="#plans"
             className={cn(
-              'flex min-h-12 flex-1 items-center justify-center gap-3 rounded-xl border border-asm-blue/35 bg-white px-6',
+              'flex min-h-12 w-full items-center justify-center gap-3 rounded-xl border border-asm-blue/35 bg-white px-6 sm:w-auto',
               'text-[14px] font-bold uppercase tracking-[0.08em] text-asm-blue',
               'transition-colors hover:border-asm-blue hover:bg-asm-blue-tint'
             )}
@@ -347,7 +333,7 @@ function Hero() {
             </span>
           </div>
 
-          <HeroMark variant="compact" className="size-12 shrink-0 animate-rise sm:size-14" />
+          <AsmMark className="size-12 animate-rise ring-1 ring-asm-line sm:size-14" />
         </div>
       </div>
     </section>

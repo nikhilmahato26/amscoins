@@ -1,21 +1,22 @@
+import asmMark from '@/assets/asm.jpeg'
 import { cn } from '@/lib/utils'
 
 /**
- * The "A" mark: two nested chevrons reading as both a letter A and a rising
- * line. Authored geometry, not a traced picture.
+ * The supplied brand mark. Clipped to a circle because the source file has a
+ * near-white disc on white, which otherwise shows a faint square edge.
  *
- * The real vector should replace this — it's built from the mockup by eye.
+ * Pass a square size — it is a round mark and object-contain will letterbox
+ * rather than distort if the box is not square.
  */
 export function AsmMark({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 48 44" className={className} aria-hidden focusable="false">
-      {/* Outer chevron, navy */}
-      <path d="M24 2 46 42h-10.5L24 20.5 12.5 42H2L24 2Z" fill="#102A5C" />
-      {/* Inner chevron, green, offset right so it reads as a second stroke */}
-      <path d="M28.5 14 44 42h-9l-9-16.5L28.5 14Z" fill="#17A34A" />
-      {/* Counter that opens up the letterform */}
-      <path d="M24 24.5 30 35H18l6-10.5Z" fill="#FFFFFF" />
-    </svg>
+    <img
+      src={asmMark}
+      alt=""
+      className={cn('shrink-0 rounded-full object-contain', className)}
+      loading="eager"
+      decoding="async"
+    />
   )
 }
 
@@ -31,7 +32,7 @@ export function AsmLogo({
 }) {
   return (
     <span className={cn('flex items-center gap-2.5', className)}>
-      <AsmMark className="h-9 w-10 shrink-0" />
+      <AsmMark className="size-9" />
       <span className="flex flex-col">
         <span className="flex items-baseline gap-1.5 text-[19px] font-extrabold leading-none tracking-[0.02em] sm:text-[22px]">
           <span className="text-asm-navy">ASM</span>
