@@ -19,9 +19,9 @@ import asmCoin from '@/assets/asm.jpeg'
 import btcCoin from '@/assets/btc.jpeg'
 import goldCoin from '@/assets/gold.jpeg'
 import silverCoin from '@/assets/market-silver.png'
-import diamondMedallion from '@/assets/plans/diamond.jpg'
-import goldMedallion from '@/assets/plans/gold.jpg'
-import silverMedallion from '@/assets/plans/silver.jpg'
+import diamondMedallion from '@/assets/plans/diamond.png'
+import goldMedallion from '@/assets/plans/gold.png'
+import silverMedallion from '@/assets/plans/silver.png'
 import { HeroMark } from '@/components/home/HeroMark'
 import { IndiaFlag } from '@/components/home/IndiaFlag'
 import { Sparkline } from '@/components/home/Sparkline'
@@ -497,9 +497,9 @@ function MarketSnapshot() {
 }
 
 /*
- * The medallions are cropped from the supplied strip and sit on black, so each
- * one renders inside a dark circle rather than floating on the white card —
- * clipping to a circle keeps the corners from showing as black wedges.
+ * The medallions are transparent PNGs and taller than they are wide, because of
+ * the crown. They are sized by height with the width left to follow, and fitted
+ * with object-contain — a circular crop would cut the crown off.
  */
 const PLAN_ACCENT = {
   silver: {
@@ -563,11 +563,9 @@ function PlansSection() {
               <img
                 src={a.medallion}
                 alt=""
-                width={112}
-                height={112}
                 loading="lazy"
                 decoding="async"
-                className="size-20 rounded-full bg-black object-contain sm:size-24"
+                className="h-[88px] w-auto max-w-full object-contain sm:h-28"
               />
               <h3 className="pt-3 text-center text-xs font-bold uppercase leading-tight tracking-[0.06em]">
                 {name}
