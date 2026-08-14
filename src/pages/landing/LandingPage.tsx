@@ -4,7 +4,6 @@ import {
   ChartNoAxesCombined,
   Coins,
   Headphones,
-  Rocket,
   ShieldCheck,
   TrendingUp,
   UserPlus,
@@ -19,7 +18,6 @@ import { Link } from 'react-router'
 import asmCoin from '@/assets/asm.jpeg'
 import btcCoin from '@/assets/btc.jpeg'
 import goldCoin from '@/assets/gold.jpeg'
-import silverCoin from '@/assets/market-silver.png'
 import diamondMedallion from '@/assets/plans/diamond.png'
 import goldMedallion from '@/assets/plans/gold.png'
 import silverMedallion from '@/assets/plans/silver.png'
@@ -77,7 +75,7 @@ const MARKET: {
   { symbol: 'ASM',    pair: 'INR',  price: '₹12.40',        change: '+1.65%', positive: true,  series: [40,42,41,45,44,47,46,50,52,51,55,58], icon: asmCoin    },
   { symbol: 'BTC',    pair: 'USDT', price: '₹58,36,245.60', change: '+2.35%', positive: true,  series: [38,41,39,44,43,48,46,52,55,53,58,62], icon: btcCoin    },
   { symbol: 'GOLD',   pair: 'XAU',  price: '₹6,795.35',     change: '+1.82%', positive: true,  series: [30,33,31,36,38,35,40,42,41,46,48,51], icon: goldCoin   },
-  { symbol: 'SILVER', pair: 'XAG',  price: '₹89.42',        change: '-0.42%', positive: false, series: [52,51,53,50,48,49,47,48,45,46,44,43], icon: silverCoin },
+  { symbol: 'SILVER', pair: 'XAG',  price: '₹89.42',        change: '-0.42%', positive: false, series: [52,51,53,50,48,49,47,48,45,46,44,43], icon: '/silver.png' },
 ]
 
 const PLANS: {
@@ -226,30 +224,15 @@ function Hero() {
           ASM Coins is a straightforward investment platform built for people across India who want to grow what they have saved.
         </motion.p>
 
-        {/* CTAs */}
-        <motion.div variants={fadeUp} className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <Link
-            to="/register"
-            className={cn(
-              'group flex min-h-[52px] flex-1 items-center justify-center gap-2.5 rounded-xl bg-asm-blue px-6',
-              'text-[14px] font-bold uppercase tracking-[0.07em] text-white',
-              'shadow-[0_12px_28px_-10px_rgba(11,79,216,0.55)]',
-              'transition-all hover:bg-asm-blue-dark hover:shadow-[0_16px_32px_-10px_rgba(11,79,216,0.65)]'
-            )}
-          >
-            Start Investing
-            <Rocket
-              className="size-[18px] transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-              strokeWidth={2.2}
-              aria-hidden
-            />
-          </Link>
+        {/* CTA */}
+        <motion.div variants={fadeUp} className="mt-6">
           <a
             href="#plans"
             className={cn(
-              'flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-xl border-2 border-asm-blue/25 bg-white px-6',
-              'text-[14px] font-bold uppercase tracking-[0.07em] text-asm-blue',
-              'transition-all hover:border-asm-blue/50 hover:bg-asm-blue-tint'
+              'flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-asm-blue px-6',
+              'text-[14px] font-bold uppercase tracking-[0.07em] text-white',
+              'shadow-[0_12px_28px_-10px_rgba(11,79,216,0.55)]',
+              'transition-all hover:bg-asm-blue-dark'
             )}
           >
             Investment Plans
@@ -430,11 +413,13 @@ function PlansSection() {
 
       <div
         className={cn(
-          'flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2',
+          'flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-pl-4 pb-2',
           '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
           'sm:grid sm:grid-cols-3 sm:gap-4 sm:overflow-visible sm:px-8'
         )}
       >
+        {/* Left spacer — ensures first card has 16px gap from screen edge on mobile */}
+        <span className="w-4 shrink-0 sm:hidden" aria-hidden />
         {PLANS.map(({ slug, name, returns, duration, min, max, accent }) => {
           const a = PLAN_ACCENT[accent]
           return (
