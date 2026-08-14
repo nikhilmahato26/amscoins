@@ -1,8 +1,7 @@
 import { Gem, Medal, ShieldCheck, Trophy, Unlock, Users, Zap } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
-import { AppHeader } from '@/components/app/AppHeader'
-import { BottomNav } from '@/components/app/BottomNav'
+import { AppShell } from '@/components/app/AppShell'
 import { type Tier } from '@/components/app/TierBadge'
 import { cn } from '@/lib/utils'
 
@@ -38,17 +37,15 @@ const PLANS: { tier: Tier; name: string; description: string }[] = [
 
 export function PlanBenefitsPage() {
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-black font-jakarta text-white">
+    <AppShell backTo="/app" width="wide" contentClassName="px-6 pt-[104px]">
       {/* Ambient glows (Figma 28:10948-10950) */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
         <span className="absolute -top-10 left-20 size-[600px] rounded-full bg-sheen/[0.04] blur-[120px]" />
         <span className="absolute -left-36 top-[628px] size-[500px] rounded-full bg-brand/[0.07] blur-[120px]" />
         <span className="absolute -left-5 top-[475px] size-[400px] rounded-full bg-sheen/[0.03] blur-[100px]" />
       </div>
 
-      <AppHeader backTo="/app" />
-
-      <main className="relative mx-auto w-full max-w-[393px] px-6 pb-28 pt-[104px]">
+      <div className="relative">
         <header className="flex flex-col items-center">
           <span className="flex items-center gap-2 rounded-full border-[0.677px] border-gold-warm/20 bg-gold-warm/10 px-4 py-[5px]">
             <span className="size-1.5 rounded-full bg-gold-warm" />
@@ -66,15 +63,13 @@ export function PlanBenefitsPage() {
           </p>
         </header>
 
-        <div className="flex flex-col gap-4 pt-14">
+        <div className="flex flex-col gap-4 pt-14 xl:grid xl:grid-cols-3 xl:items-start">
           {PLANS.map((plan) => (
             <FeatureCard key={plan.tier} {...plan} />
           ))}
         </div>
-      </main>
-
-      <BottomNav />
-    </div>
+      </div>
+    </AppShell>
   )
 }
 
@@ -117,7 +112,8 @@ function FeatureCard({
         <span className="block h-px w-full bg-gradient-to-r from-sheen/[0.18] to-transparent" />
       </div>
 
-      <div className="grid grid-cols-4 gap-2 pt-5">
+      {/* 4-up crushes these to ~78px on a 360px screen, so 2-up until sm. */}
+      <div className="grid grid-cols-2 gap-2 pt-5 sm:grid-cols-4">
         {STATS.map(({ label, value, Icon: StatIcon }) => (
           <div
             key={label}

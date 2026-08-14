@@ -3,9 +3,7 @@ import type { LucideIcon } from 'lucide-react'
 import { Link } from 'react-router'
 
 import heroCoin from '@/assets/hero-coin.png'
-import { AppHeader } from '@/components/app/AppHeader'
-import { BottomNav } from '@/components/app/BottomNav'
-import { GridBackdrop } from '@/components/app/GridBackdrop'
+import { AppShell } from '@/components/app/AppShell'
 import { MarketTicker } from '@/components/app/MarketTicker'
 import { ReferralBanner } from '@/components/app/ReferralBanner'
 import { TierBadge, type Tier } from '@/components/app/TierBadge'
@@ -46,17 +44,14 @@ const QUICK_ACTIONS: { label: string; to: string; Icon: LucideIcon }[] = [
 
 export function HomePage() {
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-black font-jakarta text-white">
-      <GridBackdrop />
-      <AppHeader variant="root" />
-
-      <main className="relative mx-auto w-full max-w-[375px] pb-28 pt-[104px]">
+    <AppShell headerVariant="root" width="wide" contentClassName="px-0 pt-[104px]">
+      <div>
         {/* Hero */}
         <section className="relative flex flex-col items-center px-[15px]">
-          <h1 className="text-center font-poppins text-4xl font-extrabold leading-tight">
+          <h1 className="max-w-[640px] text-center font-poppins text-4xl font-extrabold leading-tight lg:text-5xl">
             Jump start your wealth portfolio
           </h1>
-          <p className="pt-8 text-center font-poppins text-lg font-medium leading-snug">
+          <p className="max-w-[520px] pt-8 text-center font-poppins text-lg font-medium leading-snug">
             ASM COIN is the easiest way to grow your wealth.
           </p>
 
@@ -72,7 +67,7 @@ export function HomePage() {
             ))}
           </div>
 
-          <div className="relative mt-8 h-[380px] w-full">
+          <div className="relative mt-8 h-[380px] w-full max-w-[520px]">
             <span
               aria-hidden
               className="absolute left-1/2 top-1/2 size-[280px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#A020F0]/30 blur-[70px]"
@@ -96,7 +91,7 @@ export function HomePage() {
           {/* Plans */}
           <section className="flex flex-col gap-4">
             <h2 className="text-xl font-bold leading-7">Investment Packages</h2>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 md:grid md:grid-cols-2 md:items-start xl:grid-cols-3">
               {PLANS.map((plan) => (
                 <PlanCard key={plan.tier} {...plan} />
               ))}
@@ -108,9 +103,9 @@ export function HomePage() {
             <h2 className="font-poppins text-[32px] font-extrabold leading-tight">
               All your investments. All on <span className="text-[#8231CB]">ASM Coins.</span>
             </h2>
-            <ul className="flex flex-col gap-[30px]">
+            <ul className="flex flex-col gap-[30px] md:grid md:grid-cols-3 md:items-start md:gap-8">
               {FEATURES.map((feature) => (
-                <li key={feature} className="flex items-center gap-[30px]">
+                <li key={feature} className="flex items-center gap-[30px] md:flex-col md:items-start md:gap-4">
                   <CheckCircle2 className="size-8 shrink-0 text-brand" aria-hidden />
                   <span className="flex-1 font-poppins text-base font-medium leading-6">
                     {feature}
@@ -145,10 +140,8 @@ export function HomePage() {
             ))}
           </section>
         </div>
-      </main>
-
-      <BottomNav />
-    </div>
+      </div>
+    </AppShell>
   )
 }
 

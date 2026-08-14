@@ -1,5 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..900&family=IBM+Plex+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Poppins:wght@500;700;800&family=DM+Serif+Display&family=Lobster&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Poppins:wght@500;700;800&family=DM+Serif+Display&family=Playfair+Display:wght@700&family=Lobster&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,25 +7,25 @@
 
 @layer base {
   :root {
-    --background: 223 48% 8%; /* ink */
-    --foreground: 0 0% 100%;
-    --card: 224 44% 13%; /* ink-2 */
-    --card-foreground: 0 0% 100%;
-    --popover: 224 44% 13%;
-    --popover-foreground: 0 0% 100%;
-    --primary: 42 57% 53%; /* brass */
-    --primary-foreground: 223 48% 8%;
-    --secondary: 223 38% 19%; /* ink-3 */
-    --secondary-foreground: 0 0% 100%;
-    --muted: 223 38% 19%;
-    --muted-foreground: 223 23% 63%; /* mist */
-    --accent: 223 38% 19%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 8 54% 50%; /* rust */
-    --destructive-foreground: 0 0% 100%;
-    --border: 223 38% 19%;
-    --input: 223 38% 19%;
-    --ring: 42 57% 53%;
+    --background: 0 0% 0%; /* ink -> black */
+    --foreground: 0 0% 99%; /* paper */
+    --card: 0 0% 10%; /* ink-2 -> #1A1A1A */
+    --card-foreground: 0 0% 99%;
+    --popover: 240 3% 11%; /* surface-2 */
+    --popover-foreground: 0 0% 99%;
+    --primary: 38 92% 50%; /* brass -> amber-500 */
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 16%; /* ink-3 -> #2A2A2A */
+    --secondary-foreground: 0 0% 99%;
+    --muted: 0 0% 16%;
+    --muted-foreground: 220 9% 65%; /* mist -> gray-400 */
+    --accent: 0 0% 16%;
+    --accent-foreground: 0 0% 99%;
+    --destructive: 0 84% 60%; /* rust -> red-500 */
+    --destructive-foreground: 0 0% 99%;
+    --border: 0 0% 16%;
+    --input: 0 0% 16%;
+    --ring: 272 67% 52%; /* brand violet */
     --radius: 0.5rem;
   }
 }
@@ -63,4 +63,60 @@
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/*
+ * Browser surfaces for the light home: selection, caret, scrollbar and focus
+ * ring come from the palette instead of the platform defaults.
+ */
+.theme-light-home {
+  color-scheme: light;
+  caret-color: #0b4fd8;
+  scrollbar-color: #c8d3e8 transparent;
+  scrollbar-width: thin;
+}
+
+.theme-light-home ::selection {
+  background-color: rgb(11 79 216 / 0.16);
+  color: #102a5c;
+}
+
+.theme-light-home ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.theme-light-home ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.theme-light-home ::-webkit-scrollbar-thumb {
+  background-color: #c8d3e8;
+  border: 3px solid #ffffff;
+  border-radius: 999px;
+}
+
+.theme-light-home ::-webkit-scrollbar-thumb:hover {
+  background-color: #a9b8d6;
+}
+
+.theme-light-home :focus-visible {
+  outline: 2px solid #0b4fd8;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.theme-light-home a {
+  text-underline-offset: 3px;
+}
+
+/* Keep the entrance from firing for anyone who has asked it not to. */
+@media (prefers-reduced-motion: reduce) {
+  .theme-light-home *,
+  .theme-light-home *::before,
+  .theme-light-home *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

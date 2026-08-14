@@ -1,530 +1,672 @@
-import { cn } from '@/lib/utils'
-import { Link } from 'react-router'
-import { inr, pct } from '@/lib/format'
-import { MOCK_COINS } from '@/mocks/coins'
-import { 
-  Users, ArrowRight, TrendingUp, ShieldCheck, 
-  MapPin, HeadphonesIcon, Download, Upload, 
-  History, UserPlus, User, Lock, Zap
+import { useState } from 'react'
+import {
+  ArrowRight,
+  ChartNoAxesCombined,
+  Coins,
+  Headphones,
+  MapPin,
+  Rocket,
+  ShieldCheck,
+  TrendingUp,
+  UserPlus,
+  Users,
+  Wallet,
+  Zap,
 } from 'lucide-react'
-import { buttonVariants } from '@/components/ui/button'
+import type { LucideIcon } from 'lucide-react'
+import { Link } from 'react-router'
+
+import { HeroMark } from '@/components/home/HeroMark'
+import { Sparkline } from '@/components/home/Sparkline'
+import {
+  LandingFooter,
+  LandingHeader,
+  LandingMenu,
+} from '@/components/landing/LandingChrome'
+import { cn } from '@/lib/utils'
+
+/*
+ * ---------------------------------------------------------------------------
+ * PLACEHOLDER CONTENT
+ *
+ * Every figure below came from the supplied mockup, not from a data source.
+ *
+ * 1. PLATFORM_STATS and the trust strip are factual claims about the business.
+ *    On a public page for an investment product in India these are consumer
+ *    representations, not decoration. They must be true and substantiable.
+ *
+ * 2. MARKET is a static table. The mockup labels it "Live Market"; that label
+ *    is not used here because nothing on this page is live. It reads
+ *    "Market snapshot / indicative rates" until a real feed is wired up. Swap
+ *    the heading back once prices actually update.
+ *
+ * 3. Plan returns and limits are commercial terms. They come from the Figma
+ *    plan cards and need sign-off from whoever owns the product.
+ * ---------------------------------------------------------------------------
+ */
+
+const TRUST_SIGNALS: { Icon: LucideIcon; title: string; note: string; tone: 'green' | 'blue' }[] = [
+  { Icon: ShieldCheck, title: '100% Secure', note: 'SSL Encrypted', tone: 'green' },
+  { Icon: Zap, title: 'Instant Payout', note: 'Withdraw Anytime', tone: 'blue' },
+  { Icon: Headphones, title: '24/7 Support', note: 'Always Here For You', tone: 'blue' },
+]
+
+const PLATFORM_STATS: { Icon: LucideIcon; value: string; label: string }[] = [
+  { Icon: Users, value: '25K+', label: 'Happy Investors' },
+  { Icon: TrendingUp, value: '₹50Cr+', label: 'Total Investments' },
+  { Icon: Wallet, value: '₹12Cr+', label: 'Total Payouts' },
+  { Icon: ShieldCheck, value: '99.9%', label: 'Uptime & Security' },
+]
+
+/**
+ * Movement is mixed on purpose. The mockup shows every asset green, which is
+ * the most recognisable tell of a fabricated market and works against the
+ * credibility the rest of the page is trying to earn.
+ */
+const MARKET: {
+  symbol: string
+  pair: string
+  price: string
+  change: string
+  positive: boolean
+  series: number[]
+  swatch: string
+  glyph: string
+}[] = [
+  {
+    symbol: 'BTC',
+    pair: 'USDT',
+    price: '₹58,36,245.60',
+    change: '+2.35%',
+    positive: true,
+    series: [38, 41, 39, 44, 43, 48, 46, 52, 55, 53, 58, 62],
+    swatch: 'bg-[#F7931A]',
+    glyph: '₿',
+  },
+  {
+    symbol: 'GOLD',
+    pair: 'XAU',
+    price: '₹6,795.35',
+    change: '+1.82%',
+    positive: true,
+    series: [30, 33, 31, 36, 38, 35, 40, 42, 41, 46, 48, 51],
+    swatch: 'bg-[#E8B84B]',
+    glyph: 'Au',
+  },
+  {
+    symbol: 'SILVER',
+    pair: 'XAG',
+    price: '₹89.42',
+    change: '-0.42%',
+    positive: false,
+    series: [52, 51, 53, 50, 48, 49, 47, 48, 45, 46, 44, 43],
+    swatch: 'bg-[#B1B5BB]',
+    glyph: 'Ag',
+  },
+  {
+    symbol: 'CRUDE OIL',
+    pair: 'USOIL',
+    price: '₹6,350.70',
+    change: '-1.08%',
+    positive: false,
+    series: [56, 54, 55, 52, 53, 50, 48, 49, 46, 45, 43, 42],
+    swatch: 'bg-[#1F2937]',
+    glyph: 'Oil',
+  },
+  {
+    symbol: 'USD',
+    pair: 'INR',
+    price: '₹83.32',
+    change: '+0.18%',
+    positive: true,
+    series: [46, 47, 46, 48, 49, 48, 50, 51, 50, 52, 53, 54],
+    swatch: 'bg-[#2563EB]',
+    glyph: '$',
+  },
+]
+
+const PLANS: {
+  slug: string
+  name: string
+  returns: string
+  duration: string
+  min: string
+  max: string
+  accent: 'silver' | 'gold' | 'diamond'
+}[] = [
+  {
+    slug: 'silver',
+    name: 'Silver Plan',
+    returns: '25%',
+    duration: '36 Hours',
+    min: '₹1,000',
+    max: '₹50,000',
+    accent: 'silver',
+  },
+  {
+    slug: 'gold',
+    name: 'Gold Plan',
+    returns: '30%',
+    duration: '36 Hours',
+    min: '₹3,000',
+    max: '₹5,000',
+    accent: 'gold',
+  },
+  {
+    slug: 'diamond',
+    name: 'Diamond Plan',
+    returns: '40%',
+    duration: '36 Hours',
+    min: '₹5,000',
+    max: '₹5,00,000',
+    accent: 'diamond',
+  },
+]
+
+const HOW_IT_WORKS: { step: string; title: string; body: string }[] = [
+  {
+    step: '01',
+    title: 'Create your account',
+    body: 'Register with your mobile number and complete verification once.',
+  },
+  {
+    step: '02',
+    title: 'Choose a plan',
+    body: 'Pick the plan whose limits and duration suit the amount you want to commit.',
+  },
+  {
+    step: '03',
+    title: 'Track and withdraw',
+    body: 'Follow your position from the dashboard and withdraw to UPI when the term closes.',
+  },
+]
 
 export function LandingPage() {
+  const [menuOpen, setMenuOpen] = useState(false)
+
   return (
-    <div className="min-h-screen bg-[#060A11] text-foreground font-sans selection:bg-brass/20 relative overflow-hidden flex flex-col">
-      {/* Abstract Backgrounds */}
-      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03] mix-blend-overlay pointer-events-none"></div>
-      <div className="absolute top-0 right-0 w-[1000px] h-[800px] bg-rust/10 rounded-full blur-[150px] pointer-events-none translate-x-1/3 -translate-y-1/3"></div>
-      
-      {/* 1. Navbar */}
-      <nav className="relative z-50 border-b border-ink-3/50 bg-[#060A11]/80 backdrop-blur-md">
-        <div className="max-w-[1600px] mx-auto px-4 md:px-8 h-24 flex items-center justify-between">
-          
-          <Link to="/" className="flex items-center gap-3">
-            <svg viewBox="0 0 40 40" className="w-14 h-14 drop-shadow-[0_0_15px_rgba(200,162,74,0.3)]" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M20 0L40 40H0L20 0Z" fill="url(#paint0_linear_logo)"/>
-              <path d="M20 8L36 40H4L20 8Z" fill="#0B1120"/>
-              <path d="M20 16L30.5 37H9.5L20 16Z" fill="url(#paint1_linear_logo)"/>
-              <defs>
-                <linearGradient id="paint0_linear_logo" x1="20" y1="0" x2="20" y2="40" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#C4553A"/>
-                  <stop offset="1" stopColor="#C8A24A"/>
-                </linearGradient>
-                <linearGradient id="paint1_linear_logo" x1="20" y1="16" x2="20" y2="37" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#C8A24A"/>
-                  <stop offset="1" stopColor="#d9b661"/>
-                </linearGradient>
-              </defs>
-            </svg>
-            <div>
-              <h1 className="font-display text-2xl font-bold tracking-wider text-paper leading-none">ASM COINS</h1>
-              <p className="text-[10px] tracking-[0.25em] text-mist/80 uppercase mt-1">Invest • Grow • Prosper</p>
-            </div>
+    <div className="theme-light-home min-h-screen bg-white font-jakarta text-asm-navy">
+      <LandingHeader menuOpen={menuOpen} onMenu={() => setMenuOpen(true)} />
+      <LandingMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
+
+      <main className="mx-auto w-full max-w-[1180px] px-4 pb-6 lg:px-8">
+        <Hero />
+
+        <section className="pt-6" aria-label="Platform guarantees">
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+            {TRUST_SIGNALS.map(({ Icon, title, note, tone }) => (
+              <div
+                key={title}
+                className="flex items-center gap-3 rounded-xl border border-asm-line bg-white p-3.5"
+              >
+                <span
+                  className={cn(
+                    'flex size-9 shrink-0 items-center justify-center rounded-lg',
+                    tone === 'green' ? 'bg-asm-green-tint' : 'bg-asm-blue-tint'
+                  )}
+                >
+                  <Icon
+                    className={cn(
+                      'size-[19px]',
+                      tone === 'green' ? 'text-asm-greenInk' : 'text-asm-blue'
+                    )}
+                    strokeWidth={2.2}
+                    aria-hidden
+                  />
+                </span>
+                <span className="flex min-w-0 flex-col">
+                  <span className="text-[12px] font-bold uppercase leading-tight tracking-[0.04em]">
+                    {title}
+                  </span>
+                  <span className="pt-0.5 text-[12px] leading-tight text-asm-body">{note}</span>
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section
+          className="mt-4 rounded-xl border border-asm-line bg-white"
+          aria-label="Platform figures"
+        >
+          <dl className="grid grid-cols-2 divide-asm-line sm:grid-cols-4 sm:divide-x">
+            {PLATFORM_STATS.map(({ Icon, value, label }, index) => (
+              <div
+                key={label}
+                className={cn(
+                  'flex items-center gap-3 p-4',
+                  index < 2 && 'border-b border-asm-line sm:border-b-0'
+                )}
+              >
+                <Icon className="size-6 shrink-0 text-asm-blue" strokeWidth={1.9} aria-hidden />
+                <div className="flex min-w-0 flex-col">
+                  <dt className="order-2 truncate text-[11px] leading-tight text-asm-body">
+                    {label}
+                  </dt>
+                  <dd className="order-1 text-[19px] font-extrabold leading-tight tabular-nums">
+                    {value}
+                  </dd>
+                </div>
+              </div>
+            ))}
+          </dl>
+        </section>
+
+        <MarketSnapshot />
+
+        <PlansSection />
+
+        <HowItWorks />
+
+        <section
+          id="referral"
+          className="mt-8 flex flex-col items-start gap-4 rounded-xl bg-gradient-to-r from-asm-blue-tint to-asm-green-tint p-5 sm:flex-row sm:items-center"
+        >
+          <UserPlus className="size-9 shrink-0 text-asm-blue" strokeWidth={1.8} aria-hidden />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <h2 className="text-lg font-extrabold leading-tight text-asm-blue">Invite &amp; Earn</h2>
+            <p className="pt-1 text-[13px] leading-snug text-asm-body">
+              Refer your friends and earn rewards on what they invest. Terms apply.
+            </p>
+          </div>
+          <Link
+            to="/register"
+            className={cn(
+              'group flex min-h-11 shrink-0 items-center gap-2 rounded-lg border border-asm-greenInk bg-white px-4',
+              'text-[12px] font-bold uppercase tracking-[0.08em] text-asm-greenInk',
+              'transition-colors hover:bg-asm-greenInk hover:text-white'
+            )}
+          >
+            Join the programme
+            <ArrowRight
+              className="size-4 transition-transform duration-300 group-hover:translate-x-0.5"
+              strokeWidth={2.4}
+              aria-hidden
+            />
           </Link>
-
-          <div className="hidden xl:flex items-center gap-10 text-sm font-medium tracking-wide">
-            <Link to="#" className="text-rust">HOME</Link>
-            <Link to="#" className="text-paper hover:text-rust transition-colors">ABOUT US</Link>
-            <Link to="#" className="text-paper hover:text-rust transition-colors">INVESTMENTS</Link>
-            <Link to="#" className="text-paper hover:text-rust transition-colors">AFFILIATE</Link>
-            <Link to="#" className="text-paper hover:text-rust transition-colors">CONTACT US</Link>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <Link to="/login" className={cn(buttonVariants({ variant: 'outline' }), "border-ink-3 text-paper hover:text-brass hover:bg-ink-2 bg-transparent rounded px-6 h-11")}>
-              <User className="w-4 h-4 mr-2 text-mist" />
-              LOGIN
-            </Link>
-            <Link to="/register" className={cn(buttonVariants({ variant: 'outline' }), "hidden sm:flex border-patina/40 text-paper hover:bg-patina/10 bg-transparent rounded px-6 h-11")}>
-              <UserPlus className="w-4 h-4 mr-2 text-patina" />
-              REFERRAL
-            </Link>
-          </div>
-        </div>
-      </nav>
-
-      {/* 2. Main Dashboard Grid */}
-      <main className="flex-1 relative z-10 w-full max-w-[1600px] mx-auto px-4 md:px-8 py-8 lg:py-12 flex flex-col xl:flex-row gap-12 lg:gap-8 justify-between">
-        
-        {/* LEFT COLUMN */}
-        <div className="flex-1 max-w-2xl flex flex-col xl:pr-12">
-          
-          <h2 className="text-5xl md:text-[3.5rem] font-display font-bold leading-[1.1] mb-6">
-            <span className="text-paper">SMART INVESTMENT</span><br />
-            <span className="text-rust">SECURE FUTURE</span>
-          </h2>
-          
-          <p className="text-mist/80 text-base md:text-lg mb-10 max-w-md leading-relaxed">
-            ASM Coins is a trusted investment platform empowering people of India to build wealth and achieve financial freedom.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center gap-4 mb-14">
-            <Link to="/login" className={cn(buttonVariants({ variant: 'default' }), "bg-gradient-to-r from-rust to-[#a13b24] hover:opacity-90 text-white border-0 px-8 h-14 rounded-md text-sm font-bold tracking-wider group shadow-[0_0_20px_rgba(196,85,58,0.3)] w-full sm:w-auto")}>
-              START INVESTING 
-              <ArrowRight className="w-4 h-4 ml-3 group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <Link to="#plans" className={cn(buttonVariants({ variant: 'outline' }), "border-brass/30 text-paper hover:bg-brass/10 px-8 h-14 rounded-md text-sm font-bold tracking-wider bg-transparent w-full sm:w-auto")}>
-              INVESTMENT PLANS
-              <TrendingUp className="w-4 h-4 ml-3 text-brass" />
-            </Link>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16 pt-8 border-t border-ink-3/30">
-            <div className="flex flex-col items-start gap-2">
-              <div className="flex items-center gap-3">
-                <Users className="w-5 h-5 text-rust" />
-                <span className="text-2xl font-data text-paper font-bold">25K+</span>
-              </div>
-              <span className="text-[11px] text-mist/60 uppercase tracking-wider">Happy Investors</span>
-            </div>
-            <div className="flex flex-col items-start gap-2">
-              <div className="flex items-center gap-3">
-                <TrendingUp className="w-5 h-5 text-rust" />
-                <span className="text-2xl font-data text-paper font-bold">₹50Cr+</span>
-              </div>
-              <span className="text-[11px] text-mist/60 uppercase tracking-wider">Total Investments</span>
-            </div>
-            <div className="flex flex-col items-start gap-2">
-              <div className="flex items-center gap-3">
-                <ShieldCheck className="w-5 h-5 text-rust" />
-                <span className="text-2xl font-data text-paper font-bold">₹12Cr+</span>
-              </div>
-              <span className="text-[11px] text-mist/60 uppercase tracking-wider">Total Payouts</span>
-            </div>
-            <div className="flex flex-col items-start gap-2">
-              <div className="flex items-center gap-3">
-                <ShieldCheck className="w-5 h-5 text-rust" />
-                <span className="text-2xl font-data text-paper font-bold">99.9%</span>
-              </div>
-              <span className="text-[11px] text-mist/60 uppercase tracking-wider">Uptime & Security</span>
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div className="flex items-center gap-4 mb-10 w-full" id="plans">
-            <div className="h-px bg-gradient-to-r from-transparent to-brass/50 flex-1"></div>
-            <div className="text-brass text-sm font-medium tracking-[0.2em] uppercase">Our Investment Plans</div>
-            <div className="h-px bg-gradient-to-l from-transparent to-brass/50 flex-1"></div>
-          </div>
-
-          {/* Investment Plans Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
-            {/* Silver */}
-            <div className="relative rounded-xl bg-gradient-to-b from-[#1c2333] to-[#0c121e] border border-mist/30 p-1 flex flex-col">
-              <div className="bg-[#0b1019] rounded-lg p-5 flex-1 flex flex-col h-full relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-mist/5 rounded-full blur-[20px] -translate-y-1/2 translate-x-1/2"></div>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-mist to-mist/30 flex items-center justify-center p-[1px] shadow-[0_0_15px_rgba(142,153,180,0.3)]">
-                    <div className="w-full h-full bg-[#0b1019] rounded-full flex items-center justify-center text-mist">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                    </div>
-                  </div>
-                  <span className="text-mist font-bold tracking-wider text-sm">SILVER PLAN</span>
-                </div>
-                <div className="flex justify-between items-end mb-8 border-b border-mist/10 pb-4">
-                  <div>
-                    <div className="text-4xl font-data font-bold text-paper">25%</div>
-                    <div className="text-[10px] text-mist/60 uppercase tracking-widest mt-1">Returns</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-data text-patina">36 HOURS</div>
-                    <div className="text-[10px] text-mist/60 uppercase tracking-widest mt-1">Duration</div>
-                  </div>
-                </div>
-                <div className="flex justify-between text-xs font-data mb-6 text-paper/80">
-                  <div className="space-y-1">
-                    <div className="text-mist/50 text-[10px] uppercase">Min Investment</div>
-                    <div>₹1,000</div>
-                  </div>
-                  <div className="space-y-1 text-right">
-                    <div className="text-mist/50 text-[10px] uppercase">Max Investment</div>
-                    <div>₹50,000</div>
-                  </div>
-                </div>
-                <Link to="/login" className="mt-auto w-full py-3 bg-gradient-to-r from-mist/20 to-mist/5 text-paper text-xs font-bold tracking-widest uppercase rounded text-center border border-mist/10 hover:border-mist/30 transition-colors">
-                  Invest Now
-                </Link>
-              </div>
-            </div>
-
-            {/* Gold */}
-            <div className="relative rounded-xl bg-gradient-to-b from-brass to-[#453613] p-1 flex flex-col shadow-[0_0_30px_rgba(200,162,74,0.15)] -translate-y-2">
-              <div className="bg-[#0b1019] rounded-lg p-5 flex-1 flex flex-col h-full relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-brass/10 rounded-full blur-[20px] -translate-y-1/2 translate-x-1/2"></div>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brass to-[#69531d] flex items-center justify-center p-[1px] shadow-[0_0_15px_rgba(200,162,74,0.5)]">
-                    <div className="w-full h-full bg-[#0b1019] rounded-full flex items-center justify-center text-brass">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                    </div>
-                  </div>
-                  <span className="text-brass font-bold tracking-wider text-sm">GOLD PLAN</span>
-                </div>
-                <div className="flex justify-between items-end mb-8 border-b border-brass/10 pb-4">
-                  <div>
-                    <div className="text-4xl font-data font-bold text-paper">30%</div>
-                    <div className="text-[10px] text-brass/60 uppercase tracking-widest mt-1">Returns</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-data text-patina">36 HOURS</div>
-                    <div className="text-[10px] text-brass/60 uppercase tracking-widest mt-1">Duration</div>
-                  </div>
-                </div>
-                <div className="flex justify-between text-xs font-data mb-6 text-paper/80">
-                  <div className="space-y-1">
-                    <div className="text-brass/50 text-[10px] uppercase">Min Investment</div>
-                    <div>₹3,000</div>
-                  </div>
-                  <div className="space-y-1 text-right">
-                    <div className="text-brass/50 text-[10px] uppercase">Max Investment</div>
-                    <div>₹5,000</div>
-                  </div>
-                </div>
-                <Link to="/login" className="mt-auto w-full py-3 bg-gradient-to-r from-[#87671b] to-brass text-[#111] text-xs font-bold tracking-widest uppercase rounded text-center hover:opacity-90 transition-opacity">
-                  Invest Now
-                </Link>
-              </div>
-            </div>
-
-            {/* Diamond */}
-            <div className="relative rounded-xl bg-gradient-to-b from-rust to-[#4a1811] border border-rust/30 p-1 flex flex-col">
-              <div className="bg-[#0b1019] rounded-lg p-5 flex-1 flex flex-col h-full relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-rust/10 rounded-full blur-[20px] -translate-y-1/2 translate-x-1/2"></div>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-rust to-red-900 flex items-center justify-center p-[1px] shadow-[0_0_15px_rgba(196,85,58,0.4)]">
-                    <div className="w-full h-full bg-[#0b1019] rounded-full flex items-center justify-center text-rust">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                    </div>
-                  </div>
-                  <span className="text-rust font-bold tracking-wider text-sm">DIAMOND PLAN</span>
-                </div>
-                <div className="flex justify-between items-end mb-8 border-b border-rust/10 pb-4">
-                  <div>
-                    <div className="text-4xl font-data font-bold text-paper">40%</div>
-                    <div className="text-[10px] text-rust/60 uppercase tracking-widest mt-1">Returns</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-data text-patina">36 HOURS</div>
-                    <div className="text-[10px] text-rust/60 uppercase tracking-widest mt-1">Duration</div>
-                  </div>
-                </div>
-                <div className="flex justify-between text-xs font-data mb-6 text-paper/80">
-                  <div className="space-y-1">
-                    <div className="text-rust/50 text-[10px] uppercase">Min Investment</div>
-                    <div>₹5,000</div>
-                  </div>
-                  <div className="space-y-1 text-right">
-                    <div className="text-rust/50 text-[10px] uppercase">Max Investment</div>
-                    <div>₹5,00,000</div>
-                  </div>
-                </div>
-                <Link to="/login" className="mt-auto w-full py-3 bg-gradient-to-r from-[#6b1c11] to-rust text-white text-xs font-bold tracking-widest uppercase rounded text-center hover:opacity-90 transition-opacity">
-                  Invest Now
-                </Link>
-              </div>
-            </div>
-            
-          </div>
-        </div>
-
-        {/* CENTER COLUMN (Logo Graphic) */}
-        <div className="hidden xl:flex flex-col items-center justify-center relative w-[300px] shrink-0">
-          <div className="relative w-64 h-64 flex items-center justify-center">
-             {/* Animated Rings */}
-             <div className="absolute inset-0 border-[3px] border-rust rounded-full animate-[spin_30s_linear_infinite] opacity-60"></div>
-             <div className="absolute inset-[-12px] border border-rust/30 rounded-full animate-[spin_40s_linear_infinite_reverse]"></div>
-             <div className="absolute inset-[-24px] border border-rust/10 rounded-full"></div>
-             
-             {/* Inner Glow */}
-             <div className="absolute inset-4 bg-rust/10 rounded-full blur-xl"></div>
-             
-             {/* Big Logo */}
-             <svg viewBox="0 0 40 40" className="w-32 h-32 relative z-10 drop-shadow-[0_0_25px_rgba(200,162,74,0.3)]" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M20 0L40 40H0L20 0Z" fill="url(#paint0_linear_big)"/>
-                <path d="M20 8L36 40H4L20 8Z" fill="#0B1120"/>
-                <path d="M20 16L30.5 37H9.5L20 16Z" fill="url(#paint1_linear_big)"/>
-                <defs>
-                  <linearGradient id="paint0_linear_big" x1="20" y1="0" x2="20" y2="40" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#C4553A"/>
-                    <stop offset="1" stopColor="#C8A24A"/>
-                  </linearGradient>
-                  <linearGradient id="paint1_linear_big" x1="20" y1="16" x2="20" y2="37" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#C8A24A"/>
-                    <stop offset="1" stopColor="#d9b661"/>
-                  </linearGradient>
-                </defs>
-             </svg>
-          </div>
-          
-          <div className="mt-8 text-center">
-            <h2 className="font-display text-3xl font-bold tracking-widest text-paper/90 mb-1">ASM COINS</h2>
-            <div className="flex items-center justify-center gap-2 text-[9px] tracking-[0.3em] text-mist/70 uppercase">
-              <span>Invest</span>
-              <span className="w-1 h-1 bg-rust rounded-full"></span>
-              <span>Grow</span>
-              <span className="w-1 h-1 bg-brass rounded-full"></span>
-              <span>Prosper</span>
-            </div>
-          </div>
-        </div>
-
-        {/* RIGHT COLUMN */}
-        <div className="flex-1 max-w-[500px] flex flex-col gap-6 w-full xl:max-w-md mx-auto xl:mx-0">
-          
-          {/* India Banner */}
-          <div className="relative rounded-xl border border-ink-3/40 bg-gradient-to-r from-ink/80 to-ink-2/80 p-6 overflow-hidden flex items-center justify-between shadow-lg">
-             <div className="absolute right-0 top-0 bottom-0 w-1/2 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-             {/* Fake red chart bars in bg */}
-             <div className="absolute right-4 bottom-0 flex items-end gap-1 opacity-20">
-               {[20,35,25,45,30,55,40,65,50,75,60,85,70,95].map((h, i) => (
-                 <div key={i} className="w-1.5 bg-rust rounded-t-sm" style={{height: `${h}px`}}></div>
-               ))}
-             </div>
-             
-             <div className="flex items-center gap-4 relative z-10">
-               <div className="w-12 h-12 rounded-full bg-rust/20 flex items-center justify-center text-rust shrink-0 shadow-[0_0_15px_rgba(196,85,58,0.3)]">
-                  <MapPin className="w-6 h-6" />
-               </div>
-               <div>
-                 <div className="text-xl font-bold tracking-widest text-paper mb-1">INDIA</div>
-                 <div className="text-[10px] text-mist/70 uppercase tracking-widest leading-relaxed">
-                   Our Country, Our Pride<br/>Our Strength
-                 </div>
-               </div>
-             </div>
-          </div>
-
-          {/* Info Pills */}
-          <div className="grid grid-cols-3 gap-3">
-             <div className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl border border-rust/20 bg-ink-2/30">
-               <ShieldCheck className="w-5 h-5 text-rust opacity-80" />
-               <div className="text-center">
-                 <div className="text-[10px] font-bold text-paper mb-0.5">100% SECURE</div>
-                 <div className="text-[8px] text-mist/60">SSL Encrypted</div>
-               </div>
-             </div>
-             <div className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl border border-rust/20 bg-ink-2/30">
-               <Zap className="w-5 h-5 text-rust opacity-80" />
-               <div className="text-center">
-                 <div className="text-[10px] font-bold text-paper mb-0.5">INSTANT PAYOUT</div>
-                 <div className="text-[8px] text-mist/60">Withdraw Anytime</div>
-               </div>
-             </div>
-             <div className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl border border-rust/20 bg-ink-2/30">
-               <HeadphonesIcon className="w-5 h-5 text-rust opacity-80" />
-               <div className="text-center">
-                 <div className="text-[10px] font-bold text-paper mb-0.5">24/7 SUPPORT</div>
-                 <div className="text-[8px] text-mist/60">Always Here For You</div>
-               </div>
-             </div>
-          </div>
-
-          {/* Live Market Table */}
-          <div className="rounded-xl border border-ink-3 bg-[#0a0f18] p-5 shadow-2xl flex-1 flex flex-col">
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-patina rounded-full animate-pulse shadow-[0_0_8px_#4E9C86]"></div>
-                <h3 className="text-sm font-bold tracking-widest text-paper">LIVE MARKET</h3>
-              </div>
-              <Link to="/login" className="text-[10px] border border-patina/30 text-patina px-3 py-1 rounded hover:bg-patina/10 transition-colors tracking-widest">
-                VIEW ALL
-              </Link>
-            </div>
-
-            <div className="flex-1 overflow-x-auto no-scrollbar">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="text-[9px] text-mist/50 uppercase tracking-widest border-b border-ink-3/50">
-                    <th className="pb-3 font-medium">Asset</th>
-                    <th className="pb-3 text-right font-medium">Price</th>
-                    <th className="pb-3 text-right font-medium">24h Change</th>
-                    <th className="pb-3 text-right font-medium">Chart</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-ink-3/30 text-sm font-data">
-                  {MOCK_COINS.map(coin => (
-                    <tr key={coin.id} className="group">
-                      <td className="py-3.5 flex items-center gap-2.5">
-                        <div className="w-6 h-6 rounded-full bg-brass/10 flex items-center justify-center text-brass font-bold text-[10px]">
-                          {coin.symbol[0]}
-                        </div>
-                        <div className="text-xs text-paper/90">{coin.symbol}</div>
-                      </td>
-                      <td className="py-3.5 text-right text-xs">
-                        {coin.symbol.includes('USD') ? `₹${coin.price}` : inr(coin.price * 100)}
-                      </td>
-                      <td className={`py-3.5 text-right text-xs ${coin.change24h >= 0 ? 'text-patina' : 'text-rust'}`}>
-                        {pct(coin.change24h)}
-                      </td>
-                      <td className="py-3.5 text-right relative">
-                        <div className="w-16 h-4 ml-auto overflow-hidden opacity-70 group-hover:opacity-100 transition-opacity">
-                           <svg viewBox="0 0 100 20" className={`w-full h-full stroke-current ${coin.change24h >= 0 ? 'text-patina' : 'text-rust'}`} fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              {/* Simple zigzag based on spark */}
-                              <polyline points="0,15 20,5 40,18 60,8 80,12 100,2" />
-                           </svg>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="rounded-xl border border-ink-3 bg-[#0a0f18] p-5">
-            <h3 className="text-xs font-bold tracking-widest text-paper mb-5">QUICK ACTIONS</h3>
-            <div className="grid grid-cols-5 gap-2">
-               <Link to="/login" className="flex flex-col items-center gap-2 group">
-                 <div className="w-12 h-12 rounded-xl border border-patina/30 bg-patina/10 flex items-center justify-center text-patina group-hover:bg-patina/20 transition-colors">
-                   <Download className="w-5 h-5" />
-                 </div>
-                 <div className="text-[9px] uppercase tracking-wider text-mist group-hover:text-paper">Deposit</div>
-               </Link>
-               <Link to="/login" className="flex flex-col items-center gap-2 group">
-                 <div className="w-12 h-12 rounded-xl border border-brass/30 bg-brass/10 flex items-center justify-center text-brass group-hover:bg-brass/20 transition-colors">
-                   <Upload className="w-5 h-5" />
-                 </div>
-                 <div className="text-[9px] uppercase tracking-wider text-mist group-hover:text-paper">Withdrawal</div>
-               </Link>
-               <Link to="/login" className="flex flex-col items-center gap-2 group">
-                 <div className="w-12 h-12 rounded-xl border border-blue-400/30 bg-blue-400/10 flex items-center justify-center text-blue-400 group-hover:bg-blue-400/20 transition-colors">
-                   <History className="w-5 h-5" />
-                 </div>
-                 <div className="text-[9px] uppercase tracking-wider text-mist group-hover:text-paper">Transactions</div>
-               </Link>
-               <Link to="/login" className="flex flex-col items-center gap-2 group">
-                 <div className="w-12 h-12 rounded-xl border border-purple-400/30 bg-purple-400/10 flex items-center justify-center text-purple-400 group-hover:bg-purple-400/20 transition-colors">
-                   <UserPlus className="w-5 h-5" />
-                 </div>
-                 <div className="text-[9px] uppercase tracking-wider text-mist group-hover:text-paper">Referral</div>
-               </Link>
-               <Link to="/login" className="flex flex-col items-center gap-2 group">
-                 <div className="w-12 h-12 rounded-xl border border-yellow-500/30 bg-yellow-500/10 flex items-center justify-center text-yellow-500 group-hover:bg-yellow-500/20 transition-colors">
-                   <User className="w-5 h-5" />
-                 </div>
-                 <div className="text-[9px] uppercase tracking-wider text-mist group-hover:text-paper">My Profile</div>
-               </Link>
-            </div>
-          </div>
-
-        </div>
+        </section>
       </main>
 
-      {/* 3. Footer Area */}
-      <footer className="relative z-20 border-t border-ink-3/40 bg-[#04070b]">
-         
-         {/* Trust Bar */}
-         <div className="border-b border-ink-3/40">
-           <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-4 grid grid-cols-2 md:grid-cols-5 gap-6 text-[10px]">
-             
-             <div className="flex items-center gap-3 text-mist/80">
-               <div className="w-6 h-6 rounded-full bg-rust/20 flex items-center justify-center text-rust shrink-0">
-                 <Lock className="w-3 h-3" />
-               </div>
-               <div>
-                 <div className="font-bold text-paper mb-0.5 tracking-wider">TRUSTED BY THOUSANDS</div>
-                 <div className="leading-tight">Across India</div>
-               </div>
-             </div>
+      <LandingFooter />
 
-             <div className="flex items-center gap-3 text-mist/80">
-               <div className="w-6 h-6 rounded-full bg-brass/20 flex items-center justify-center text-brass shrink-0">
-                 <ShieldCheck className="w-3 h-3" />
-               </div>
-               <div>
-                 <div className="font-bold text-paper mb-0.5 tracking-wider">SECURE & ENCRYPTED</div>
-                 <div className="leading-tight">Your Data is 100% Safe</div>
-               </div>
-             </div>
-
-             <div className="flex items-center gap-3 text-mist/80">
-               <div className="w-6 h-6 rounded-full bg-purple-400/20 flex items-center justify-center text-purple-400 shrink-0">
-                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-               </div>
-               <div>
-                 <div className="font-bold text-paper mb-0.5 tracking-wider">TRANSPARENT PLATFORM</div>
-                 <div className="leading-tight">Clear & Honest System</div>
-               </div>
-             </div>
-
-             <div className="flex items-center gap-3 text-mist/80">
-               <div className="w-6 h-6 rounded-full bg-patina/20 flex items-center justify-center text-patina shrink-0">
-                 <Zap className="w-3 h-3" />
-               </div>
-               <div>
-                 <div className="font-bold text-paper mb-0.5 tracking-wider">INSTANT WITHDRAWALS</div>
-                 <div className="leading-tight">Quick & Hassle Free</div>
-               </div>
-             </div>
-
-             <div className="flex items-center gap-3 text-mist/80">
-               <div className="w-6 h-6 rounded-full bg-blue-400/20 flex items-center justify-center text-blue-400 shrink-0">
-                 <HeadphonesIcon className="w-3 h-3" />
-               </div>
-               <div>
-                 <div className="font-bold text-paper mb-0.5 tracking-wider">DEDICATED SUPPORT</div>
-                 <div className="leading-tight">24/7 Support Team</div>
-               </div>
-             </div>
-
-           </div>
-         </div>
-
-         {/* Bottom Bar */}
-         <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-5 flex flex-col lg:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <svg viewBox="0 0 40 40" className="w-8 h-8 opacity-80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M20 0L40 40H0L20 0Z" fill="url(#p0)"/>
-                <path d="M20 8L36 40H4L20 8Z" fill="#0B1120"/>
-                <path d="M20 16L30.5 37H9.5L20 16Z" fill="url(#p1)"/>
-                <defs>
-                  <linearGradient id="p0" x1="20" y1="0" x2="20" y2="40" gradientUnits="userSpaceOnUse"><stop stopColor="#C4553A"/><stop offset="1" stopColor="#C8A24A"/></linearGradient>
-                  <linearGradient id="p1" x1="20" y1="16" x2="20" y2="37" gradientUnits="userSpaceOnUse"><stop stopColor="#C8A24A"/><stop offset="1" stopColor="#d9b661"/></linearGradient>
-                </defs>
-              </svg>
-              <div>
-                <h2 className="font-display text-sm font-bold tracking-wider text-paper/80 leading-none">ASM COINS</h2>
-                <p className="text-[7px] tracking-[0.25em] text-mist/60 uppercase mt-1">Invest • Grow • Prosper</p>
-              </div>
-            </div>
-
-            <div className="text-[10px] text-mist/60 flex items-center gap-2">
-              © 2024 ASM COINS. All Rights Reserved. <span className="hidden sm:inline">| Built with <span className="text-rust">❤</span> for India</span>
-            </div>
-
-            <div className="flex items-center gap-4 text-mist/50">
-               <span className="text-[9px] uppercase tracking-widest font-bold">WE ACCEPT</span>
-               <div className="flex gap-3">
-                 <div className="h-6 px-2 border border-ink-3 rounded flex items-center text-xs font-bold bg-white text-[#111]">UPI</div>
-                 <div className="h-6 px-2 border border-ink-3 rounded flex items-center text-xs font-bold bg-[#002970] text-white">Paytm</div>
-                 <div className="h-6 px-2 border border-ink-3 rounded flex items-center text-[10px] font-bold bg-[#5f259f] text-white">PhonePe</div>
-                 <div className="h-6 px-2 border border-ink-3 rounded flex items-center text-[10px] font-bold bg-white text-gray-700">G Pay</div>
-               </div>
-            </div>
-         </div>
-      </footer>
+      <MobileCta />
     </div>
+  )
+}
+
+/**
+ * Persistent primary action on mobile. Almost all traffic is phones, and the
+ * hero CTA leaves the viewport within one swipe, so the page keeps one tappable
+ * way forward at all times. Hidden from lg up, where the header CTA is visible
+ * the whole way down.
+ */
+function MobileCta() {
+  return (
+    <div
+      className={cn(
+        'fixed inset-x-0 bottom-0 z-30 border-t border-asm-line bg-white/95 backdrop-blur-md',
+        'pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_-16px_rgb(16_42_92_/_0.25)] lg:hidden'
+      )}
+    >
+      <div className="flex items-center gap-3 px-4 py-2.5">
+        <div className="flex min-w-0 flex-1 flex-col">
+          <span className="truncate text-[13px] font-extrabold leading-tight">
+            Start from ₹1,000
+          </span>
+          <span className="truncate text-[11px] leading-tight text-asm-body">
+            Plans from 36 hours
+          </span>
+        </div>
+        <Link
+          to="/register"
+          className={cn(
+            'flex min-h-11 shrink-0 items-center gap-2 rounded-lg bg-asm-blue px-5',
+            'text-[12px] font-bold uppercase tracking-[0.08em] text-white',
+            'transition-colors hover:bg-asm-blue-dark'
+          )}
+        >
+          Start Investing
+          <ArrowRight className="size-4" strokeWidth={2.4} aria-hidden />
+        </Link>
+      </div>
+    </div>
+  )
+}
+
+function Hero() {
+  return (
+    <section className="grid items-center gap-6 pt-6 lg:grid-cols-[1.05fr_1fr] lg:gap-12 lg:pt-12">
+      <div className="animate-rise">
+        <h1 className="text-[30px] leading-[1.1] tracking-[-0.02em] sm:text-[38px] lg:text-[46px]">
+          <span className="block font-semibold text-asm-navy">Smart Investment</span>
+          <span className="block pt-1 font-extrabold">
+            <span className="text-asm-navy">Secure </span>
+            <span className="text-asm-green">Future</span>
+          </span>
+        </h1>
+
+        <p className="max-w-[48ch] pt-4 text-sm leading-relaxed text-asm-body lg:text-base">
+          ASM Coins is an investment platform built for people across India who want a clear,
+          straightforward way to grow what they have saved.
+        </p>
+
+        <div className="flex flex-col gap-3 pt-6 sm:flex-row">
+          <Link
+            to="/register"
+            className={cn(
+              'group flex min-h-12 flex-1 items-center justify-center gap-3 rounded-xl bg-asm-blue px-6',
+              'text-[14px] font-bold uppercase tracking-[0.08em] text-white',
+              'shadow-[0_12px_24px_-12px_rgb(11_79_216_/_0.75)]',
+              'transition-colors hover:bg-asm-blue-dark'
+            )}
+          >
+            Start Investing
+            <Rocket
+              className="size-[18px] transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+              strokeWidth={2.2}
+              aria-hidden
+            />
+          </Link>
+          <a
+            href="#plans"
+            className={cn(
+              'flex min-h-12 flex-1 items-center justify-center gap-3 rounded-xl border border-asm-blue/35 bg-white px-6',
+              'text-[14px] font-bold uppercase tracking-[0.08em] text-asm-blue',
+              'transition-colors hover:border-asm-blue hover:bg-asm-blue-tint'
+            )}
+          >
+            Investment Plans
+            <ChartNoAxesCombined className="size-[18px]" strokeWidth={2.2} aria-hidden />
+          </a>
+        </div>
+
+        <div className="mt-6 flex items-center gap-3 rounded-xl border border-asm-line bg-white p-4">
+          <MapPin className="size-6 shrink-0 text-asm-blue" strokeWidth={2.1} aria-hidden />
+          <span className="flex flex-col">
+            <span className="text-sm font-extrabold uppercase leading-tight tracking-[0.06em]">
+              India
+            </span>
+            <span className="pt-0.5 text-[10px] font-semibold uppercase leading-tight tracking-[0.1em] text-asm-body">
+              Our country, our pride, our strength
+            </span>
+          </span>
+        </div>
+      </div>
+
+      <HeroMark className="mx-auto aspect-square w-full max-w-[220px] animate-rise sm:max-w-[280px] lg:max-w-[380px]" />
+    </section>
+  )
+}
+
+function MarketSnapshot() {
+  return (
+    <section
+      className="mt-4 overflow-hidden rounded-xl border border-asm-line bg-white"
+      aria-labelledby="market-heading"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 pb-2 pt-3">
+        <div className="flex min-w-0 flex-col">
+          <h2
+            id="market-heading"
+            className="text-[13px] font-extrabold uppercase tracking-[0.1em]"
+          >
+            Market snapshot
+          </h2>
+          <p className="pt-0.5 text-[11px] text-asm-body">
+            Indicative rates, refreshed daily. Not a live feed.
+          </p>
+        </div>
+      </div>
+
+      {/*
+        One table, no horizontal scroll. The chart column is dropped below sm
+        because a sparkline is the least useful thing on a 360px screen, and
+        making the table scroll sideways to keep it would hide the prices.
+      */}
+      <table className="w-full border-collapse text-left">
+        <thead>
+          <tr className="border-y border-asm-line bg-asm-tint/60">
+            <th
+              scope="col"
+              className="px-3 py-2 text-[9px] font-bold uppercase tracking-[0.12em] text-asm-muted sm:px-4"
+            >
+              Asset
+            </th>
+            <th
+              scope="col"
+              className="px-2 py-2 text-right text-[9px] font-bold uppercase tracking-[0.12em] text-asm-muted"
+            >
+              Price
+            </th>
+            <th
+              scope="col"
+              className="px-3 py-2 text-right text-[9px] font-bold uppercase tracking-[0.12em] text-asm-muted sm:px-2"
+            >
+              24h
+            </th>
+            <th
+              scope="col"
+              className="hidden px-4 py-2 text-right text-[9px] font-bold uppercase tracking-[0.12em] text-asm-muted sm:table-cell"
+            >
+              Chart
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {MARKET.map(({ symbol, pair, price, change, positive, series, swatch, glyph }) => (
+            <tr key={symbol} className="border-b border-asm-line/70 last:border-b-0">
+              <th scope="row" className="px-3 py-3 text-left font-normal sm:px-4">
+                <span className="flex items-center gap-2 sm:gap-2.5">
+                  <span
+                    className={cn(
+                      'flex size-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white',
+                      swatch
+                    )}
+                    aria-hidden
+                  >
+                    {glyph}
+                  </span>
+                  <span className="flex flex-col sm:flex-row sm:items-baseline sm:gap-1">
+                    <span className="text-[13px] font-bold leading-tight">{symbol}</span>
+                    <span className="text-[10px] leading-tight text-asm-muted sm:text-[11px]">
+                      <span className="hidden sm:inline">/ </span>
+                      {pair}
+                    </span>
+                  </span>
+                </span>
+              </th>
+              <td className="px-2 py-3 text-right text-[13px] font-semibold tabular-nums">
+                {price}
+              </td>
+              <td
+                className={cn(
+                  'px-3 py-3 text-right text-[12px] font-bold tabular-nums sm:px-2',
+                  positive ? 'text-asm-greenInk' : 'text-asm-red'
+                )}
+              >
+                {change}
+              </td>
+              <td className="hidden px-4 py-3 sm:table-cell">
+                <span className="flex justify-end">
+                  <Sparkline values={series} positive={positive} />
+                </span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  )
+}
+
+const PLAN_ACCENT = {
+  silver: {
+    ring: 'ring-[#B1B5BB]/50',
+    chip: 'bg-gradient-to-b from-[#E4E8EE] to-[#B1B5BB]',
+    figure: 'text-asm-blue',
+    button: 'bg-asm-blue hover:bg-asm-blue-dark',
+  },
+  gold: {
+    ring: 'ring-[#E8B84B]/60',
+    chip: 'bg-gradient-to-b from-[#F7DE9B] to-[#D9A227]',
+    figure: 'text-asm-greenInk',
+    button: 'bg-asm-greenInk hover:bg-[#0E6E32]',
+  },
+  diamond: {
+    ring: 'ring-[#7DD3FC]/60',
+    chip: 'bg-gradient-to-b from-[#BAE6FD] to-[#38BDF8]',
+    figure: 'text-asm-blue',
+    button: 'bg-asm-blue hover:bg-asm-blue-dark',
+  },
+} as const
+
+function PlansSection() {
+  return (
+    <section id="plans" className="scroll-mt-24 pt-10" aria-labelledby="plans-heading">
+      <div className="flex items-center gap-3">
+        <span className="h-px flex-1 bg-gradient-to-r from-transparent to-asm-blue/40" />
+        <h2
+          id="plans-heading"
+          className="whitespace-nowrap text-[13px] font-extrabold uppercase tracking-[0.14em] text-asm-blue"
+        >
+          Our Investment Plans
+        </h2>
+        <span className="h-px flex-1 bg-gradient-to-l from-transparent to-asm-blue/40" />
+      </div>
+
+      {/*
+        Swipeable on mobile, grid from sm. Stacking three full-width cards put
+        the third plan two screens down, which stops it being a comparison; a
+        snap rail keeps the next card visible at the right edge so it reads as
+        "there are more" without scrolling the page.
+      */}
+      <div
+        className={cn(
+          '-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pt-5',
+          '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+          'sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-4 sm:overflow-visible sm:px-0'
+        )}
+      >
+        {PLANS.map(({ slug, name, returns, duration, min, max, accent }) => {
+          const a = PLAN_ACCENT[accent]
+          return (
+            <article
+              key={slug}
+              className={cn(
+                'flex w-[62%] min-w-[196px] shrink-0 snap-start flex-col items-center rounded-xl bg-white p-4 ring-1',
+                'sm:w-auto sm:min-w-0 sm:p-5',
+                a.ring
+              )}
+            >
+              <span
+                className={cn('flex size-10 items-center justify-center rounded-full', a.chip)}
+                aria-hidden
+              />
+              <h3 className="pt-2.5 text-center text-xs font-bold uppercase leading-tight tracking-[0.06em]">
+                {name}
+              </h3>
+
+              <p
+                className={cn('pt-2.5 text-[30px] font-extrabold leading-none tabular-nums', a.figure)}
+              >
+                {returns}
+              </p>
+              <p className="pt-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-asm-muted">
+                Returns
+              </p>
+
+              <p className="pt-3 text-[9px] font-bold uppercase tracking-[0.14em] text-asm-muted">
+                Duration
+              </p>
+              <p className="text-[13px] font-bold uppercase tabular-nums">{duration}</p>
+
+              <dl className="mt-3.5 flex w-full items-start justify-between border-t border-asm-line pt-3">
+                <div className="flex flex-col">
+                  <dt className="text-[8px] font-bold uppercase tracking-[0.1em] text-asm-muted">
+                    Min
+                  </dt>
+                  <dd className="text-[12px] font-bold tabular-nums">{min}</dd>
+                </div>
+                <div className="flex flex-col items-end">
+                  <dt className="text-[8px] font-bold uppercase tracking-[0.1em] text-asm-muted">
+                    Max
+                  </dt>
+                  <dd className="text-[12px] font-bold tabular-nums">{max}</dd>
+                </div>
+              </dl>
+
+              {/*
+                The chosen plan rides along in the query string so registration
+                can carry it through instead of dropping the selection.
+              */}
+              <Link
+                to={`/register?plan=${slug}`}
+                aria-label={`Get started with the ${name}`}
+                className={cn(
+                  'mt-4 flex min-h-11 w-full items-center justify-center rounded-lg px-2',
+                  'text-[11px] font-bold uppercase tracking-[0.1em] text-white transition-colors',
+                  a.button
+                )}
+              >
+                Get Started
+              </Link>
+            </article>
+          )
+        })}
+      </div>
+
+      <p className="pt-4 text-center text-[11px] leading-relaxed text-asm-body">
+        Returns shown are plan terms, not guarantees. Read the full terms before you invest.
+      </p>
+    </section>
+  )
+}
+
+function HowItWorks() {
+  return (
+    <section id="about" className="scroll-mt-24 pt-10" aria-labelledby="about-heading">
+      <div className="flex items-center gap-3">
+        <span className="h-px flex-1 bg-gradient-to-r from-transparent to-asm-blue/40" />
+        <h2
+          id="about-heading"
+          className="whitespace-nowrap text-[13px] font-extrabold uppercase tracking-[0.14em] text-asm-blue"
+        >
+          How It Works
+        </h2>
+        <span className="h-px flex-1 bg-gradient-to-l from-transparent to-asm-blue/40" />
+      </div>
+
+      <ol className="grid gap-3 pt-5 sm:grid-cols-3 sm:gap-4">
+        {HOW_IT_WORKS.map(({ step, title, body }) => (
+          <li
+            key={step}
+            className="flex flex-col rounded-xl border border-asm-line bg-white p-4 sm:p-5"
+          >
+            <span className="flex size-9 items-center justify-center rounded-lg bg-asm-blue-tint text-[13px] font-extrabold tabular-nums text-asm-blue">
+              {step}
+            </span>
+            <h3 className="pt-3 text-[15px] font-extrabold leading-tight">{title}</h3>
+            <p className="pt-1.5 text-[13px] leading-relaxed text-asm-body">{body}</p>
+          </li>
+        ))}
+      </ol>
+
+      <div className="mt-4 flex flex-col items-start gap-4 rounded-xl border border-asm-line bg-asm-tint p-5 sm:flex-row sm:items-center">
+        <Coins className="size-9 shrink-0 text-asm-blue" strokeWidth={1.8} aria-hidden />
+        <p className="flex-1 text-[13px] leading-relaxed text-asm-body">
+          Questions before you start? Our support team answers on WhatsApp and email, every day.
+        </p>
+        <Link
+          to="/register"
+          className={cn(
+            'flex min-h-11 shrink-0 items-center rounded-lg bg-asm-blue px-5',
+            'text-[12px] font-bold uppercase tracking-[0.08em] text-white',
+            'transition-colors hover:bg-asm-blue-dark'
+          )}
+        >
+          Create account
+        </Link>
+      </div>
+    </section>
   )
 }

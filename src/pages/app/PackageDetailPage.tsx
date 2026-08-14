@@ -3,9 +3,7 @@ import { Check, Clock, ShieldCheck, TrendingUp } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Link } from 'react-router'
 
-import { AppHeader } from '@/components/app/AppHeader'
-import { BottomNav } from '@/components/app/BottomNav'
-import { GridBackdrop } from '@/components/app/GridBackdrop'
+import { AppShell } from '@/components/app/AppShell'
 import { ReferralBanner } from '@/components/app/ReferralBanner'
 import { TierBadge } from '@/components/app/TierBadge'
 import { cn } from '@/lib/utils'
@@ -43,11 +41,8 @@ export function PackageDetailPage() {
   const [selected, setSelected] = useState<string>('entry')
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-black font-jakarta text-white">
-      <GridBackdrop />
-      <AppHeader variant="root" />
-
-      <main className="relative mx-auto flex w-full max-w-[375px] flex-col gap-10 px-[18px] pb-28 pt-[116px]">
+    <AppShell headerVariant="root" width="wide" contentClassName="px-[18px] pt-[116px]">
+      <div className="flex flex-col gap-10 lg:mx-auto lg:max-w-[600px]">
         {/* Package summary */}
         <section className="relative flex flex-col gap-3 overflow-hidden rounded-[20px] border-2 border-plate px-[25px] py-4">
           <span
@@ -208,9 +203,7 @@ export function PackageDetailPage() {
         >
           Continue to Payment
         </Link>
-      </main>
-
-      <BottomNav />
-    </div>
+      </div>
+    </AppShell>
   )
 }
