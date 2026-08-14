@@ -259,7 +259,7 @@ function PlanCard({
         y: -6,
         boxShadow: `0 20px 40px -12px ${s.glow}, 0 4px 16px -4px rgba(16,42,92,0.10)`,
       }}
-      transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+      transition={{ type: 'spring' as const, stiffness: 380, damping: 28 }}
       className={cn(
         'flex flex-col items-center rounded-2xl bg-white px-5 py-5',
         'shadow-[0_2px_16px_-4px_rgba(16,42,92,0.08)]',

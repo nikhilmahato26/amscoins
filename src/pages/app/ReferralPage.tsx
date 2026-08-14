@@ -135,7 +135,7 @@ export function ReferralPage() {
                 type="button"
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                transition={{ type: 'spring' as const, stiffness: 400, damping: 25 }}
                 className={cn(
                   'flex h-14 shrink-0 items-center gap-2 rounded-xl',
                   'border border-asm-blue/20 bg-asm-blue-tint px-4',
@@ -291,7 +291,7 @@ export function ReferralPage() {
             type="button"
             whileHover={{ scale: 1.02, boxShadow: '0 12px 32px -8px rgba(21,128,61,0.45)' }}
             whileTap={{ scale: 0.98 }}
-            transition={{ type: 'spring', stiffness: 380, damping: 26 }}
+            transition={{ type: 'spring' as const, stiffness: 380, damping: 26 }}
             className={cn(
               'flex min-h-[56px] w-full items-center justify-center gap-3 rounded-2xl',
               'bg-asm-greenInk shadow-[0_8px_24px_-8px_rgba(21,128,61,0.5)]',
