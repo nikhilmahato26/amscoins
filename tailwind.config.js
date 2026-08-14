@@ -171,6 +171,10 @@ module.exports = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        marquee: {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
         scroll: {
           "0%": { transform: "translateY(0)" },
           "100%": { transform: "translateY(-50%)" },
@@ -192,6 +196,7 @@ module.exports = {
         // animations never run.
         rise: "rise 0.62s cubic-bezier(0.16, 1, 0.3, 1) both",
         "live-pulse": "live-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        marquee: "marquee 28s linear infinite",
       },
     },
   },
