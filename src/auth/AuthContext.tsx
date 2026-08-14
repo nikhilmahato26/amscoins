@@ -8,8 +8,12 @@ function isStoredUser(value: unknown): value is User {
   const candidate = value as Record<string, unknown>
   return (
     typeof candidate.id === 'string' &&
+    typeof candidate.name === 'string' &&
     typeof candidate.email === 'string' &&
-    (candidate.role === 'user' || candidate.role === 'admin')
+    typeof candidate.password === 'string' &&
+    (candidate.role === 'user' || candidate.role === 'admin') &&
+    (candidate.status === 'active' || candidate.status === 'frozen') &&
+    typeof candidate.createdAt === 'string'
   )
 }
 
