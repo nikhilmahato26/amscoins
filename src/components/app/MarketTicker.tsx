@@ -167,7 +167,7 @@ export function MarketTicker({ className }: { className?: string }) {
             variants={rowVariants}
             initial="hidden"
             animate="visible"
-            whileHover={{ scale: 1.008, transition: { type: 'spring', stiffness: 400, damping: 30 } }}
+            whileHover={{ scale: 1.008, transition: { type: 'spring' as const, stiffness: 400, damping: 30 } }}
             className={cn(
               'flex items-center gap-3 rounded-2xl border bg-white p-3',
               'cursor-default',
