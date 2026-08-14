@@ -11,6 +11,10 @@ import { PackageDetailPage } from './pages/app/PackageDetailPage'
 import { HomePage } from './pages/app/HomePage'
 import { PlanBenefitsPage } from './pages/app/PlanBenefitsPage'
 import { PlansPage } from './pages/plans/PlansPage'
+import { DashboardPage } from './pages/app/DashboardPage'
+import { InvestSummaryPage } from './pages/app/InvestSummaryPage'
+import { SilverTierPage } from './pages/app/SilverTierPage'
+import { GalleryPage } from './pages/gallery/GalleryPage'
 import { AdminPlaceholder } from './pages/placeholder/AdminPlaceholder'
 import { NotFound } from './pages/placeholder/NotFound'
 import { RequireAuth } from './auth/RequireAuth'
@@ -22,6 +26,7 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/plans" element={<PlansPage />} />
+      <Route path="/gallery" element={<GalleryPage />} />
       
       <Route path="/app/payment" element={
         <RequireAuth role="user">
@@ -56,6 +61,24 @@ export default function App() {
       <Route path="/app/benefits" element={
         <RequireAuth role="user">
           <PlanBenefitsPage />
+        </RequireAuth>
+      } />
+
+      <Route path="/app/dashboard" element={
+        <RequireAuth role="user">
+          <DashboardPage />
+        </RequireAuth>
+      } />
+
+      <Route path="/app/summary" element={
+        <RequireAuth role="user">
+          <InvestSummaryPage />
+        </RequireAuth>
+      } />
+
+      <Route path="/app/silver-tier" element={
+        <RequireAuth role="user">
+          <SilverTierPage />
         </RequireAuth>
       } />
 

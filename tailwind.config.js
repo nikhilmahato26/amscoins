@@ -62,6 +62,8 @@ module.exports = {
           bright: "#F4C506",
           antique: "#D4AF37",
           warm: "#E8B84B",
+          pale: "#F3E2B3",
+          solid: "#FFC30F",
         },
         plate: "#B1B5BB",
         frost: "#F0F4FF",
@@ -70,6 +72,11 @@ module.exports = {
         abyss: "#080C14",
         steel: "#B8C8E0",
         deep: "#0E1520",
+        ruby: {
+          DEFAULT: "#E0115F",
+          deep: "#800020",
+        },
+        night: "#050505",
         bluesteel: {
           from: "#8FA8C0",
           to: "#6A8AA8",
@@ -120,6 +127,7 @@ module.exports = {
         jakarta: ['Plus Jakarta Sans', 'sans-serif'],
         poppins: ['Poppins', 'sans-serif'],
         dmserif: ['DM Serif Display', 'serif'],
+        playfair: ['Playfair Display', 'serif'],
         script: ['Lobster', 'cursive'],
       },
       borderRadius: {
