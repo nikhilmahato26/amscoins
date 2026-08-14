@@ -1,148 +1,240 @@
-import { ArrowDownToLine, ArrowUpFromLine, CheckCircle2, History, LifeBuoy } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { Lock, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Link } from 'react-router'
 
-import heroCoin from '@/assets/hero-coin.png'
+// vault.png lives in /public — referenced as an absolute URL, no import needed
 import { AppShell } from '@/components/app/AppShell'
 import { MarketTicker } from '@/components/app/MarketTicker'
 import { ReferralBanner } from '@/components/app/ReferralBanner'
 import { TierBadge, type Tier } from '@/components/app/TierBadge'
 import { cn } from '@/lib/utils'
 
-const STATS = [
-  { label: 'Total locked', value: '₹42.8 Cr+' },
-  { label: 'Active investors', value: '12.5k+' },
+/* ── Framer Motion variants ─────────────────────────────────────── */
+
+const container = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.1, delayChildren: 0.05 } },
+}
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 22 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { type: 'spring', stiffness: 90, damping: 18 },
+  },
+}
+
+/* ── Data ───────────────────────────────────────────────────────── */
+
+const STATS: { label: string; value: string; Icon: LucideIcon; color: 'blue' | 'green' }[] = [
+  { label: 'Total Locked',     value: '₹42.8 Cr+', Icon: Lock,  color: 'green' },
+  { label: 'Active Investors', value: '12.5k+',    Icon: Users, color: 'green' },
 ]
 
-/**
- * Placeholder plans. Return figures come from the desktop plan cards in Figma
- * (26:8496 / 26:8588), since the mobile cards all carry the same
- * "SilverPackage" placeholder label.
- *
- * Diamond's min/max reads ₹3,000-₹5,000 on the current mobile card, identical
- * to Gold. Every other Diamond card in the file says ₹5,000-₹5,00,000, so that
- * looks like a copy-paste slip and we use the latter here.
- */
 const PLANS: { tier: Tier; name: string; returns: string; duration: string; min: string; max: string }[] = [
-  { tier: 'silver', name: 'Silver', returns: '25%', duration: '36 Hours', min: '₹1,000', max: '₹5,000' },
-  { tier: 'gold', name: 'Gold', returns: '30%', duration: '36 Hours', min: '₹3,000', max: '₹5,000' },
+  { tier: 'silver',  name: 'Silver',  returns: '25%', duration: '36 Hours', min: '₹1,000', max: '₹50,000'   },
+  { tier: 'gold',    name: 'Gold',    returns: '30%', duration: '36 Hours', min: '₹3,000', max: '₹50,000'   },
   { tier: 'diamond', name: 'Diamond', returns: '40%', duration: '36 Hours', min: '₹5,000', max: '₹5,00,000' },
 ]
 
-const FEATURES = [
-  'Choose Silver, Gold, or Diamond plans designed to help you grow your wealth.',
-  'Track your investments, payouts, and portfolio with a secure investment platform.',
-  'Deposit, withdraw, track transactions, and manage your investments—all in one place.',
-]
-
-const QUICK_ACTIONS: { label: string; to: string; Icon: LucideIcon }[] = [
-  { label: 'Deposit', to: '/app/invest', Icon: ArrowDownToLine },
-  { label: 'Withdraw', to: '/app/withdraw', Icon: ArrowUpFromLine },
-  { label: 'History', to: '/app/history', Icon: History },
-  { label: 'Support', to: '/app/support', Icon: LifeBuoy },
-]
+/* ── Page ───────────────────────────────────────────────────────── */
 
 export function HomePage() {
   return (
-    <AppShell headerVariant="root" width="wide" contentClassName="px-0 pt-[104px]">
-      <div>
-        {/* Hero */}
-        <section className="relative flex flex-col items-center px-[15px]">
-          <h1 className="max-w-[640px] text-center font-poppins text-4xl font-extrabold leading-tight lg:text-5xl">
-            Jump start your wealth portfolio
-          </h1>
-          <p className="max-w-[520px] pt-8 text-center font-poppins text-lg font-medium leading-snug">
-            ASM COIN is the easiest way to grow your wealth.
-          </p>
+    <AppShell headerVariant="root" width="wide" contentClassName="px-0 pt-[68px]">
+      <motion.div
+        className="flex flex-col"
+        variants={container}
+        initial="hidden"
+        animate="visible"
+      >
 
-          <div className="flex w-[215px] items-center gap-4 pt-12">
-            {STATS.map(({ label, value }, index) => (
-              <div key={label} className="flex items-center gap-4">
-                {index > 0 ? <span className="h-8 w-px bg-white/10" /> : null}
-                <span className="flex flex-col">
-                  <span className="text-[10px] uppercase leading-[15px] text-gray-400">{label}</span>
-                  <span className="text-lg font-bold leading-7">{value}</span>
-                </span>
-              </div>
-            ))}
-          </div>
+        {/* ── Hero ── */}
+        <section className="flex flex-col px-5 pb-6 pt-5">
 
-          <div className="relative mt-8 h-[380px] w-full max-w-[520px]">
-            <span
-              aria-hidden
-              className="absolute left-1/2 top-1/2 size-[280px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#A020F0]/30 blur-[70px]"
-            />
-            <span
-              aria-hidden
-              className="absolute left-1/2 top-1/2 size-[150px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#FF00FF]/30 blur-[60px]"
-            />
-            <img
-              src={heroCoin}
-              alt=""
-              className="relative size-full object-contain"
-              fetchPriority="high"
-            />
-          </div>
-        </section>
-
-        <div className="flex flex-col gap-10 px-[18px] pt-2">
-          <MarketTicker />
-
-          {/* Plans */}
-          <section className="flex flex-col gap-4">
-            <h2 className="text-xl font-bold leading-7">Investment Packages</h2>
-            <div className="flex flex-col gap-4 md:grid md:grid-cols-2 md:items-start xl:grid-cols-3">
-              {PLANS.map((plan) => (
-                <PlanCard key={plan.tier} {...plan} />
-              ))}
+          {/* Live price pill */}
+          <motion.div variants={fadeUp} className=" mb-3 self-start">
+            <div className="inline-flex items-center gap-2 rounded-full border border-asm-greenInk/20 bg-asm-green-tint px-3.5 py-1.5">
+              <span className="relative flex size-[7px] shrink-0">
+                <span className="absolute inline-flex h-full w-full animate-[live-pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite] rounded-full bg-asm-greenInk opacity-60" />
+                <span className="relative inline-flex size-[7px] rounded-full bg-asm-greenInk" />
+              </span>
+              <span className="font-jakarta text-[11px] font-bold uppercase tracking-[0.14em] text-asm-greenInk">
+                Live · ASM COIN ₹12,850
+              </span>
             </div>
-          </section>
+          </motion.div>
 
-          {/* Features */}
-          <section className="flex flex-col gap-16">
-            <h2 className="font-poppins text-[32px] font-extrabold leading-tight">
-              All your investments. All on <span className="text-[#8231CB]">ASM Coins.</span>
-            </h2>
-            <ul className="flex flex-col gap-[30px] md:grid md:grid-cols-3 md:items-start md:gap-8">
-              {FEATURES.map((feature) => (
-                <li key={feature} className="flex items-center gap-[30px] md:flex-col md:items-start md:gap-4">
-                  <CheckCircle2 className="size-8 shrink-0 text-brand" aria-hidden />
-                  <span className="flex-1 font-poppins text-base font-medium leading-6">
-                    {feature}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <ReferralBanner />
-
-          {/* Quick actions */}
-          <section className="flex items-start justify-center gap-4">
-            {QUICK_ACTIONS.map(({ label, to, Icon }) => (
-              <Link
+         
+          {/* Stat cards */}
+          {/* <motion.div variants={fadeUp} className="mt-2 grid w-full max-w-sm grid-cols-2 gap-2">
+            {STATS.map(({ label, value, Icon, color }) => (
+              <div
                 key={label}
-                to={to}
-                className="flex min-w-0 flex-1 flex-col items-center gap-2 focus-visible:outline-none"
+                className="flex items-center gap-3 rounded-2xl border border-asm-line bg-white px-4 py-3 shadow-[0_2px_12px_-4px_rgba(16,42,92,0.1)]"
               >
                 <span
                   className={cn(
-                    'flex size-14 items-center justify-center rounded-2xl border border-white/10',
-                    'bg-gradient-to-b from-white/[0.08] to-white/[0.02] transition-colors hover:border-white/25'
+                    'flex size-10 shrink-0 items-center justify-center rounded-xl',
+                    color === 'blue' ? 'bg-asm-blue-tint' : 'bg-asm-green-tint'
                   )}
                 >
-                  <Icon className="size-5" aria-hidden />
+                  <Icon
+                    className={cn(
+                      'size-[18px]',
+                      color === 'blue' ? 'text-asm-blue' : 'text-asm-greenInk'
+                    )}
+                    strokeWidth={2}
+                    aria-hidden
+                  />
                 </span>
-                <span className="text-[11px] font-medium uppercase leading-[16.5px] tracking-[-0.55px] text-gray-400">
-                  {label}
-                </span>
-              </Link>
+                <div className="flex min-w-0 flex-col">
+                  <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-asm-muted">
+                    {label}
+                  </span>
+                  <span className="mt-0.5 font-mono text-[18px] font-bold tabular-nums leading-none text-asm-navy">
+                    {value}
+                  </span>
+                </div>
+              </div>
             ))}
-          </section>
-        </div>
-      </div>
+          </motion.div> */}
+
+          {/* Hero coin image — gentle float, full-width */}
+          <motion.div
+            variants={fadeUp}
+            className="relative mt-2 w-full max-w-[420px] self-center"
+          >
+            <div
+              aria-hidden
+              className="absolute inset-0 -z-0 mx-auto rounded-full"
+              style={{
+                background: 'radial-gradient(circle at 50% 55%, rgba(21,128,61,0.07) 0%, transparent 72%)',
+              }}
+            />
+            <motion.img
+              src="/vault.png"
+              alt=""
+              className="relative w-full object-contain drop-shadow-[0_12px_40px_rgba(21,128,61,0.15)]"
+              fetchPriority="high"
+              animate={{ y: [0, -10, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+            />
+          </motion.div>
+
+           {/* Subtitle */}
+          <motion.p variants={fadeUp} className="mt-2 max-w-[310px] text-[15px] leading-relaxed text-asm-body">
+            Up to{' '}
+            <span className="font-bold text-asm-greenInk">40% returns</span>
+            {' '}in 36 hours.{' '}
+            <span className="font-semibold text-asm-navy">ASM COIN</span> is where smart money moves.
+          </motion.p>
+
+
+          {/* Feature badges */}
+          <motion.div
+            variants={fadeUp}
+            className="mt-1 w-full max-w-sm self-center rounded-2xl border border-asm-line bg-white px-2 py-4 shadow-[0_2px_12px_-4px_rgba(16,42,92,0.08)]"
+          >
+            <div className="flex items-stretch divide-x divide-asm-line">
+
+              {/* Secure */}
+              <div className="flex flex-1 flex-col items-center gap-1.5 px-2">
+                <svg viewBox="0 0 24 24" className="size-7 text-asm-blue" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                </svg>
+                <span className="text-[13px] font-bold text-asm-blue">Secure</span>
+                <span className="text-center text-[10px] leading-tight text-asm-body">100% Safe &amp; Trusted</span>
+              </div>
+
+              {/* Grow */}
+              <div className="flex flex-1 flex-col items-center gap-1.5 px-2">
+                <svg viewBox="0 0 24 24" className="size-7 text-asm-greenInk" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                </svg>
+                <span className="text-[13px] font-bold text-asm-greenInk">Grow</span>
+                <span className="text-center text-[10px] leading-tight text-asm-body">High Returns Growth</span>
+              </div>
+
+              {/* Prosper */}
+              <div className="flex flex-1 flex-col items-center gap-1.5 px-2">
+                <svg viewBox="0 0 24 24" className="size-7 text-asm-blue" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
+                </svg>
+                <span className="text-[13px] font-bold text-asm-blue">Prosper</span>
+                <span className="text-center text-[10px] leading-tight text-asm-body">Build Wealth For Future</span>
+              </div>
+
+            </div>
+          </motion.div>
+        </section>
+
+        {/* ── Market Snapshot ── */}
+        <motion.section variants={fadeUp} className="px-5 pb-6">
+          <MarketTicker />
+        </motion.section>
+
+        {/* ── Investment Plans ── */}
+        <motion.section variants={fadeUp} className="px-5 pb-8">
+          <h2 className="mb-4 text-[18px] font-extrabold tracking-tight text-asm-navy">
+            Investment Packages
+          </h2>
+          <div className="flex flex-col gap-4 sm:grid sm:grid-cols-3">
+            {PLANS.map((plan) => (
+              <PlanCard key={plan.tier} {...plan} />
+            ))}
+          </div>
+          <p className="mt-4 px-1 text-center text-[11px] leading-relaxed text-asm-muted">
+            Returns shown are plan terms, not guarantees.{' '}
+            <span className="text-asm-body">Read the full terms before you invest.</span>
+          </p>
+        </motion.section>
+
+        {/* ── Referral ── */}
+        <motion.section variants={fadeUp} className="px-5 pb-8">
+          <ReferralBanner />
+        </motion.section>
+
+      </motion.div>
     </AppShell>
   )
+}
+
+/* ── Plan card ── */
+
+/**
+ * Per-tier accent styles.
+ * Silver: neutral steel tones.
+ * Gold: amber — the warmth of the metal.
+ * Diamond: asm-blue — premium, trust-leading.
+ */
+const PLAN_STYLE: Record<Tier, {
+  ring: string
+  figure: string
+  btn: string
+  glow: string
+}> = {
+  silver: {
+    ring:   'ring-1 ring-[#CED5E1]',
+    figure: 'text-[#868B95]',
+    btn:    'bg-[#868B95] hover:bg-[#6b6f78]',
+    glow:   'rgba(134,139,149,0.12)',
+  },
+  gold: {
+    ring:   'ring-1 ring-[#FF9E45]/50',
+    figure: 'text-[#F37400]',
+    btn:    'bg-[#F37400] hover:bg-[#d96800]',
+    glow:   'rgba(243,116,0,0.12)',
+  },
+  diamond: {
+    ring:   'ring-1 ring-asm-blue/30',
+    figure: 'text-asm-blue',
+    btn:    'bg-asm-blue hover:bg-asm-blue-dark',
+    glow:   'rgba(11,79,216,0.12)',
+  },
 }
 
 function PlanCard({
@@ -160,54 +252,58 @@ function PlanCard({
   min: string
   max: string
 }) {
+  const s = PLAN_STYLE[tier]
   return (
-    <article className="relative flex flex-col gap-3 overflow-hidden rounded-[20px] border-2 border-plate bg-plate/10 px-[25px] py-4">
-      <span
-        aria-hidden
-        className="pointer-events-none absolute -top-10 right-[-14px] size-32 rounded-full bg-slate-400/10 blur-[32px]"
-      />
+    <motion.article
+      whileHover={{
+        y: -6,
+        boxShadow: `0 20px 40px -12px ${s.glow}, 0 4px 16px -4px rgba(16,42,92,0.10)`,
+      }}
+      transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+      className={cn(
+        'flex flex-col items-center rounded-2xl bg-white px-5 py-5',
+        'shadow-[0_2px_16px_-4px_rgba(16,42,92,0.08)]',
+        s.ring
+      )}
+    >
+      <TierBadge tier={tier} size={88} />
 
-      <div className="flex flex-col items-center gap-1">
-        <TierBadge tier={tier} size={133} />
-
-        <div className="flex flex-col items-center gap-5">
-          <div className="flex flex-col items-center">
-            <span className="text-[32px] font-bold leading-none">{returns}</span>
-            <span className="text-sm uppercase leading-5 text-gray-400">Returns</span>
-          </div>
-
-          <div className="flex flex-col items-center pt-1.5">
-            <span className="text-sm leading-5 text-haze/45">Duration</span>
-            <span className="text-xl font-medium leading-[30px] text-frost">{duration}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-stretch justify-between rounded-xl border border-black/10 bg-white/20 px-[18px] py-3">
-        <span className="flex w-[62px] flex-col">
-          <span className="text-[10px] uppercase leading-[15px] tracking-[1.5px]">Min</span>
-          <span className="pt-[5px] text-lg font-semibold leading-[27px] text-frost">{min}</span>
+      <div className="mt-3 flex flex-col items-center gap-0.5">
+        <span className={cn('text-[32px] font-extrabold leading-none tabular-nums', s.figure)}>
+          {returns}
         </span>
-        <span className="w-px self-stretch bg-white/[0.07]" />
-        <span className="flex w-[62px] flex-col items-end">
-          <span className="text-[10px] uppercase leading-[15px] tracking-[1.5px]">Max</span>
-          <span className="pt-[5px] text-lg font-semibold leading-[27px] text-frost">{max}</span>
+        <span className="text-[10px] font-bold uppercase tracking-widest text-asm-muted">Returns</span>
+      </div>
+
+      <div className="mt-3 flex flex-col items-center gap-0.5">
+        <span className="text-[10px] font-bold uppercase tracking-widest text-asm-muted">Duration</span>
+        <span className="text-[15px] font-bold text-asm-navy">{duration}</span>
+      </div>
+
+      <div className="mt-3 flex w-full items-stretch justify-between rounded-xl bg-asm-tint px-4 py-2.5">
+        <span className="flex flex-col">
+          <span className="text-[9px] font-bold uppercase tracking-widest text-asm-muted">Min</span>
+          <span className="mt-0.5 font-mono text-[14px] font-bold tabular-nums text-asm-navy">{min}</span>
+        </span>
+        <span className="w-px self-stretch bg-asm-line" />
+        <span className="flex flex-col items-end">
+          <span className="text-[9px] font-bold uppercase tracking-widest text-asm-muted">Max</span>
+          <span className="mt-0.5 font-mono text-[14px] font-bold tabular-nums text-asm-navy">{max}</span>
         </span>
       </div>
 
-      <div className="rounded-xl border-[0.677px] border-slate-400/30">
-        <Link
-          to="/app/invest"
-          aria-label={`Invest in the ${name} package`}
-          className={cn(
-            'flex h-[55px] items-center justify-center rounded-xl bg-plate',
-            'text-sm font-bold uppercase tracking-[0.35px] text-white transition-opacity hover:opacity-90',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand'
-          )}
-        >
-          Invest Now
-        </Link>
-      </div>
-    </article>
+      <Link
+        to={`/app/invest?plan=${tier}`}
+        aria-label={`Invest in the ${name} package`}
+        className={cn(
+          'mt-3 flex min-h-[44px] w-full items-center justify-center rounded-xl',
+          'text-[12px] font-bold uppercase tracking-[0.08em] text-white',
+          'transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1',
+          s.btn
+        )}
+      >
+        Invest Now
+      </Link>
+    </motion.article>
   )
 }

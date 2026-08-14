@@ -1,4 +1,5 @@
 import { ChevronLeft, Menu } from 'lucide-react'
+import type { RefObject } from 'react'
 import { useNavigate } from 'react-router'
 
 import { cn } from '@/lib/utils'
@@ -15,6 +16,8 @@ interface AppHeaderProps {
   width?: 'default' | 'wide'
   onHelp?: () => void
   onMenu?: () => void
+  /** Ref forwarded to the hamburger button so focus can return to it after drawer closes. */
+  menuButtonRef?: RefObject<HTMLButtonElement | null>
   className?: string
 }
 
@@ -24,6 +27,7 @@ export function AppHeader({
   width = 'default',
   onHelp,
   onMenu,
+  menuButtonRef,
   className,
 }: AppHeaderProps) {
   const navigate = useNavigate()
@@ -31,18 +35,36 @@ export function AppHeader({
   return (
     <header
       className={cn(
-        'fixed inset-x-0 top-0 z-20 backdrop-blur-xl lg:left-60',
-        variant === 'root' ? 'bg-black' : 'bg-black/80',
+        'fixed inset-x-0 top-0 z-20 lg:left-60',
+        /* Premium glassmorphism: heavier blur, semi-transparent base */
+        'backdrop-blur-[22px]',
+        variant === 'root'
+          ? 'bg-white/95'
+          : 'bg-white/88',
+        /* Layered shadow: bright inset top edge + soft drop */
+        'shadow-[0_1px_0_rgba(255,255,255,0.95)_inset,0_4px_24px_-8px_rgba(16,42,92,0.07)]',
+        /* Border replaced by gradient line below */
         className
       )}
     >
+      {/* Gradient accent bar at the very top of the header */}
+      <div
+        aria-hidden
+        className="absolute inset-x-0 top-0 h-[2.5px] bg-gradient-to-r from-asm-blue via-[#0B4FD8] to-asm-greenInk opacity-80"
+      />
+      {/* Subtle bottom separator */}
+      <div
+        aria-hidden
+        className="absolute inset-x-0 bottom-0 h-px bg-asm-line/70"
+      />
+
       <div
         className={cn(
           'mx-auto flex w-full items-center justify-between',
           width === 'wide'
             ? 'max-w-[375px] sm:max-w-[600px] lg:max-w-[860px] xl:max-w-[1120px]'
             : 'max-w-[375px] sm:max-w-[560px] lg:max-w-[720px]',
-          variant === 'root' ? 'px-[15px] py-8' : 'px-5 pb-2 pt-4'
+          variant === 'root' ? 'px-[15px] py-3' : 'px-5 pb-2 pt-3'
         )}
       >
         {variant === 'detail' ? (
@@ -50,24 +72,31 @@ export function AppHeader({
             type="button"
             onClick={() => (backTo ? navigate(backTo) : navigate(-1))}
             aria-label="Go back"
-            className="flex size-10 items-center justify-start rounded-lg text-white/90 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            className="flex size-11 items-center justify-start rounded-lg text-asm-body transition-colors hover:text-asm-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue"
           >
             <ChevronLeft className="size-6" strokeWidth={2.5} />
           </button>
         ) : null}
 
         {/* The side rail carries the wordmark from lg up, so avoid showing it twice. */}
-        <p className="select-none text-[40px] leading-10 text-brand lg:hidden">
-          <span className="font-jakarta font-extrabold tracking-tight">ASM </span>
-          <span className="font-script">Coins</span>
-        </p>
+        <div className="flex select-none items-center gap-2 lg:hidden">
+          <div className="relative">
+            <img
+              src="/asm.png"
+              alt="ASM Coins"
+              className="size-9 shrink-0 rounded-xl object-contain"
+            />
+          </div>
+          <span className="font-jakarta text-[20px] font-extrabold tracking-tight text-asm-navy">ASM</span>
+          <span className="font-script text-[22px] text-asm-greenInk">Coins</span>
+        </div>
 
         {variant === 'detail' ? (
           <button
             type="button"
             onClick={onHelp}
             aria-label="Help"
-            className="flex size-10 items-center justify-end rounded-lg text-white/70 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            className="flex size-11 items-center justify-end rounded-lg text-asm-muted transition-colors hover:text-asm-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue"
           >
             <svg viewBox="0 0 24 24" fill="none" className="size-[18px]" aria-hidden>
               <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
@@ -82,10 +111,13 @@ export function AppHeader({
           </button>
         ) : (
           <button
+            ref={menuButtonRef}
             type="button"
             onClick={onMenu}
             aria-label="Open menu"
-            className="flex size-10 items-center justify-center rounded-lg text-white transition-colors hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand lg:hidden"
+            aria-expanded={false}
+            aria-haspopup="dialog"
+            className="flex size-11 items-center justify-center rounded-lg text-asm-body transition-colors hover:text-asm-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue lg:hidden"
           >
             <Menu className="size-6" strokeWidth={2.5} />
           </button>

@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion'
 import { useState } from 'react'
 import {
   ArrowRight,
@@ -27,7 +28,7 @@ const MAX_WITHDRAWAL = 100000
 const WITHDRAWAL_FEE = 0
 
 /** Placeholder until the wallet service is wired up. */
-const BALANCE = { inr: 2299.3, usd: 27.05 }
+const BALANCE = { inr: 2299.3 }
 
 const rupees = (value: number) =>
   new Intl.NumberFormat('en-IN', {
@@ -47,75 +48,137 @@ export function WithdrawPage() {
   const [destination, setDestination] = useState<Destination>('bank')
   const [accountType, setAccountType] = useState<AccountType>('savings')
   const [amount, setAmount] = useState('')
+  const [submitted, setSubmitted] = useState(false)
 
   const parsed = Number.parseFloat(amount)
   const validAmount = Number.isFinite(parsed) && parsed > 0 ? parsed : 0
   const payout = Math.max(validAmount - WITHDRAWAL_FEE, 0)
 
+  /** Mock submit — real implementation sends to the withdrawal API */
+  function handleSubmit() {
+    if (validAmount < MIN_WITHDRAWAL || validAmount > MAX_WITHDRAWAL) return
+    setSubmitted(true)
+  }
+
+  /* ── Submitted confirmation state ── */
+  if (submitted) {
+    return (
+      <AppShell backTo="/app">
+        <div className="flex flex-col items-center gap-6 py-12 text-center lg:mx-auto lg:max-w-[480px]">
+          <span className="flex size-16 items-center justify-center rounded-full bg-asm-green-tint">
+            <Check className="size-8 text-asm-greenInk" strokeWidth={2.5} aria-hidden />
+          </span>
+          <div className="flex flex-col gap-2">
+            <h1 className="text-[22px] font-extrabold leading-tight tracking-tight text-asm-navy">
+              Request submitted
+            </h1>
+            <p className="text-[14px] leading-relaxed text-asm-body">
+              Your withdrawal of{' '}
+              <span className="font-bold text-asm-navy">{rupees(validAmount)}</span>{' '}
+              is under review. Our team typically processes it within{' '}
+              <span className="font-bold text-asm-navy">1 hour</span>.
+            </p>
+          </div>
+          <div className="w-full rounded-2xl border border-asm-line bg-white px-6 py-5 text-left shadow-[0_2px_12px_-4px_rgba(16,42,92,0.08)]">
+            <p className="text-[11px] font-bold uppercase tracking-[1px] text-amber-600">What happens next</p>
+            <ul className="mt-4 flex flex-col gap-3">
+              <KeyPoint>Our team reviews your request — usually within 1 hour.</KeyPoint>
+              <KeyPoint>Once approved, funds are sent to your {destination === 'upi' ? 'UPI ID' : 'bank account'}.</KeyPoint>
+              <KeyPoint>You'll receive a confirmation when the transfer is complete.</KeyPoint>
+              <KeyPoint>
+                Questions? Email <Strong>support@asmcoins.com</Strong> or tap the{' '}
+                <Strong>?</Strong> button in the header.
+              </KeyPoint>
+            </ul>
+          </div>
+          <button
+            type="button"
+            onClick={() => { setSubmitted(false); setAmount('') }}
+            className="flex min-h-[44px] items-center text-[13px] font-semibold text-asm-muted transition-colors hover:text-asm-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue rounded"
+          >
+            Make another withdrawal
+          </button>
+        </div>
+      </AppShell>
+    )
+  }
+
+  const container = {
+    hidden: {},
+    visible: { transition: { staggerChildren: 0.09, delayChildren: 0.04 } },
+  }
+  const fadeUp = {
+    hidden: { opacity: 0, y: 16 },
+    visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 90, damping: 18 } },
+  }
+
   return (
     <AppShell backTo="/app" width="wide">
-      <div className="flex flex-col gap-6 lg:mx-auto lg:max-w-[560px]">
-        {/* Balance */}
-        <section className="flex items-center justify-between rounded-2xl border border-white/[0.08] bg-surface-2 p-[17px]">
+      <motion.div
+        className="flex flex-col gap-5 lg:mx-auto lg:max-w-[560px]"
+        variants={container}
+        initial="hidden"
+        animate="visible"
+      >
+
+        {/* ── Balance card ── */}
+        <motion.section variants={fadeUp} className="flex items-center justify-between rounded-2xl border border-asm-line bg-white p-[17px] shadow-[0_2px_12px_-4px_rgba(16,42,92,0.08)]">
           <div className="flex items-center">
-            <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-amber-500/20 bg-amber-500/10">
-              <Wallet className="size-5 text-amber-500" aria-hidden />
+            <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-amber-200 bg-amber-50">
+              <Wallet className="size-5 text-amber-600" aria-hidden />
             </span>
             <div className="flex flex-col pl-4">
-              <span className="text-[10px] font-bold uppercase leading-[15px] tracking-[1px] text-gray-500">
+              <span className="text-[11px] font-bold uppercase leading-[15px] tracking-[1px] text-asm-muted">
                 Withdrawable balance
               </span>
-              <span className="flex items-baseline gap-2">
-                <span className="text-xl font-bold leading-7 tracking-[-0.16px]">
-                  {rupees(BALANCE.inr)}
-                </span>
-                <span className="text-xs leading-4 tracking-[-0.16px] text-gray-400">
-                  ≈ ${BALANCE.usd.toFixed(2)}
-                </span>
+              <span className="mt-0.5 font-mono text-xl font-bold tabular-nums leading-7 text-asm-navy">
+                {rupees(BALANCE.inr)}
               </span>
             </div>
           </div>
-          <ChevronRight className="size-3 shrink-0 text-gray-500" aria-hidden />
-        </section>
+          <ChevronRight className="size-4 shrink-0 text-asm-muted" aria-hidden />
+        </motion.section>
 
-        {/* Amount */}
-        <section className="flex flex-col gap-3">
+        {/* ── Amount ── */}
+        <motion.section variants={fadeUp} className="flex flex-col gap-3">
           <SectionLabel>Amount to withdraw</SectionLabel>
-          <div className="flex h-14 items-center gap-3 rounded-xl border border-white/[0.08] bg-surface-2 px-4">
-            <IndianRupee className="size-3.5 shrink-0 text-gray-500" aria-hidden />
+          <div className="flex h-14 items-center gap-3 rounded-xl border border-asm-line bg-white px-4 shadow-[0_1px_4px_-1px_rgba(16,42,92,0.06)]">
+            <IndianRupee className="size-3.5 shrink-0 text-asm-muted" aria-hidden />
             <input
               value={amount}
               onChange={(event) => setAmount(event.target.value)}
               inputMode="decimal"
-              placeholder="Enter amount"
+              placeholder="0"
               aria-label="Amount to withdraw"
-              className="min-w-0 flex-1 bg-transparent text-base font-bold tracking-[-0.16px] text-white outline-none placeholder:font-bold placeholder:text-gray-400"
+              className="min-w-0 flex-1 bg-transparent font-mono text-base font-bold tabular-nums text-asm-navy outline-none placeholder:font-sans placeholder:font-bold placeholder:text-asm-muted/50"
             />
             <button
               type="button"
-              className="flex shrink-0 items-center gap-2 text-xs font-bold leading-4 tracking-[-0.16px] text-gray-300"
+              aria-label="Select currency"
+              className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1 text-[12px] font-bold text-asm-muted transition-colors hover:bg-asm-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue"
             >
               INR
-              <ChevronDown className="size-2.5" aria-hidden />
+              <ChevronDown className="size-3" aria-hidden />
             </button>
           </div>
-          <p className="px-1 text-[10px] leading-[15px] tracking-[-0.16px] text-gray-500">
-            Min <span className="font-bold text-gray-300">₹{rupeesCompact(MIN_WITHDRAWAL)}</span> • Max{' '}
-            <span className="font-bold text-amber-500">₹{rupeesCompact(MAX_WITHDRAWAL)}</span>
+          <p className="px-1 text-[11px] leading-[15px] text-asm-muted">
+            Min <span className="font-bold text-asm-navy">₹{rupeesCompact(MIN_WITHDRAWAL)}</span>
+            {' '}·{' '}
+            Max <span className="font-bold text-asm-blue">₹{rupeesCompact(MAX_WITHDRAWAL)}</span>
           </p>
-        </section>
+        </motion.section>
 
-        {/* Destination */}
-        <section className="flex flex-col gap-3">
+        {/* ── Destination ── */}
+        <motion.section variants={fadeUp} className="flex flex-col gap-3">
           <SectionLabel>Withdraw to</SectionLabel>
-          <div className="flex items-stretch gap-3">
+          <div className="flex items-stretch gap-3" role="group" aria-label="Select withdrawal destination">
             <DestinationCard
               selected={destination === 'bank'}
               onSelect={() => setDestination('bank')}
               Icon={Landmark}
               title="Bank Account"
               currency="(INR)"
-              description="Withdraw to your linked bank account"
+              description="Send to your bank account"
             />
             <DestinationCard
               selected={destination === 'upi'}
@@ -123,166 +186,173 @@ export function WithdrawPage() {
               Icon={Smartphone}
               title="UPI"
               currency="(INR)"
-              description="Withdraw to your linked UPI ID"
+              description="Send to your UPI ID"
             />
           </div>
-        </section>
+        </motion.section>
 
-        {/* Bank details */}
-        <section className="flex flex-col gap-4">
-          <div className="flex items-center justify-between px-1">
-            <SectionLabel className="px-0">Enter bank details</SectionLabel>
-            <span className="flex items-center gap-1.5 text-[9px] font-bold uppercase leading-[13.5px] tracking-[-0.16px] text-emerald-500">
-              <Shield className="size-2.5" aria-hidden />
-              100% Secure
-            </span>
-          </div>
+        {/* ── Bank details — shown only when bank is selected ── */}
+        {destination === 'bank' && (
+          <section className="flex flex-col gap-4">
+            <div className="flex items-center justify-between px-1">
+              <SectionLabel className="px-0">Bank details</SectionLabel>
+              <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.06em] text-asm-greenInk">
+                <Shield className="size-3" aria-hidden />
+                100% Secure
+              </span>
+            </div>
 
-          <div className="flex flex-col gap-3">
-            <FormField
-              label="Account holder name"
-              placeholder="Enter Account Holder Name"
-              Icon={User}
-              autoComplete="name"
-            />
-            <FormField
-              label="Bank account number"
-              placeholder="Enter Bank Account Number"
-              Icon={CreditCard}
-              inputMode="numeric"
-            />
-            <FormField
-              label="IFSC code"
-              placeholder="ENTER IFSC CODE"
-              Icon={Building2}
-              className="uppercase placeholder:uppercase"
-            />
-
-            <fieldset className="flex flex-col gap-2">
-              <legend className="px-1 pb-2 text-[10px] font-bold uppercase leading-[15px] tracking-[-0.16px] text-gray-500">
-                Account type
-              </legend>
-              <div className="flex gap-2">
-                <AccountTypeButton
-                  selected={accountType === 'savings'}
-                  onSelect={() => setAccountType('savings')}
-                  Icon={PiggyBank}
-                  label="Savings account"
+            <div className="flex flex-col gap-3">
+              <FormField
+                label="Account holder name"
+                placeholder="Full name as on your bank account"
+                Icon={User}
+                autoComplete="name"
+              />
+              <FormField
+                label="Bank account number"
+                placeholder="Enter account number"
+                Icon={CreditCard}
+                inputMode="numeric"
+              />
+              <div className="flex flex-col gap-1.5">
+                <FormField
+                  label="IFSC code"
+                  placeholder="E.g. SBIN0001234"
+                  Icon={Building2}
+                  className="uppercase placeholder:normal-case"
+                  maxLength={11}
                 />
-                <AccountTypeButton
-                  selected={accountType === 'current'}
-                  onSelect={() => setAccountType('current')}
-                  Icon={Briefcase}
-                  label="Current account"
-                />
+                <p className="px-1 text-[11px] leading-snug text-asm-muted">
+                  11-character code on your chequebook or passbook (e.g. HDFC0000123).
+                </p>
               </div>
-            </fieldset>
-          </div>
 
-          <Callout>
-            Please ensure all bank details are correct. Incorrect details may result in failed
-            transactions or delays.
-          </Callout>
-        </section>
+              <fieldset className="flex flex-col gap-2">
+                <legend className="px-1 pb-2 text-[11px] font-bold uppercase leading-[15px] tracking-[0.06em] text-asm-muted">
+                  Account type
+                </legend>
+                <div className="flex gap-2">
+                  <AccountTypeButton
+                    selected={accountType === 'savings'}
+                    onSelect={() => setAccountType('savings')}
+                    Icon={PiggyBank}
+                    label="Savings"
+                  />
+                  <AccountTypeButton
+                    selected={accountType === 'current'}
+                    onSelect={() => setAccountType('current')}
+                    Icon={Briefcase}
+                    label="Current"
+                  />
+                </div>
+              </fieldset>
+            </div>
 
-        {/* OR */}
-        <div className="flex items-center gap-4 py-2">
-          <span className="h-px flex-1 bg-white/5" />
-          <span className="text-[10px] font-bold uppercase leading-[15px] tracking-[-0.16px] text-gray-600">
-            or
-          </span>
-          <span className="h-px flex-1 bg-white/5" />
-        </div>
+            <Callout>
+              Double-check your account number and IFSC — incorrect details can cause failed
+              transfers that cannot be reversed.
+            </Callout>
+          </section>
+        )}
 
-        {/* UPI details */}
-        <section className="flex flex-col gap-3">
-          <SectionLabel>Enter UPI details</SectionLabel>
-          <FormField
-            label="UPI ID"
-            placeholder="Enter UPI ID (e.g. name@upi)"
-            Icon={AtSign}
-            trailing={<Smartphone className="size-4 text-gray-500" aria-hidden />}
-          />
-          <Callout>
-            Please ensure your UPI ID is correct. Withdrawals sent to the wrong UPI ID may fail.
-          </Callout>
-        </section>
+        {/* ── UPI details — shown only when UPI is selected ── */}
+        {destination === 'upi' && (
+          <section className="flex flex-col gap-3">
+            <SectionLabel>UPI details</SectionLabel>
+            <div className="flex flex-col gap-1.5">
+              <FormField
+                label="UPI ID"
+                placeholder="name@upi or name@okaxis"
+                Icon={AtSign}
+                trailing={<Smartphone className="size-4 text-asm-muted" aria-hidden />}
+              />
+              <p className="px-1 text-[11px] leading-snug text-asm-muted">
+                Must include @ — e.g. yourname@okicici or 9876543210@paytm.
+              </p>
+            </div>
+            <Callout>
+              The UPI ID must be active and registered to your name. A wrong ID causes an
+              immediate failed transfer with no reversal.
+            </Callout>
+          </section>
+        )}
 
-        {/* Summary */}
-        <section className="flex flex-col gap-3 rounded-2xl border border-white/[0.08] bg-surface-2 p-[21px]">
-          <h2 className="text-[10px] font-bold uppercase leading-[15px] tracking-[1px] text-gray-500">
+        {/* ── Summary ── */}
+        <section className="rounded-2xl border border-asm-line bg-white p-[21px] shadow-[0_2px_12px_-4px_rgba(16,42,92,0.08)]">
+          <h2 className="text-[11px] font-bold uppercase leading-[15px] tracking-[1px] text-asm-muted">
             Withdrawal summary
           </h2>
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-2 text-xs leading-4 tracking-[-0.16px] text-gray-400">
-              Withdrawal Fee
-              <Info className="size-[9px]" aria-hidden />
+          <div className="mt-3 flex items-center justify-between">
+            <span className="flex items-center gap-2 text-[13px] text-asm-body">
+              Withdrawal fee
+              <Info className="size-3.5 text-asm-muted" aria-hidden />
             </span>
-            <span className="text-xs font-bold leading-4 tracking-[-0.16px]">
-              {rupees(WITHDRAWAL_FEE)}
+            <span className="font-mono text-[13px] font-bold tabular-nums text-asm-greenInk">
+              {WITHDRAWAL_FEE === 0 ? 'Free' : rupees(WITHDRAWAL_FEE)}
             </span>
           </div>
-          <span className="h-px w-full bg-white/5" />
-          <div className="flex items-center justify-between pt-1">
-            <span className="text-sm font-bold leading-5 tracking-[-0.16px] text-gray-300">
-              You Will Get
-            </span>
-            <span className="text-lg font-bold leading-7 tracking-[-0.45px] text-emerald-400">
+          <span className="my-3 block h-px w-full bg-asm-line" />
+          <div className="flex items-center justify-between">
+            <span className="text-[14px] font-bold text-asm-navy">You will get</span>
+            <span className="font-mono text-lg font-bold tabular-nums text-asm-greenInk">
               {rupees(payout)}
             </span>
           </div>
         </section>
 
-        {/* Action */}
-        <div className="flex flex-col gap-6 pt-2">
+        {/* ── Action ── */}
+        <div className="flex flex-col gap-5 pt-1">
           <button
             type="button"
+            onClick={handleSubmit}
             className={cn(
               'flex h-14 w-full items-center justify-center gap-3 rounded-2xl',
-              'bg-gradient-to-br from-gold to-yellow-500 shadow-2xl shadow-black/25',
-              'text-base font-bold uppercase leading-6 tracking-[-0.4px] text-black',
-              'transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2',
-              'focus-visible:ring-white/60 disabled:pointer-events-none disabled:opacity-50'
+              'bg-asm-greenInk shadow-[0_8px_24px_-8px_rgba(21,128,61,0.5)]',
+              'text-base font-bold uppercase leading-6 tracking-[0.04em] text-white',
+              'transition-colors hover:bg-green-800 active:scale-[0.99]',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-greenInk focus-visible:ring-offset-2',
+              'disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none'
             )}
             disabled={validAmount < MIN_WITHDRAWAL || validAmount > MAX_WITHDRAWAL}
           >
             Submit Withdrawal Request
-            <ArrowRight className="size-3" aria-hidden />
+            <ArrowRight className="size-4" aria-hidden />
           </button>
 
-          <section className="rounded-lg border border-white/[0.08] bg-surface-2 p-[21px]">
-            <h2 className="text-[10px] font-bold uppercase leading-[15px] tracking-[1px] text-amber-500">
+          <section className="rounded-2xl border border-asm-line bg-white p-5 shadow-[0_2px_12px_-4px_rgba(16,42,92,0.06)]">
+            <h2 className="text-[11px] font-bold uppercase tracking-[1px] text-amber-600">
               Key Points
             </h2>
-            <ul className="mt-4 flex flex-col gap-3">
+            <ul className="mt-3 flex flex-col gap-3">
               <KeyPoint>
-                Withdrawals are usually processed within <Strong>1 hour</Strong>, with a maximum of
-                24hrs.
+                Every withdrawal is <Strong>reviewed by our team</Strong> before processing.
+                This protects your funds.
               </KeyPoint>
               <KeyPoint>
-                Withdrawal amount should be between{' '}
-                <Strong>
-                  ₹{rupeesCompact(MIN_WITHDRAWAL)} - ₹{rupeesCompact(MAX_WITHDRAWAL)}
-                </Strong>
-                .
+                Processing typically takes <Strong>under 1 hour</Strong>. In rare cases up to 24 hours.
               </KeyPoint>
-              <KeyPoint>Raise a support ticket for any queries.</KeyPoint>
+              <KeyPoint>
+                Amount must be between <Strong>₹{rupeesCompact(MIN_WITHDRAWAL)}</Strong> and{' '}
+                <Strong>₹{rupeesCompact(MAX_WITHDRAWAL)}</Strong>.
+              </KeyPoint>
+              <KeyPoint>
+                Need help? Tap <Strong>?</Strong> or email <Strong>support@asmcoins.com</Strong>.
+              </KeyPoint>
             </ul>
           </section>
         </div>
-      </div>
+
+      </motion.div>
     </AppShell>
   )
 }
 
+/* ── Sub-components ─────────────────────────────────────────────── */
+
 function SectionLabel({ className, children }: { className?: string; children: React.ReactNode }) {
   return (
-    <h2
-      className={cn(
-        'px-1 text-xs font-bold uppercase leading-4 tracking-[1.2px] text-gray-400',
-        className
-      )}
-    >
+    <h2 className={cn('px-1 text-[11px] font-bold uppercase leading-4 tracking-[1.2px] text-asm-muted', className)}>
       {children}
     </h2>
   )
@@ -309,37 +379,29 @@ function DestinationCard({
       onClick={onSelect}
       aria-pressed={selected}
       className={cn(
-        'flex flex-1 flex-col items-start gap-1 rounded-2xl border bg-surface-2 p-[17px] text-left',
-        'transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
-        selected ? 'border-yellow-500' : 'border-surface-2 hover:border-white/10'
+        'flex flex-1 flex-col items-start gap-1.5 rounded-2xl border bg-white p-[17px] text-left',
+        'transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-greenInk',
+        selected
+          ? 'border-2 border-asm-greenInk bg-asm-green-tint/20'
+          : 'border-asm-line hover:border-asm-greenInk/40'
       )}
     >
       <span className="flex w-full items-start justify-between">
-        <span
-          className={cn(
-            'flex size-10 items-center justify-center rounded-xl',
-            selected ? 'bg-amber-500/10' : 'bg-white/5'
-          )}
-        >
-          <Icon
-            className={cn('size-4', selected ? 'text-amber-500' : 'text-gray-500 opacity-50')}
-            aria-hidden
-          />
+        <span className={cn('flex size-10 items-center justify-center rounded-xl', selected ? 'bg-asm-green-tint' : 'bg-asm-tint')}>
+          <Icon className={cn('size-4', selected ? 'text-asm-greenInk' : 'text-asm-muted')} aria-hidden />
         </span>
         {selected ? (
-          <span className="flex size-4 items-center justify-center rounded-full bg-amber-500">
-            <Check className="size-2.5 text-black" strokeWidth={3.5} aria-hidden />
+          <span className="flex size-4 items-center justify-center rounded-full bg-asm-greenInk">
+            <Check className="size-2.5 text-white" strokeWidth={3.5} aria-hidden />
           </span>
         ) : (
-          <span className="size-4 rounded-full border border-white/20" />
+          <span className="size-4 rounded-full border-2 border-asm-line" />
         )}
       </span>
-      <span className="text-xs font-bold leading-4 tracking-[-0.16px]">
-        {title} <span className="text-[9px] font-bold text-gray-500">{currency}</span>
+      <span className={cn('text-[13px] font-bold leading-4', selected ? 'text-asm-navy' : 'text-asm-body')}>
+        {title} <span className="text-[10px] font-semibold text-asm-muted">{currency}</span>
       </span>
-      <span className="text-[9px] leading-[13.5px] tracking-[-0.16px] text-gray-500">
-        {description}
-      </span>
+      <span className="text-[11px] leading-snug text-asm-muted">{description}</span>
     </button>
   )
 }
@@ -361,15 +423,15 @@ function AccountTypeButton({
       onClick={onSelect}
       aria-pressed={selected}
       className={cn(
-        'flex h-10 flex-1 items-center justify-center gap-2 rounded-xl border',
-        'text-[10px] font-bold uppercase leading-[15px] tracking-[-0.16px]',
-        'transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
+        'flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl border',
+        'text-[12px] font-bold uppercase tracking-[0.05em]',
+        'transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-greenInk',
         selected
-          ? 'border-yellow-500/40 bg-yellow-500/10 text-yellow-500'
-          : 'border-white/5 bg-surface text-gray-500 hover:border-white/10'
+          ? 'border-asm-greenInk/40 bg-asm-green-tint text-asm-greenInk'
+          : 'border-asm-line bg-white text-asm-muted hover:border-asm-greenInk/30'
       )}
     >
-      <Icon className="size-2.5" aria-hidden />
+      <Icon className="size-3.5" aria-hidden />
       {label}
     </button>
   )
@@ -389,16 +451,16 @@ function FormField({
   trailing?: React.ReactNode
 } & React.ComponentProps<'input'>) {
   return (
-    <label className="flex flex-col">
-      <span className="px-1 pb-[15px] text-[10px] font-bold uppercase leading-[15px] tracking-[-0.16px] text-gray-500">
+    <label className="flex flex-col gap-1.5">
+      <span className="px-1 text-[11px] font-bold uppercase leading-[15px] tracking-[0.06em] text-asm-muted">
         {label}
       </span>
-      <span className="flex h-12 items-center gap-3 rounded-xl border border-white/[0.08] bg-surface px-4">
-        <Icon className="size-3.5 shrink-0 text-gray-500" aria-hidden />
+      <span className="flex h-12 items-center gap-3 rounded-xl border border-asm-line bg-white px-4 shadow-[0_1px_4px_-1px_rgba(16,42,92,0.06)]">
+        <Icon className="size-3.5 shrink-0 text-asm-muted" aria-hidden />
         <input
           placeholder={placeholder}
           className={cn(
-            'min-w-0 flex-1 bg-transparent text-xs tracking-[-0.16px] text-white outline-none placeholder:text-gray-400',
+            'min-w-0 flex-1 bg-transparent text-[13px] text-asm-navy outline-none placeholder:text-asm-muted/55',
             className
           )}
           {...props}
@@ -411,9 +473,9 @@ function FormField({
 
 function Callout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-amber-500/10 bg-amber-500/5 p-[13px]">
-      <Info className="mt-0.5 size-2.5 shrink-0 text-amber-500" aria-hidden />
-      <p className="text-[9px] leading-[14.6px] tracking-[-0.16px] text-gray-500">{children}</p>
+    <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3.5">
+      <Info className="mt-0.5 size-4 shrink-0 text-amber-600" aria-hidden />
+      <p className="text-[12px] leading-relaxed text-amber-800">{children}</p>
     </div>
   )
 }
@@ -421,12 +483,12 @@ function Callout({ children }: { children: React.ReactNode }) {
 function KeyPoint({ children }: { children: React.ReactNode }) {
   return (
     <li className="flex items-start gap-3">
-      <Check className="mt-0.5 size-2.5 shrink-0 text-emerald-500" strokeWidth={3} aria-hidden />
-      <span className="text-[9px] leading-[14.6px] tracking-[-0.16px] text-gray-400">{children}</span>
+      <Check className="mt-0.5 size-3.5 shrink-0 text-asm-greenInk" strokeWidth={2.5} aria-hidden />
+      <span className="text-[12px] leading-relaxed text-asm-body">{children}</span>
     </li>
   )
 }
 
 function Strong({ children }: { children: React.ReactNode }) {
-  return <span className="font-bold text-white">{children}</span>
+  return <span className="font-bold text-asm-navy">{children}</span>
 }
