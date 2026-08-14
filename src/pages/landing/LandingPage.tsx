@@ -4,7 +4,6 @@ import {
   ChartNoAxesCombined,
   Coins,
   Headphones,
-  MapPin,
   Rocket,
   ShieldCheck,
   TrendingUp,
@@ -17,6 +16,7 @@ import type { LucideIcon } from 'lucide-react'
 import { Link } from 'react-router'
 
 import { HeroMark } from '@/components/home/HeroMark'
+import { IndiaFlag } from '@/components/home/IndiaFlag'
 import { Sparkline } from '@/components/home/Sparkline'
 import {
   LandingFooter,
@@ -335,17 +335,17 @@ function MobileCta() {
 
 function Hero() {
   return (
-    <section className="grid items-center gap-6 pt-6 lg:grid-cols-[1.05fr_1fr] lg:gap-12 lg:pt-12">
+    <section className="pt-6 lg:pt-10">
       <div className="animate-rise">
-        <h1 className="text-[30px] leading-[1.1] tracking-[-0.02em] sm:text-[38px] lg:text-[46px]">
+        <h1 className="text-[21px] leading-[1.15] tracking-[-0.01em] sm:text-[26px] lg:text-[32px]">
           <span className="block font-semibold text-asm-navy">Smart Investment</span>
-          <span className="block pt-1 font-extrabold">
+          <span className="block pt-0.5 font-extrabold">
             <span className="text-asm-navy">Secure </span>
             <span className="text-asm-green">Future</span>
           </span>
         </h1>
 
-        <p className="max-w-[48ch] pt-4 text-sm leading-relaxed text-asm-body lg:text-base">
+        <p className="max-w-[48ch] pt-3 text-[13px] leading-relaxed text-asm-body sm:text-sm">
           ASM Coins is an investment platform built for people across India who want a clear,
           straightforward way to grow what they have saved.
         </p>
@@ -380,20 +380,23 @@ function Hero() {
           </a>
         </div>
 
-        <div className="mt-6 flex items-center gap-3 rounded-xl border border-asm-line bg-white p-4">
-          <MapPin className="size-6 shrink-0 text-asm-blue" strokeWidth={2.1} aria-hidden />
-          <span className="flex flex-col">
-            <span className="text-sm font-extrabold uppercase leading-tight tracking-[0.06em]">
-              India
+        {/* Flag chip on the left, mark immediately to its right. */}
+        <div className="mt-5 flex items-center gap-3">
+          <div className="flex items-center gap-2.5 rounded-lg border border-asm-line bg-white py-1.5 pl-1.5 pr-3">
+            <IndiaFlag className="h-6 w-9 shrink-0 rounded-[3px] shadow-[0_1px_3px_rgb(16_42_92_/_0.25)]" />
+            <span className="flex flex-col">
+              <span className="text-[12px] font-extrabold uppercase leading-tight tracking-[0.06em]">
+                India
+              </span>
+              <span className="text-[9px] font-semibold uppercase leading-tight tracking-[0.08em] text-asm-body">
+                Our country, our pride
+              </span>
             </span>
-            <span className="pt-0.5 text-[10px] font-semibold uppercase leading-tight tracking-[0.1em] text-asm-body">
-              Our country, our pride, our strength
-            </span>
-          </span>
+          </div>
+
+          <HeroMark variant="compact" className="size-12 shrink-0 animate-rise sm:size-14" />
         </div>
       </div>
-
-      <HeroMark className="mx-auto aspect-square w-full max-w-[220px] animate-rise sm:max-w-[280px] lg:max-w-[380px]" />
     </section>
   )
 }
@@ -522,7 +525,7 @@ const PLAN_ACCENT = {
 
 function PlansSection() {
   return (
-    <section id="plans" className="scroll-mt-24 pt-10" aria-labelledby="plans-heading">
+    <section id="plans" className="scroll-mt-4 pt-10" aria-labelledby="plans-heading">
       <div className="flex items-center gap-3">
         <span className="h-px flex-1 bg-gradient-to-r from-transparent to-asm-blue/40" />
         <h2
@@ -624,7 +627,7 @@ function PlansSection() {
 
 function HowItWorks() {
   return (
-    <section id="about" className="scroll-mt-24 pt-10" aria-labelledby="about-heading">
+    <section id="about" className="scroll-mt-4 pt-10" aria-labelledby="about-heading">
       <div className="flex items-center gap-3">
         <span className="h-px flex-1 bg-gradient-to-r from-transparent to-asm-blue/40" />
         <h2

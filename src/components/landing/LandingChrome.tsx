@@ -37,11 +37,9 @@ export function LandingHeader({
   onMenu?: () => void
 }) {
   return (
-    <header
-      className={cn(
-        'sticky top-0 z-30 border-b border-asm-line/80 bg-white/90 backdrop-blur-md'
-      )}
-    >
+    /* Scrolls away with the page. The bottom CTA bar carries the primary
+       action on mobile, so nothing is lost by letting the header go. */
+    <header className="border-b border-asm-line/80 bg-white">
       <div className="mx-auto flex w-full max-w-[1180px] items-center justify-between gap-4 px-4 py-3 lg:px-8">
         <Link
           to="/"
