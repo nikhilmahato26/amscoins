@@ -1,4 +1,4 @@
-require('dotenv').config()
+require('dotenv').config({ quiet: true })
 
 const required = ['MONGO_URI', 'JWT_SECRET']
 for (const k of required) {
