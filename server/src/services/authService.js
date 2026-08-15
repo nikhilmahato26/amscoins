@@ -51,4 +51,30 @@ async function login({ email, password }) {
   return { user, token: signToken(user) }
 }
 
-module.exports = { register, login, signToken }
+async function findOrCreateGoogleUser({ googleId, email, name }) {
+  const lowerEmail = String(email).toLowerCase()
+
+  let user = await User.findOne({ googleId })
+  if (user) {
+    if (user.status === 'frozen') throw new ApiError(403, 'Account frozen')
+    return user
+  }
+
+  user = await User.findOne({ email: lowerEmail })
+  if (user) {
+    if (user.role === 'admin') throw new ApiError(403, 'Admin accounts must sign in with a password')
+    if (user.status === 'frozen') throw new ApiError(403, 'Account frozen')
+    user.googleId = googleId
+    await user.save()
+    logger.info('Linked Google identity to existing account', { userId: user._id })
+    return user
+  }
+
+  const code = await generateUniqueCode()
+  user = await User.create({ name: name || lowerEmail, email: lowerEmail, googleId, referralCode: code })
+  await Wallet.create({ user: user._id, balance: 0 })
+  logger.info('User registered via Google', { userId: user._id, email: user.email })
+  return user
+}
+
+module.exports = { register, login, signToken, findOrCreateGoogleUser }
