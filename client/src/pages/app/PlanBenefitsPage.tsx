@@ -3,7 +3,10 @@ import type { LucideIcon } from 'lucide-react'
 
 import { AppShell } from '@/components/app/AppShell'
 import { type Tier } from '@/components/app/TierBadge'
+import { usePlans } from '@/hooks/queries'
+import { inr } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import type { Plan } from '@/services/api/plans'
 
 /**
  * Figma's card background is an eight-stop 150deg gradient; kept verbatim
@@ -18,24 +21,23 @@ const TIER_ICONS: Record<Tier, LucideIcon> = {
   diamond: Gem,
 }
 
-/**
- * All three cards carry identical stat values in Figma, which looks like
- * placeholder content rather than intent.
- */
-const STATS: { label: string; value: string; Icon: LucideIcon }[] = [
+/** Static benefit badges — same for every plan tier. */
+const STATIC_STATS: { label: string; value: string; Icon: LucideIcon }[] = [
   { label: 'Level Unlock', value: 'Instant', Icon: Unlock },
   { label: 'Referral Benefits', value: 'Available', Icon: Users },
   { label: 'Payout', value: 'Instant', Icon: Zap },
   { label: 'Secure Investment', value: '100%', Icon: ShieldCheck },
 ]
 
-const PLANS: { tier: Tier; name: string; description: string }[] = [
-  { tier: 'silver', name: 'Silver', description: 'Start your journey with Silver package' },
-  { tier: 'gold', name: 'Gold', description: 'Accelerate returns with Gold package' },
-  { tier: 'diamond', name: 'Diamond', description: 'Maximum growth with Diamond package' },
-]
+const PLAN_DESCRIPTIONS: Record<Tier, string> = {
+  silver: 'Start your journey with Silver package',
+  gold: 'Accelerate returns with Gold package',
+  diamond: 'Maximum growth with Diamond package',
+}
 
 export function PlanBenefitsPage() {
+  const { data: plans, isLoading, isError } = usePlans()
+
   return (
     <AppShell backTo="/app" width="wide" contentClassName="px-6 pt-[104px]">
       {/* Ambient glows (Figma 28:10948-10950) */}
@@ -63,26 +65,46 @@ export function PlanBenefitsPage() {
           </p>
         </header>
 
-        <div className="flex flex-col gap-4 pt-14 xl:grid xl:grid-cols-3 xl:items-start">
-          {PLANS.map((plan) => (
-            <FeatureCard key={plan.tier} {...plan} />
-          ))}
-        </div>
+        {isLoading && (
+          <div role="status" aria-live="polite" aria-label="Loading plan benefits" className="flex flex-col gap-4 pt-14 xl:grid xl:grid-cols-3 xl:items-start">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="h-[260px] animate-pulse rounded-[20px] bg-sheen/[0.05]" />
+            ))}
+          </div>
+        )}
+
+        {isError && (
+          <p role="alert" className="pt-14 text-center text-sm text-red-400">
+            Failed to load plan details. Please refresh.
+          </p>
+        )}
+
+        {plans && (
+          <div className="flex flex-col gap-4 pt-14 xl:grid xl:grid-cols-3 xl:items-start">
+            {plans.map((plan) => (
+              <FeatureCard key={plan.key} plan={plan} />
+            ))}
+          </div>
+        )}
       </div>
     </AppShell>
   )
 }
 
-function FeatureCard({
-  tier,
-  name,
-  description,
-}: {
-  tier: Tier
-  name: string
-  description: string
-}) {
-  const Icon = TIER_ICONS[tier]
+function FeatureCard({ plan }: { plan: Plan }) {
+  const Icon = TIER_ICONS[plan.key]
+  const description = PLAN_DESCRIPTIONS[plan.key] ?? `Invest with ${plan.name} package`
+
+  // Dynamic stats from real plan data
+  const dynamicStats: { label: string; value: string; Icon: LucideIcon }[] = [
+    { label: 'Returns', value: `${plan.returnPct}%`, Icon: TIER_ICONS[plan.key] },
+    { label: 'Duration', value: `${plan.durationHours}h`, Icon: Unlock },
+    { label: 'Min Invest', value: inr(plan.minInvest), Icon: Users },
+    { label: 'Secure', value: '100%', Icon: ShieldCheck },
+  ]
+
+  // Merge static benefits with dynamic plan figures
+  const stats = dynamicStats.length > 0 ? dynamicStats : STATIC_STATS
 
   return (
     <article
@@ -102,7 +124,7 @@ function FeatureCard({
         <BenefitBadge Icon={Icon} />
         <div className="flex min-w-0 flex-col">
           <h2 className="text-[22px] font-bold uppercase leading-[33px] tracking-[1.32px] text-frost">
-            {name}
+            {plan.name}
           </h2>
           <p className="pt-1 text-[13px] leading-[19.5px] text-haze/50">{description}</p>
         </div>
@@ -114,7 +136,7 @@ function FeatureCard({
 
       {/* 4-up crushes these to ~78px on a 360px screen, so 2-up until sm. */}
       <div className="grid grid-cols-2 gap-2 pt-5 sm:grid-cols-4">
-        {STATS.map(({ label, value, Icon: StatIcon }) => (
+        {stats.map(({ label, value, Icon: StatIcon }) => (
           <div
             key={label}
             className={cn(
@@ -134,6 +156,16 @@ function FeatureCard({
           </div>
         ))}
       </div>
+
+      {/* Unlock requirement for locked plans */}
+      {!plan.unlocked && (
+        <div className="mt-4 flex items-center gap-2 rounded-xl border border-sheen/10 bg-white/[0.03] px-4 py-2.5">
+          <Zap className="size-4 text-gold-warm/70" aria-hidden />
+          <span className="text-[12px] text-haze/50">
+            Unlock with <span className="font-semibold text-gold-warm">{plan.unlockReferrals} referrals</span>
+          </span>
+        </div>
+      )}
     </article>
   )
 }

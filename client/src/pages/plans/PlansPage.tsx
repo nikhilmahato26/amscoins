@@ -1,38 +1,25 @@
-import { Clock, Gem, Medal, Trophy } from 'lucide-react'
+import { Clock, Gem, Lock, Medal, Trophy } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { Link } from 'react-router'
+import { useNavigate } from 'react-router'
 
+import { usePlans } from '@/hooks/queries'
+import { inr } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import type { Plan } from '@/services/api/plans'
 
 /**
  * Desktop plans section (Figma 26:8496 "Choose Your Growth Path").
  *
- * The Figma frame only contains Silver and Diamond cards side by side with a
- * gap between them; the Gold card exists as a loose variant elsewhere on the
- * canvas (26:8588). Rendering all three, which is clearly the intent.
- *
- * Silver's max reads ₹50,000 here but ₹5,000 on the mobile cards — flagged,
- * desktop value used since this frame is the more detailed one.
+ * Now fetches real plan data from the API via usePlans(). Locked plans (unlocked
+ * === false) show a locked overlay with the referral threshold. Unlocked plans
+ * navigate to /app/invest with { planKey } in location state.
  */
-const PLANS: {
-  name: string
-  returns: string
-  duration: string
-  min: string
-  max: string
-  Icon: LucideIcon
-}[] = [
-  { name: 'Silver', returns: '25%', duration: '36 Hours', min: '₹1,000', max: '₹50,000', Icon: Medal },
-  { name: 'Gold', returns: '30%', duration: '36 Hours', min: '₹3,000', max: '₹5,000', Icon: Trophy },
-  {
-    name: 'Diamond',
-    returns: '40%',
-    duration: '36 Hours',
-    min: '₹5,000',
-    max: '₹5,00,000',
-    Icon: Gem,
-  },
-]
+
+const TIER_ICONS: Record<string, LucideIcon> = {
+  silver: Medal,
+  gold: Trophy,
+  diamond: Gem,
+}
 
 const CARD_GRADIENT =
   'linear-gradient(140deg, rgba(184,200,224,0.06) 6.17%, rgba(184,200,224,0.01) 93.83%), linear-gradient(90deg, #0E1520 0%, #0E1520 100%)'
@@ -41,6 +28,8 @@ const BUTTON_SHEEN =
   'linear-gradient(146.5deg, rgba(255,255,255,0) 41.55%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 58.45%)'
 
 export function PlansPage() {
+  const { data: plans, isLoading, isError } = usePlans()
+
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-abyss font-jakarta text-white">
       <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -67,11 +56,35 @@ export function PlansPage() {
           </p>
         </header>
 
-        <div className="grid gap-8 pt-14 md:grid-cols-2 lg:grid-cols-3">
-          {PLANS.map((plan) => (
-            <PlanCard key={plan.name} {...plan} />
-          ))}
-        </div>
+        {isLoading && (
+          <div
+            role="status"
+            aria-live="polite"
+            aria-label="Loading investment plans"
+            className="grid gap-8 pt-14 md:grid-cols-2 lg:grid-cols-3"
+          >
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="h-[340px] animate-pulse rounded-[20px] border border-steel/20 bg-steel/[0.08]"
+              />
+            ))}
+          </div>
+        )}
+
+        {isError && (
+          <p role="alert" className="pt-14 text-center text-sm text-red-400">
+            Failed to load plans. Please refresh.
+          </p>
+        )}
+
+        {plans && (
+          <div className="grid gap-8 pt-14 md:grid-cols-2 lg:grid-cols-3">
+            {plans.map((plan) => (
+              <PlanCard key={plan.key} plan={plan} />
+            ))}
+          </div>
+        )}
 
         <p className="pt-12 text-center text-[13px] leading-[18px] text-haze/38">
           All returns are indicative. Investments subject to terms.
@@ -81,26 +94,21 @@ export function PlansPage() {
   )
 }
 
-function PlanCard({
-  name,
-  returns,
-  duration,
-  min,
-  max,
-  Icon,
-}: {
-  name: string
-  returns: string
-  duration: string
-  min: string
-  max: string
-  Icon: LucideIcon
-}) {
+function PlanCard({ plan }: { plan: Plan }) {
+  const navigate = useNavigate()
+  const Icon = TIER_ICONS[plan.key] ?? Medal
+  const isLocked = !plan.unlocked
+
+  function handleInvest() {
+    navigate('/app/invest', { state: { planKey: plan.key } })
+  }
+
   return (
     <article
       className={cn(
         'flex flex-col overflow-hidden rounded-[20px] border border-steel/20 p-7',
-        'shadow-[0px_8px_32px_0px_rgba(0,0,0,0.35)]'
+        'shadow-[0px_8px_32px_0px_rgba(0,0,0,0.35)]',
+        isLocked && 'opacity-70'
       )}
       style={{ backgroundImage: CARD_GRADIENT }}
     >
@@ -114,13 +122,13 @@ function PlanCard({
               Plan
             </span>
             <span className="pt-0.5 text-[17px] font-semibold leading-[25.5px] tracking-[0.34px] text-steel">
-              {name}
+              {plan.name}
             </span>
           </span>
         </div>
 
         <div className="flex w-[92px] flex-col items-center rounded-xl border border-steel/20 bg-steel/[0.15] px-4 py-2.5">
-          <span className="font-dmserif text-[30px] leading-[30px] text-steel">{returns}</span>
+          <span className="font-dmserif text-[30px] leading-[30px] text-steel">{plan.returnPct}%</span>
           <span className="pt-0.5 text-[9px] uppercase leading-[13.5px] tracking-[1.8px] text-steel opacity-70">
             Returns
           </span>
@@ -138,7 +146,7 @@ function PlanCard({
         </span>
         <span className="flex items-center gap-2 pt-1.5">
           <Clock className="size-4 text-frost" aria-hidden />
-          <span className="text-xl font-medium leading-[30px] text-frost">{duration}</span>
+          <span className="text-xl font-medium leading-[30px] text-frost">{plan.durationHours} Hours</span>
         </span>
       </div>
 
@@ -147,35 +155,50 @@ function PlanCard({
           <span className="text-[10px] uppercase leading-[15px] tracking-[1.5px] text-haze/38">
             Min
           </span>
-          <span className="pt-[5px] text-lg font-semibold leading-[27px] text-frost">{min}</span>
+          <span className="pt-[5px] text-lg font-semibold leading-[27px] text-frost">{inr(plan.minInvest)}</span>
         </span>
         <span className="w-px self-stretch bg-white/[0.07]" />
         <span className="flex flex-col items-end">
           <span className="text-[10px] uppercase leading-[15px] tracking-[1.5px] text-haze/38">
             Max
           </span>
-          <span className="pt-[5px] text-lg font-semibold leading-[27px] text-frost">{max}</span>
+          <span className="pt-[5px] text-lg font-semibold leading-[27px] text-frost">{inr(plan.maxInvest)}</span>
         </span>
       </div>
 
-      <Link
-        to="/app/invest"
-        aria-label={`Invest in the ${name} plan`}
-        className={cn(
-          'relative mt-auto flex h-[50px] items-center justify-center overflow-hidden rounded-xl',
-          'bg-gradient-to-b from-bluesteel-from to-bluesteel-to',
-          'text-[13px] font-bold uppercase tracking-[1.56px] text-white',
-          'shadow-[0px_4px_20px_0px_rgba(143,168,192,0.4)] transition-opacity hover:opacity-90',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-steel'
-        )}
-      >
-        <span className="relative z-10">Invest Now</span>
-        <span
-          aria-hidden
-          className="absolute inset-0"
-          style={{ backgroundImage: BUTTON_SHEEN }}
-        />
-      </Link>
+      {isLocked ? (
+        <div
+          className={cn(
+            'relative mt-auto flex h-[50px] items-center justify-center gap-2 overflow-hidden rounded-xl',
+            'border border-steel/20 bg-steel/[0.08]',
+            'text-[12px] font-semibold uppercase tracking-[1.2px] text-haze/50'
+          )}
+          aria-label={`Locked plan: unlock with ${plan.unlockReferrals} referrals`}
+        >
+          <Lock className="size-4" aria-hidden />
+          Unlock with {plan.unlockReferrals} referrals
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={handleInvest}
+          aria-label={`Invest in the ${plan.name} plan`}
+          className={cn(
+            'relative mt-auto flex h-[50px] items-center justify-center overflow-hidden rounded-xl',
+            'bg-gradient-to-b from-bluesteel-from to-bluesteel-to',
+            'text-[13px] font-bold uppercase tracking-[1.56px] text-white',
+            'shadow-[0px_4px_20px_0px_rgba(143,168,192,0.4)] transition-opacity hover:opacity-90',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-steel'
+          )}
+        >
+          <span className="relative z-10">Invest Now</span>
+          <span
+            aria-hidden
+            className="absolute inset-0"
+            style={{ backgroundImage: BUTTON_SHEEN }}
+          />
+        </button>
+      )}
     </article>
   )
 }
