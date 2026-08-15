@@ -12,6 +12,9 @@ import {
 
 import { AppShell } from '@/components/app/AppShell'
 import { useAuth } from '@/auth/AuthContext'
+import { useWallet, useDashboard } from '@/hooks/queries'
+import { authService } from '@/services/authService'
+import { inr } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import type { Transaction } from '@/types'
 
@@ -33,14 +36,6 @@ function initials(name: string): string {
   return (first + last).toUpperCase()
 }
 
-const rupees = (paise: number) =>
-  new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(paise / 100)
-
 function memberSince(iso: string): string {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ''
@@ -56,43 +51,12 @@ function relDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
 }
 
-/* ── Mock data ── */
-const MOCK_TRANSACTIONS: Transaction[] = [
-  {
-    id: 'tx_001', userId: 'u_1001', type: 'credit',     amount: 2500000,
-    status: 'settled',  note: 'Wallet top-up',             actor: 'admin',
-    createdAt: new Date(Date.now() - 0.5 * 86_400_000).toISOString(),
-  },
-  {
-    id: 'tx_002', userId: 'u_1001', type: 'debit',      amount: 100000,
-    status: 'settled',  note: 'Silver plan — 36 hr term',  actor: 'user',
-    createdAt: new Date(Date.now() - 1.2 * 86_400_000).toISOString(),
-  },
-  {
-    id: 'tx_003', userId: 'u_1001', type: 'credit',     amount: 125000,
-    status: 'settled',  note: 'Silver plan payout',         actor: 'admin',
-    createdAt: new Date(Date.now() - 2 * 86_400_000).toISOString(),
-  },
-  {
-    id: 'tx_004', userId: 'u_1001', type: 'withdrawal', amount: 229930,
-    status: 'pending',  note: 'UPI withdrawal — name@upi',  actor: 'user',
-    createdAt: new Date(Date.now() - 3 * 86_400_000).toISOString(),
-  },
-  {
-    id: 'tx_005', userId: 'u_1001', type: 'debit',      amount: 300000,
-    status: 'settled',  note: 'Gold plan — 36 hr term',     actor: 'user',
-    createdAt: new Date(Date.now() - 5 * 86_400_000).toISOString(),
-  },
-]
-
-const TX_META: Record<Transaction['type'], {
+/* ── Transaction display meta — keyed on direction ── */
+const DIR_META: Record<Transaction['direction'], {
   Icon: typeof ArrowDownLeft; sign: '+' | '−'; color: string; bg: string
 }> = {
-  credit:     { Icon: ArrowDownLeft, sign: '+', color: 'text-asm-greenInk', bg: 'bg-asm-green-tint'  },
-  debit:      { Icon: ArrowUpRight,  sign: '−', color: 'text-asm-red',      bg: 'bg-red-50'          },
-  buy:        { Icon: ArrowUpRight,  sign: '−', color: 'text-asm-red',      bg: 'bg-red-50'          },
-  sell:       { Icon: ArrowDownLeft, sign: '+', color: 'text-asm-greenInk', bg: 'bg-asm-green-tint'  },
-  withdrawal: { Icon: Wallet,        sign: '−', color: 'text-amber-600',    bg: 'bg-amber-50'        },
+  credit: { Icon: ArrowDownLeft, sign: '+', color: 'text-asm-greenInk', bg: 'bg-asm-green-tint' },
+  debit:  { Icon: ArrowUpRight,  sign: '−', color: 'text-asm-red',      bg: 'bg-red-50'         },
 }
 
 const STATUS_PILL: Record<Transaction['status'], string> = {
@@ -101,12 +65,43 @@ const STATUS_PILL: Record<Transaction['status'], string> = {
   rejected: 'bg-red-50 text-asm-red',
 }
 
+/* ── Skeleton ── */
+function SkeletonRow() {
+  return (
+    <li className="flex items-center gap-3 px-5 py-4 animate-pulse">
+      <span className="size-9 shrink-0 rounded-full bg-asm-tint" />
+      <div className="flex flex-1 flex-col gap-1.5">
+        <span className="h-3 w-2/3 rounded bg-asm-tint" />
+        <span className="h-2.5 w-1/3 rounded bg-asm-tint" />
+      </div>
+      <div className="flex flex-col items-end gap-1.5">
+        <span className="h-3.5 w-16 rounded bg-asm-tint" />
+        <span className="h-2.5 w-10 rounded bg-asm-tint" />
+      </div>
+    </li>
+  )
+}
+
+function StatSkeleton() {
+  return (
+    <div className="flex flex-col items-center gap-2 rounded-2xl border border-asm-line bg-white py-4 animate-pulse">
+      <span className="size-9 rounded-xl bg-asm-tint" />
+      <span className="h-4 w-14 rounded bg-asm-tint" />
+      <span className="h-2.5 w-10 rounded bg-asm-tint" />
+    </div>
+  )
+}
+
 /* ── Page ── */
 export function AccountPage() {
   const { user, setUser } = useAuth()
   const navigate = useNavigate()
 
-  function handleSignOut() {
+  const walletQuery = useWallet()
+  const dashQuery   = useDashboard()
+
+  async function handleSignOut() {
+    await authService.logout()
     setUser(null)
     navigate('/login', { replace: true })
   }
@@ -115,10 +110,18 @@ export function AccountPage() {
   const email  = user?.email  ?? ''
   const status = user?.status ?? 'active'
   const since  = user?.createdAt ? memberSince(user.createdAt) : ''
+  const tier   = user?.tier ?? null
+  const referralCode  = user?.referralCode  ?? '—'
+  const referralCount = user?.referralCount ?? 0
 
-  const transactions = MOCK_TRANSACTIONS
-    .filter((t) => !user || t.userId === user.id)
-    .slice(0, 5)
+  const walletBalance  = walletQuery.data?.balance ?? null
+  const transactions   = walletQuery.data?.transactions ?? []
+  const dashBalance    = dashQuery.data?.balance ?? null
+  const totalInvested  = dashQuery.data?.totals.invested ?? null
+  const expectedReturn = dashQuery.data?.totals.expectedReturn ?? null
+
+  // Prefer wallet balance (more up-to-date), fall back to dashboard balance
+  const displayBalance = walletBalance ?? dashBalance
 
   return (
     <AppShell backTo="/app">
@@ -168,36 +171,79 @@ export function AccountPage() {
             <p className="text-[18px] font-extrabold leading-tight tracking-tight text-asm-navy">{name}</p>
             <p className="mt-0.5 text-[13px] text-asm-body">{email}</p>
             {since && <p className="mt-1 text-[11px] text-asm-muted">{since}</p>}
+
+            {/* Tier + referral row */}
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              {tier && (
+                <span className={cn(
+                  'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide',
+                  tier === 'silver'  ? 'bg-[#CED5E1] text-[#4B5563]'           :
+                  tier === 'gold'    ? 'bg-amber-50 text-[#F37400]'             :
+                                       'bg-asm-blue-tint text-asm-blue'
+                )}>
+                  {tier}
+                </span>
+              )}
+              <span className="text-[11px] text-asm-muted">
+                Referral: <span className="font-mono font-semibold text-asm-navy">{referralCode}</span>
+              </span>
+              <span className="text-[11px] text-asm-muted">
+                {referralCount} {referralCount === 1 ? 'referral' : 'referrals'}
+              </span>
+            </div>
           </div>
         </motion.section>
 
         {/* ── Portfolio snapshot ── */}
-        <motion.section variants={fadeUp}>
+        <motion.section variants={fadeUp} aria-live="polite" aria-label="Portfolio summary">
           <h2 className="mb-3 px-1 text-[11px] font-bold uppercase tracking-[0.1em] text-asm-muted">
             Portfolio
           </h2>
           <div className="grid grid-cols-3 gap-2.5">
-            {[
-              { label: 'Balance',    value: '₹2,299', Icon: Wallet,     color: 'bg-asm-blue-tint text-asm-blue'        },
-              { label: 'Invested',   value: '₹4,000', Icon: TrendingUp, color: 'bg-asm-green-tint text-asm-greenInk'   },
-              { label: 'Earned',     value: '₹1,250', Icon: ArrowDownLeft, color: 'bg-amber-50 text-amber-600'         },
-            ].map(({ label, value, Icon, color }) => (
-              <div
-                key={label}
-                className="flex flex-col items-center gap-2 rounded-2xl border border-asm-line bg-white py-4 shadow-[0_1px_6px_-2px_rgba(16,42,92,0.07)]"
-              >
-                <span className={cn('flex size-9 items-center justify-center rounded-xl', color)}>
-                  <Icon className="size-4" strokeWidth={2} aria-hidden />
-                </span>
-                <span className="font-mono text-[15px] font-bold tabular-nums text-asm-navy">{value}</span>
-                <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-asm-muted">{label}</span>
-              </div>
-            ))}
+            {walletQuery.isLoading || dashQuery.isLoading ? (
+              <>
+                <StatSkeleton />
+                <StatSkeleton />
+                <StatSkeleton />
+              </>
+            ) : (
+              <>
+                <div className="flex flex-col items-center gap-2 rounded-2xl border border-asm-line bg-white py-4 shadow-[0_1px_6px_-2px_rgba(16,42,92,0.07)]">
+                  <span className="flex size-9 items-center justify-center rounded-xl bg-asm-blue-tint text-asm-blue">
+                    <Wallet className="size-4" strokeWidth={2} aria-hidden />
+                  </span>
+                  <span className="font-mono text-[15px] font-bold tabular-nums text-asm-navy">
+                    {displayBalance !== null ? inr(displayBalance) : '—'}
+                  </span>
+                  <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-asm-muted">Balance</span>
+                </div>
+
+                <div className="flex flex-col items-center gap-2 rounded-2xl border border-asm-line bg-white py-4 shadow-[0_1px_6px_-2px_rgba(16,42,92,0.07)]">
+                  <span className="flex size-9 items-center justify-center rounded-xl bg-asm-green-tint text-asm-greenInk">
+                    <TrendingUp className="size-4" strokeWidth={2} aria-hidden />
+                  </span>
+                  <span className="font-mono text-[15px] font-bold tabular-nums text-asm-navy">
+                    {totalInvested !== null ? inr(totalInvested) : '—'}
+                  </span>
+                  <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-asm-muted">Invested</span>
+                </div>
+
+                <div className="flex flex-col items-center gap-2 rounded-2xl border border-asm-line bg-white py-4 shadow-[0_1px_6px_-2px_rgba(16,42,92,0.07)]">
+                  <span className="flex size-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+                    <ArrowDownLeft className="size-4" strokeWidth={2} aria-hidden />
+                  </span>
+                  <span className="font-mono text-[15px] font-bold tabular-nums text-asm-navy">
+                    {expectedReturn !== null ? inr(expectedReturn) : '—'}
+                  </span>
+                  <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-asm-muted">Expected</span>
+                </div>
+              </>
+            )}
           </div>
         </motion.section>
 
         {/* ── Recent activity ── */}
-        <motion.section variants={fadeUp} aria-labelledby="activity-heading">
+        <motion.section variants={fadeUp} aria-labelledby="activity-heading" aria-live="polite">
           <h2
             id="activity-heading"
             className="mb-3 px-1 text-[11px] font-bold uppercase tracking-[0.1em] text-asm-muted"
@@ -205,7 +251,21 @@ export function AccountPage() {
             Recent Activity
           </h2>
           <div className="rounded-2xl border border-asm-line bg-white shadow-[0_2px_12px_-4px_rgba(16,42,92,0.08)]">
-            {transactions.length === 0 ? (
+            {walletQuery.isLoading ? (
+              <ul aria-label="Loading transactions">
+                <SkeletonRow />
+                <SkeletonRow />
+                <SkeletonRow />
+              </ul>
+            ) : walletQuery.isError ? (
+              <div className="flex flex-col items-center gap-3 px-5 py-10 text-center">
+                <span className="flex size-12 items-center justify-center rounded-full bg-red-50">
+                  <Wallet className="size-5 text-asm-red" aria-hidden />
+                </span>
+                <p className="text-[13px] font-semibold text-asm-navy">Couldn't load transactions</p>
+                <p className="text-[12px] text-asm-body">Check your connection and try again.</p>
+              </div>
+            ) : transactions.length === 0 ? (
               <div className="flex flex-col items-center gap-3 px-5 py-10 text-center">
                 <span className="flex size-12 items-center justify-center rounded-full bg-asm-tint">
                   <Wallet className="size-5 text-asm-muted" aria-hidden />
@@ -215,21 +275,21 @@ export function AccountPage() {
               </div>
             ) : (
               <ul className="divide-y divide-asm-line">
-                {transactions.map((tx) => {
-                  const meta = TX_META[tx.type]
+                {transactions.slice(0, 10).map((tx) => {
+                  const meta = DIR_META[tx.direction]
                   const { Icon } = meta
                   return (
-                    <li key={tx.id} className="flex items-center gap-3 px-5 py-4">
+                    <li key={tx._id} className="flex items-center gap-3 px-5 py-4">
                       <span className={cn('flex size-9 shrink-0 items-center justify-center rounded-full', meta.bg)} aria-hidden>
                         <Icon className={cn('size-4', meta.color)} strokeWidth={2.2} aria-hidden />
                       </span>
                       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                        <span className="truncate text-[13px] font-semibold text-asm-navy">{tx.note}</span>
+                        <span className="truncate text-[13px] font-semibold text-asm-navy">{tx.note || tx.type}</span>
                         <span className="text-[11px] text-asm-muted">{relDate(tx.createdAt)}</span>
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-1">
                         <span className={cn('font-mono text-[14px] font-bold tabular-nums', meta.color)}>
-                          {meta.sign}{rupees(tx.amount)}
+                          {meta.sign}{inr(tx.amount)}
                         </span>
                         <span className={cn('rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide', STATUS_PILL[tx.status])}>
                           {tx.status}

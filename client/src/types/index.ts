@@ -45,13 +45,15 @@ export interface Order {
   createdAt: string
 }
 
+/** Matches the backend ledger shape exactly — amount is in paise. */
 export interface Transaction {
-  id: string
-  userId: string
-  type: 'credit' | 'debit' | 'buy' | 'sell' | 'withdrawal'
-  amount: number
+  _id: string
+  user: string
+  type: 'deposit' | 'withdrawal' | 'refund' | 'adjustment'
+  direction: 'credit' | 'debit'
+  amount: number            // paise
   status: 'pending' | 'settled' | 'rejected'
   note: string
-  actor: 'user' | 'admin'   // who caused it — drives the audit log
+  actor: 'user' | 'admin' | 'system'
   createdAt: string
 }

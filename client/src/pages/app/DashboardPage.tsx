@@ -1,22 +1,284 @@
-import { HeroBanner } from '@/components/sections/HeroBanner'
-import { StickyHeader } from '@/components/sections/StickyHeader'
+import { motion } from 'framer-motion'
+import { Link } from 'react-router'
+import {
+  ArrowRight,
+  TrendingUp,
+  Wallet,
+  Award,
+  BarChart3,
+} from 'lucide-react'
 
-/**
- * Figma 2:2 "Html → Body" — sticky header over a hero banner.
- *
- * The frame stops after the banner, so there is no further content to build;
- * the ruby accent here is a different direction from the violet/amber app
- * shell and hasn't been reconciled with it.
- */
-export function DashboardPage() {
+import { AppShell } from '@/components/app/AppShell'
+import { TierBadge, type Tier } from '@/components/app/TierBadge'
+import { useDashboard, useWallet } from '@/hooks/queries'
+import { useAuth } from '@/auth/AuthContext'
+import { inr } from '@/lib/format'
+import { cn } from '@/lib/utils'
+
+/* ── Motion variants ── */
+const container = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.08, delayChildren: 0.04 } },
+}
+const fadeUp = {
+  hidden: { opacity: 0, y: 16 },
+  visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 90, damping: 18 } },
+}
+
+/* ── Helpers ── */
+function maturityLabel(maturesAt?: string): string | null {
+  if (!maturesAt) return null
+  const d = new Date(maturesAt)
+  if (Number.isNaN(d.getTime())) return null
+  const diff = d.getTime() - Date.now()
+  if (diff <= 0) return 'Matured'
+  const hours = Math.floor(diff / 3_600_000)
+  const mins  = Math.floor((diff % 3_600_000) / 60_000)
+  if (hours < 1) return `${mins}m remaining`
+  if (hours < 24) return `${hours}h ${mins}m remaining`
+  const days = Math.floor(hours / 24)
+  return `${days}d ${hours % 24}h remaining`
+}
+
+/* ── Skeleton cards ── */
+function SkeletonStat() {
   return (
-    <div className="min-h-screen bg-night pb-24 font-jakarta text-white">
-      <div className="mx-auto w-full max-w-[375px] sm:max-w-[560px] lg:max-w-[880px]">
-        <StickyHeader className="sticky top-0 z-20" />
-        <main className="px-5 pt-6">
-          <HeroBanner className="lg:h-80" />
-        </main>
+    <div className="flex flex-col gap-2 rounded-2xl border border-asm-line bg-white p-4 animate-pulse">
+      <span className="size-9 rounded-xl bg-asm-tint" />
+      <span className="h-5 w-2/3 rounded bg-asm-tint" />
+      <span className="h-3 w-1/2 rounded bg-asm-tint" />
+    </div>
+  )
+}
+
+function SkeletonInvestment() {
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-asm-line bg-white px-4 py-3.5 animate-pulse">
+      <span className="size-11 shrink-0 rounded-xl bg-asm-tint" />
+      <div className="flex flex-1 flex-col gap-1.5">
+        <span className="h-3.5 w-24 rounded bg-asm-tint" />
+        <span className="h-3 w-32 rounded bg-asm-tint" />
+      </div>
+      <div className="flex flex-col items-end gap-1.5">
+        <span className="h-4 w-16 rounded bg-asm-tint" />
+        <span className="h-3 w-12 rounded bg-asm-tint" />
       </div>
     </div>
+  )
+}
+
+/* ── Page ── */
+export function DashboardPage() {
+  const { user } = useAuth()
+  const dashQuery  = useDashboard()
+  const walletQuery = useWallet()
+
+  const dash          = dashQuery.data
+  const walletBalance = walletQuery.data?.balance ?? null
+
+  // Prefer wallet balance; fall back to dashboard balance
+  const displayBalance = walletBalance ?? dash?.balance ?? null
+  const tier           = dash?.tier ?? user?.tier ?? null
+  const totalInvested  = dash?.totals.invested ?? null
+  const expectedReturn = dash?.totals.expectedReturn ?? null
+  const activeCount    = dash?.totals.activeCount ?? null
+  const activeInvests  = dash?.activeInvestments ?? []
+
+  const firstName = (user?.name ?? 'Investor').split(' ')[0]
+
+  const isLoading = dashQuery.isLoading
+  const isError   = dashQuery.isError
+
+  return (
+    <AppShell headerVariant="root" width="wide">
+      <motion.div
+        className="flex flex-col gap-5"
+        variants={container}
+        initial="hidden"
+        animate="visible"
+      >
+
+        {/* ── Greeting ── */}
+        <motion.div variants={fadeUp}>
+          <p className="text-[13px] text-asm-muted">Welcome back,</p>
+          <h1 className="text-[22px] font-extrabold leading-tight tracking-tight text-asm-navy">
+            {firstName} {tier && <span className="capitalize text-asm-blue">· {tier}</span>}
+          </h1>
+        </motion.div>
+
+        {/* ── Balance hero card ── */}
+        <motion.section
+          variants={fadeUp}
+          aria-label="Wallet balance"
+          aria-live="polite"
+          className="relative overflow-hidden rounded-2xl bg-asm-navy px-5 py-5 shadow-[0_8px_32px_-8px_rgba(16,42,92,0.30)]"
+        >
+          {/* Decorative radial */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{ background: 'radial-gradient(ellipse at 80% 20%, rgba(11,79,216,0.35) 0%, transparent 65%)' }}
+          />
+
+          <div className="relative flex flex-col gap-1">
+            <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-white/50">
+              Wallet Balance
+            </span>
+            {isLoading ? (
+              <span className="mt-1 h-9 w-40 animate-pulse rounded-lg bg-white/10" />
+            ) : (
+              <span className="font-mono text-[36px] font-extrabold tabular-nums leading-none text-white">
+                {displayBalance !== null ? inr(displayBalance) : '—'}
+              </span>
+            )}
+
+            {tier && (
+              <div className="mt-4 flex items-center gap-2.5">
+                <TierBadge tier={tier as Tier} size={28} />
+                <span className="text-[12px] font-semibold capitalize text-white/70">{tier} Member</span>
+              </div>
+            )}
+          </div>
+        </motion.section>
+
+        {/* ── Stats grid ── */}
+        <motion.section variants={fadeUp} aria-label="Portfolio overview" aria-live="polite">
+          <h2 className="mb-3 px-1 text-[11px] font-bold uppercase tracking-[0.1em] text-asm-muted">
+            Overview
+          </h2>
+          {isError ? (
+            <div className="rounded-2xl border border-asm-line bg-white p-5 text-center">
+              <p className="text-[13px] font-semibold text-asm-navy">Couldn't load dashboard</p>
+              <p className="mt-1 text-[12px] text-asm-body">Check your connection and try again.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-2.5">
+              {isLoading ? (
+                <>
+                  <SkeletonStat />
+                  <SkeletonStat />
+                  <SkeletonStat />
+                </>
+              ) : (
+                <>
+                  {/* Invested */}
+                  <div className="flex flex-col gap-1 rounded-2xl border border-asm-line bg-white p-4 shadow-[0_1px_6px_-2px_rgba(16,42,92,0.07)]">
+                    <span className="flex size-9 items-center justify-center rounded-xl bg-asm-green-tint">
+                      <TrendingUp className="size-4 text-asm-greenInk" strokeWidth={2} aria-hidden />
+                    </span>
+                    <span className="mt-1 font-mono text-[15px] font-bold tabular-nums leading-none text-asm-navy">
+                      {totalInvested !== null ? inr(totalInvested) : '—'}
+                    </span>
+                    <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-asm-muted">Invested</span>
+                  </div>
+
+                  {/* Expected Return */}
+                  <div className="flex flex-col gap-1 rounded-2xl border border-asm-line bg-white p-4 shadow-[0_1px_6px_-2px_rgba(16,42,92,0.07)]">
+                    <span className="flex size-9 items-center justify-center rounded-xl bg-asm-blue-tint">
+                      <Wallet className="size-4 text-asm-blue" strokeWidth={2} aria-hidden />
+                    </span>
+                    <span className="mt-1 font-mono text-[15px] font-bold tabular-nums leading-none text-asm-navy">
+                      {expectedReturn !== null ? inr(expectedReturn) : '—'}
+                    </span>
+                    <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-asm-muted">Returns</span>
+                  </div>
+
+                  {/* Active Plans */}
+                  <div className="flex flex-col gap-1 rounded-2xl border border-asm-line bg-white p-4 shadow-[0_1px_6px_-2px_rgba(16,42,92,0.07)]">
+                    <span className="flex size-9 items-center justify-center rounded-xl bg-amber-50">
+                      <BarChart3 className="size-4 text-amber-600" strokeWidth={2} aria-hidden />
+                    </span>
+                    <span className="mt-1 font-mono text-[15px] font-bold tabular-nums leading-none text-asm-navy">
+                      {activeCount !== null ? activeCount : '—'}
+                    </span>
+                    <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-asm-muted">Active</span>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </motion.section>
+
+        {/* ── Active investments ── */}
+        <motion.section variants={fadeUp} aria-labelledby="investments-heading" aria-live="polite">
+          <div className="mb-3 flex items-center justify-between px-1">
+            <h2
+              id="investments-heading"
+              className="text-[11px] font-bold uppercase tracking-[0.1em] text-asm-muted"
+            >
+              Active Investments
+            </h2>
+            <Link
+              to="/app/plans"
+              className="flex items-center gap-0.5 text-[11px] font-semibold text-asm-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1 rounded"
+            >
+              Plans <ArrowRight className="size-3" strokeWidth={2.5} aria-hidden />
+            </Link>
+          </div>
+
+          <div className="flex flex-col gap-2.5">
+            {isLoading ? (
+              <>
+                <SkeletonInvestment />
+                <SkeletonInvestment />
+              </>
+            ) : isError ? null : activeInvests.length === 0 ? (
+              <div className="flex flex-col items-center gap-3 rounded-2xl border border-asm-line bg-white px-5 py-10 text-center">
+                <span className="flex size-12 items-center justify-center rounded-full bg-asm-tint">
+                  <Award className="size-5 text-asm-muted" aria-hidden />
+                </span>
+                <p className="text-[13px] font-semibold text-asm-navy">No active investments yet</p>
+                <p className="text-[12px] text-asm-body">Start growing your wealth today.</p>
+                <Link
+                  to="/app/plans"
+                  className={cn(
+                    'mt-1 inline-flex items-center gap-1.5 rounded-xl bg-asm-blue px-4 py-2.5',
+                    'text-[12px] font-bold uppercase tracking-[0.06em] text-white',
+                    'transition-colors hover:bg-asm-blue-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-2'
+                  )}
+                >
+                  Browse Plans
+                </Link>
+              </div>
+            ) : (
+              activeInvests.map((inv) => {
+                const planTier = inv.planKey as Tier
+                const matLabel = maturityLabel(inv.maturesAt)
+                const profit   = inv.expectedReturn - inv.amount
+
+                return (
+                  <div
+                    key={inv.id}
+                    className="flex items-center gap-3 rounded-2xl border border-asm-line bg-white px-4 py-3.5 shadow-[0_1px_6px_-2px_rgba(16,42,92,0.07)]"
+                  >
+                    <TierBadge tier={planTier} size={44} className="shrink-0" />
+
+                    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                      <span className="text-[13px] font-bold capitalize text-asm-navy">{planTier} Plan</span>
+                      {matLabel && (
+                        <span className="text-[11px] text-asm-muted">{matLabel}</span>
+                      )}
+                      <span className="text-[11px] text-asm-muted">
+                        Invested: <span className="font-semibold text-asm-navy">{inr(inv.amount)}</span>
+                      </span>
+                    </div>
+
+                    <div className="flex shrink-0 flex-col items-end gap-0.5">
+                      <span className="font-mono text-[14px] font-bold tabular-nums text-asm-greenInk">
+                        {inr(inv.expectedReturn)}
+                      </span>
+                      <span className="text-[10px] font-semibold text-asm-greenInk">
+                        +{inr(profit)} profit
+                      </span>
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+        </motion.section>
+
+      </motion.div>
+    </AppShell>
   )
 }

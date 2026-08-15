@@ -1,11 +1,15 @@
 import { motion } from 'framer-motion'
 import { Link } from 'react-router'
+import { ArrowRight, Award, TrendingUp, Wallet } from 'lucide-react'
 
 // vault.png lives in /public — referenced as an absolute URL, no import needed
 import { AppShell } from '@/components/app/AppShell'
 import { MarketTicker } from '@/components/app/MarketTicker'
 import { ReferralBanner } from '@/components/app/ReferralBanner'
 import { TierBadge, type Tier } from '@/components/app/TierBadge'
+import { useDashboard, useWallet } from '@/hooks/queries'
+import { useAuth } from '@/auth/AuthContext'
+import { inr } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
 /* ── Framer Motion variants ─────────────────────────────────────── */
@@ -24,6 +28,22 @@ const fadeUp = {
   },
 }
 
+/* ── Helpers ──────────────────────────────────────────────────── */
+
+function maturityLabel(maturesAt?: string): string | null {
+  if (!maturesAt) return null
+  const d = new Date(maturesAt)
+  if (Number.isNaN(d.getTime())) return null
+  const diff = d.getTime() - Date.now()
+  if (diff <= 0) return 'Matured'
+  const hours = Math.floor(diff / 3_600_000)
+  const mins  = Math.floor((diff % 3_600_000) / 60_000)
+  if (hours < 1) return `${mins}m remaining`
+  if (hours < 24) return `${hours}h ${mins}m remaining`
+  const days = Math.floor(hours / 24)
+  return `${days}d ${hours % 24}h remaining`
+}
+
 /* ── Data ───────────────────────────────────────────────────────── */
 
 
@@ -36,6 +56,20 @@ const PLANS: { tier: Tier; name: string; returns: string; duration: string; min:
 /* ── Page ───────────────────────────────────────────────────────── */
 
 export function HomePage() {
+  const { user } = useAuth()
+  const dashQuery   = useDashboard()
+  const walletQuery = useWallet()
+
+  const dash          = dashQuery.data
+  const walletBalance = walletQuery.data?.balance ?? null
+  const displayBalance = walletBalance ?? dash?.balance ?? null
+  const totalInvested  = dash?.totals.invested ?? null
+  const activeCount    = dash?.totals.activeCount ?? null
+  const activeInvests  = dash?.activeInvestments ?? []
+  const isLoadingDash  = dashQuery.isLoading
+
+  const firstName = (user?.name ?? '').split(' ')[0]
+
   return (
     <AppShell headerVariant="root" width="wide" contentClassName="px-0 pt-[68px]">
       <motion.div
@@ -165,6 +199,122 @@ export function HomePage() {
             </div>
           </motion.div>
         </section>
+
+        {/* ── Portfolio snapshot ── */}
+        {(user || isLoadingDash) && (
+          <motion.section variants={fadeUp} className="px-5 pb-2" aria-live="polite" aria-label="Portfolio summary">
+            {firstName && (
+              <p className="mb-3 text-[13px] font-semibold text-asm-body">
+                Hey {firstName}, here's your portfolio
+              </p>
+            )}
+            <div className="grid grid-cols-3 gap-2.5">
+              {isLoadingDash ? (
+                <>
+                  {[0, 1, 2].map((i) => (
+                    <div key={i} className="flex flex-col items-center gap-2 rounded-2xl border border-asm-line bg-white py-4 animate-pulse">
+                      <span className="size-9 rounded-xl bg-asm-tint" />
+                      <span className="h-4 w-14 rounded bg-asm-tint" />
+                      <span className="h-2.5 w-10 rounded bg-asm-tint" />
+                    </div>
+                  ))}
+                </>
+              ) : (
+                <>
+                  <div className="flex flex-col items-center gap-2 rounded-2xl border border-asm-line bg-white py-4 shadow-[0_1px_6px_-2px_rgba(16,42,92,0.07)]">
+                    <span className="flex size-9 items-center justify-center rounded-xl bg-asm-blue-tint">
+                      <Wallet className="size-4 text-asm-blue" strokeWidth={2} aria-hidden />
+                    </span>
+                    <span className="font-mono text-[14px] font-bold tabular-nums text-asm-navy">
+                      {displayBalance !== null ? inr(displayBalance) : '—'}
+                    </span>
+                    <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-asm-muted">Balance</span>
+                  </div>
+
+                  <div className="flex flex-col items-center gap-2 rounded-2xl border border-asm-line bg-white py-4 shadow-[0_1px_6px_-2px_rgba(16,42,92,0.07)]">
+                    <span className="flex size-9 items-center justify-center rounded-xl bg-asm-green-tint">
+                      <TrendingUp className="size-4 text-asm-greenInk" strokeWidth={2} aria-hidden />
+                    </span>
+                    <span className="font-mono text-[14px] font-bold tabular-nums text-asm-navy">
+                      {totalInvested !== null ? inr(totalInvested) : '—'}
+                    </span>
+                    <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-asm-muted">Invested</span>
+                  </div>
+
+                  <div className="flex flex-col items-center gap-2 rounded-2xl border border-asm-line bg-white py-4 shadow-[0_1px_6px_-2px_rgba(16,42,92,0.07)]">
+                    <span className="flex size-9 items-center justify-center rounded-xl bg-amber-50">
+                      <Award className="size-4 text-amber-600" strokeWidth={2} aria-hidden />
+                    </span>
+                    <span className="font-mono text-[14px] font-bold tabular-nums text-asm-navy">
+                      {activeCount !== null ? activeCount : '—'}
+                    </span>
+                    <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-asm-muted">Active</span>
+                  </div>
+                </>
+              )}
+            </div>
+          </motion.section>
+        )}
+
+        {/* ── Active investments (if any) ── */}
+        {!isLoadingDash && activeInvests.length > 0 && (
+          <motion.section variants={fadeUp} className="px-5 pb-2" aria-live="polite" aria-labelledby="home-investments-heading">
+            <div className="mb-3 flex items-center justify-between">
+              <h2
+                id="home-investments-heading"
+                className="text-[11px] font-bold uppercase tracking-[0.1em] text-asm-muted"
+              >
+                Active Investments
+              </h2>
+              <Link
+                to="/app/dashboard"
+                className="flex items-center gap-0.5 text-[11px] font-semibold text-asm-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue rounded"
+              >
+                See all <ArrowRight className="size-3" strokeWidth={2.5} aria-hidden />
+              </Link>
+            </div>
+            <div className="flex flex-col gap-2.5">
+              {activeInvests.slice(0, 3).map((inv) => {
+                const planTier = inv.planKey as Tier
+                const matLabel = maturityLabel(inv.maturesAt)
+                const profit   = inv.expectedReturn - inv.amount
+                return (
+                  <div
+                    key={inv.id}
+                    className="flex items-center gap-3 rounded-2xl border border-asm-line bg-white px-4 py-3 shadow-[0_1px_6px_-2px_rgba(16,42,92,0.07)]"
+                  >
+                    <TierBadge tier={planTier} size={40} className="shrink-0" />
+                    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                      <span className="text-[13px] font-bold capitalize text-asm-navy">{planTier} Plan</span>
+                      {matLabel && <span className="text-[11px] text-asm-muted">{matLabel}</span>}
+                    </div>
+                    <div className="flex shrink-0 flex-col items-end">
+                      <span className="font-mono text-[14px] font-bold tabular-nums text-asm-greenInk">
+                        {inr(inv.expectedReturn)}
+                      </span>
+                      <span className="text-[10px] font-semibold text-asm-greenInk">
+                        +{inr(profit)}
+                      </span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </motion.section>
+        )}
+
+        {/* ── No active investments CTA ── */}
+        {!isLoadingDash && user && activeInvests.length === 0 && (
+          <motion.section variants={fadeUp} className="px-5 pb-2" aria-live="polite">
+            <div className="flex flex-col items-center gap-3 rounded-2xl border border-asm-line bg-white px-5 py-7 text-center shadow-[0_1px_6px_-2px_rgba(16,42,92,0.07)]">
+              <span className="flex size-12 items-center justify-center rounded-full bg-asm-tint">
+                <TrendingUp className="size-5 text-asm-muted" aria-hidden />
+              </span>
+              <p className="text-[13px] font-semibold text-asm-navy">No active investments yet</p>
+              <p className="text-[12px] text-asm-body">Browse plans below and start earning today.</p>
+            </div>
+          </motion.section>
+        )}
 
         {/* ── Market Snapshot ── */}
         <motion.section variants={fadeUp} className="px-5 pb-6">
