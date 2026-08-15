@@ -20,7 +20,9 @@ export function ForgotPasswordPage() {
   const navigate = useNavigate()
 
   const submitEmail = async (e: React.FormEvent) => {
-    e.preventDefault(); setError(''); setLoading(true)
+    e.preventDefault()
+    setError('')
+    setLoading(true)
     try {
       const r = await authService.forgotPassword(email)
       setNotice(r.message)
@@ -31,7 +33,9 @@ export function ForgotPasswordPage() {
   }
 
   const submitOtp = async (e: React.FormEvent) => {
-    e.preventDefault(); setError(''); setLoading(true)
+    e.preventDefault()
+    setError('')
+    setLoading(true)
     try {
       const { resetToken } = await authService.verifyOtp(email, otp)
       setResetToken(resetToken)
@@ -42,7 +46,8 @@ export function ForgotPasswordPage() {
   }
 
   const submitPassword = async (e: React.FormEvent) => {
-    e.preventDefault(); setError('')
+    e.preventDefault()
+    setError('')
     if (password !== confirm) { setError('Passwords do not match'); return }
     if (password.length < 6) { setError('Password must be at least 6 characters'); return }
     setLoading(true)
