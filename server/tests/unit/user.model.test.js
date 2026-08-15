@@ -37,3 +37,17 @@ test('wallet balance defaults to 0', async () => {
   const w = await Wallet.create({ user: u._id })
   expect(w.balance).toBe(0)
 })
+
+test('a Google user can be created without a passwordHash', async () => {
+  const u = await User.create({
+    name: 'G', email: 'g@b.com', googleId: 'google-123', referralCode: 'ABC123',
+  })
+  expect(u.passwordHash).toBeUndefined()
+  expect(u.googleId).toBe('google-123')
+})
+
+test('a non-Google user still requires a passwordHash', async () => {
+  await expect(
+    User.create({ name: 'P', email: 'p@b.com', referralCode: 'DEF456' })
+  ).rejects.toThrow(/passwordHash/)
+})
