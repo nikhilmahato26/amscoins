@@ -8,14 +8,14 @@ test('withdrawalInitiated builds a message mentioning initiation and net amount'
   const info = await email.withdrawalInitiated(user, { gross: 100000, net: 95000, upiId: 'x@upi' })
   const msg = JSON.parse(info.message)
   expect(msg.subject).toMatch(/initiated/i)
-  expect(msg.html).toContain('₹950') // net 95000 paise = ₹950
+  expect(msg.html).toContain('950 INR') // net 95000 paise, formatted "950 INR"
   expect(msg.to[0].address).toBe('x@y.com')
 })
 
 test('withdrawalCompleted mentions completion', async () => {
-  const info = await email.withdrawalCompleted(user, { net: 95000, upiId: 'x@upi' })
+  const info = await email.withdrawalCompleted(user, { gross: 100000, net: 95000, upiId: 'x@upi' })
   const msg = JSON.parse(info.message)
-  expect(msg.subject).toMatch(/complete/i)
+  expect(msg.subject).toMatch(/successfully processed/i)
 })
 
 test('sendMail resolves (does not throw) even on transport failure', async () => {
