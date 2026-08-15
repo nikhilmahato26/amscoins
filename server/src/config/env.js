@@ -24,4 +24,7 @@ module.exports = {
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'change-me-admin',
   REDIS_URL: process.env.REDIS_URL || null,
   LOGO_URL: process.env.LOGO_URL || null,
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || null,
+  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || null,
+  GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL || null,
 }
