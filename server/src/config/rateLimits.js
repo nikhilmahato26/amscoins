@@ -17,11 +17,17 @@ const keyByUserId = (req) => (req.user?._id ? req.user._id.toString() : ipKeyGen
 const createHandler = (message) => (_req, res) =>
   res.status(429).json({ error: message })
 
+// Disable throttling under the test runner. Integration/e2e tests exercise
+// business logic and legitimately make many requests from one IP; the limiters'
+// own behaviour is covered separately in tests/unit/rateLimits.test.js.
+const skipInTest = () => process.env.NODE_ENV === 'test'
+
 // 1. Registration — IP based
 const registerLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 5,
   store: makeStore('rl:reg:'),
+  skip: skipInTest,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   handler: createHandler('Too many registration attempts, please try again later'),
@@ -32,6 +38,7 @@ const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 10,
   store: makeStore('rl:login:'),
+  skip: skipInTest,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   handler: createHandler('Too many login attempts, please try again in 15 minutes'),
@@ -42,6 +49,7 @@ const forgotPasswordLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 5,
   store: makeStore('rl:forgot:'),
+  skip: skipInTest,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   handler: createHandler('Too many reset requests, please try again in 15 minutes'),
@@ -52,6 +60,7 @@ const otpVerifyLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 10,
   store: makeStore('rl:otp:'),
+  skip: skipInTest,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   handler: createHandler('Too many attempts, please try again in 15 minutes'),
@@ -63,6 +72,7 @@ const investmentCreateLimiter = rateLimit({
   limit: 3,
   keyGenerator: keyByUserId,
   store: makeStore('rl:inv:'),
+  skip: skipInTest,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   handler: createHandler('Investment limit reached, please try again later'),
@@ -74,6 +84,7 @@ const withdrawalCreateLimiter = rateLimit({
   limit: 5,
   keyGenerator: keyByUserId,
   store: makeStore('rl:wd:'),
+  skip: skipInTest,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   handler: createHandler('Daily withdrawal limit reached, please try again tomorrow'),
@@ -85,6 +96,7 @@ const dashboardLimiter = rateLimit({
   limit: 30,
   keyGenerator: keyByUserId,
   store: makeStore('rl:dash:'),
+  skip: skipInTest,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   handler: createHandler('Too many requests, please try again shortly'),
@@ -96,6 +108,7 @@ const walletLimiter = rateLimit({
   limit: 30,
   keyGenerator: keyByUserId,
   store: makeStore('rl:wallet:'),
+  skip: skipInTest,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   handler: createHandler('Too many requests, please try again shortly'),
@@ -107,6 +120,7 @@ const leaderboardLimiter = rateLimit({
   limit: 10,
   keyGenerator: keyByUserId,
   store: makeStore('rl:lb:'),
+  skip: skipInTest,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   handler: createHandler('Too many requests, please try again shortly'),
