@@ -37,7 +37,17 @@ test('GET /api/leaderboard?period=yearly with auth returns 200 with entries', as
   expect(res.body.entries[0].name).toBe('Bob')
   expect(res.body.entries[0].rank).toBe(1)
   expect(res.body.entries[0].totalInvested).toBe(900000)
+  expect(res.body.entries[0].tier).toBe('silver')
+  expect(String(res.body.entries[0].userId)).toBe(String(u2._id))
   expect(res.body.entries[1].name).toBe('Alice')
+})
+
+test('GET /api/leaderboard with no period defaults to daily and returns 200', async () => {
+  const token = await registerToken()
+  const res = await request(app).get('/api/leaderboard').set('Authorization', `Bearer ${token}`)
+  expect(res.status).toBe(200)
+  expect(res.body.period).toBe('daily')
+  expect(Array.isArray(res.body.entries)).toBe(true)
 })
 
 test('GET /api/leaderboard?period=badvalue returns 400', async () => {
