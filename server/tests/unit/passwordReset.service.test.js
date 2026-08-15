@@ -75,3 +75,12 @@ test('resetPassword rejects a token that was never OTP-verified', async () => {
   const forged = jwt.sign({ id: user._id, purpose: 'pwreset' }, process.env.JWT_SECRET, { expiresIn: '15m' })
   await expect(svc.resetPassword(forged, 'brandnew1')).rejects.toMatchObject({ statusCode: 400 })
 })
+
+test('locked out after max attempts throws 429', async () => {
+  const user = await makeUser()
+  await PasswordReset.create({
+    user: user._id, otpHash: await bcrypt.hash('333333', 10),
+    attempts: 5, expiresAt: new Date(Date.now() + 600000),
+  })
+  await expect(svc.verifyResetOtp('u@b.com', '333333')).rejects.toMatchObject({ statusCode: 429 })
+})
