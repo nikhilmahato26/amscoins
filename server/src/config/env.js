@@ -23,4 +23,5 @@ module.exports = {
   ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'admin@asmcoins.com',
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'change-me-admin',
   REDIS_URL: process.env.REDIS_URL || null,
+  LOGO_URL: process.env.LOGO_URL || null,
 }
