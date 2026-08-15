@@ -8,5 +8,6 @@ router.use('/wallet', require('./walletRoutes'))
 router.use('/referral', require('./referralRoutes'))
 router.use('/withdrawals', require('./withdrawalRoutes'))
 router.use('/admin', require('./adminRoutes'))
+router.use('/leaderboard', require('./leaderboardRoutes'))
 
 module.exports = router
