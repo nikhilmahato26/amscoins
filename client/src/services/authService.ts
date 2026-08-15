@@ -32,4 +32,31 @@ export const authService = {
   async logout(): Promise<void> {
     setToken(null)
   },
+
+  googleLoginUrl(): string {
+    const base = import.meta.env.VITE_API_URL ?? '/api'
+    return `${base}/auth/google`
+  },
+
+  async completeOAuth(token: string): Promise<User> {
+    setToken(token)
+    try {
+      const { user } = await apiFetch<{ user: User }>('/auth/me')
+      return user
+    } catch (err) {
+      setToken(null)
+      throw err
+    }
+  },
+
+  forgotPassword: (email: string) =>
+    apiFetch<{ message: string }>('/auth/forgot-password', { method: 'POST', body: { email }, auth: false }),
+
+  verifyOtp: (email: string, otp: string) =>
+    apiFetch<{ resetToken: string }>('/auth/verify-otp', { method: 'POST', body: { email, otp }, auth: false }),
+
+  resetPassword: (resetToken: string, password: string) =>
+    apiFetch<{ message: string }>('/auth/reset-password', {
+      method: 'POST', body: { resetToken, password }, auth: false,
+    }),
 }
