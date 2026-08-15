@@ -1,67 +1,92 @@
 import { motion } from 'framer-motion'
 import { useState } from 'react'
 import {
+  AlertCircle,
   ArrowRight,
   AtSign,
-  Briefcase,
-  Building2,
   Check,
-  ChevronDown,
   ChevronRight,
-  CreditCard,
+  Clock,
   IndianRupee,
   Info,
-  Landmark,
-  PiggyBank,
-  Shield,
+  Loader2,
   Smartphone,
-  User,
   Wallet,
+  XCircle,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 import { AppShell } from '@/components/app/AppShell'
+import { useWallet, useWithdrawals, useCreateWithdrawal } from '@/hooks/queries'
+import { inr } from '@/lib/format'
+import { ApiError } from '@/lib/api'
 import { cn } from '@/lib/utils'
+import type { Withdrawal } from '@/services/api/withdrawals'
 
-const MIN_WITHDRAWAL = 500
-const MAX_WITHDRAWAL = 100000
-const WITHDRAWAL_FEE = 0
+/* ── Constants (in rupees for UI display; converted to paise on submit) ── */
+const MIN_WITHDRAWAL_RS = 500
+const MAX_WITHDRAWAL_RS = 100_000
 
-/** Placeholder until the wallet service is wired up. */
-const BALANCE = { inr: 2299.3 }
+/* ── Motion variants ── */
+const container = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.09, delayChildren: 0.04 } },
+}
+const fadeUp = {
+  hidden: { opacity: 0, y: 16 },
+  visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 90, damping: 18 } },
+}
 
-const rupees = (value: number) =>
-  new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value)
-
+/* ── Helpers ── */
 const rupeesCompact = (value: number) =>
   new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(value)
 
-type Destination = 'bank' | 'upi'
-type AccountType = 'savings' | 'current'
+function statusLabel(status: Withdrawal['status']): { label: string; cls: string } {
+  switch (status) {
+    case 'completed': return { label: 'Completed',   cls: 'bg-asm-green-tint text-asm-greenInk' }
+    case 'rejected':  return { label: 'Rejected',    cls: 'bg-red-50 text-red-600'              }
+    default:          return { label: 'Pending',     cls: 'bg-amber-50 text-amber-600'          }
+  }
+}
 
+/* ── Page ── */
 export function WithdrawPage() {
-  const [destination, setDestination] = useState<Destination>('bank')
-  const [accountType, setAccountType] = useState<AccountType>('savings')
-  const [amount, setAmount] = useState('')
-  const [submitted, setSubmitted] = useState(false)
+  const { data: walletData, isLoading: walletLoading } = useWallet()
+  const { data: withdrawalsData, isLoading: withdrawalsLoading } = useWithdrawals()
+  const mutation = useCreateWithdrawal()
 
-  const parsed = Number.parseFloat(amount)
-  const validAmount = Number.isFinite(parsed) && parsed > 0 ? parsed : 0
-  const payout = Math.max(validAmount - WITHDRAWAL_FEE, 0)
+  const [amount, setAmount]       = useState('')
+  const [upiId, setUpiId]         = useState('')
+  const [fieldError, setFieldError] = useState<string | null>(null)
 
-  /** Mock submit — real implementation sends to the withdrawal API */
-  function handleSubmit() {
-    if (validAmount < MIN_WITHDRAWAL || validAmount > MAX_WITHDRAWAL) return
-    setSubmitted(true)
+  /* Balance in paise from API; convert to rupees for UI */
+  const balancePaise = walletData?.balance ?? 0
+  const balanceRs    = balancePaise / 100
+
+  const parsedRs  = Number.parseFloat(amount)
+  const validRs   = Number.isFinite(parsedRs) && parsedRs > 0 ? parsedRs : 0
+  const validPaise = Math.round(validRs * 100)
+
+  /* Client-side validation */
+  function validate(): string | null {
+    if (validRs <= 0)                         return 'Enter a valid amount.'
+    if (validRs < MIN_WITHDRAWAL_RS)           return `Minimum withdrawal is ₹${rupeesCompact(MIN_WITHDRAWAL_RS)}.`
+    if (validRs > MAX_WITHDRAWAL_RS)           return `Maximum withdrawal is ₹${rupeesCompact(MAX_WITHDRAWAL_RS)}.`
+    if (validPaise > balancePaise)             return 'Amount exceeds your available balance.'
+    if (!upiId.trim().includes('@'))           return 'Enter a valid UPI ID (e.g. name@okicici).'
+    return null
   }
 
-  /* ── Submitted confirmation state ── */
-  if (submitted) {
+  function handleSubmit() {
+    setFieldError(null)
+    const err = validate()
+    if (err) { setFieldError(err); return }
+    mutation.mutate({ amount: validPaise, upiId: upiId.trim() })
+  }
+
+  /* ── Success state — TDS breakdown ── */
+  if (mutation.isSuccess && mutation.data) {
+    const w = mutation.data
     return (
       <AppShell backTo="/app">
         <div className="flex flex-col items-center gap-6 py-12 text-center lg:mx-auto lg:max-w-[480px]">
@@ -70,30 +95,29 @@ export function WithdrawPage() {
           </span>
           <div className="flex flex-col gap-2">
             <h1 className="text-[22px] font-extrabold leading-tight tracking-tight text-asm-navy">
-              Request submitted
+              Withdrawal initiated
             </h1>
-            <p className="text-[14px] leading-relaxed text-asm-body">
-              Your withdrawal of{' '}
-              <span className="font-bold text-asm-navy">{rupees(validAmount)}</span>{' '}
-              is under review. Our team typically processes it within{' '}
-              <span className="font-bold text-asm-navy">1 hour</span>.
+            <p className="text-[14px] leading-relaxed text-asm-body" aria-live="polite">
+              Funds reach your bank within{' '}
+              <span className="font-bold text-asm-navy">3 hours</span>{' '}
+              after admin verification. You'll get an email.
             </p>
           </div>
+
+          {/* TDS breakdown */}
           <div className="w-full rounded-2xl border border-asm-line bg-white px-6 py-5 text-left shadow-[0_2px_12px_-4px_rgba(16,42,92,0.08)]">
-            <p className="text-[11px] font-bold uppercase tracking-[1px] text-amber-600">What happens next</p>
-            <ul className="mt-4 flex flex-col gap-3">
-              <KeyPoint>Our team reviews your request — usually within 1 hour.</KeyPoint>
-              <KeyPoint>Once approved, funds are sent to your {destination === 'upi' ? 'UPI ID' : 'bank account'}.</KeyPoint>
-              <KeyPoint>You'll receive a confirmation when the transfer is complete.</KeyPoint>
-              <KeyPoint>
-                Questions? Email <Strong>support@asmcoins.com</Strong> or tap the{' '}
-                <Strong>?</Strong> button in the header.
-              </KeyPoint>
-            </ul>
+            <p className="text-[11px] font-bold uppercase tracking-[1px] text-asm-muted">Breakdown</p>
+            <div className="mt-4 flex flex-col gap-3">
+              <BreakdownRow label="Gross amount" value={inr(w.gross)} />
+              <BreakdownRow label="TDS (5%)" value={`− ${inr(w.tds)}`} valueClass="text-red-600" />
+              <span className="block h-px w-full bg-asm-line" />
+              <BreakdownRow label="Net payout" value={inr(w.net)} valueClass="text-asm-greenInk text-base font-extrabold" />
+            </div>
           </div>
+
           <button
             type="button"
-            onClick={() => { setSubmitted(false); setAmount('') }}
+            onClick={() => { mutation.reset(); setAmount(''); setUpiId('') }}
             className="flex min-h-[44px] items-center text-[13px] font-semibold text-asm-muted transition-colors hover:text-asm-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue rounded"
           >
             Make another withdrawal
@@ -101,15 +125,6 @@ export function WithdrawPage() {
         </div>
       </AppShell>
     )
-  }
-
-  const container = {
-    hidden: {},
-    visible: { transition: { staggerChildren: 0.09, delayChildren: 0.04 } },
-  }
-  const fadeUp = {
-    hidden: { opacity: 0, y: 16 },
-    visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 90, damping: 18 } },
   }
 
   return (
@@ -131,9 +146,16 @@ export function WithdrawPage() {
               <span className="text-[11px] font-bold uppercase leading-[15px] tracking-[1px] text-asm-muted">
                 Withdrawable balance
               </span>
-              <span className="mt-0.5 font-mono text-xl font-bold tabular-nums leading-7 text-asm-navy">
-                {rupees(BALANCE.inr)}
-              </span>
+              {walletLoading ? (
+                <span className="mt-0.5 flex items-center gap-1.5 font-mono text-xl font-bold tabular-nums leading-7 text-asm-muted">
+                  <Loader2 className="size-4 animate-spin" aria-hidden />
+                  Loading…
+                </span>
+              ) : (
+                <span className="mt-0.5 font-mono text-xl font-bold tabular-nums leading-7 text-asm-navy">
+                  {inr(balancePaise)}
+                </span>
+              )}
             </div>
           </div>
           <ChevronRight className="size-4 shrink-0 text-asm-muted" aria-hidden />
@@ -146,137 +168,48 @@ export function WithdrawPage() {
             <IndianRupee className="size-3.5 shrink-0 text-asm-muted" aria-hidden />
             <input
               value={amount}
-              onChange={(event) => setAmount(event.target.value)}
+              onChange={(event) => { setAmount(event.target.value); setFieldError(null) }}
               inputMode="decimal"
               placeholder="0"
-              aria-label="Amount to withdraw"
+              aria-label="Amount to withdraw in rupees"
               className="min-w-0 flex-1 bg-transparent font-mono text-base font-bold tabular-nums text-asm-navy outline-none placeholder:font-sans placeholder:font-bold placeholder:text-asm-muted/50"
             />
-            <button
-              type="button"
-              aria-label="Select currency"
-              className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1 text-[12px] font-bold text-asm-muted transition-colors hover:bg-asm-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue"
-            >
-              INR
-              <ChevronDown className="size-3" aria-hidden />
-            </button>
+            <span className="shrink-0 text-[12px] font-bold text-asm-muted">INR</span>
           </div>
           <p className="px-1 text-[11px] leading-[15px] text-asm-muted">
-            Min <span className="font-bold text-asm-navy">₹{rupeesCompact(MIN_WITHDRAWAL)}</span>
+            Min <span className="font-bold text-asm-navy">₹{rupeesCompact(MIN_WITHDRAWAL_RS)}</span>
             {' '}·{' '}
-            Max <span className="font-bold text-asm-blue">₹{rupeesCompact(MAX_WITHDRAWAL)}</span>
+            Max <span className="font-bold text-asm-blue">₹{rupeesCompact(MAX_WITHDRAWAL_RS)}</span>
+            {!walletLoading && (
+              <>
+                {' '}·{' '}
+                Balance <span className="font-bold text-asm-greenInk">₹{rupeesCompact(balanceRs)}</span>
+              </>
+            )}
           </p>
         </motion.section>
 
-        {/* ── Destination ── */}
+        {/* ── UPI ID ── */}
         <motion.section variants={fadeUp} className="flex flex-col gap-3">
-          <SectionLabel>Withdraw to</SectionLabel>
-          <div className="flex items-stretch gap-3" role="group" aria-label="Select withdrawal destination">
-            <DestinationCard
-              selected={destination === 'bank'}
-              onSelect={() => setDestination('bank')}
-              Icon={Landmark}
-              title="Bank Account"
-              currency="(INR)"
-              description="Send to your bank account"
+          <SectionLabel>UPI details</SectionLabel>
+          <div className="flex flex-col gap-1.5">
+            <FormField
+              label="UPI ID"
+              placeholder="name@upi or name@okaxis"
+              Icon={AtSign}
+              trailing={<Smartphone className="size-4 text-asm-muted" aria-hidden />}
+              value={upiId}
+              onChange={(e) => { setUpiId(e.target.value); setFieldError(null) }}
             />
-            <DestinationCard
-              selected={destination === 'upi'}
-              onSelect={() => setDestination('upi')}
-              Icon={Smartphone}
-              title="UPI"
-              currency="(INR)"
-              description="Send to your UPI ID"
-            />
+            <p className="px-1 text-[11px] leading-snug text-asm-muted">
+              Must include @ — e.g. yourname@okicici or 9876543210@paytm.
+            </p>
           </div>
+          <Callout>
+            The UPI ID must be active and registered to your name. A wrong ID causes an
+            immediate failed transfer with no reversal.
+          </Callout>
         </motion.section>
-
-        {/* ── Bank details — shown only when bank is selected ── */}
-        {destination === 'bank' && (
-          <section className="flex flex-col gap-4">
-            <div className="flex items-center justify-between px-1">
-              <SectionLabel className="px-0">Bank details</SectionLabel>
-              <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.06em] text-asm-greenInk">
-                <Shield className="size-3" aria-hidden />
-                100% Secure
-              </span>
-            </div>
-
-            <div className="flex flex-col gap-3">
-              <FormField
-                label="Account holder name"
-                placeholder="Full name as on your bank account"
-                Icon={User}
-                autoComplete="name"
-              />
-              <FormField
-                label="Bank account number"
-                placeholder="Enter account number"
-                Icon={CreditCard}
-                inputMode="numeric"
-              />
-              <div className="flex flex-col gap-1.5">
-                <FormField
-                  label="IFSC code"
-                  placeholder="E.g. SBIN0001234"
-                  Icon={Building2}
-                  className="uppercase placeholder:normal-case"
-                  maxLength={11}
-                />
-                <p className="px-1 text-[11px] leading-snug text-asm-muted">
-                  11-character code on your chequebook or passbook (e.g. HDFC0000123).
-                </p>
-              </div>
-
-              <fieldset className="flex flex-col gap-2">
-                <legend className="px-1 pb-2 text-[11px] font-bold uppercase leading-[15px] tracking-[0.06em] text-asm-muted">
-                  Account type
-                </legend>
-                <div className="flex gap-2">
-                  <AccountTypeButton
-                    selected={accountType === 'savings'}
-                    onSelect={() => setAccountType('savings')}
-                    Icon={PiggyBank}
-                    label="Savings"
-                  />
-                  <AccountTypeButton
-                    selected={accountType === 'current'}
-                    onSelect={() => setAccountType('current')}
-                    Icon={Briefcase}
-                    label="Current"
-                  />
-                </div>
-              </fieldset>
-            </div>
-
-            <Callout>
-              Double-check your account number and IFSC — incorrect details can cause failed
-              transfers that cannot be reversed.
-            </Callout>
-          </section>
-        )}
-
-        {/* ── UPI details — shown only when UPI is selected ── */}
-        {destination === 'upi' && (
-          <section className="flex flex-col gap-3">
-            <SectionLabel>UPI details</SectionLabel>
-            <div className="flex flex-col gap-1.5">
-              <FormField
-                label="UPI ID"
-                placeholder="name@upi or name@okaxis"
-                Icon={AtSign}
-                trailing={<Smartphone className="size-4 text-asm-muted" aria-hidden />}
-              />
-              <p className="px-1 text-[11px] leading-snug text-asm-muted">
-                Must include @ — e.g. yourname@okicici or 9876543210@paytm.
-              </p>
-            </div>
-            <Callout>
-              The UPI ID must be active and registered to your name. A wrong ID causes an
-              immediate failed transfer with no reversal.
-            </Callout>
-          </section>
-        )}
 
         {/* ── Summary ── */}
         <section className="rounded-2xl border border-asm-line bg-white p-[21px] shadow-[0_2px_12px_-4px_rgba(16,42,92,0.08)]">
@@ -285,27 +218,45 @@ export function WithdrawPage() {
           </h2>
           <div className="mt-3 flex items-center justify-between">
             <span className="flex items-center gap-2 text-[13px] text-asm-body">
-              Withdrawal fee
+              TDS (5%)
               <Info className="size-3.5 text-asm-muted" aria-hidden />
             </span>
-            <span className="font-mono text-[13px] font-bold tabular-nums text-asm-greenInk">
-              {WITHDRAWAL_FEE === 0 ? 'Free' : rupees(WITHDRAWAL_FEE)}
+            <span className="font-mono text-[13px] font-bold tabular-nums text-red-600">
+              {validRs > 0 ? `− ${inr(Math.round(validPaise * 0.05))}` : '−'}
             </span>
           </div>
           <span className="my-3 block h-px w-full bg-asm-line" />
           <div className="flex items-center justify-between">
             <span className="text-[14px] font-bold text-asm-navy">You will get</span>
             <span className="font-mono text-lg font-bold tabular-nums text-asm-greenInk">
-              {rupees(payout)}
+              {validRs > 0 ? inr(Math.round(validPaise * 0.95)) : '₹0'}
             </span>
           </div>
+          <p className="mt-2 text-[11px] text-asm-muted">
+            Actual amounts are confirmed in the withdrawal receipt.
+          </p>
         </section>
+
+        {/* ── Inline error ── */}
+        {(fieldError || mutation.isError) && (
+          <div
+            className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-3.5"
+            role="alert"
+            aria-live="assertive"
+          >
+            <AlertCircle className="mt-0.5 size-4 shrink-0 text-red-600" aria-hidden />
+            <p className="text-[12px] leading-relaxed text-red-800">
+              {fieldError ?? (mutation.error instanceof ApiError ? mutation.error.message : 'Something went wrong. Please try again.')}
+            </p>
+          </div>
+        )}
 
         {/* ── Action ── */}
         <div className="flex flex-col gap-5 pt-1">
           <button
             type="button"
             onClick={handleSubmit}
+            disabled={mutation.isPending}
             className={cn(
               'flex h-14 w-full items-center justify-center gap-3 rounded-2xl',
               'bg-asm-greenInk shadow-[0_8px_24px_-8px_rgba(21,128,61,0.5)]',
@@ -314,10 +265,18 @@ export function WithdrawPage() {
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-greenInk focus-visible:ring-offset-2',
               'disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none'
             )}
-            disabled={validAmount < MIN_WITHDRAWAL || validAmount > MAX_WITHDRAWAL}
           >
-            Submit Withdrawal Request
-            <ArrowRight className="size-4" aria-hidden />
+            {mutation.isPending ? (
+              <>
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+                Submitting…
+              </>
+            ) : (
+              <>
+                Submit Withdrawal Request
+                <ArrowRight className="size-4" aria-hidden />
+              </>
+            )}
           </button>
 
           <section className="rounded-2xl border border-asm-line bg-white p-5 shadow-[0_2px_12px_-4px_rgba(16,42,92,0.06)]">
@@ -333,8 +292,8 @@ export function WithdrawPage() {
                 Processing typically takes <Strong>under 1 hour</Strong>. In rare cases up to 24 hours.
               </KeyPoint>
               <KeyPoint>
-                Amount must be between <Strong>₹{rupeesCompact(MIN_WITHDRAWAL)}</Strong> and{' '}
-                <Strong>₹{rupeesCompact(MAX_WITHDRAWAL)}</Strong>.
+                Amount must be between <Strong>₹{rupeesCompact(MIN_WITHDRAWAL_RS)}</Strong> and{' '}
+                <Strong>₹{rupeesCompact(MAX_WITHDRAWAL_RS)}</Strong>.
               </KeyPoint>
               <KeyPoint>
                 Need help? Tap <Strong>?</Strong> or email <Strong>support@asmcoins.com</Strong>.
@@ -342,6 +301,60 @@ export function WithdrawPage() {
             </ul>
           </section>
         </div>
+
+        {/* ── Past withdrawals ── */}
+        <motion.section variants={fadeUp} className="flex flex-col gap-3 pb-2">
+          <h2 className="px-1 text-[11px] font-bold uppercase tracking-[0.1em] text-asm-muted">
+            Past Withdrawals
+          </h2>
+          {withdrawalsLoading ? (
+            <div className="flex items-center justify-center gap-2 rounded-2xl border border-asm-line bg-white py-8 text-asm-muted" aria-live="polite">
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+              <span className="text-[13px]">Loading…</span>
+            </div>
+          ) : !withdrawalsData || withdrawalsData.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 rounded-2xl border border-asm-line bg-white px-5 py-8 text-center">
+              <Wallet className="size-8 text-asm-muted/40" aria-hidden />
+              <p className="text-[13px] font-semibold text-asm-navy">No withdrawals yet</p>
+              <p className="text-[12px] text-asm-body">Your withdrawal history will appear here.</p>
+            </div>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {withdrawalsData.map((w) => {
+                const { label, cls } = statusLabel(w.status)
+                return (
+                  <li
+                    key={w._id}
+                    className="flex items-center justify-between gap-3 rounded-2xl border border-asm-line bg-white px-4 py-3.5"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-asm-tint">
+                        {w.status === 'completed' ? (
+                          <Check className="size-4 text-asm-greenInk" aria-hidden />
+                        ) : w.status === 'rejected' ? (
+                          <XCircle className="size-4 text-red-500" aria-hidden />
+                        ) : (
+                          <Clock className="size-4 text-amber-500" aria-hidden />
+                        )}
+                      </span>
+                      <div className="flex flex-col gap-0.5 min-w-0">
+                        <span className="font-mono text-[13px] font-bold tabular-nums text-asm-navy">
+                          {inr(w.gross)}
+                        </span>
+                        <span className="text-[11px] text-asm-muted">
+                          Net {inr(w.net)} · {new Date(w.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </span>
+                      </div>
+                    </div>
+                    <span className={cn('shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em]', cls)}>
+                      {label}
+                    </span>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </motion.section>
 
       </motion.div>
     </AppShell>
@@ -355,85 +368,6 @@ function SectionLabel({ className, children }: { className?: string; children: R
     <h2 className={cn('px-1 text-[11px] font-bold uppercase leading-4 tracking-[1.2px] text-asm-muted', className)}>
       {children}
     </h2>
-  )
-}
-
-function DestinationCard({
-  selected,
-  onSelect,
-  Icon,
-  title,
-  currency,
-  description,
-}: {
-  selected: boolean
-  onSelect: () => void
-  Icon: LucideIcon
-  title: string
-  currency: string
-  description: string
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      aria-pressed={selected}
-      className={cn(
-        'flex flex-1 flex-col items-start gap-1.5 rounded-2xl border bg-white p-[17px] text-left',
-        'transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-greenInk',
-        selected
-          ? 'border-2 border-asm-greenInk bg-asm-green-tint/20'
-          : 'border-asm-line hover:border-asm-greenInk/40'
-      )}
-    >
-      <span className="flex w-full items-start justify-between">
-        <span className={cn('flex size-10 items-center justify-center rounded-xl', selected ? 'bg-asm-green-tint' : 'bg-asm-tint')}>
-          <Icon className={cn('size-4', selected ? 'text-asm-greenInk' : 'text-asm-muted')} aria-hidden />
-        </span>
-        {selected ? (
-          <span className="flex size-4 items-center justify-center rounded-full bg-asm-greenInk">
-            <Check className="size-2.5 text-white" strokeWidth={3.5} aria-hidden />
-          </span>
-        ) : (
-          <span className="size-4 rounded-full border-2 border-asm-line" />
-        )}
-      </span>
-      <span className={cn('text-[13px] font-bold leading-4', selected ? 'text-asm-navy' : 'text-asm-body')}>
-        {title} <span className="text-[10px] font-semibold text-asm-muted">{currency}</span>
-      </span>
-      <span className="text-[11px] leading-snug text-asm-muted">{description}</span>
-    </button>
-  )
-}
-
-function AccountTypeButton({
-  selected,
-  onSelect,
-  Icon,
-  label,
-}: {
-  selected: boolean
-  onSelect: () => void
-  Icon: LucideIcon
-  label: string
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      aria-pressed={selected}
-      className={cn(
-        'flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl border',
-        'text-[12px] font-bold uppercase tracking-[0.05em]',
-        'transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-greenInk',
-        selected
-          ? 'border-asm-greenInk/40 bg-asm-green-tint text-asm-greenInk'
-          : 'border-asm-line bg-white text-asm-muted hover:border-asm-greenInk/30'
-      )}
-    >
-      <Icon className="size-3.5" aria-hidden />
-      {label}
-    </button>
   )
 }
 
@@ -491,4 +425,23 @@ function KeyPoint({ children }: { children: React.ReactNode }) {
 
 function Strong({ children }: { children: React.ReactNode }) {
   return <span className="font-bold text-asm-navy">{children}</span>
+}
+
+function BreakdownRow({
+  label,
+  value,
+  valueClass,
+}: {
+  label: string
+  value: string
+  valueClass?: string
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-[13px] text-asm-body">{label}</span>
+      <span className={cn('font-mono text-[13px] font-bold tabular-nums text-asm-navy', valueClass)}>
+        {value}
+      </span>
+    </div>
+  )
 }

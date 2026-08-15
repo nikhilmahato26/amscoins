@@ -4,7 +4,7 @@ import { getWallet } from '@/services/api/wallet'
 import { getReferral } from '@/services/api/referral'
 import { getDashboard } from '@/services/api/dashboard'
 import { getInvestments } from '@/services/api/investments'
-import { getWithdrawals } from '@/services/api/withdrawals'
+import { getWithdrawals, createWithdrawal } from '@/services/api/withdrawals'
 import { getLeaderboard, type LeaderboardPeriod } from '@/services/api/leaderboard'
 import {
   adminStats,
@@ -27,6 +27,16 @@ export const useReferral = () => useQuery({ queryKey: ['referral'], queryFn: get
 export const useDashboard = () => useQuery({ queryKey: ['dashboard'], queryFn: getDashboard })
 export const useInvestments = () => useQuery({ queryKey: ['investments'], queryFn: getInvestments })
 export const useWithdrawals = () => useQuery({ queryKey: ['withdrawals'], queryFn: getWithdrawals })
+export const useCreateWithdrawal = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { amount: number; upiId: string }) => createWithdrawal(input),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['withdrawals'] })
+      void qc.invalidateQueries({ queryKey: ['wallet'] })
+    },
+  })
+}
 export const useLeaderboard = (period: LeaderboardPeriod) =>
   useQuery({ queryKey: ['leaderboard', period], queryFn: () => getLeaderboard(period) })
 
