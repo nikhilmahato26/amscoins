@@ -465,4 +465,31 @@ const withdrawalRejected = (user, w) => {
   })
 }
 
-module.exports = { sendMail, withdrawalInitiated, withdrawalCompleted, withdrawalRejected }
+const passwordResetOtp = (user, otp) => {
+  const body = `
+    <p style="margin:0 0 16px 0;font-size:15px;color:#e5e7eb;">
+      Hello <span style="color:#22c55e;font-weight:600;">${user.name}</span>,
+    </p>
+    <p style="margin:0 0 16px 0;font-size:14px;color:#d1d5db;line-height:1.6;">
+      Use the one-time code below to reset your ASM Coins password. It expires in <strong>10 minutes</strong>.
+    </p>
+    <div style="text-align:center;margin:24px 0;">
+      <div style="display:inline-block;padding:14px 28px;border:1.5px solid #22c55e;border-radius:10px;background-color:#0c0c0c;font-size:32px;font-weight:800;letter-spacing:10px;color:#22c55e;">
+        ${otp}
+      </div>
+    </div>
+    <p style="margin:0 0 16px 0;font-size:13px;color:#9ca3af;line-height:1.6;">
+      If you did not request a password reset, you can safely ignore this email — your password will not change.
+    </p>
+    <p style="margin:0;font-size:14px;color:#e5e7eb;line-height:1.6;">
+      Thank You,<br/>Team <span style="color:#22c55e;font-weight:600;">ASM Coins</span>
+    </p>
+  `
+  return sendMail({
+    to: user.email,
+    subject: 'Your ASM Coins password reset code',
+    html: emailShell(user._id, body),
+  })
+}
+
+module.exports = { sendMail, withdrawalInitiated, withdrawalCompleted, withdrawalRejected, passwordResetOtp }
