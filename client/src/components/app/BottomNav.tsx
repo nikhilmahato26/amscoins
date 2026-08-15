@@ -1,4 +1,4 @@
-import { CircleUserRound, House, Users, Wallet } from 'lucide-react'
+import { CircleUserRound, House, Trophy, Users, Wallet } from 'lucide-react'
 import { NavLink } from 'react-router'
 
 import { cn } from '@/lib/utils'
@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 const LINKS = [
   { to: '/app', label: 'Home', Icon: House, end: true },
   { to: '/app/withdraw', label: 'Withdraw', Icon: Wallet, end: false },
+  { to: '/app/leaderboard', label: 'Leaders', Icon: Trophy, end: false },
   { to: '/app/referral', label: 'Referral', Icon: Users, end: false },
   { to: '/app/account', label: 'Account', Icon: CircleUserRound, end: false },
 ] as const

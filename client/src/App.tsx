@@ -46,6 +46,9 @@ const SilverTierPage = lazy(() =>
 const AccountPage = lazy(() =>
   import('./pages/app/AccountPage').then((m) => ({ default: m.AccountPage }))
 )
+const LeaderboardPage = lazy(() =>
+  import('./pages/app/LeaderboardPage').then((m) => ({ default: m.LeaderboardPage }))
+)
 const AppPlaceholder = lazy(() =>
   import('./pages/placeholder/AppPlaceholder').then((m) => ({ default: m.AppPlaceholder }))
 )
@@ -170,6 +173,15 @@ export default function App() {
           element={
             <RequireAuth role="user">
               <AccountPage />
+            </RequireAuth>
+          }
+        />
+
+        <Route
+          path="/app/leaderboard"
+          element={
+            <RequireAuth role="user">
+              <LeaderboardPage />
             </RequireAuth>
           }
         />
