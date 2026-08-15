@@ -21,11 +21,11 @@ export function LoginPage() {
     setLoading(true)
 
     try {
-      const user = await authService.login(email, password)
+      const { user } = await authService.login(email, password)
       setUser(user)
       navigate(user.role === 'admin' ? '/admin' : '/app')
-    } catch (err: any) {
-      setError(err.message || 'Login failed. Check your credentials.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed. Check your credentials.')
     } finally {
       setLoading(false)
     }

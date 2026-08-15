@@ -9,19 +9,21 @@ import { useAuth } from '@/auth/AuthContext'
 import { Checkbox } from '@/components/ui/checkbox'
 
 export function RegisterPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  
-  const navigate = useNavigate()
-  const { setUser } = useAuth()
-
   const [searchParams] = useSearchParams()
   const planParam = searchParams.get('plan')
   const selectedPlan =
     planParam && ['silver', 'gold', 'diamond'].includes(planParam) ? planParam : null
+
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [referralCode, setReferralCode] = useState((searchParams.get('ref') ?? '').toUpperCase())
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const navigate = useNavigate()
+  const { setUser } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -39,11 +41,16 @@ export function RegisterPage() {
     setLoading(true)
 
     try {
-      const user = await authService.register(email, password)
+      const { user } = await authService.register({
+        name,
+        email,
+        password,
+        referralCode: referralCode.trim() || undefined,
+      })
       setUser(user)
       navigate('/app')
-    } catch (err: any) {
-      setError(err.message || 'Registration failed')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Registration failed')
     } finally {
       setLoading(false)
     }
@@ -106,10 +113,21 @@ export function RegisterPage() {
           </div>
         )}
         
+        <Field label="Full Name">
+          <Input
+            type="text"
+            placeholder="Your full name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="h-11 border-asm-line bg-white text-asm-navy placeholder:text-asm-muted focus-visible:border-asm-blue focus-visible:ring-asm-blue/30"
+            required
+          />
+        </Field>
+
         <Field label="Email">
-          <Input 
-            type="email" 
-            placeholder="Enter your email" 
+          <Input
+            type="email"
+            placeholder="Enter your email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="h-11 border-asm-line bg-white text-asm-navy placeholder:text-asm-muted focus-visible:border-asm-blue focus-visible:ring-asm-blue/30"
@@ -141,9 +159,11 @@ export function RegisterPage() {
         
         <Field label="Referral Code (Optional)">
           <div className="relative">
-             <Input 
-              type="text" 
-              placeholder="USER010" 
+             <Input
+              type="text"
+              placeholder="USER010"
+              value={referralCode}
+              onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
               className="h-11 border-asm-line bg-white pr-10 text-asm-navy placeholder:text-asm-muted focus-visible:border-asm-blue focus-visible:ring-asm-blue/30"
              />
              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-asm-greenInk">

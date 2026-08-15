@@ -1,12 +1,16 @@
 export type Role = 'user' | 'admin'
+export type Tier = 'silver' | 'gold' | 'diamond'
 
+/** Matches the backend `user.toPublic()` payload — no password client-side. */
 export interface User {
   id: string
   name: string
   email: string
-  password: string          // mock only — never do this for real
   role: Role
   status: 'active' | 'frozen'
+  referralCode: string
+  referralCount: number
+  tier: Tier
   createdAt: string
 }
 

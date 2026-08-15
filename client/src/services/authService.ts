@@ -1,43 +1,35 @@
-import type { User } from '../types'
-import { MOCK_USERS } from '../mocks/users'
+import { apiFetch, setToken } from '@/lib/api'
+import type { User } from '@/types'
 
-// Fake latency helper
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+interface AuthResult {
+  user: User
+  token: string
+}
 
 export const authService = {
-  async login(email: string, password: string): Promise<User> {
-    await delay(700) // Fake 700ms latency as specified
-    const user = MOCK_USERS.find(
-      (u) => u.email === email && u.password === password
-    )
-    if (!user) {
-      throw new Error('Invalid email or password')
-    }
-    return user
+  async login(email: string, password: string): Promise<AuthResult> {
+    const r = await apiFetch<AuthResult>('/auth/login', {
+      method: 'POST',
+      body: { email, password },
+      auth: false,
+    })
+    setToken(r.token)
+    return r
   },
 
-  async register(email: string, password: string): Promise<User> {
-    await delay(700)
-    // Basic mock registration, only meant for demo
-    if (MOCK_USERS.find((u) => u.email === email)) {
-      throw new Error('Email already registered')
-    }
-    
-    const newUser: User = {
-      id: `u_${Math.random().toString(36).substr(2, 9)}`,
-      name: email.split('@')[0],
-      email,
-      password, // Again, mock only!
-      role: 'user',
-      status: 'active',
-      createdAt: new Date().toISOString(),
-    }
-    // We do not mutate MOCK_USERS permanently for a refresh, 
-    // it's just a demo representation, but we return it successfully.
-    return newUser
+  async register(input: { name: string; email: string; password: string; referralCode?: string }): Promise<AuthResult> {
+    const r = await apiFetch<AuthResult>('/auth/register', {
+      method: 'POST',
+      body: input,
+      auth: false,
+    })
+    setToken(r.token)
+    return r
   },
+
+  me: () => apiFetch<{ user: User }>('/auth/me'),
 
   async logout(): Promise<void> {
-    await delay(200)
-  }
+    setToken(null)
+  },
 }

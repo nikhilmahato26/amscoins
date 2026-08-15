@@ -1,21 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import type { User } from '../types'
-
-/** Narrow enough for the fields the app actually reads off a session. */
-function isStoredUser(value: unknown): value is User {
-  if (typeof value !== 'object' || value === null) return false
-
-  const candidate = value as Record<string, unknown>
-  return (
-    typeof candidate.id === 'string' &&
-    typeof candidate.name === 'string' &&
-    typeof candidate.email === 'string' &&
-    typeof candidate.password === 'string' &&
-    (candidate.role === 'user' || candidate.role === 'admin') &&
-    (candidate.status === 'active' || candidate.status === 'frozen') &&
-    typeof candidate.createdAt === 'string'
-  )
-}
+import { getToken, setToken } from '@/lib/api'
+import { authService } from '@/services/authService'
 
 interface AuthContextType {
   user: User | null
@@ -30,44 +16,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const stored = localStorage.getItem('taksal_session')
-
-    if (!stored) {
+    /*
+     * The token is the source of truth for a session. If one is present we
+     * ask the API who it belongs to (this also validates it server-side); a
+     * failure means the token is stale/invalid, so we clear it.
+     */
+    if (!getToken()) {
       setIsLoading(false)
       return
     }
 
-    try {
-      const parsed: unknown = JSON.parse(stored)
+    let cancelled = false
+    authService
+      .me()
+      .then(({ user }) => {
+        if (!cancelled) setUserState(user)
+      })
+      .catch(() => {
+        setToken(null)
+        if (!cancelled) setUserState(null)
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
 
-      /*
-       * Anything can end up under this key: a half-written value, a stale
-       * shape from an older build, or another app that used the same
-       * localhost origin. RequireAuth reads user.role to decide access, so a
-       * parsed-but-wrong value has to be rejected rather than trusted.
-       */
-      if (isStoredUser(parsed)) {
-        setUserState(parsed)
-      } else {
-        console.warn('Discarding session: unexpected shape')
-        localStorage.removeItem('taksal_session')
-      }
-    } catch (e) {
-      // Clear it, otherwise this throws again on every single load.
-      console.error('Discarding unreadable session', e)
-      localStorage.removeItem('taksal_session')
-    } finally {
-      setIsLoading(false)
+    return () => {
+      cancelled = true
     }
   }, [])
 
-  const setUser = (user: User | null) => {
-    setUserState(user)
-    if (user) {
-      localStorage.setItem('taksal_session', JSON.stringify(user))
-    } else {
-      localStorage.removeItem('taksal_session')
-    }
+  const setUser = (next: User | null) => {
+    setUserState(next)
+    // Logout: also drop the token so a reload does not re-hydrate a session.
+    if (!next) setToken(null)
   }
 
   return (
