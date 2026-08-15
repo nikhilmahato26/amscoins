@@ -52,12 +52,26 @@ const LeaderboardPage = lazy(() =>
 const AppPlaceholder = lazy(() =>
   import('./pages/placeholder/AppPlaceholder').then((m) => ({ default: m.AppPlaceholder }))
 )
-const AdminPlaceholder = lazy(() =>
-  import('./pages/placeholder/AdminPlaceholder').then((m) => ({ default: m.AdminPlaceholder }))
-)
 // NotFound lives in AdminPlaceholder.tsx; NotFound.tsx is only a re-export.
 const NotFound = lazy(() =>
   import('./pages/placeholder/AdminPlaceholder').then((m) => ({ default: m.NotFound }))
+)
+
+// ── Admin shell (code-split; admins are rare and never on the landing path) ──
+const AdminLayout = lazy(() =>
+  import('./pages/admin/AdminLayout').then((m) => ({ default: m.AdminLayout }))
+)
+const AdminDashboard = lazy(() =>
+  import('./pages/admin/AdminDashboard').then((m) => ({ default: m.AdminDashboard }))
+)
+const AdminDeposits = lazy(() =>
+  import('./pages/admin/AdminDeposits').then((m) => ({ default: m.AdminDeposits }))
+)
+const AdminWithdrawals = lazy(() =>
+  import('./pages/admin/AdminWithdrawals').then((m) => ({ default: m.AdminWithdrawals }))
+)
+const AdminUsers = lazy(() =>
+  import('./pages/admin/AdminUsers').then((m) => ({ default: m.AdminUsers }))
 )
 
 /** Shown while a route chunk downloads. Announced, so it is not a silent gap. */
@@ -195,14 +209,20 @@ export default function App() {
           }
         />
 
+        {/* ── Admin routes — gated by RequireAuth role="admin", rendered inside AdminLayout ── */}
         <Route
-          path="/admin/*"
+          path="/admin"
           element={
             <RequireAuth role="admin">
-              <AdminPlaceholder />
+              <AdminLayout />
             </RequireAuth>
           }
-        />
+        >
+          <Route index element={<AdminDashboard />} />
+          <Route path="deposits" element={<AdminDeposits />} />
+          <Route path="withdrawals" element={<AdminWithdrawals />} />
+          <Route path="users" element={<AdminUsers />} />
+        </Route>
 
         <Route path="*" element={<NotFound />} />
       </Routes>
