@@ -11,7 +11,8 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "test": "NODE_ENV=test jest --runInBand",
-    "seed": "node src/seed/seedPlans.js"
+    "seed": "node src/seed/seedPlans.js",
+    "e2e:server": "node e2e-server.js"
   },
   "keywords": [],
   "author": "",
