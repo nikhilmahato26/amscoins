@@ -26,4 +26,19 @@ const googleCallback = (req, res, next) => {
   })(req, res, next)
 }
 
-module.exports = { register, login, me, googleCallback }
+const forgotPassword = asyncHandler(async (req, res) => {
+  await authService.requestPasswordReset(req.body.email)
+  res.json({ message: 'If an account exists for that email, a reset code has been sent.' })
+})
+
+const verifyOtp = asyncHandler(async (req, res) => {
+  const { resetToken } = await authService.verifyResetOtp(req.body.email, req.body.otp)
+  res.json({ resetToken })
+})
+
+const resetPassword = asyncHandler(async (req, res) => {
+  await authService.resetPassword(req.body.resetToken, req.body.password)
+  res.json({ message: 'Password updated. You can now sign in.' })
+})
+
+module.exports = { register, login, me, googleCallback, forgotPassword, verifyOtp, resetPassword }

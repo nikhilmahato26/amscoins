@@ -29,10 +29,17 @@ const adjustWalletSchema = z.object({
   note: z.string().optional(),
 })
 
+const forgotPasswordSchema = z.object({ email: z.string().email() })
+const verifyOtpSchema = z.object({ email: z.string().email(), otp: z.string().regex(/^\d{6}$/) })
+const resetPasswordSchema = z.object({ resetToken: z.string().min(10), password: z.string().min(6) })
+
 module.exports = {
   registerSchema,
   loginSchema,
   createInvestmentSchema,
   createWithdrawalSchema,
   adjustWalletSchema,
+  forgotPasswordSchema,
+  verifyOtpSchema,
+  resetPasswordSchema,
 }

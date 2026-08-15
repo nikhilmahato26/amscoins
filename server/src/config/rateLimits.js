@@ -37,7 +37,27 @@ const loginLimiter = rateLimit({
   handler: createHandler('Too many login attempts, please try again in 15 minutes'),
 })
 
-// 3. Investment Creation — User-ID based
+// 3. Forgot Password — IP based
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  store: makeStore('rl:forgot:'),
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  handler: createHandler('Too many reset requests, please try again in 15 minutes'),
+})
+
+// 4. OTP Verify — IP based
+const otpVerifyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  store: makeStore('rl:otp:'),
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  handler: createHandler('Too many attempts, please try again in 15 minutes'),
+})
+
+// 5. Investment Creation — User-ID based
 const investmentCreateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   limit: 3,
@@ -48,7 +68,7 @@ const investmentCreateLimiter = rateLimit({
   handler: createHandler('Investment limit reached, please try again later'),
 })
 
-// 4. Withdrawal Creation — User-ID based
+// 6. Withdrawal Creation — User-ID based
 const withdrawalCreateLimiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000,
   limit: 5,
@@ -59,7 +79,7 @@ const withdrawalCreateLimiter = rateLimit({
   handler: createHandler('Daily withdrawal limit reached, please try again tomorrow'),
 })
 
-// 5. Dashboard — User-ID based
+// 7. Dashboard — User-ID based
 const dashboardLimiter = rateLimit({
   windowMs: 60 * 1000,
   limit: 30,
@@ -70,7 +90,7 @@ const dashboardLimiter = rateLimit({
   handler: createHandler('Too many requests, please try again shortly'),
 })
 
-// 6. Wallet — User-ID based
+// 8. Wallet — User-ID based
 const walletLimiter = rateLimit({
   windowMs: 60 * 1000,
   limit: 30,
@@ -81,7 +101,7 @@ const walletLimiter = rateLimit({
   handler: createHandler('Too many requests, please try again shortly'),
 })
 
-// 7. Leaderboard — User-ID based
+// 9. Leaderboard — User-ID based
 const leaderboardLimiter = rateLimit({
   windowMs: 60 * 1000,
   limit: 10,
@@ -95,6 +115,8 @@ const leaderboardLimiter = rateLimit({
 module.exports = {
   registerLimiter,
   loginLimiter,
+  forgotPasswordLimiter,
+  otpVerifyLimiter,
   investmentCreateLimiter,
   withdrawalCreateLimiter,
   dashboardLimiter,
