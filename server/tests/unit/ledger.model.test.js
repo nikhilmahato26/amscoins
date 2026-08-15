@@ -6,7 +6,13 @@ const Investment = require('../../src/models/Investment')
 const Withdrawal = require('../../src/models/Withdrawal')
 const Transaction = require('../../src/models/Transaction')
 
-beforeAll(setupDb)
+beforeAll(async () => {
+  await setupDb()
+  // Ensure unique indexes are built before the uniqueness assertions run —
+  // Mongoose builds indexes asynchronously, which otherwise makes the
+  // duplicate-key test flaky under full-suite load.
+  await Promise.all([Investment.init(), Withdrawal.init(), Transaction.init()])
+})
 afterEach(clearDb)
 afterAll(teardownDb)
 
