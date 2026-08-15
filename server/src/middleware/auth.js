@@ -28,6 +28,11 @@ module.exports = async (req, _res, next) => {
       throw new ApiError(401, 'Invalid token')
     }
 
+    if (payload.purpose) {
+      logger.warn('Purpose-scoped token used as session token', { url: req.originalUrl })
+      throw new ApiError(401, 'Invalid token')
+    }
+
     const user = await User.findById(payload.id)
     if (!user) {
       logger.warn('Token references non-existent user', {

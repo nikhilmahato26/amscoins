@@ -42,7 +42,7 @@ async function register({ name, email, password, referralCode }) {
 async function login({ email, password }) {
   const user = await User.findOne({ email: email.toLowerCase() })
 
-  if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+  if (!user || !user.passwordHash || !(await bcrypt.compare(password, user.passwordHash))) {
     logger.warn('Login failed — invalid credentials', { email })
     throw new ApiError(401, 'Invalid email or password')
   }

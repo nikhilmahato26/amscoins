@@ -1,6 +1,13 @@
 process.env.JWT_SECRET = 'test'
 process.env.MONGO_URI = 'mongodb://127.0.0.1:27017/test'
+// This suite exercises the un-configured Google path. dotenv does not override
+// keys already present in process.env, so setting these empty before app load
+// keeps isGoogleConfigured false even when a local .env carries real creds.
+process.env.GOOGLE_CLIENT_ID = ''
+process.env.GOOGLE_CLIENT_SECRET = ''
+process.env.GOOGLE_CALLBACK_URL = ''
 const request = require('supertest')
+const jwt = require('jsonwebtoken')
 const { setupDb, clearDb, teardownDb } = require('../helpers/db')
 const app = require('../../src/app')
 
@@ -37,4 +44,23 @@ test('login works after register', async () => {
   const res = await request(app).post('/api/auth/login').send({ email: 'l@b.com', password: 'secret1' })
   expect(res.status).toBe(200)
   expect(res.body.token).toBeTruthy()
+})
+
+test('pwreset token rejected as session token (401)', async () => {
+  const reg = await request(app)
+    .post('/api/auth/register')
+    .send({ name: 'P', email: 'p@b.com', password: 'secret1' })
+  const pwresetToken = jwt.sign(
+    { id: reg.body.user._id, purpose: 'pwreset' },
+    process.env.JWT_SECRET
+  )
+  const res = await request(app)
+    .get('/api/auth/me')
+    .set('Authorization', `Bearer ${pwresetToken}`)
+  expect(res.status).toBe(401)
+})
+
+test('GET /api/auth/google returns 503 when Google is not configured', async () => {
+  const res = await request(app).get('/api/auth/google')
+  expect(res.status).toBe(503)
 })

@@ -46,3 +46,10 @@ test('verify-otp with a non-numeric code is 400 (validation)', async () => {
   const res = await request(app).post('/api/auth/verify-otp').send({ email: 'r@b.com', otp: 'abcdef' })
   expect(res.status).toBe(400)
 })
+
+test('reset-password with invalid resetToken returns 400', async () => {
+  const res = await request(app)
+    .post('/api/auth/reset-password')
+    .send({ resetToken: 'not-a-real-token', password: 'whatever1' })
+  expect(res.status).toBe(400)
+})
