@@ -17,6 +17,9 @@ const RegisterPage = lazy(() =>
 const ForgotPasswordPage = lazy(() =>
   import('./pages/auth/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage }))
 )
+const AuthCallbackPage = lazy(() =>
+  import('./pages/auth/AuthCallbackPage').then((m) => ({ default: m.AuthCallbackPage }))
+)
 const PlansPage = lazy(() => import('./pages/plans/PlansPage').then((m) => ({ default: m.PlansPage })))
 const GalleryPage = lazy(() =>
   import('./pages/gallery/GalleryPage').then((m) => ({ default: m.GalleryPage }))
@@ -102,6 +105,7 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/plans" element={<PlansPage />} />
         <Route path="/gallery" element={<GalleryPage />} />
 
