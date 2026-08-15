@@ -9,5 +9,6 @@ router.use('/referral', require('./referralRoutes'))
 router.use('/withdrawals', require('./withdrawalRoutes'))
 router.use('/admin', require('./adminRoutes'))
 router.use('/leaderboard', require('./leaderboardRoutes'))
+router.use('/dashboard', require('./dashboardRoutes'))
 
 module.exports = router
