@@ -6,7 +6,7 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
-app.get('/api/health', (_req, res) => res.json({ status: 'ok' }))
+app.use('/api', require('./routes'))
 
 app.use(notFound)
 app.use(errorHandler)
