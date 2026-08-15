@@ -2,6 +2,7 @@ const asyncHandler = require('../middleware/asyncHandler')
 const Investment = require('../models/Investment')
 const Withdrawal = require('../models/Withdrawal')
 const User = require('../models/User')
+const Wallet = require('../models/Wallet')
 const invSvc = require('../services/investmentService')
 const wdSvc = require('../services/withdrawalService')
 const walletService = require('../services/walletService')
@@ -49,6 +50,22 @@ const adjustWallet = asyncHandler(async (req, res) => {
   res.json({ balance: w.balance })
 })
 
+const getStats = asyncHandler(async (_req, res) => {
+  const [users, pendingDeposits, pendingWithdrawals, invAgg, walAgg] = await Promise.all([
+    User.countDocuments(),
+    Investment.countDocuments({ status: 'pending' }),
+    Withdrawal.countDocuments({ status: 'pending' }),
+    Investment.aggregate([{ $match: { status: 'active' } }, { $group: { _id: null, s: { $sum: '$amount' } } }]),
+    Wallet.aggregate([{ $group: { _id: null, s: { $sum: '$balance' } } }]),
+  ])
+  res.json({
+    users,
+    pendingDeposits,
+    pendingWithdrawals,
+    totals: { invested: invAgg[0]?.s || 0, walletLiability: walAgg[0]?.s || 0 },
+  })
+})
+
 module.exports = {
   listInvestments,
   approveInvestment,
@@ -60,4 +77,5 @@ module.exports = {
   freeze: setStatus('frozen'),
   unfreeze: setStatus('active'),
   adjustWallet,
+  getStats,
 }

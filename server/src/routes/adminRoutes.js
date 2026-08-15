@@ -7,6 +7,8 @@ const c = require('../controllers/adminController')
 
 router.use(auth, requireAdmin)
 
+router.get('/stats', c.getStats)
+
 router.get('/investments', c.listInvestments)
 router.post('/investments/:id/approve', c.approveInvestment)
 router.post('/investments/:id/reject', c.rejectInvestment)
