@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { Link } from 'react-router'
-import { ArrowRight, Award, TrendingUp, Wallet } from 'lucide-react'
+import { ArrowRight, Award, Lock, TrendingUp, Wallet } from 'lucide-react'
 
 // vault.png lives in /public — referenced as an absolute URL, no import needed
 import { AppShell } from '@/components/app/AppShell'
@@ -46,11 +46,10 @@ function maturityLabel(maturesAt?: string): string | null {
 
 /* ── Data ───────────────────────────────────────────────────────── */
 
-
-const PLANS: { tier: Tier; name: string; returns: string; duration: string; min: string; max: string }[] = [
-  { tier: 'silver',  name: 'Silver',  returns: '25%', duration: '36 Hours', min: '₹1,000', max: '₹50,000'   },
-  { tier: 'gold',    name: 'Gold',    returns: '30%', duration: '36 Hours', min: '₹3,000', max: '₹50,000'   },
-  { tier: 'diamond', name: 'Diamond', returns: '40%', duration: '36 Hours', min: '₹5,000', max: '₹5,00,000' },
+const PLANS: { tier: Tier; name: string; returns: string; duration: string; min: string; max: string; requiredReferrals: number }[] = [
+  { tier: 'silver',  name: 'Silver',  returns: '25%', duration: '36 Hours', min: '₹1,000', max: '₹10,000',   requiredReferrals: 0  },
+  { tier: 'gold',    name: 'Gold',    returns: '30%', duration: '36 Hours', min: '₹3,000', max: '₹50,000',   requiredReferrals: 11 },
+  { tier: 'diamond', name: 'Diamond', returns: '40%', duration: '36 Hours', min: '₹5,000', max: '₹1,00,000', requiredReferrals: 21 },
 ]
 
 /* ── Page ───────────────────────────────────────────────────────── */
@@ -327,9 +326,17 @@ export function HomePage() {
             Investment Packages
           </h2>
           <div className="flex flex-col gap-4 sm:grid sm:grid-cols-3">
-            {PLANS.map((plan) => (
-              <PlanCard key={plan.tier} {...plan} />
-            ))}
+            {PLANS.map((plan) => {
+              const currentTier = (dash?.tier ?? user?.tier ?? 'silver') as Tier
+              const unlocked = isPlanUnlocked(currentTier, plan.tier)
+              return (
+                <PlanCard
+                  key={plan.tier}
+                  {...plan}
+                  unlocked={unlocked}
+                />
+              )
+            })}
           </div>
           <p className="mt-4 px-1 text-center text-[11px] leading-relaxed text-asm-muted">
             Returns shown are plan terms, not guarantees.{' '}
@@ -349,6 +356,11 @@ export function HomePage() {
 
 /* ── Plan card ── */
 
+const TIER_ORDER: Tier[] = ['silver', 'gold', 'diamond']
+function isPlanUnlocked(userTier: Tier, planTier: Tier): boolean {
+  return TIER_ORDER.indexOf(userTier) >= TIER_ORDER.indexOf(planTier)
+}
+
 /**
  * Per-tier accent styles.
  * Silver: neutral steel tones.
@@ -364,8 +376,6 @@ const PLAN_STYLE: Record<Tier, {
   silver: {
     ring:   'ring-1 ring-[#CED5E1]',
     figure: 'text-[#868B95]',
-    // Tier identity lives on the badge/figure/ring; the commit-money button
-    // stays the primary blue on every tier so it never reads as disabled.
     btn:    'bg-asm-blue hover:bg-asm-blue-dark',
     glow:   'rgba(134,139,149,0.12)',
   },
@@ -390,6 +400,8 @@ function PlanCard({
   duration,
   min,
   max,
+  requiredReferrals,
+  unlocked,
 }: {
   tier: Tier
   name: string
@@ -397,59 +409,108 @@ function PlanCard({
   duration: string
   min: string
   max: string
+  requiredReferrals: number
+  unlocked: boolean
 }) {
   const s = PLAN_STYLE[tier]
+  const unlockOrdinalText =
+    requiredReferrals === 11
+      ? 'Unlocks on 11th Referral'
+      : requiredReferrals === 21
+      ? 'Unlocks on 21st Referral'
+      : `Unlocks on ${requiredReferrals}th Referral`
+
   return (
     <motion.article
-      whileHover={{
-        y: -6,
-        boxShadow: `0 20px 40px -12px ${s.glow}, 0 4px 16px -4px rgba(16,42,92,0.10)`,
-      }}
+      whileHover={
+        unlocked
+          ? {
+              y: -4,
+              boxShadow: `0 20px 40px -12px ${s.glow}, 0 4px 16px -4px rgba(16,42,92,0.10)`,
+            }
+          : undefined
+      }
       transition={{ type: 'spring' as const, stiffness: 380, damping: 28 }}
       className={cn(
-        'flex flex-col items-center rounded-2xl bg-white px-5 py-5',
+        'relative flex flex-col items-center overflow-hidden rounded-2xl bg-white p-5',
         'shadow-[0_2px_16px_-4px_rgba(16,42,92,0.08)]',
         s.ring
       )}
     >
-      <TierBadge tier={tier} size={88} />
-
-      <div className="mt-3 flex flex-col items-center gap-0.5">
-        <span className={cn('text-[32px] font-extrabold leading-none tabular-nums', s.figure)}>
-          {returns}
-        </span>
-        <span className="text-[10px] font-bold uppercase tracking-widest text-asm-muted">Returns</span>
-      </div>
-
-      <div className="mt-3 flex flex-col items-center gap-0.5">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-asm-muted">Duration</span>
-        <span className="text-[15px] font-bold text-asm-navy">{duration}</span>
-      </div>
-
-      <div className="mt-3 flex w-full items-stretch justify-between rounded-xl bg-asm-tint px-4 py-2.5">
-        <span className="flex flex-col">
-          <span className="text-[9px] font-bold uppercase tracking-widest text-asm-muted">Min</span>
-          <span className="mt-0.5 font-mono text-[14px] font-bold tabular-nums text-asm-navy">{min}</span>
-        </span>
-        <span className="w-px self-stretch bg-asm-line" />
-        <span className="flex flex-col items-end">
-          <span className="text-[9px] font-bold uppercase tracking-widest text-asm-muted">Max</span>
-          <span className="mt-0.5 font-mono text-[14px] font-bold tabular-nums text-asm-navy">{max}</span>
-        </span>
-      </div>
-
-      <Link
-        to={`/app/invest?plan=${tier}`}
-        aria-label={`Invest in the ${name} package`}
+      {/* Underlying Card Content — Visible through subtle blur when locked */}
+      <div
         className={cn(
-          'mt-3 flex min-h-[44px] w-full items-center justify-center rounded-xl',
-          'text-[12px] font-bold uppercase tracking-[0.08em] text-white',
-          'transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1',
-          s.btn
+          'flex w-full flex-col items-center transition-all duration-300',
+          !unlocked && 'pointer-events-none select-none opacity-50 filter blur-[1.5px]'
         )}
       >
-        Invest Now
-      </Link>
+        <TierBadge tier={tier} size={88} />
+
+        <div className="mt-3 flex flex-col items-center gap-0.5">
+          <span className={cn('text-[32px] font-extrabold leading-none tabular-nums', s.figure)}>
+            {returns}
+          </span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-asm-muted">Returns</span>
+        </div>
+
+        <div className="mt-3 flex flex-col items-center gap-0.5">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-asm-muted">Duration</span>
+          <span className="text-[15px] font-bold text-asm-navy">{duration}</span>
+        </div>
+
+        <div className="mt-3 flex w-full items-stretch justify-between rounded-xl bg-asm-tint px-4 py-2.5">
+          <span className="flex flex-col">
+            <span className="text-[9px] font-bold uppercase tracking-widest text-asm-muted">Min</span>
+            <span className="mt-0.5 font-mono text-[14px] font-bold tabular-nums text-asm-navy">{min}</span>
+          </span>
+          <span className="w-px self-stretch bg-asm-line" />
+          <span className="flex flex-col items-end">
+            <span className="text-[9px] font-bold uppercase tracking-widest text-asm-muted">Max</span>
+            <span className="mt-0.5 font-mono text-[14px] font-bold tabular-nums text-asm-navy">{max}</span>
+          </span>
+        </div>
+
+        <Link
+          to={`/app/invest?plan=${tier}`}
+          aria-label={`Invest in the ${name} package`}
+          className={cn(
+            'mt-3 flex min-h-[44px] w-full items-center justify-center rounded-xl',
+            'text-[12px] font-bold uppercase tracking-[0.08em] text-white',
+            'transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1',
+            s.btn
+          )}
+        >
+          Invest Now
+        </Link>
+      </div>
+
+      {/* Big Grey Lock Overlay when locked */}
+      {!unlocked && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/65 backdrop-blur-[1px] p-5 text-center">
+          <div className="mb-3 flex size-14 items-center justify-center rounded-full border border-slate-200/90 bg-slate-100 shadow-sm">
+            <Lock className="size-7 text-slate-500" strokeWidth={2.2} aria-hidden />
+          </div>
+
+          <span className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-slate-500">
+            {name} Locked
+          </span>
+          <h3 className="mt-1 text-[17px] font-extrabold leading-tight text-asm-navy">
+            {unlockOrdinalText}
+          </h3>
+          <p className="mt-1.5 max-w-[24ch] text-[12px] leading-snug text-slate-600">
+            Refer {requiredReferrals} active friends with their first deposit to unlock this tier.
+          </p>
+
+          <Link
+            to="/app/referral"
+            aria-label={`Unlock ${name} on referral page`}
+            className="mt-4 flex min-h-[46px] w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#F08800] via-[#E67E00] to-[#DC7000] px-4 text-[13px] font-extrabold uppercase tracking-[0.08em] text-white shadow-[0_8px_20px_-6px_rgba(230,126,0,0.55)] transition-all hover:brightness-105 active:scale-[0.98]"
+          >
+            <Lock className="size-4" strokeWidth={2.4} aria-hidden />
+            Unlock Tier
+          </Link>
+        </div>
+      )}
     </motion.article>
   )
 }

@@ -200,11 +200,11 @@ export function LandingMenu({ open, onClose }: { open: boolean; onClose: () => v
 }
 
 const TRUST_BAR: { Icon: LucideIcon; title: string; note: string }[] = [
-  { Icon: Lock, title: 'Trusted by thousands', note: 'Across India' },
-  { Icon: ShieldCheck, title: 'Secure & encrypted', note: 'Your data is 100% safe' },
-  { Icon: Eye, title: 'Transparent platform', note: 'Clear & honest system' },
-  { Icon: Zap, title: 'Instant withdrawals', note: 'Quick & hassle free' },
-  { Icon: Headphones, title: 'Dedicated support', note: '24/7 support team' },
+  { Icon: Lock, title: 'SSL Encrypted', note: 'Secure platform' },
+  { Icon: ShieldCheck, title: 'Admin Verified', note: 'Manual review for safety' },
+  { Icon: Eye, title: 'Transparent Terms', note: '36-hour defined terms' },
+  { Icon: Zap, title: '3-Hour Payouts', note: 'Direct to UPI' },
+  { Icon: Headphones, title: 'Daily Support', note: 'WhatsApp & email team' },
 ]
 
 const PAY_METHODS = [

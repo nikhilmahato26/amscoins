@@ -11,11 +11,11 @@ import { cn } from '@/lib/utils'
  */
 export function TierPlanCard({
   tierLabel = 'Silver Tier',
-  rate = '6.5%',
-  period = 'Monthly',
-  duration = '60 Days',
-  minInvestment = '₹25,000',
-  roi = '13.0% Fixed',
+  rate = '25%',
+  period = 'Per Term',
+  duration = '36 Hours',
+  minInvestment = '₹1,000',
+  roi = '25% Fixed',
   Icon = Medal,
   to,
   className,

@@ -1,12 +1,12 @@
-import { Award, Landmark, Lock } from 'lucide-react'
+import { CheckCircle2, Lock, Wallet } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 
 const BADGES: { label: string; Icon: LucideIcon }[] = [
-  { label: 'RBI Regulated', Icon: Landmark },
-  { label: 'SEBI Certified', Icon: Award },
   { label: '256-bit SSL', Icon: Lock },
+  { label: 'Admin Verified', Icon: CheckCircle2 },
+  { label: 'Direct UPI', Icon: Wallet },
 ]
 
 /**

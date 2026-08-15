@@ -289,7 +289,7 @@ export function WithdrawPage() {
                 This protects your funds.
               </KeyPoint>
               <KeyPoint>
-                Processing typically takes <Strong>under 1 hour</Strong>. In rare cases up to 24 hours.
+                Processing is completed <Strong>within 3 hours</Strong> after admin review. If rejected, 100% of funds are immediately refunded to your wallet.
               </KeyPoint>
               <KeyPoint>
                 Amount must be between <Strong>₹{rupeesCompact(MIN_WITHDRAWAL_RS)}</Strong> and{' '}

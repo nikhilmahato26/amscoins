@@ -41,32 +41,32 @@ const UNLOCK_LEVELS: {
 }[] = [
   {
     tier: 'silver',  name: 'Silver',
-    requirement: 'Unlocks instantly',
+    requirement: 'Default Tier',
     card: 'border-asm-line bg-white',
     requirementTone: 'text-asm-greenInk',
-    perks: ['Invest up to ₹10,000', 'Access to Silver Plans'],
+    perks: ['Invest up to ₹10,000', '25% Returns in 36h'],
   },
   {
     tier: 'gold',    name: 'Gold',
     requirement: 'Unlock with 11 referrals',
     card: 'border-amber-200 bg-amber-50',
     requirementTone: 'text-amber-600',
-    perks: ['Invest up to ₹50,000', 'Access to Gold Plans'],
+    perks: ['Invest up to ₹50,000', '30% Returns in 36h'],
   },
   {
     tier: 'diamond', name: 'Diamond',
     requirement: 'Unlock with 21 referrals',
     card: 'border-asm-blue/20 bg-asm-blue-tint/40',
     requirementTone: 'text-asm-blue',
-    perks: ['Invest up to ₹1,00,000', 'Access to Diamond Plans'],
+    perks: ['Invest up to ₹1,00,000', '40% Returns in 36h'],
   },
 ]
 
 const VALUE_PROPS: { Icon: LucideIcon; title: string; subtitle: string }[] = [
-  { Icon: ShieldCheck, title: '100% Secure',    subtitle: 'Your data is safe'      },
-  { Icon: Zap,         title: 'Instant Payout', subtitle: 'Withdraw anytime'       },
-  { Icon: Headphones,  title: '24/7 Support',   subtitle: "We're here for you"     },
-  { Icon: Users,       title: 'Trusted',        subtitle: 'Thousands of investors' },
+  { Icon: ShieldCheck, title: 'Admin Verified',  subtitle: 'Manual security check' },
+  { Icon: Zap,         title: '3-Hour Payout',   subtitle: 'Direct to your UPI'    },
+  { Icon: Headphones,  title: 'Daily Support',   subtitle: "We're here for you"     },
+  { Icon: Users,       title: 'Tier Progress',   subtitle: 'Unlock up to 40% returns' },
 ]
 
 /* ── Page ── */
@@ -108,7 +108,7 @@ export function ReferralPage() {
           animate="visible"
         >
 
-          {/* ── Commission hero ── */}
+          {/* ── Tier Progression hero ── */}
           <motion.section
             variants={fadeUp}
             className="relative overflow-hidden rounded-2xl border border-asm-blue/15 bg-gradient-to-br from-asm-blue-tint via-white to-asm-green-tint/60 p-5 shadow-[0_4px_20px_-6px_rgba(11,79,216,0.12)]"
@@ -120,12 +120,12 @@ export function ReferralPage() {
                 <Gift className="size-5 text-asm-blue" aria-hidden />
               </span>
               <div className="flex flex-col gap-1">
-                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-asm-muted">Referral Commission</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-asm-muted">Tier Progression</p>
                 <p className="text-[22px] font-extrabold leading-tight tracking-tight text-asm-navy">
-                  Earn <span className="text-asm-greenInk">2%</span> per referral
+                  Unlock <span className="text-asm-greenInk">Gold &amp; Diamond</span>
                 </p>
                 <p className="text-[13px] leading-snug text-asm-body">
-                  Paid instantly to your wallet on every investment your referrals make.
+                  Every friend who joins and completes their first deposit counts toward unlocking higher return tiers.
                 </p>
               </div>
             </div>
@@ -278,7 +278,7 @@ export function ReferralPage() {
                     Next level benefits
                   </span>
                   <span className="text-[12px] leading-snug text-amber-900">
-                    Higher investment limits &amp; exclusive commissions unlock at{' '}
+                    Higher returns (up to 40%) and larger investment limits unlock at{' '}
                     {nextTier.charAt(0).toUpperCase() + nextTier.slice(1)}.
                   </span>
                 </span>
@@ -328,7 +328,7 @@ export function ReferralPage() {
               <div className="flex flex-col items-center gap-2 rounded-2xl border border-asm-line bg-white px-5 py-8 text-center">
                 <Users className="size-8 text-asm-muted/40" aria-hidden />
                 <p className="text-[13px] font-semibold text-asm-navy">No referrals yet</p>
-                <p className="text-[12px] text-asm-body">Share your code to start earning commissions.</p>
+                <p className="text-[12px] text-asm-body">Share your code to start unlocking higher tiers.</p>
               </div>
             ) : (
               <ul className="flex flex-col gap-2">

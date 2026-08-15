@@ -166,13 +166,17 @@ export function RegisterPage() {
               onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
               className="h-11 border-asm-line bg-white pr-10 text-asm-navy placeholder:text-asm-muted focus-visible:border-asm-blue focus-visible:ring-asm-blue/30"
              />
-             <div className="absolute right-3 top-1/2 -translate-y-1/2 text-asm-greenInk">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-             </div>
+             {referralCode && (
+               <div className="absolute right-3 top-1/2 -translate-y-1/2 text-asm-greenInk">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+               </div>
+             )}
           </div>
-          <p className="mt-1 flex items-center gap-1 text-xs text-asm-greenInk">
-             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg> 10% trading fees discount applied
-          </p>
+          {referralCode && (
+            <p className="mt-1 flex items-center gap-1 text-xs text-asm-greenInk">
+               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg> Referral code applied
+            </p>
+          )}
         </Field>
         
         <div className="pt-2">

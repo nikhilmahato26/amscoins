@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Check, Clock, ShieldCheck, TrendingUp } from 'lucide-react'
+import { ArrowRight, Check, Clock, Lock, ShieldCheck, TrendingUp } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { useLocation, useNavigate, useSearchParams } from 'react-router'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 
 import { AppShell } from '@/components/app/AppShell'
 import { ReferralBanner } from '@/components/app/ReferralBanner'
@@ -19,22 +19,36 @@ const BENEFITS: { Icon: LucideIcon; title: string; subtitle: string }[] = [
   {
     Icon: ShieldCheck,
     title: 'Secured Assets',
-    subtitle: 'Institutional grade vault protection',
+    subtitle: 'Admin-verified deposit and withdrawal tracking',
   },
   {
     Icon: TrendingUp,
-    title: 'Compound Returns',
-    subtitle: 'ROI calculated and paid daily',
+    title: 'Structured Returns',
+    subtitle: 'Calculated and paid at term maturity (36 hours)',
   },
 ]
 
-/** Quick-pick preset amounts in rupees (not paise). */
-const QUICK_PICKS: { id: string; label: string; rupees: number; popular?: boolean }[] = [
-  { id: 'q1', label: 'Entry', rupees: 1000 },
-  { id: 'q2', label: 'Starter', rupees: 5000 },
-  { id: 'q3', label: 'Premium', rupees: 10000 },
-  { id: 'q4', label: 'Elite', rupees: 25000, popular: true },
-]
+/** Quick-pick presets tailored per tier in rupees */
+const TIER_QUICK_PICKS: Record<Tier, { id: string; label: string; rupees: number; popular?: boolean }[]> = {
+  silver: [
+    { id: 's1', label: 'Min Entry', rupees: 1000 },
+    { id: 's2', label: 'Starter', rupees: 3000 },
+    { id: 's3', label: 'Growth', rupees: 5000, popular: true },
+    { id: 's4', label: 'Max Limit', rupees: 10000 },
+  ],
+  gold: [
+    { id: 'g1', label: 'Min Entry', rupees: 3000 },
+    { id: 'g2', label: 'Starter', rupees: 10000 },
+    { id: 'g3', label: 'Growth', rupees: 25000, popular: true },
+    { id: 'g4', label: 'Max Limit', rupees: 50000 },
+  ],
+  diamond: [
+    { id: 'd1', label: 'Min Entry', rupees: 5000 },
+    { id: 'd2', label: 'Starter', rupees: 25000 },
+    { id: 'd3', label: 'Growth', rupees: 50000, popular: true },
+    { id: 'd4', label: 'Max Limit', rupees: 100000 },
+  ],
+}
 
 export function PackageDetailPage() {
   const navigate = useNavigate()
@@ -45,8 +59,7 @@ export function PackageDetailPage() {
   const { data: plans, isLoading, isError } = usePlans()
 
   // Resolve the plan to display: from ?plan= query, then router state, then
-  // first unlocked, then silver. Reading the query means /app/invest?plan=silver
-  // deep-links to the right tier instead of silently ignoring the parameter.
+  // first unlocked, then silver.
   const planParam = params.get('plan') as Tier | null
   const plan =
     plans?.find((p) => p.key === planParam) ??
@@ -54,17 +67,20 @@ export function PackageDetailPage() {
     plans?.find((p) => p.unlocked) ??
     plans?.find((p) => p.key === 'silver')
 
+  const planKey = (plan?.key ?? 'silver') as Tier
+  const quickPicks = TIER_QUICK_PICKS[planKey] ?? TIER_QUICK_PICKS.silver
+
   // rupee string in the custom input
   const [customRupees, setCustomRupees] = useState<string>('')
-  // quick-pick selection id ('q1'...'q4' or 'custom')
-  const [selected, setSelected] = useState<string>('q1')
+  // quick-pick selection id
+  const [selected, setSelected] = useState<string>(quickPicks[0].id)
   const [validationError, setValidationError] = useState<string | null>(null)
 
   function getSelectedRupees(): number {
     if (selected === 'custom') {
       return parseFloat(customRupees) || 0
     }
-    return QUICK_PICKS.find((q) => q.id === selected)?.rupees ?? 0
+    return quickPicks.find((q) => q.id === selected)?.rupees ?? (plan ? plan.minInvest / 100 : 0)
   }
 
   function handleContinue() {
@@ -114,7 +130,43 @@ export function PackageDetailPage() {
           </p>
         )}
 
-        {plan && (
+        {plan && !plan.unlocked && (
+          <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-lg">
+            <div className="mx-auto mb-4 flex size-20 items-center justify-center rounded-full border border-slate-200 bg-slate-100 shadow-sm">
+              <Lock className="size-10 text-slate-500" strokeWidth={2.2} />
+            </div>
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-extrabold uppercase tracking-widest text-slate-600">
+              {plan.name} Tier Locked
+            </span>
+            <h2 className="mt-3 text-2xl font-extrabold text-asm-navy">
+              {plan.unlockReferrals === 11
+                ? 'Unlocks on 11th Referral'
+                : plan.unlockReferrals === 21
+                ? 'Unlocks on 21st Referral'
+                : `Unlocks on ${plan.unlockReferrals}th Referral`}
+            </h2>
+            <p className="mx-auto mt-2 max-w-[36ch] text-sm leading-relaxed text-slate-600">
+              The {plan.name} package requires {plan.unlockReferrals} successful referrals with their first deposit. Invite friends to unlock {plan.returnPct}% returns.
+            </p>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <Link
+                to="/app/referral"
+                className="flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#F08800] via-[#E67E00] to-[#DC7000] px-6 text-sm font-bold uppercase tracking-wider text-white shadow-[0_8px_20px_-6px_rgba(230,126,0,0.55)] transition-all hover:brightness-105 active:scale-[0.98]"
+              >
+                Go to Referral Hub
+                <ArrowRight className="size-4" />
+              </Link>
+              <Link
+                to="/app"
+                className="flex min-h-[48px] items-center justify-center rounded-2xl border border-asm-line bg-white px-6 text-sm font-semibold text-asm-navy hover:bg-asm-tint"
+              >
+                Back to Dashboard
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {plan && plan.unlocked && (
           <>
             {/* Package summary */}
             <section className="relative flex flex-col gap-3 overflow-hidden rounded-[20px] border border-asm-line bg-white px-[25px] py-4 shadow-[0_2px_16px_-6px_rgba(16,42,92,0.1)]">
@@ -169,7 +221,7 @@ export function PackageDetailPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-x-4 gap-y-5 pt-2">
-                {QUICK_PICKS.map(({ id, label, rupees, popular }) => {
+                {quickPicks.map(({ id, label, rupees, popular }) => {
                   const isSelected = selected === id
                   return (
                     <button

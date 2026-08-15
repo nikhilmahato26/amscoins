@@ -29,11 +29,11 @@ export function HeroBanner({ className }: { className?: string }) {
       <div className="relative flex flex-col p-6">
         <div className="flex items-center gap-2">
           <span className="rounded-full border border-ruby/30 bg-ruby/20 px-[9px] py-[3px] text-[10px] font-bold leading-[15px] text-ruby">
-            Secured by AI
+            36-Hour Cycles
           </span>
           <span className="flex items-center gap-1">
             <ShieldCheck className="size-3 text-gray-300" aria-hidden />
-            <span className="text-xs leading-4 text-gray-300">ISO Certified</span>
+            <span className="text-xs leading-4 text-gray-300">Admin Verified</span>
           </span>
         </div>
 

@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion'
-import { ChevronDown, ChevronRight, Clock, ShieldCheck, TrendingUp, Users } from 'lucide-react'
-import { Link } from 'react-router'
+import { ChevronDown, Clock, ShieldCheck, TrendingUp } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 
@@ -8,7 +7,6 @@ import { cn } from '@/lib/utils'
 const IMG_ASM     = '/asm.png'
 const IMG_BITCOIN = '/bitcoin.png'
 const IMG_GOLD    = '/gold.png'
-const IMG_SILVER  = '/silver.png'
 
 /**
  * Inline sparkline: normalised polyline + endpoint dot.
@@ -94,24 +92,12 @@ const ROWS: Row[] = [
     series: [80, 76, 78, 72, 68, 64, 60, 57, 53, 49, 45, 42],
     featured: 'gold',
   },
-  {
-    id: 'silv',
-    symbol: 'SILVER',
-    ticker: 'XAG',
-    name: 'Silver Spot',
-    price: '89',
-    change: '+2.23%',
-    up: true,
-    icon: IMG_SILVER,
-    series: [35, 38, 36, 42, 40, 45, 43, 48, 51, 47, 53, 56],
-    featured: undefined,
-  },
 ]
 
 const TRUST = [
-  { Icon: ShieldCheck, title: 'Secure',    sub: '100% Protected' },
-  { Icon: TrendingUp,  title: 'Real-time', sub: 'Live Market Data' },
-  { Icon: Users,       title: 'Trusted',   sub: 'By Thousands' },
+  { Icon: ShieldCheck, title: 'Admin Verified', sub: 'Manual Approval' },
+  { Icon: TrendingUp,  title: 'Indicative Rates', sub: 'Market Snapshot' },
+  { Icon: Clock,       title: '36-Hour Term',   sub: 'Defined Cycle' },
 ]
 
 /* Row stagger variants */
@@ -233,19 +219,10 @@ export function MarketTicker({ className }: { className?: string }) {
         ))}
       </ul>
 
-      {/* See all */}
-      <Link
-        to="/app/market"
-        className={[
-          'flex min-h-[44px] items-center justify-center gap-2 rounded-2xl',
-          'border border-asm-line bg-white text-[13px] font-semibold text-asm-blue',
-          'transition-colors hover:bg-asm-blue-tint',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue',
-        ].join(' ')}
-      >
-        See all markets
-        <ChevronRight className="size-4" aria-hidden />
-      </Link>
+      {/* Disclaimer */}
+      <p className="px-1 text-center text-[11px] text-asm-muted">
+        Indicative rates · prices update periodically
+      </p>
 
       {/* Trust bar */}
       <div className="flex items-stretch divide-x divide-asm-line rounded-2xl border border-asm-line bg-white px-2 py-3">

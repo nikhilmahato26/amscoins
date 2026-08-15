@@ -2,12 +2,12 @@ import { motion } from 'framer-motion'
 import {
   ArrowRight,
   ChartNoAxesCombined,
+  Clock,
   Coins,
   Headphones,
   ShieldCheck,
   TrendingUp,
   UserPlus,
-  Users,
   Wallet,
   Zap,
 } from 'lucide-react'
@@ -29,14 +29,6 @@ import {
 } from '@/components/landing/LandingChrome'
 import { cn } from '@/lib/utils'
 
-/*
- * ---------------------------------------------------------------------------
- * PLACEHOLDER CONTENT
- * Every figure below came from the supplied mockup, not from a data source.
- * Plan returns and limits are commercial terms needing sign-off.
- * ---------------------------------------------------------------------------
- */
-
 /* ── Framer Motion variants ── */
 const container = {
   hidden: {},
@@ -53,44 +45,43 @@ const fadeUp = {
 
 /* ── Data ── */
 const TRUST_PILLS: { Icon: LucideIcon; label: string }[] = [
-  { Icon: ShieldCheck, label: '100% Secure'       },
-  { Icon: Zap,         label: 'Instant Payout'    },
-  { Icon: Headphones,  label: '24/7 Support'      },
-  { Icon: Users,       label: '25K+ Investors'    },
-  { Icon: TrendingUp,  label: '₹50 Cr+ Invested'  },
-  { Icon: Wallet,      label: 'Withdraw Anytime'  },
+  { Icon: ShieldCheck, label: 'Admin Verified'       },
+  { Icon: Zap,         label: '3-Hour Payouts'       },
+  { Icon: Headphones,  label: 'Daily Support'        },
+  { Icon: TrendingUp,  label: '25%–40% Returns'      },
+  { Icon: Clock,       label: '36-Hour Cycles'       },
+  { Icon: Wallet,      label: 'Direct UPI Payout'    },
 ]
 
 const PLATFORM_STATS: { Icon: LucideIcon; value: string; label: string; tone: 'blue' | 'green' }[] = [
-  { Icon: Users,       value: '25K+',   label: 'Happy Investors',   tone: 'blue'  },
-  { Icon: TrendingUp,  value: '₹50Cr+', label: 'Total Investments', tone: 'green' },
-  { Icon: Wallet,      value: '₹12Cr+', label: 'Total Payouts',     tone: 'blue'  },
-  { Icon: ShieldCheck, value: '99.9%',  label: 'Uptime & Security', tone: 'green' },
+  { Icon: Clock,       value: '36 Hours', label: 'Cycle Duration',          tone: 'blue'  },
+  { Icon: TrendingUp,  value: '25%–40%',  label: 'Tier-Based Returns',      tone: 'green' },
+  { Icon: Wallet,      value: '3 Hours',  label: 'UPI Payout Speed',        tone: 'blue'  },
+  { Icon: ShieldCheck, value: '100%',     label: 'Capital Refund Protected', tone: 'green' },
 ]
 
 const MARKET: {
   symbol: string; pair: string; price: string; change: string;
   positive: boolean; series: number[]; icon: string
 }[] = [
-  { symbol: 'ASM',    pair: 'INR',  price: '₹12.40',        change: '+1.65%', positive: true,  series: [40,42,41,45,44,47,46,50,52,51,55,58], icon: asmCoin    },
-  { symbol: 'BTC',    pair: 'USDT', price: '₹58,36,245.60', change: '+2.35%', positive: true,  series: [38,41,39,44,43,48,46,52,55,53,58,62], icon: btcCoin    },
-  { symbol: 'GOLD',   pair: 'XAU',  price: '₹6,795.35',     change: '+1.82%', positive: true,  series: [30,33,31,36,38,35,40,42,41,46,48,51], icon: goldCoin   },
-  { symbol: 'SILVER', pair: 'XAG',  price: '₹89.42',        change: '-0.42%', positive: false, series: [52,51,53,50,48,49,47,48,45,46,44,43], icon: '/silver.png' },
+  { symbol: 'ASM',  pair: 'INR',  price: '₹12,850.00',    change: '+10.79%', positive: true,  series: [40,42,41,46,48,45,50,54,57,60,63,68], icon: asmCoin  },
+  { symbol: 'BTC',  pair: 'USDT', price: '₹58,36,245.60', change: '+2.35%',  positive: true,  series: [38,41,39,44,43,48,46,52,55,53,58,62], icon: btcCoin  },
+  { symbol: 'GOLD', pair: 'XAU',  price: '₹6,795.35',     change: '+1.82%',  positive: true,  series: [30,33,31,36,38,35,40,42,41,46,48,51], icon: goldCoin },
 ]
 
 const PLANS: {
   slug: string; name: string; returns: string; duration: string;
-  min: string; max: string; accent: 'silver' | 'gold' | 'diamond'
+  min: string; max: string; unlockNote: string; accent: 'silver' | 'gold' | 'diamond'
 }[] = [
-  { slug: 'silver',  name: 'Silver Plan',  returns: '25%', duration: '36 Hours', min: '₹1,000', max: '₹50,000',   accent: 'silver'  },
-  { slug: 'gold',    name: 'Gold Plan',    returns: '30%', duration: '36 Hours', min: '₹3,000', max: '₹50,000',   accent: 'gold'    },
-  { slug: 'diamond', name: 'Diamond Plan', returns: '40%', duration: '36 Hours', min: '₹5,000', max: '₹5,00,000', accent: 'diamond' },
+  { slug: 'silver',  name: 'Silver Plan',  returns: '25%', duration: '36 Hours', min: '₹1,000', max: '₹10,000',   unlockNote: 'Default Tier',              accent: 'silver'  },
+  { slug: 'gold',    name: 'Gold Plan',    returns: '30%', duration: '36 Hours', min: '₹3,000', max: '₹50,000',   unlockNote: 'Unlocks with 11 referrals', accent: 'gold'    },
+  { slug: 'diamond', name: 'Diamond Plan', returns: '40%', duration: '36 Hours', min: '₹5,000', max: '₹1,00,000', unlockNote: 'Unlocks with 21 referrals', accent: 'diamond' },
 ]
 
 const HOW_IT_WORKS: { step: string; title: string; body: string }[] = [
-  { step: '01', title: 'Create your account', body: 'Register with your mobile number and complete verification once.'                                      },
-  { step: '02', title: 'Choose a plan',        body: 'Pick the plan whose limits and duration suit the amount you want to commit.'                          },
-  { step: '03', title: 'Track and withdraw',   body: 'Follow your position from the dashboard and withdraw to UPI when the term closes.'                    },
+  { step: '01', title: 'Create your account', body: 'Register with your email and access the Silver tier immediately.' },
+  { step: '02', title: 'Deposit & start plan', body: 'Choose an amount, complete payment via Telegram QR, and your plan activates upon admin confirmation.' },
+  { step: '03', title: 'Track and withdraw',   body: 'Follow your 36-hour investment from the dashboard. Withdraw to UPI within 3 hours, or invite friends to unlock Gold & Diamond.' },
 ]
 
 /* ── Page ── */
@@ -139,7 +130,7 @@ export function LandingPage() {
         <PlansSection />
         <HowItWorks />
 
-        {/* ── Invite & Earn ── */}
+        {/* ── Invite & Level Up ── */}
         <section
           id="referral"
           className="mx-4 mt-8 overflow-hidden rounded-2xl lg:mx-8"
@@ -152,9 +143,9 @@ export function LandingPage() {
               style={{ background: 'radial-gradient(circle at 80% 30%, #fff 0%, transparent 70%)' }}
             />
             <UserPlus className="mb-3 size-8 text-white/80" strokeWidth={1.8} aria-hidden />
-            <h2 className="text-[22px] font-extrabold leading-tight text-white">Invite &amp; Earn</h2>
-            <p className="mt-1.5 max-w-[34ch] text-[13px] leading-relaxed text-white/75">
-              Refer your friends and earn rewards on what they invest. Terms apply.
+            <h2 className="text-[22px] font-extrabold leading-tight text-white">Invite &amp; Level Up</h2>
+            <p className="mt-1.5 max-w-[38ch] text-[13px] leading-relaxed text-white/75">
+              Refer members to unlock Gold (30%) and Diamond (40%) tiers with higher limits. Referrals credit when friends complete their first deposit.
             </p>
             <Link
               to="/register"
@@ -164,7 +155,7 @@ export function LandingPage() {
                 'transition-colors hover:bg-asm-blue-tint'
               )}
             >
-              Join the programme
+              Start Referring
               <ArrowRight
                 className="size-4 transition-transform duration-300 group-hover:translate-x-0.5"
                 strokeWidth={2.4}
@@ -204,7 +195,7 @@ function Hero() {
               <span className="relative inline-flex size-[7px] rounded-full bg-asm-greenInk" />
             </span>
             <span className="font-jakarta text-[11px] font-bold uppercase tracking-[0.14em] text-asm-greenInk">
-              Live · ASM ₹12.40 &nbsp;+1.65%
+              Live · ASM COIN ₹12,850 &nbsp;+10.79%
             </span>
           </div>
         </motion.div>
@@ -221,7 +212,7 @@ function Hero() {
 
         {/* Subtitle */}
         <motion.p variants={fadeUp} className="mt-4 max-w-[38ch] text-[14px] leading-relaxed text-asm-body">
-          ASM Coins is a straightforward investment platform built for people across India who want to grow what they have saved.
+          ASM Coins is a time-boxed 36-hour investment platform designed for simple deposits, fast 3-hour UPI payouts, and progressive tier returns.
         </motion.p>
 
         {/* CTA */}
@@ -232,29 +223,12 @@ function Hero() {
               'flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-asm-blue px-6',
               'text-[14px] font-bold uppercase tracking-[0.07em] text-white',
               'shadow-[0_12px_28px_-10px_rgba(11,79,216,0.55)]',
-              'transition-all hover:bg-asm-blue-dark'
+              'transition-all hover:bg-asm-blue-dark sm:w-fit sm:inline-flex'
             )}
           >
             Investment Plans
             <ChartNoAxesCombined className="size-[18px]" strokeWidth={2.2} aria-hidden />
           </a>
-        </motion.div>
-
-        {/* Social proof micro-row */}
-        <motion.div variants={fadeUp} className="mt-5 flex items-center gap-2.5">
-          <div className="flex -space-x-2" aria-hidden>
-            {['RK', 'PM', 'SN'].map((initials) => (
-              <span
-                key={initials}
-                className="flex size-7 items-center justify-center rounded-full border-2 border-white bg-asm-blue-tint text-[9px] font-extrabold text-asm-blue ring-1 ring-asm-line"
-              >
-                {initials}
-              </span>
-            ))}
-          </div>
-          <p className="text-[12px] font-semibold text-asm-body">
-            <span className="font-extrabold text-asm-navy">25,000+</span> investors already earning
-          </p>
         </motion.div>
 
       </motion.div>
@@ -420,7 +394,7 @@ function PlansSection() {
       >
         {/* Left spacer — ensures first card has 16px gap from screen edge on mobile */}
         <span className="w-4 shrink-0 sm:hidden" aria-hidden />
-        {PLANS.map(({ slug, name, returns, duration, min, max, accent }) => {
+        {PLANS.map(({ slug, name, returns, duration, min, max, unlockNote, accent }) => {
           const a = PLAN_ACCENT[accent]
           return (
             <motion.article
@@ -447,8 +421,11 @@ function PlansSection() {
                 <span className={cn('mt-1.5 rounded-full px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.1em]', a.badge)}>
                   {name}
                 </span>
+                <span className="mt-1 text-[10px] font-semibold text-asm-muted">
+                  {unlockNote}
+                </span>
 
-                <p className={cn('mt-3 text-[44px] font-extrabold leading-none tabular-nums', a.figure)}>
+                <p className={cn('mt-2 text-[44px] font-extrabold leading-none tabular-nums', a.figure)}>
                   {returns}
                 </p>
                 <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-asm-muted">Returns</p>
