@@ -1,6 +1,10 @@
 /**
  * Brand glyphs the icon set doesn't cover, inlined so we don't depend on the
  * Figma asset CDN (those export URLs expire after 7 days).
+ *
+ * Add to this file only after checking `lucide-react` — it carries no brand
+ * marks (no Tether, BNB, WhatsApp or Telegram), but it does cover the generic
+ * shapes, so `Wallet`, `Send`, `Bitcoin` and friends come from there.
  */
 
 export function TetherIcon({ className }: { className?: string }) {
@@ -16,6 +20,22 @@ export function BnbIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
       <path d="M12 2 7.6 6.4 9.9 8.7 12 6.6l2.1 2.1 2.3-2.3L12 2ZM6.4 7.6 2 12l4.4 4.4 2.3-2.3L6.6 12l2.1-2.1L6.4 7.6Zm11.2 0-2.3 2.3L17.4 12l-2.1 2.1 2.3 2.3L22 12l-4.4-4.4ZM12 9.9 9.9 12l2.1 2.1L14.1 12 12 9.9Zm-2.1 5.4-2.3 2.3L12 22l4.4-4.4-2.3-2.3-2.1 2.1-2.1-2.1Z" />
+    </svg>
+  )
+}
+
+export function WhatsAppIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
+      <path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm0 1.9a8.1 8.1 0 1 1-4.1 15.1l-.3-.2-3 .8.8-3-.2-.3A8.1 8.1 0 0 1 12 3.9Zm-3.7 4c-.2 0-.5.1-.7.4-.2.3-.9.9-.9 2.1s.9 2.5 1 2.6c.1.2 1.7 2.7 4.3 3.7 2.1.8 2.6.7 3 .6.5 0 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2l-.6-.3-1.5-.7c-.2-.1-.4-.1-.5.1l-.7.9c-.1.2-.3.2-.5.1a7 7 0 0 1-2-1.3 7.7 7.7 0 0 1-1.5-1.8c-.1-.3 0-.4.1-.5l.4-.5.3-.4v-.5l-.7-1.6c-.2-.4-.4-.4-.5-.4h-.5Z" />
+    </svg>
+  )
+}
+
+export function TelegramIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
+      <path d="M21.7 4.3a1.2 1.2 0 0 0-1.3-.2L2.9 11c-1 .4-1 1.8 0 2.2l4.3 1.6 1.7 5.1c.3.8 1.3 1 1.9.4l2.4-2.3 4.3 3.2c.7.5 1.7.1 1.9-.7l3-14.1c.1-.4 0-.8-.3-1.1ZM9.3 14.2l8.4-5.6-6.9 6.6c-.2.2-.3.4-.3.6l-.3 2.3-.9-3.9Z" />
     </svg>
   )
 }

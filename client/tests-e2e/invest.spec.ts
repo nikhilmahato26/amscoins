@@ -52,11 +52,9 @@ test.describe('Investment flow', () => {
     await page.getByRole('button', { name: /proceed to payment/i }).click()
     await expect(page).toHaveURL(/\/app\/payment/, { timeout: 10_000 })
 
-    /* ── 8. Confirm / submit investment ── */
-    const confirmBtn = page.getByRole('button', { name: /confirm|pay now|proceed|submit/i }).first()
-    if (await confirmBtn.isVisible({ timeout: 5_000 }).catch(() => false)) {
-      await confirmBtn.click()
-    }
+    /* ── 8. Choose a payment method — this is what creates the investment ── */
+    await expect(page.getByRole('heading', { name: /invest & pay/i })).toBeVisible({ timeout: 10_000 })
+    await page.getByRole('button', { name: /telegram/i }).click()
 
     /* ── 9. Assert reference code (ASM-…) + Telegram link appear ── */
     await expect(page.getByText(/ASM-/)).toBeVisible({ timeout: 15_000 })

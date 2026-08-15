@@ -51,6 +51,16 @@ export default defineConfig({
       stderr: 'pipe',
       env: {
         VITE_API_URL: 'http://localhost:4000/api',
+        /*
+         * Payment handles are fixtures here, not the real ones — the deposit
+         * screen hides any method whose destination is unset, so the e2e needs
+         * these to have something to click.
+         */
+        VITE_USDT_TRC20_ADDRESS: 'TTestTrc20AddressForE2eOnly000000000',
+        VITE_USDT_BEP20_ADDRESS: '0xTestBep20AddressForE2eOnly00000000000000',
+        VITE_BINANCE_PAY_ID: '123456789',
+        VITE_WHATSAPP_NUMBER: '919999999999',
+        VITE_TELEGRAM_USERNAME: 'asmcoins_e2e',
       },
     },
   ],
