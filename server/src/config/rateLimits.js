@@ -1,15 +1,145 @@
 'use strict'
 
-const { rateLimit, ipKeyGenerator } = require('express-rate-limit')
+const { rateLimit, ipKeyGenerator, MemoryStore } = require('express-rate-limit')
 const { RedisStore } = require('rate-limit-redis')
 const { redis } = require('./redis')
+const logger = require('../lib/logger').child({ service: 'rate-limit' })
 
+/**
+ * Rate limiting backed by Redis, degrading to per-process counters when Redis
+ * is unreachable.
+ *
+ * A limiter runs ahead of nearly every route, so this used to take the whole
+ * API down whenever Redis was not up: the client is created with
+ * `enableOfflineQueue: false`, so `redis.call()` rejects with "Stream isn't
+ * writeable and enableOfflineQueue options is false" for any status other than
+ * `ready` — including the brief window during the startup handshake — and
+ * express-rate-limit surfaces that rejection as a 500 on login, register and
+ * the rest. Throttling is a protective layer; it has to fail open.
+ *
+ * The cost while Redis is down is that counters are process-local and start
+ * from zero, so a multi-instance deployment allows roughly N× the configured
+ * limit for that window. For a login throttle that is the right direction to
+ * fail — the alternative is refusing every request.
+ */
+
+/** One warning per store per minute, so a sustained outage can't flood the log. */
+const WARN_INTERVAL_MS = 60_000
+
+class FailoverStore {
+  constructor(prefix) {
+    this.prefix = prefix
+    /* Keys live in Redis on the happy path, so they are not process-local. */
+    this.localKeys = false
+    this.memory = new MemoryStore()
+    this.redisStore = redis
+      ? new RedisStore({ sendCommand: (...args) => redis.call(...args), prefix })
+      : null
+    this.options = null
+    this.initPromise = null
+    this.initialised = false
+    this.lastWarnAt = 0
+    this.degraded = false
+  }
+
+  init(options) {
+    this.options = options
+    this.memory.init(options)
+    /*
+     * Deliberately *not* initialising the Redis store here. `RedisStore.init`
+     * eagerly SCRIPT LOADs, so with Redis down it throws during module load and
+     * leaves `incrementScriptSha` as a permanently rejected promise — the store
+     * would stay broken even after Redis came back. `ensureRedis` does it
+     * lazily instead, and can retry.
+     */
+  }
+
+  /**
+   * Resolves true when the Redis store is connected and its scripts are loaded.
+   * Retries the load on a later call if this attempt fails.
+   */
+  async ensureRedis() {
+    if (!this.redisStore || !this.options) return false
+    // ioredis only accepts commands once the handshake has completed.
+    if (!redis || redis.status !== 'ready') {
+      this.reportDegraded(`redis status: ${redis?.status ?? 'unavailable'}`)
+      return false
+    }
+    if (this.initialised) return true
+
+    if (!this.initPromise) this.initPromise = this.redisStore.init(this.options)
+    try {
+      await this.initPromise
+      this.initialised = true
+      return true
+    } catch (err) {
+      this.initPromise = null
+      this.reportDegraded(err.message)
+      return false
+    }
+  }
+
+  async delegate(method, ...args) {
+    if (await this.ensureRedis()) {
+      try {
+        const result = await this.redisStore[method](...args)
+        if (this.degraded) {
+          this.degraded = false
+          logger.info('Redis recovered — rate limits are shared across instances again', {
+            prefix: this.prefix,
+          })
+        }
+        return result
+      } catch (err) {
+        /* The connection may have dropped mid-flight; reload scripts next time. */
+        this.initialised = false
+        this.initPromise = null
+        this.reportDegraded(err.message)
+      }
+    }
+    return this.memory[method](...args)
+  }
+
+  reportDegraded(reason) {
+    this.degraded = true
+    const now = Date.now()
+    if (now - this.lastWarnAt < WARN_INTERVAL_MS) return
+    this.lastWarnAt = now
+    logger.warn('Redis unavailable — rate limiting fell back to in-memory counters', {
+      prefix: this.prefix,
+      reason,
+    })
+  }
+
+  get(key) {
+    return this.delegate('get', key)
+  }
+
+  increment(key) {
+    return this.delegate('increment', key)
+  }
+
+  decrement(key) {
+    return this.delegate('decrement', key)
+  }
+
+  resetKey(key) {
+    return this.delegate('resetKey', key)
+  }
+
+  /* RedisStore implements neither of these, so both stay on the memory store. */
+  resetAll() {
+    return this.memory.resetAll()
+  }
+
+  shutdown() {
+    return this.memory.shutdown()
+  }
+}
+
+/** Each limiter needs its own instance — express-rate-limit rejects a shared store. */
 function makeStore(prefix) {
-  if (!redis) return undefined
-  return new RedisStore({
-    sendCommand: (...args) => redis.call(...args),
-    prefix,
-  })
+  return new FailoverStore(prefix)
 }
 
 const keyByUserId = (req) => (req.user?._id ? req.user._id.toString() : ipKeyGenerator(req))

@@ -101,8 +101,61 @@ function formatAccount(upiId) {
 }
 
 // ---------------------------------------------------------------------------
-// Shared layout shell (White top header + Tagline + Green divider + Badges + Greeting)
+// Shared layout shell
 // ---------------------------------------------------------------------------
+/**
+ * Colour tokens, mirrored from the app's light theme (`asm-*` in the Tailwind
+ * config) so an email and the screen it links to read as one product.
+ *
+ * Light is the *authored* palette and is applied inline, because a fair number
+ * of clients drop `<style>` entirely — whatever survives has to be the light
+ * one. Dark is applied from the stylesheet, so it only reaches clients that
+ * both keep `<style>` and honour `prefers-color-scheme`.
+ */
+const C = {
+  page: '#F4F7FE',
+  card: '#FFFFFF',
+  line: '#E5EAF3',
+  heading: '#102A5C',
+  text: '#546582',
+  muted: '#55698E',
+  panel: '#F4F7FE',
+  footer: '#EDF3FF',
+  /*
+   * Text-safe green. The brand green (#22C55E) sits at ~2.2:1 on white, which
+   * is illegible — it survives below only as the decorative rule and as the
+   * dark-mode accent, where the contrast works.
+   */
+  accent: '#15803D',
+  accentSoft: '#EAF7EF',
+  rule: '#22C55E',
+}
+
+/**
+ * Dark-mode overrides.
+ *
+ * `!important` is not optional here: every colour is also set inline on the
+ * element, and inline styles outrank a stylesheet rule without it.
+ *
+ * The `[data-ogsc]` / `[data-ogsb]` duplicates target Outlook.com, which
+ * rewrites the DOM and stamps those attributes instead of honouring the media
+ * query. Same declarations, different trigger.
+ */
+const DARK_RULES = `
+    .asm-page { background-color:#0D0D0D !important; }
+    .asm-card { background-color:#121212 !important; border-color:#232323 !important; }
+    .asm-panel { background-color:#161616 !important; border-color:#282828 !important; }
+    .asm-cell { border-color:#232323 !important; }
+    .asm-strip { background-color:#0C0C0C !important; border-color:#232323 !important; }
+    .asm-footer { background-color:#080808 !important; border-color:#1A1A1A !important; }
+    .asm-heading { color:#FFFFFF !important; }
+    .asm-text { color:#D1D5DB !important; }
+    .asm-muted { color:#9CA3AF !important; }
+    .asm-accent { color:#22C55E !important; }
+    .asm-code { background-color:#0C0C0C !important; border-color:#22C55E !important; color:#22C55E !important; }
+    .asm-icon { stroke:#22C55E !important; }
+`
+
 /**
  * NOTE: The anti-phishing code is a deterministic hash of the user's MongoDB _id.
  * It is displayed in every email so users can spot spoofed emails that don't know
@@ -116,13 +169,37 @@ function emailShell(userId, bodyHtml) {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="x-apple-disable-message-reformatting" />
+  <!--
+    Declaring both schemes is what stops Gmail, Outlook and Apple Mail from
+    running their own auto-inversion over this message. Without it a client in
+    dark mode assumes the email is light and inverts it wholesale, which is how
+    a dark template ends up rendering as a washed-out light one.
+  -->
+  <meta name="color-scheme" content="light dark" />
+  <meta name="supported-color-schemes" content="light dark" />
   <title>ASM Coins</title>
+  <style>
+    :root { color-scheme: light dark; supported-color-schemes: light dark; }
+    a { color: ${C.accent}; }
+    @media (prefers-color-scheme: dark) {
+${DARK_RULES}
+      a { color:#22C55E !important; }
+    }
+    [data-ogsc] .asm-page, [data-ogsb] .asm-page { background-color:#0D0D0D !important; }
+${DARK_RULES.replace(/^ {4}\./gm, '    [data-ogsc] .')}
+    @media only screen and (max-width: 480px) {
+      .asm-shell { padding: 12px 8px !important; }
+      .asm-pad { padding: 22px 18px 16px 18px !important; }
+      .asm-phish { display: block !important; text-align: left !important; padding-top: 10px !important; }
+    }
+  </style>
 </head>
-<body style="margin:0;padding:0;background-color:#0d0d0d;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#0d0d0d;padding:24px 12px;">
+<body class="asm-page" style="margin:0;padding:0;background-color:${C.page};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
+  <table width="100%" cellpadding="0" cellspacing="0" class="asm-page" style="background-color:${C.page};padding:24px 12px;">
     <tr>
-      <td align="center">
-        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background-color:#121212;border-radius:12px;overflow:hidden;border:1px solid #222222;box-shadow:0 8px 24px rgba(0,0,0,0.5);">
+      <td align="center" class="asm-shell">
+        <table width="100%" cellpadding="0" cellspacing="0" class="asm-card" style="max-width:560px;background-color:${C.card};border-radius:12px;overflow:hidden;border:1px solid ${C.line};box-shadow:0 8px 24px rgba(16,42,92,0.10);">
 
           <!-- ── Header: White Banner ── -->
           <tr>
@@ -149,12 +226,12 @@ function emailShell(userId, bodyHtml) {
                   </td>
 
                   <!-- Anti-Phishing Code -->
-                  <td align="right" style="vertical-align:middle;">
-                    <table cellpadding="0" cellspacing="0">
+                  <td align="right" class="asm-phish" style="vertical-align:middle;">
+                    <table cellpadding="0" cellspacing="0" align="right">
                       <tr>
-                        <td style="padding-right:8px;font-size:12px;font-weight:600;color:#222222;white-space:nowrap;">Anti-Phishing Code:</td>
+                        <td style="padding-right:8px;font-size:12px;font-weight:600;color:#4b5563;white-space:nowrap;">Anti-Phishing Code:</td>
                         <td>
-                          <div style="border:1.5px solid #16a34a;border-radius:4px;padding:4px 10px;font-size:14px;font-weight:700;letter-spacing:1.5px;color:#16a34a;background-color:#ffffff;text-align:center;">
+                          <div style="border:1.5px solid ${C.accent};border-radius:4px;padding:4px 10px;font-size:14px;font-weight:700;letter-spacing:1.5px;color:${C.accent};background-color:${C.accentSoft};text-align:center;">
                             ${code}
                           </div>
                         </td>
@@ -168,19 +245,19 @@ function emailShell(userId, bodyHtml) {
 
           <!-- ── Green Accent Divider ── -->
           <tr>
-            <td style="height:3px;background-color:#22c55e;line-height:3px;font-size:0;">&nbsp;</td>
+            <td style="height:3px;background-color:${C.rule};line-height:3px;font-size:0;">&nbsp;</td>
           </tr>
 
-          <!-- ── Email Body (Dark) ── -->
+          <!-- ── Email Body ── -->
           <tr>
-            <td style="padding:28px 24px 20px 24px;color:#d1d5db;font-size:14px;line-height:1.65;">
+            <td class="asm-pad asm-text" style="padding:28px 24px 20px 24px;color:${C.text};font-size:14px;line-height:1.65;">
               ${bodyHtml}
             </td>
           </tr>
 
           <!-- ── Trust Badges & Website ── -->
           <tr>
-            <td style="padding:16px 20px;border-top:1px solid #222222;background-color:#0c0c0c;">
+            <td class="asm-strip" style="padding:16px 20px;border-top:1px solid ${C.line};background-color:${C.panel};">
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <!-- Secure -->
@@ -188,11 +265,11 @@ function emailShell(userId, bodyHtml) {
                     <table cellpadding="0" cellspacing="0" align="center">
                       <tr>
                         <td style="vertical-align:middle;padding-right:4px;">
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                          <svg width="18" height="18" viewBox="0 0 24 24" class="asm-icon" fill="none" stroke="${C.accent}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
                         </td>
                         <td align="left" style="vertical-align:middle;">
-                          <div style="color:#e5e7eb;font-size:11px;font-weight:700;line-height:1.1;">Secure</div>
-                          <div style="color:#6b7280;font-size:9px;line-height:1.1;">100% Protected</div>
+                          <div class="asm-heading" style="color:${C.heading};font-size:11px;font-weight:700;line-height:1.1;">Secure</div>
+                          <div class="asm-muted" style="color:${C.muted};font-size:9px;line-height:1.1;">100% Protected</div>
                         </td>
                       </tr>
                     </table>
@@ -202,11 +279,11 @@ function emailShell(userId, bodyHtml) {
                     <table cellpadding="0" cellspacing="0" align="center">
                       <tr>
                         <td style="vertical-align:middle;padding-right:4px;">
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+                          <svg width="18" height="18" viewBox="0 0 24 24" class="asm-icon" fill="none" stroke="${C.accent}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
                         </td>
                         <td align="left" style="vertical-align:middle;">
-                          <div style="color:#e5e7eb;font-size:11px;font-weight:700;line-height:1.1;">Fast &amp; Reliable</div>
-                          <div style="color:#6b7280;font-size:9px;line-height:1.1;">24/7 Support</div>
+                          <div class="asm-heading" style="color:${C.heading};font-size:11px;font-weight:700;line-height:1.1;">Fast &amp; Reliable</div>
+                          <div class="asm-muted" style="color:${C.muted};font-size:9px;line-height:1.1;">24/7 Support</div>
                         </td>
                       </tr>
                     </table>
@@ -216,11 +293,11 @@ function emailShell(userId, bodyHtml) {
                     <table cellpadding="0" cellspacing="0" align="center">
                       <tr>
                         <td style="vertical-align:middle;padding-right:4px;">
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                          <svg width="18" height="18" viewBox="0 0 24 24" class="asm-icon" fill="none" stroke="${C.accent}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                         </td>
                         <td align="left" style="vertical-align:middle;">
-                          <div style="color:#e5e7eb;font-size:11px;font-weight:700;line-height:1.1;">Trusted</div>
-                          <div style="color:#6b7280;font-size:9px;line-height:1.1;">By Thousands</div>
+                          <div class="asm-heading" style="color:${C.heading};font-size:11px;font-weight:700;line-height:1.1;">Trusted</div>
+                          <div class="asm-muted" style="color:${C.muted};font-size:9px;line-height:1.1;">By Thousands</div>
                         </td>
                       </tr>
                     </table>
@@ -230,10 +307,10 @@ function emailShell(userId, bodyHtml) {
                     <table cellpadding="0" cellspacing="0" align="center">
                       <tr>
                         <td style="vertical-align:middle;padding-right:4px;">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                          <svg width="16" height="16" viewBox="0 0 24 24" class="asm-icon" fill="none" stroke="${C.accent}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
                         </td>
                         <td align="left" style="vertical-align:middle;">
-                          <a href="https://www.asmcoins.com" target="_blank" style="color:#22c55e;font-size:11px;text-decoration:none;font-weight:600;">www.asmcoins.com</a>
+                          <a href="https://www.asmcoins.com" target="_blank" class="asm-accent" style="color:${C.accent};font-size:11px;text-decoration:none;font-weight:600;">www.asmcoins.com</a>
                         </td>
                       </tr>
                     </table>
@@ -245,8 +322,8 @@ function emailShell(userId, bodyHtml) {
 
           <!-- ── Farewell Greeting Footer ── -->
           <tr>
-            <td align="center" style="padding:14px 20px;background-color:#080808;border-top:1px solid #1a1a1a;color:#9ca3af;font-size:12px;">
-              &#x1F389; Thank you for choosing <span style="color:#22c55e;font-weight:600;">ASM Coins</span>. Happy Trading! &#x1F680;
+            <td align="center" class="asm-footer asm-muted" style="padding:14px 20px;background-color:${C.footer};border-top:1px solid ${C.line};color:${C.muted};font-size:12px;">
+              &#x1F389; Thank you for choosing <span class="asm-accent" style="color:${C.accent};font-weight:600;">ASM Coins</span>. Happy Trading! &#x1F680;
             </td>
           </tr>
 
@@ -281,46 +358,46 @@ const withdrawalInitiated = (user, w) => {
   const accountText = formatAccount(w.upiId)
 
   const body = `
-    <p style="margin:0 0 16px 0;font-size:15px;color:#e5e7eb;">
-      Hello <span style="color:#22c55e;font-weight:600;">${user.name}</span>,
+    <p class="asm-heading" style="margin:0 0 16px 0;font-size:15px;color:${C.heading};">
+      Hello <span class="asm-accent" style="color:${C.accent};font-weight:600;">${user.name}</span>,
     </p>
 
-    <p style="margin:0 0 16px 0;font-size:14px;color:#d1d5db;line-height:1.6;">
-      Your withdrawal request for <strong>${inrAmountPrefix}</strong> to your ${accountText} has been successfully placed on <span style="color:#22c55e;">${dateStr}</span>.
+    <p class="asm-text" style="margin:0 0 16px 0;font-size:14px;color:${C.text};line-height:1.6;">
+      Your withdrawal request for <strong>${inrAmountPrefix}</strong> to your ${accountText} has been successfully placed on <span class="asm-accent" style="color:${C.accent};">${dateStr}</span>.
     </p>
 
-    <p style="margin:0 0 16px 0;font-size:14px;color:#9ca3af;line-height:1.6;">
+    <p class="asm-muted" style="margin:0 0 16px 0;font-size:14px;color:${C.muted};line-height:1.6;">
       All Withdrawals are processed with manual review. We try to complete all withdrawals in less than 24 hours.
     </p>
 
-    <p style="margin:0 0 20px 0;font-size:14px;color:#d1d5db;line-height:1.6;">
+    <p class="asm-text" style="margin:0 0 20px 0;font-size:14px;color:${C.text};line-height:1.6;">
       We will update you once the withdrawal request is successfully processed.
     </p>
 
     <!-- Table -->
     <table width="100%" cellpadding="0" cellspacing="0"
-           style="background-color:#161616;border:1px solid #282828;border-radius:8px;overflow:hidden;margin:20px 0;">
+           class="asm-panel" style="background-color:${C.panel};border:1px solid ${C.line};border-radius:8px;overflow:hidden;margin:20px 0;">
       <tr>
-        <td style="padding:11px 16px;border-bottom:1px solid #232323;border-right:1px solid #232323;color:#d1d5db;font-size:14px;width:35%;">Amount</td>
-        <td style="padding:11px 16px;border-bottom:1px solid #232323;color:#22c55e;font-size:14px;font-weight:700;">${inrNetSuffix}</td>
+        <td class="asm-cell asm-text" style="padding:11px 16px;border-bottom:1px solid ${C.line};border-right:1px solid ${C.line};color:${C.text};font-size:14px;width:35%;">Amount</td>
+        <td class="asm-cell asm-accent" style="padding:11px 16px;border-bottom:1px solid ${C.line};color:${C.accent};font-size:14px;font-weight:700;">${inrNetSuffix}</td>
       </tr>
       <tr>
-        <td style="padding:11px 16px;border-bottom:1px solid #232323;border-right:1px solid #232323;color:#d1d5db;font-size:14px;">TDS (5%)</td>
-        <td style="padding:11px 16px;border-bottom:1px solid #232323;color:#ffffff;font-size:14px;">${tdsSuffix}</td>
+        <td class="asm-cell asm-text" style="padding:11px 16px;border-bottom:1px solid ${C.line};border-right:1px solid ${C.line};color:${C.text};font-size:14px;">TDS (5%)</td>
+        <td class="asm-cell asm-heading" style="padding:11px 16px;border-bottom:1px solid ${C.line};color:${C.heading};font-size:14px;">${tdsSuffix}</td>
       </tr>
       <tr>
-        <td style="padding:11px 16px;border-right:1px solid #232323;color:#d1d5db;font-size:14px;">Date</td>
-        <td style="padding:11px 16px;color:#ffffff;font-size:14px;">${dateStr}</td>
+        <td class="asm-cell asm-text" style="padding:11px 16px;border-right:1px solid ${C.line};color:${C.text};font-size:14px;">Date</td>
+        <td class="asm-heading" style="padding:11px 16px;color:${C.heading};font-size:14px;">${dateStr}</td>
       </tr>
     </table>
 
-    <p style="margin:24px 0 18px 0;font-size:13px;color:#9ca3af;line-height:1.6;">
-      Please raise a support ticket in case of any concerns <a href="${env.FRONTEND_URL}/support" style="color:#22c55e;text-decoration:underline;">here</a>. We will sort out the issue on highest priority.
+    <p class="asm-muted" style="margin:24px 0 18px 0;font-size:13px;color:${C.muted};line-height:1.6;">
+      Please raise a support ticket in case of any concerns <a href="${env.FRONTEND_URL}/support" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a>. We will sort out the issue on highest priority.
     </p>
 
-    <p style="margin:0;font-size:14px;color:#e5e7eb;line-height:1.6;">
+    <p class="asm-text" style="margin:0;font-size:14px;color:${C.text};line-height:1.6;">
       Thank You,<br/>
-      Team <span style="color:#22c55e;font-weight:600;">ASM Coins</span>
+      Team <span class="asm-accent" style="color:${C.accent};font-weight:600;">ASM Coins</span>
     </p>
   `
 
@@ -351,7 +428,7 @@ const withdrawalCompleted = (user, w) => {
         <!-- Confetti left -->
         <circle cx="30" cy="18" r="3" fill="#22c55e"/>
         <circle cx="55" cy="10" r="2.5" fill="#f59e0b"/>
-        <circle cx="75" cy="26" r="3" fill="#ffffff"/>
+        <circle cx="75" cy="26" r="3" fill="#0B4FD8"/>
         <circle cx="45" cy="42" r="2" fill="#22c55e"/>
         <!-- Star left -->
         <path d="M85 36L86.8 40.4L91.5 40.8L87.9 43.9L89 48.5L85 46L81 48.5L82.1 43.9L78.5 40.8L83.2 40.4L85 36Z" fill="#f59e0b"/>
@@ -367,7 +444,7 @@ const withdrawalCompleted = (user, w) => {
         <!-- Confetti right -->
         <circle cx="230" cy="18" r="3" fill="#22c55e"/>
         <circle cx="205" cy="10" r="2.5" fill="#f59e0b"/>
-        <circle cx="185" cy="26" r="3" fill="#ffffff"/>
+        <circle cx="185" cy="26" r="3" fill="#0B4FD8"/>
         <circle cx="215" cy="42" r="2" fill="#22c55e"/>
         <!-- Star right -->
         <path d="M175 36L176.8 40.4L181.5 40.8L177.9 43.9L179 48.5L175 46L171 48.5L172.1 43.9L168.5 40.8L173.2 40.4L175 36Z" fill="#f59e0b"/>
@@ -376,50 +453,50 @@ const withdrawalCompleted = (user, w) => {
         <path d="M210 20C214 26 202 33 208 46" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round" fill="none"/>
         <path d="M192 13C196 18 188 24 193 34" stroke="#22c55e" stroke-width="2" stroke-linecap="round" fill="none"/>
       </svg>
-      <h2 style="margin:10px 0 6px 0;font-size:22px;font-weight:800;color:#ffffff;letter-spacing:0.3px;">Withdrawal <span style="color:#22c55e;">Successful!</span></h2>
-      <p style="margin:0;font-size:14px;color:#d1d5db;line-height:1.5;">Your withdrawal of ${inrAmountPrefix} has been<br/>successfully processed. &#x1F389;</p>
+      <h2 class="asm-heading" style="margin:10px 0 6px 0;font-size:22px;font-weight:800;color:${C.heading};letter-spacing:0.3px;">Withdrawal <span class="asm-accent" style="color:${C.accent};">Successful!</span></h2>
+      <p class="asm-text" style="margin:0;font-size:14px;color:${C.text};line-height:1.5;">Your withdrawal of ${inrAmountPrefix} has been<br/>successfully processed. &#x1F389;</p>
     </div>
 
-    <p style="margin:0 0 16px 0;font-size:15px;color:#e5e7eb;">
-      Hello <span style="color:#22c55e;font-weight:600;">${user.name}</span>,
+    <p class="asm-heading" style="margin:0 0 16px 0;font-size:15px;color:${C.heading};">
+      Hello <span class="asm-accent" style="color:${C.accent};font-weight:600;">${user.name}</span>,
     </p>
 
-    <p style="margin:0 0 16px 0;font-size:14px;color:#d1d5db;line-height:1.6;">
+    <p class="asm-text" style="margin:0 0 16px 0;font-size:14px;color:${C.text};line-height:1.6;">
       Your request for withdrawal of ${inrAmountPrefix} to your ${accountText} has been processed by ASM Coins.
     </p>
 
-    <p style="margin:0 0 20px 0;font-size:14px;color:#d1d5db;line-height:1.6;">
-      You can check the updated wallet balance <a href="${env.FRONTEND_URL}/wallet" style="color:#22c55e;text-decoration:underline;">here</a>
+    <p class="asm-text" style="margin:0 0 20px 0;font-size:14px;color:${C.text};line-height:1.6;">
+      You can check the updated wallet balance <a href="${env.FRONTEND_URL}/wallet" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a>
     </p>
 
     <!-- Table with 2 columns and borders -->
     <table width="100%" cellpadding="0" cellspacing="0"
-           style="background-color:#161616;border:1px solid #282828;border-radius:8px;overflow:hidden;margin:20px 0;">
+           class="asm-panel" style="background-color:${C.panel};border:1px solid ${C.line};border-radius:8px;overflow:hidden;margin:20px 0;">
       <tr>
-        <td style="padding:11px 16px;border-bottom:1px solid #232323;border-right:1px solid #232323;color:#d1d5db;font-size:14px;width:35%;">Amount</td>
-        <td style="padding:11px 16px;border-bottom:1px solid #232323;color:#22c55e;font-size:14px;font-weight:700;">${inrNetSuffix}</td>
+        <td class="asm-cell asm-text" style="padding:11px 16px;border-bottom:1px solid ${C.line};border-right:1px solid ${C.line};color:${C.text};font-size:14px;width:35%;">Amount</td>
+        <td class="asm-cell asm-accent" style="padding:11px 16px;border-bottom:1px solid ${C.line};color:${C.accent};font-size:14px;font-weight:700;">${inrNetSuffix}</td>
       </tr>
       <tr>
-        <td style="padding:11px 16px;border-bottom:1px solid #232323;border-right:1px solid #232323;color:#d1d5db;font-size:14px;">TDS (5%)</td>
-        <td style="padding:11px 16px;border-bottom:1px solid #232323;color:#ffffff;font-size:14px;">${tdsSuffix}</td>
+        <td class="asm-cell asm-text" style="padding:11px 16px;border-bottom:1px solid ${C.line};border-right:1px solid ${C.line};color:${C.text};font-size:14px;">TDS (5%)</td>
+        <td class="asm-cell asm-heading" style="padding:11px 16px;border-bottom:1px solid ${C.line};color:${C.heading};font-size:14px;">${tdsSuffix}</td>
       </tr>
       <tr>
-        <td style="padding:11px 16px;border-bottom:1px solid #232323;border-right:1px solid #232323;color:#d1d5db;font-size:14px;">Reference Number</td>
-        <td style="padding:11px 16px;border-bottom:1px solid #232323;color:#ffffff;font-size:14px;letter-spacing:0.5px;">${refNumber}</td>
+        <td class="asm-cell asm-text" style="padding:11px 16px;border-bottom:1px solid ${C.line};border-right:1px solid ${C.line};color:${C.text};font-size:14px;">Reference Number</td>
+        <td class="asm-cell asm-heading" style="padding:11px 16px;border-bottom:1px solid ${C.line};color:${C.heading};font-size:14px;letter-spacing:0.5px;">${refNumber}</td>
       </tr>
       <tr>
-        <td style="padding:11px 16px;border-right:1px solid #232323;color:#d1d5db;font-size:14px;">Date</td>
-        <td style="padding:11px 16px;color:#ffffff;font-size:14px;">${dateStr}</td>
+        <td class="asm-cell asm-text" style="padding:11px 16px;border-right:1px solid ${C.line};color:${C.text};font-size:14px;">Date</td>
+        <td class="asm-heading" style="padding:11px 16px;color:${C.heading};font-size:14px;">${dateStr}</td>
       </tr>
     </table>
 
-    <p style="margin:24px 0 18px 0;font-size:13px;color:#9ca3af;line-height:1.6;">
-      Please raise a support ticket in case of any concerns <a href="${env.FRONTEND_URL}/support" style="color:#22c55e;text-decoration:underline;">here</a>. We will sort out the issue on highest priority.
+    <p class="asm-muted" style="margin:24px 0 18px 0;font-size:13px;color:${C.muted};line-height:1.6;">
+      Please raise a support ticket in case of any concerns <a href="${env.FRONTEND_URL}/support" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a>. We will sort out the issue on highest priority.
     </p>
 
-    <p style="margin:0;font-size:14px;color:#e5e7eb;line-height:1.6;">
+    <p class="asm-text" style="margin:0;font-size:14px;color:${C.text};line-height:1.6;">
       Thank You,<br/>
-      Team <span style="color:#22c55e;font-weight:600;">ASM Coins</span> &#x1F49A;
+      Team <span class="asm-accent" style="color:${C.accent};font-weight:600;">ASM Coins</span> &#x1F49A;
     </p>
   `
 
@@ -437,24 +514,24 @@ const withdrawalRejected = (user, w) => {
   const inrAmountPrefix = formatInrPrefix(w.gross)
 
   const body = `
-    <p style="margin:0 0 16px 0;font-size:15px;color:#e5e7eb;">
-      Hello <span style="color:#22c55e;font-weight:600;">${user.name}</span>,
+    <p class="asm-heading" style="margin:0 0 16px 0;font-size:15px;color:${C.heading};">
+      Hello <span class="asm-accent" style="color:${C.accent};font-weight:600;">${user.name}</span>,
     </p>
 
-    <p style="margin:0 0 16px 0;font-size:14px;color:#d1d5db;line-height:1.6;">
+    <p class="asm-text" style="margin:0 0 16px 0;font-size:14px;color:${C.text};line-height:1.6;">
       Unfortunately your withdrawal request of <strong>${inrAmountPrefix}</strong> could not be completed.
-      The full amount has been <span style="color:#22c55e;font-weight:600;">credited back</span> to your ASM Coins wallet.
+      The full amount has been <span class="asm-accent" style="color:${C.accent};font-weight:600;">credited back</span> to your ASM Coins wallet.
     </p>
 
-    ${w.note ? `<p style="margin:0 0 16px 0;color:#9ca3af;font-size:13px;">Reason: ${w.note}</p>` : ''}
+    ${w.note ? `<p class="asm-muted" style="margin:0 0 16px 0;color:${C.muted};font-size:13px;">Reason: ${w.note}</p>` : ''}
 
-    <p style="margin:24px 0 18px 0;font-size:13px;color:#9ca3af;line-height:1.6;">
-      Please raise a support ticket in case of any concerns <a href="${env.FRONTEND_URL}/support" style="color:#22c55e;text-decoration:underline;">here</a>. We will sort out the issue on highest priority.
+    <p class="asm-muted" style="margin:24px 0 18px 0;font-size:13px;color:${C.muted};line-height:1.6;">
+      Please raise a support ticket in case of any concerns <a href="${env.FRONTEND_URL}/support" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a>. We will sort out the issue on highest priority.
     </p>
 
-    <p style="margin:0;font-size:14px;color:#e5e7eb;line-height:1.6;">
+    <p class="asm-text" style="margin:0;font-size:14px;color:${C.text};line-height:1.6;">
       Thank You,<br/>
-      Team <span style="color:#22c55e;font-weight:600;">ASM Coins</span>
+      Team <span class="asm-accent" style="color:${C.accent};font-weight:600;">ASM Coins</span>
     </p>
   `
 
@@ -467,22 +544,24 @@ const withdrawalRejected = (user, w) => {
 
 const passwordResetOtp = (user, otp) => {
   const body = `
-    <p style="margin:0 0 16px 0;font-size:15px;color:#e5e7eb;">
-      Hello <span style="color:#22c55e;font-weight:600;">${user.name}</span>,
+    <p class="asm-heading" style="margin:0 0 16px 0;font-size:15px;color:${C.heading};">
+      Hello <span class="asm-accent" style="color:${C.accent};font-weight:600;">${user.name}</span>,
     </p>
-    <p style="margin:0 0 16px 0;font-size:14px;color:#d1d5db;line-height:1.6;">
+    <p class="asm-text" style="margin:0 0 16px 0;font-size:14px;color:${C.text};line-height:1.6;">
       Use the one-time code below to reset your ASM Coins password. It expires in <strong>10 minutes</strong>.
     </p>
     <div style="text-align:center;margin:24px 0;">
-      <div style="display:inline-block;padding:14px 28px;border:1.5px solid #22c55e;border-radius:10px;background-color:#0c0c0c;font-size:32px;font-weight:800;letter-spacing:10px;color:#22c55e;">
+      <!-- Right padding is 10px light: letter-spacing adds a trailing gap after
+           the last digit, which would otherwise push the code off-centre. -->
+      <div class="asm-code" style="display:inline-block;padding:14px 18px 14px 28px;border:1.5px solid ${C.accent};border-radius:10px;background-color:${C.accentSoft};font-size:32px;font-weight:800;letter-spacing:10px;color:${C.accent};">
         ${otp}
       </div>
     </div>
-    <p style="margin:0 0 16px 0;font-size:13px;color:#9ca3af;line-height:1.6;">
+    <p class="asm-muted" style="margin:0 0 16px 0;font-size:13px;color:${C.muted};line-height:1.6;">
       If you did not request a password reset, you can safely ignore this email — your password will not change.
     </p>
-    <p style="margin:0;font-size:14px;color:#e5e7eb;line-height:1.6;">
-      Thank You,<br/>Team <span style="color:#22c55e;font-weight:600;">ASM Coins</span>
+    <p class="asm-text" style="margin:0;font-size:14px;color:${C.text};line-height:1.6;">
+      Thank You,<br/>Team <span class="asm-accent" style="color:${C.accent};font-weight:600;">ASM Coins</span>
     </p>
   `
   return sendMail({
