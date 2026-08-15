@@ -2,6 +2,7 @@ const express = require('express')
 const cors = require('cors')
 const httpLogger = require('./middleware/httpLogger')
 const { notFound, errorHandler } = require('./middleware/errorHandler')
+const { passport } = require('./config/passport')
 
 const app = express()
 // Trust exactly one hop: the nginx reverse proxy on the same VPS (see
@@ -12,6 +13,7 @@ const app = express()
 app.set('trust proxy', 1)
 app.use(cors())
 app.use(express.json())
+app.use(passport.initialize())
 app.use(httpLogger)
 
 app.use('/api', require('./routes'))

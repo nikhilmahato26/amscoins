@@ -26,3 +26,11 @@ test('sendMail resolves (does not throw) even on transport failure', async () =>
   expect(info).toBeTruthy()
   expect(original).toBe(email.sendMail)
 })
+
+test('passwordResetOtp includes the code and a reset subject', async () => {
+  const info = await email.passwordResetOtp({ _id: 'u1', name: 'Bhavesh', email: 'x@y.com' }, '123456')
+  const msg = JSON.parse(info.message)
+  expect(msg.subject).toMatch(/reset code/i)
+  expect(msg.html).toContain('123456')
+  expect(msg.to[0].address).toBe('x@y.com')
+})

@@ -43,3 +43,8 @@ test('login frozen account throws 403', async () => {
   await User.updateOne({ _id: user._id }, { status: 'frozen' })
   await expect(login({ email: 'f@b.com', password: 'secret1' })).rejects.toMatchObject({ statusCode: 403 })
 })
+
+test('login google-only account (no passwordHash) throws 401', async () => {
+  await User.create({ name: 'G', email: 'g@login.com', googleId: 'g-login-1', referralCode: 'GLOG01' })
+  await expect(login({ email: 'g@login.com', password: 'anything' })).rejects.toMatchObject({ statusCode: 401 })
+})

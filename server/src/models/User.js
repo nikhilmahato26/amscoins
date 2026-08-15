@@ -4,7 +4,9 @@ const userSchema = new Schema(
   {
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    passwordHash: { type: String, required: true },
+    passwordHash: { type: String, required: function () { return !this.googleId } },
+    googleId: { type: String, unique: true, sparse: true },
+    avatar: { type: String },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     status: { type: String, enum: ['active', 'frozen'], default: 'active' },
     phone: { type: String },

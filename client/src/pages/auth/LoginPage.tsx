@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 
 import { AuthLayout } from './AuthLayout'
 import { Field } from '@/components/ui/field'
@@ -14,6 +14,8 @@ export function LoginPage() {
   const [loading, setLoading]   = useState(false)
   const navigate  = useNavigate()
   const { setUser } = useAuth()
+  const [searchParams] = useSearchParams()
+  const oauthError = searchParams.get('error')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -46,6 +48,7 @@ export function LoginPage() {
       {/* Google SSO */}
       <button
         type="button"
+        onClick={() => { window.location.href = authService.googleLoginUrl() }}
         className={[
           'flex w-full items-center justify-center gap-3 rounded-xl',
           'border border-asm-line bg-white px-4 py-3',
@@ -101,14 +104,14 @@ export function LoginPage() {
         </Field>
 
         {/* Global error */}
-        {error && (
+        {(error || oauthError) && (
           <p role="alert" className="text-[12px] font-medium text-asm-red">
-            {error}
+            {error || 'Google sign-in failed. Please try again or use your password.'}
           </p>
         )}
 
         <div className="flex justify-end">
-          <Link to="#" className="text-[12px] text-asm-blue hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue rounded">
+          <Link to="/forgot-password" className="text-[12px] text-asm-blue hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue rounded">
             Forgot password?
           </Link>
         </div>
