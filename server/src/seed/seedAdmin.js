@@ -3,6 +3,7 @@ const User = require('../models/User')
 const Wallet = require('../models/Wallet')
 const env = require('../config/env')
 const { generateUniqueCode } = require('../services/referralCode')
+const logger = require('../lib/logger').child({ service: 'seed' })
 
 async function seedAdmin() {
   if (await User.exists({ email: env.ADMIN_EMAIL.toLowerCase() })) return
@@ -16,7 +17,7 @@ async function seedAdmin() {
     referralCode,
   })
   await Wallet.create({ user: admin._id, balance: 0 })
-  console.log(`Seeded admin: ${env.ADMIN_EMAIL}`)
+  logger.info('Admin user seeded', { email: env.ADMIN_EMAIL })
 }
 
 module.exports = { seedAdmin }

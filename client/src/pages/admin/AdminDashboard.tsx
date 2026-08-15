@@ -45,7 +45,7 @@ export function AdminDashboard() {
   const { data, isLoading, isError } = useAdminStats()
 
   return (
-    <div className="flex flex-col gap-6 p-8">
+    <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
       {/* Header */}
       <div>
         <h1 className="text-[22px] font-bold tracking-tight text-asm-navy">Dashboard</h1>

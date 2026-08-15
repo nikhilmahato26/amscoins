@@ -364,13 +364,15 @@ const PLAN_STYLE: Record<Tier, {
   silver: {
     ring:   'ring-1 ring-[#CED5E1]',
     figure: 'text-[#868B95]',
-    btn:    'bg-[#868B95] hover:bg-[#6b6f78]',
+    // Tier identity lives on the badge/figure/ring; the commit-money button
+    // stays the primary blue on every tier so it never reads as disabled.
+    btn:    'bg-asm-blue hover:bg-asm-blue-dark',
     glow:   'rgba(134,139,149,0.12)',
   },
   gold: {
     ring:   'ring-1 ring-[#FF9E45]/50',
     figure: 'text-[#F37400]',
-    btn:    'bg-[#F37400] hover:bg-[#d96800]',
+    btn:    'bg-asm-blue hover:bg-asm-blue-dark',
     glow:   'rgba(243,116,0,0.12)',
   },
   diamond: {

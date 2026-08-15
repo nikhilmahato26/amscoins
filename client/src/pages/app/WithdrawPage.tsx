@@ -164,7 +164,7 @@ export function WithdrawPage() {
         {/* ── Amount ── */}
         <motion.section variants={fadeUp} className="flex flex-col gap-3">
           <SectionLabel>Amount to withdraw</SectionLabel>
-          <div className="flex h-14 items-center gap-3 rounded-xl border border-asm-line bg-white px-4 shadow-[0_1px_4px_-1px_rgba(16,42,92,0.06)]">
+          <label className="flex h-14 cursor-text items-center gap-3 rounded-xl border border-asm-line bg-white px-4 shadow-[0_1px_4px_-1px_rgba(16,42,92,0.06)] focus-within:ring-2 focus-within:ring-asm-blue">
             <IndianRupee className="size-3.5 shrink-0 text-asm-muted" aria-hidden />
             <input
               value={amount}
@@ -172,10 +172,10 @@ export function WithdrawPage() {
               inputMode="decimal"
               placeholder="0"
               aria-label="Amount to withdraw in rupees"
-              className="min-w-0 flex-1 bg-transparent font-mono text-base font-bold tabular-nums text-asm-navy outline-none placeholder:font-sans placeholder:font-bold placeholder:text-asm-muted/50"
+              className="min-w-0 flex-1 self-stretch bg-transparent font-mono text-base font-bold tabular-nums text-asm-navy outline-none placeholder:font-sans placeholder:font-bold placeholder:text-asm-muted/50"
             />
             <span className="shrink-0 text-[12px] font-bold text-asm-muted">INR</span>
-          </div>
+          </label>
           <p className="px-1 text-[11px] leading-[15px] text-asm-muted">
             Min <span className="font-bold text-asm-navy">₹{rupeesCompact(MIN_WITHDRAWAL_RS)}</span>
             {' '}·{' '}

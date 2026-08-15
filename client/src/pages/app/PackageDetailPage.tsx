@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Check, Clock, ShieldCheck, TrendingUp } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { useLocation, useNavigate } from 'react-router'
+import { useLocation, useNavigate, useSearchParams } from 'react-router'
 
 import { AppShell } from '@/components/app/AppShell'
 import { ReferralBanner } from '@/components/app/ReferralBanner'
@@ -39,14 +39,20 @@ const QUICK_PICKS: { id: string; label: string; rupees: number; popular?: boolea
 export function PackageDetailPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const [params] = useSearchParams()
   const state = location.state as LocationState | null
 
   const { data: plans, isLoading, isError } = usePlans()
 
-  // Resolve the plan to display: from state, or first unlocked, or silver
-  const plan = plans?.find((p) => p.key === state?.planKey)
-    ?? plans?.find((p) => p.unlocked)
-    ?? plans?.find((p) => p.key === 'silver')
+  // Resolve the plan to display: from ?plan= query, then router state, then
+  // first unlocked, then silver. Reading the query means /app/invest?plan=silver
+  // deep-links to the right tier instead of silently ignoring the parameter.
+  const planParam = params.get('plan') as Tier | null
+  const plan =
+    plans?.find((p) => p.key === planParam) ??
+    plans?.find((p) => p.key === state?.planKey) ??
+    plans?.find((p) => p.unlocked) ??
+    plans?.find((p) => p.key === 'silver')
 
   // rupee string in the custom input
   const [customRupees, setCustomRupees] = useState<string>('')
@@ -84,23 +90,26 @@ export function PackageDetailPage() {
     }
 
     setValidationError(null)
-    navigate('/app/summary', { state: { planKey: plan.key, amount: paise } })
+    // Carry the selection in the query string (refresh-safe) and in router state.
+    navigate(`/app/summary?plan=${plan.key}&amt=${paise}`, {
+      state: { planKey: plan.key, amount: paise },
+    })
   }
 
   return (
     <AppShell headerVariant="root" width="wide" contentClassName="px-[18px] pt-[116px]">
-      <div className="flex flex-col gap-10 lg:mx-auto lg:max-w-[600px]">
+      <div className="flex flex-col gap-8 lg:mx-auto lg:max-w-[600px]">
 
         {/* Loading skeleton */}
         {isLoading && (
-          <div role="status" aria-live="polite" aria-label="Loading plan details" className="flex flex-col gap-10">
-            <div className="h-[200px] animate-pulse rounded-[20px] bg-surface" />
-            <div className="h-[260px] animate-pulse rounded-[20px] bg-surface" />
+          <div role="status" aria-live="polite" aria-label="Loading plan details" className="flex flex-col gap-8">
+            <div className="h-[200px] animate-pulse rounded-[20px] bg-white/70 ring-1 ring-asm-line" />
+            <div className="h-[260px] animate-pulse rounded-[20px] bg-white/70 ring-1 ring-asm-line" />
           </div>
         )}
 
         {isError && (
-          <p role="alert" className="rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          <p role="alert" className="rounded-xl border border-asm-red/20 bg-red-50 px-4 py-3 text-sm text-asm-red">
             Failed to load plan details. Please go back and try again.
           </p>
         )}
@@ -108,39 +117,34 @@ export function PackageDetailPage() {
         {plan && (
           <>
             {/* Package summary */}
-            <section className="relative flex flex-col gap-3 overflow-hidden rounded-[20px] border-2 border-plate px-[25px] py-4">
-              <span
-                aria-hidden
-                className="pointer-events-none absolute -top-10 right-[-14px] size-32 rounded-full bg-slate-400/10 blur-[32px]"
-              />
-
+            <section className="relative flex flex-col gap-3 overflow-hidden rounded-[20px] border border-asm-line bg-white px-[25px] py-4 shadow-[0_2px_16px_-6px_rgba(16,42,92,0.1)]">
               <div className="flex flex-col items-center gap-1">
                 <TierBadge tier={plan.key} size={133} />
                 <div className="flex w-full items-end justify-between">
                   <span className="flex items-baseline gap-2">
-                    <span className="text-2xl font-bold leading-8">{plan.returnPct}%</span>
-                    <span className="text-sm leading-5 text-gray-400">Returns</span>
+                    <span className="text-2xl font-extrabold leading-8 text-asm-navy">{plan.returnPct}%</span>
+                    <span className="text-sm leading-5 text-asm-muted">Returns</span>
                   </span>
                   <span className="flex items-center gap-2 pt-1.5">
-                    <Clock className="size-4 text-frost" aria-hidden />
-                    <span className="text-xl font-medium leading-[30px] text-frost">
+                    <Clock className="size-4 text-asm-blue" aria-hidden />
+                    <span className="text-xl font-semibold leading-[30px] text-asm-navy">
                       {plan.durationHours} Hours
                     </span>
                   </span>
                 </div>
               </div>
 
-              <div className="flex items-stretch justify-between rounded-xl border border-black/10 bg-white/20 px-[18px] py-3">
-                <span className="flex w-[62px] flex-col">
-                  <span className="text-[10px] uppercase leading-[15px] tracking-[1.5px]">Min</span>
-                  <span className="pt-[5px] text-lg font-semibold leading-[27px] text-frost">
+              <div className="flex items-stretch justify-between rounded-xl bg-asm-tint px-[18px] py-3">
+                <span className="flex flex-col">
+                  <span className="text-[10px] font-semibold uppercase leading-[15px] tracking-[1.5px] text-asm-muted">Min</span>
+                  <span className="pt-[5px] text-lg font-bold leading-[27px] text-asm-navy">
                     {inr(plan.minInvest)}
                   </span>
                 </span>
-                <span className="w-px self-stretch bg-white/[0.07]" />
-                <span className="flex w-[62px] flex-col items-end">
-                  <span className="text-[10px] uppercase leading-[15px] tracking-[1.5px]">Max</span>
-                  <span className="pt-[5px] text-lg font-semibold leading-[27px] text-frost">
+                <span className="w-px self-stretch bg-asm-line" />
+                <span className="flex flex-col items-end">
+                  <span className="text-[10px] font-semibold uppercase leading-[15px] tracking-[1.5px] text-asm-muted">Max</span>
+                  <span className="pt-[5px] text-lg font-bold leading-[27px] text-asm-navy">
                     {inr(plan.maxInvest)}
                   </span>
                 </span>
@@ -149,14 +153,18 @@ export function PackageDetailPage() {
 
             {/* Investment grid */}
             <section className="flex flex-col gap-2">
-              <div className="flex items-end justify-between">
-                <h2 className="text-lg font-medium leading-7">Select Investment</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold leading-7 text-asm-navy">Select Investment</h2>
                 <button
                   type="button"
                   onClick={() => setSelected('custom')}
-                  className="text-xs leading-4 text-gold-antique underline decoration-solid underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                  className={cn(
+                    'inline-flex min-h-[40px] items-center rounded-lg px-2.5 py-1.5 text-sm font-semibold text-asm-blue transition-colors',
+                    'hover:bg-asm-blue-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue',
+                    selected === 'custom' && 'bg-asm-blue-tint'
+                  )}
                 >
-                  Custom Amount
+                  Custom amount
                 </button>
               </div>
 
@@ -173,24 +181,20 @@ export function PackageDetailPage() {
                       }}
                       aria-pressed={isSelected}
                       className={cn(
-                        'relative flex h-[97px] flex-col justify-center rounded-2xl px-6 text-left backdrop-blur-[6px]',
-                        'transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
+                        'relative flex h-[97px] flex-col justify-center rounded-2xl border px-6 text-left transition-colors',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue',
                         isSelected
-                          ? 'bg-plate drop-shadow-[0_0_7.5px_rgba(212,175,55,0.3)]'
-                          : popular
-                            ? 'border border-white/5 bg-white/10'
-                            : 'border border-white/[0.08] bg-surface hover:border-white/20'
+                          ? 'border-asm-blue bg-asm-blue-tint shadow-[0_2px_12px_-4px_rgba(11,79,216,0.25)]'
+                          : 'border-asm-line bg-white hover:border-asm-blue/40'
                       )}
                     >
-                      <span
-                        className={cn('text-xs leading-4', isSelected ? 'text-black' : 'text-gray-400')}
-                      >
+                      <span className={cn('text-xs font-medium leading-4', isSelected ? 'text-asm-blue' : 'text-asm-muted')}>
                         {label}
                       </span>
                       <span
                         className={cn(
-                          'text-xl font-bold leading-7',
-                          isSelected ? 'text-black' : 'text-white'
+                          'text-xl font-extrabold leading-7',
+                          isSelected ? 'text-asm-blue' : 'text-asm-navy'
                         )}
                       >
                         ₹{rupees.toLocaleString('en-IN')}
@@ -198,14 +202,14 @@ export function PackageDetailPage() {
 
                       {isSelected ? (
                         <Check
-                          className="absolute right-[9px] top-[13px] size-4 text-black"
+                          className="absolute right-[11px] top-[13px] size-4 text-asm-blue"
                           strokeWidth={3}
                           aria-hidden
                         />
                       ) : null}
 
                       {popular && !isSelected ? (
-                        <span className="absolute -right-1 -top-2 rounded-full bg-gold-antique px-2 py-0.5 text-[8px] font-bold uppercase leading-3 tracking-[-0.4px] text-surface-nav">
+                        <span className="absolute -right-1 -top-2 rounded-full bg-asm-green px-2 py-0.5 text-[8px] font-bold uppercase leading-3 tracking-[0.4px] text-white">
                           Popular
                         </span>
                       ) : null}
@@ -217,11 +221,11 @@ export function PackageDetailPage() {
               {/* Custom amount input */}
               {selected === 'custom' && (
                 <div className="mt-2 flex flex-col gap-1.5">
-                  <label htmlFor="custom-amount" className="text-xs leading-4 text-gray-400">
+                  <label htmlFor="custom-amount" className="text-xs font-medium leading-4 text-asm-body">
                     Enter amount in ₹
                   </label>
                   <div className="relative">
-                    <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg font-semibold text-gray-400">
+                    <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg font-semibold text-asm-muted">
                       ₹
                     </span>
                     <input
@@ -237,9 +241,9 @@ export function PackageDetailPage() {
                       }}
                       placeholder={`${plan.minInvest / 100}–${plan.maxInvest / 100}`}
                       className={cn(
-                        'h-[62px] w-full rounded-2xl border bg-surface pl-9 pr-4 text-xl font-bold text-white',
-                        'placeholder:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
-                        'backdrop-blur-[6px] border-white/5 hover:border-white/20'
+                        'h-[62px] w-full rounded-2xl border border-asm-line bg-white pl-9 pr-4 text-xl font-bold text-asm-navy',
+                        'placeholder:font-semibold placeholder:text-asm-muted',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue hover:border-asm-blue/40'
                       )}
                     />
                   </div>
@@ -248,27 +252,41 @@ export function PackageDetailPage() {
 
               {/* Validation error */}
               {validationError && (
-                <p role="alert" className="mt-1 text-xs leading-4 text-red-400">
+                <p role="alert" className="mt-1 text-xs font-medium leading-4 text-asm-red">
                   {validationError}
                 </p>
               )}
             </section>
 
+            {/* Primary action, placed directly after the amount picker so the
+                money action is never buried beneath the referral banner. */}
+            <button
+              type="button"
+              onClick={handleContinue}
+              className={cn(
+                'flex h-14 w-full items-center justify-center rounded-2xl bg-asm-blue',
+                'text-base font-bold text-white shadow-[0_10px_28px_-8px_rgba(11,79,216,0.5)]',
+                'transition-colors hover:bg-asm-blue-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-2'
+              )}
+            >
+              Continue to Payment
+            </button>
+
             {/* Benefits */}
             <section className="flex flex-col gap-4">
-              <h2 className="text-lg font-medium leading-7">Exclusive Benefits</h2>
+              <h2 className="text-lg font-bold leading-7 text-asm-navy">Exclusive Benefits</h2>
               <div className="flex flex-col gap-3">
                 {BENEFITS.map(({ Icon, title, subtitle }) => (
                   <div
                     key={title}
-                    className="flex items-center gap-4 rounded-xl border border-white/[0.08] bg-white/[0.03] p-[17px] backdrop-blur-[6px]"
+                    className="flex items-center gap-4 rounded-xl border border-asm-line bg-white p-[17px] shadow-[0_2px_12px_-4px_rgba(16,42,92,0.06)]"
                   >
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-gold-antique/20 bg-gold-antique/10">
-                      <Icon className="size-4 text-gold-antique" aria-hidden />
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-asm-blue-tint">
+                      <Icon className="size-4 text-asm-blue" aria-hidden />
                     </span>
                     <span className="flex min-w-0 flex-col">
-                      <span className="text-sm font-semibold leading-5">{title}</span>
-                      <span className="text-xs leading-4 text-gray-400">{subtitle}</span>
+                      <span className="text-sm font-semibold leading-5 text-asm-navy">{title}</span>
+                      <span className="text-xs leading-4 text-asm-body">{subtitle}</span>
                     </span>
                   </div>
                 ))}
@@ -276,18 +294,6 @@ export function PackageDetailPage() {
             </section>
 
             <ReferralBanner />
-
-            <button
-              type="button"
-              onClick={handleContinue}
-              className={cn(
-                'flex h-14 w-full items-center justify-center rounded-2xl bg-gradient-to-br from-gold to-yellow-500',
-                'text-base font-bold uppercase tracking-[-0.4px] text-black shadow-2xl shadow-black/25',
-                'transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60'
-              )}
-            >
-              Continue to Payment
-            </button>
           </>
         )}
       </div>

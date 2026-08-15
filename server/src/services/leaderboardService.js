@@ -1,4 +1,8 @@
+'use strict'
+
 const Investment = require('../models/Investment')
+const logger = require('../lib/logger').child({ service: 'leaderboard' })
+const { cacheGet, cacheSet } = require('../config/redis')
 
 // IST day/month/year starts. IST is UTC+5:30 with no DST.
 const IST_OFFSET_MS = 5.5 * 3600 * 1000
@@ -12,6 +16,18 @@ function periodStart(period, now = new Date()) {
 }
 
 async function topInvestors(period, limit = 20) {
+  const cacheKey = `cache:leaderboard:${period}`
+  const cached = await cacheGet(cacheKey)
+  if (cached) {
+    try {
+      const data = JSON.parse(cached)
+      logger.debug('Leaderboard cache hit', { period, resultCount: data.length })
+      return data
+    } catch {
+      // ignore parse error, fallback to aggregation
+    }
+  }
+
   const start = periodStart(period)
   const rows = await Investment.aggregate([
     { $match: { status: 'active', approvedAt: { $gte: start } } },
@@ -22,7 +38,11 @@ async function topInvestors(period, limit = 20) {
     { $unwind: '$u' },
     { $project: { _id: 0, userId: '$_id', name: '$u.name', tier: '$u.tier', totalInvested: 1 } },
   ])
-  return rows.map((r, i) => ({ rank: i + 1, ...r }))
+
+  logger.debug('Leaderboard queried', { period, resultCount: rows.length })
+  const result = rows.map((r, i) => ({ rank: i + 1, ...r }))
+  await cacheSet(cacheKey, JSON.stringify(result), 60)
+  return result
 }
 
 module.exports = { periodStart, topInvestors }

@@ -1,20 +1,12 @@
-import { CircleUserRound, House, Trophy, Users, Wallet } from 'lucide-react'
 import { NavLink } from 'react-router'
 
+import { APP_NAV_LINKS } from '@/components/app/navLinks'
 import { cn } from '@/lib/utils'
 
-const LINKS = [
-  { to: '/app', label: 'Home', Icon: House, end: true },
-  { to: '/app/withdraw', label: 'Withdraw', Icon: Wallet, end: false },
-  { to: '/app/leaderboard', label: 'Leaderboard', Icon: Trophy, end: false },
-  { to: '/app/referral', label: 'Referral', Icon: Users, end: false },
-  { to: '/app/account', label: 'Account', Icon: CircleUserRound, end: false },
-] as const
-
 /**
- * Desktop counterpart to BottomNav. The Figma file is mobile-only, so this rail
- * is an addition rather than a translation — same destinations, laid out for a
- * wide viewport.
+ * Desktop navigation rail (lg+). The Figma file is mobile-only, so this rail is
+ * an addition rather than a translation — same destinations as the mobile
+ * hamburger drawer, laid out for a wide viewport.
  */
 export function SideNav({ className }: { className?: string }) {
   return (
@@ -29,7 +21,7 @@ export function SideNav({ className }: { className?: string }) {
       {/* Gradient accent at top matching AppHeader */}
       <div
         aria-hidden
-        className="absolute inset-x-0 top-0 h-[2.5px] bg-gradient-to-r from-asm-blue via-[#0B4FD8] to-asm-greenInk opacity-80"
+        className="absolute inset-x-0 top-0 h-[2.5px] bg-gradient-to-r from-asm-blue via-asm-blue to-asm-greenInk opacity-80"
       />
 
       {/* Logo */}
@@ -45,7 +37,7 @@ export function SideNav({ className }: { className?: string }) {
 
       {/* Nav links */}
       <div className="flex flex-1 flex-col gap-0.5">
-        {LINKS.map(({ to, label, Icon, end }) => (
+        {APP_NAV_LINKS.map(({ to, label, Icon, end }) => (
           <NavLink
             key={to}
             to={to}

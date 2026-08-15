@@ -250,7 +250,7 @@ export function AdminUsers() {
   const isMutating = freezeMutation.isPending || unfreezeMutation.isPending
 
   return (
-    <div className="flex flex-col gap-6 p-8">
+    <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
       {/* Header */}
       <div>
         <h1 className="text-[22px] font-bold tracking-tight text-asm-navy">Users</h1>
@@ -347,7 +347,7 @@ export function AdminUsers() {
                         onClick={() => handleToggleFreeze(user)}
                         disabled={isMutating || adjustMutation.isPending}
                         className={cn(
-                          'rounded-md px-2.5 py-1 text-[11px] font-semibold',
+                          'rounded-md inline-flex min-h-[40px] items-center px-3 py-1.5 text-[11px] font-semibold',
                           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1',
                           'disabled:cursor-not-allowed disabled:opacity-40',
                           user.status === 'active'
@@ -362,7 +362,7 @@ export function AdminUsers() {
                         onClick={() => setAdjustingUser(user)}
                         disabled={isMutating || adjustMutation.isPending}
                         className={cn(
-                          'rounded-md border border-asm-line px-2.5 py-1 text-[11px] font-semibold text-asm-body',
+                          'rounded-md border border-asm-line inline-flex min-h-[40px] items-center px-3 py-1.5 text-[11px] font-semibold text-asm-body',
                           'hover:bg-asm-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1',
                           'disabled:cursor-not-allowed disabled:opacity-40',
                         )}

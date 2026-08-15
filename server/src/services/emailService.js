@@ -1,5 +1,8 @@
+'use strict'
+
 const nodemailer = require('nodemailer')
 const env = require('../config/env')
+const logger = require('../lib/logger').child({ service: 'email' })
 
 // In tests use a JSON transport so nothing is actually sent over SMTP.
 const transport =
@@ -16,10 +19,11 @@ const rupees = (paise) => `₹${(paise / 100).toLocaleString('en-IN')}`
 
 async function sendMail({ to, subject, html }) {
   try {
+    logger.info('Sending email', { to, subject })
     return await transport.sendMail({ from: env.MAIL_FROM, to, subject, html })
   } catch (e) {
     // A mail failure must never roll back a wallet transaction.
-    console.error('Email send failed:', e.message)
+    logger.error('Email send failed', { to, subject, error: e.message })
     return null
   }
 }

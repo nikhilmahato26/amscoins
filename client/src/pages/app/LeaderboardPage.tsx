@@ -260,7 +260,7 @@ export function LeaderboardPage() {
                   aria-selected={isActive}
                   onClick={() => setPeriod(value)}
                   className={cn(
-                    'rounded-xl py-2 text-[13px] font-semibold transition-all duration-150',
+                    'flex min-h-[42px] items-center justify-center rounded-xl py-2 text-[13px] font-semibold transition-all duration-150',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue',
                     isActive
                       ? 'bg-white text-asm-blue shadow-[0_1px_4px_-1px_rgba(16,42,92,0.12)]'

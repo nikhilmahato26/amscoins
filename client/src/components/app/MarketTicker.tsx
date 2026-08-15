@@ -141,8 +141,8 @@ export function MarketTicker({ className }: { className?: string }) {
         <button
           type="button"
           className={[
-            'flex shrink-0 items-center gap-1.5 rounded-full border border-asm-line bg-white',
-            'py-1.5 pl-3 pr-2 text-[12px] font-semibold text-asm-navy',
+            'flex min-h-[40px] shrink-0 items-center gap-1.5 rounded-full border border-asm-line bg-white',
+            'py-1.5 pl-3 pr-2.5 text-[12px] font-semibold text-asm-navy',
             'transition-colors hover:bg-asm-tint',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue',
           ].join(' ')}

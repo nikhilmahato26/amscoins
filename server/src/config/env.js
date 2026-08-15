@@ -7,6 +7,8 @@ for (const k of required) {
 
 module.exports = {
   PORT: Number(process.env.PORT || 4000),
+  NODE_ENV: process.env.NODE_ENV || 'development',
+  LOG_LEVEL: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'info' : 'http'),
   MONGO_URI: process.env.MONGO_URI,
   JWT_SECRET: process.env.JWT_SECRET,
   JWT_EXPIRES: process.env.JWT_EXPIRES || '7d',
@@ -17,7 +19,8 @@ module.exports = {
   SMTP_PORT: Number(process.env.SMTP_PORT || 465),
   SMTP_USER: process.env.SMTP_USER,
   SMTP_PASS: process.env.SMTP_PASS,
-  MAIL_FROM: process.env.MAIL_FROM || 'ASM Coins <bhaveshsolminde@gmail.com>',
+  MAIL_FROM: process.env.MAIL_FROM || 'bhaveshsolminde@gmail.com',
   ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'admin@asmcoins.com',
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'change-me-admin',
+  REDIS_URL: process.env.REDIS_URL || null,
 }

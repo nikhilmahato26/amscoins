@@ -10,7 +10,7 @@ import {
   Send,
   ShieldCheck,
 } from 'lucide-react'
-import { useLocation } from 'react-router'
+import { useLocation, useSearchParams } from 'react-router'
 
 import { AppShell } from '@/components/app/AppShell'
 import { usePlans } from '@/hooks/queries'
@@ -44,20 +44,28 @@ type PageState =
 
 export function PaymentMethodPage() {
   const location = useLocation()
+  const [params] = useSearchParams()
   const state = location.state as LocationState | null
 
+  // Resolve the selection from the URL query first, then router state, so a
+  // refresh or a shared/deep link keeps the chosen plan and amount instead of
+  // collapsing to "— / ₹0".
+  const planKey = (params.get('plan') as Tier | null) ?? state?.planKey ?? null
+  const amountPaise = Number(params.get('amt')) || state?.amount || 0
+  const hasSelection = Boolean(planKey) && amountPaise > 0
+
   const { data: plans } = usePlans()
-  const plan = plans?.find((p) => p.key === state?.planKey)
+  const plan = plans?.find((p) => p.key === planKey)
 
   const [pageState, setPageState] = useState<PageState>({ phase: 'idle' })
 
   async function handleConfirm() {
-    if (!state) return
+    if (!planKey || !hasSelection) return
     setPageState({ phase: 'submitting' })
     try {
       const result = await createInvestment({
-        planKey: state.planKey,
-        amount: state.amount,
+        planKey,
+        amount: amountPaise,
       })
       setPageState({ phase: 'success', investment: result.investment, telegramLink: result.telegramLink })
     } catch (err) {
@@ -75,8 +83,8 @@ export function PaymentMethodPage() {
         <ConfirmationState
           investment={pageState.investment}
           telegramLink={pageState.telegramLink}
-          planName={plan?.name ?? state?.planKey ?? 'Investment'}
-          amountPaise={state?.amount ?? pageState.investment.amount}
+          planName={plan?.name ?? planKey ?? 'Investment'}
+          amountPaise={amountPaise || pageState.investment.amount}
         />
       </AppShell>
     )
@@ -104,8 +112,8 @@ export function PaymentMethodPage() {
         {/* ── Package summary ── */}
         <motion.div variants={fadeUp}>
           <PackageSummary
-            planName={plan?.name ?? state?.planKey ?? '—'}
-            amountPaise={state?.amount ?? 0}
+            planName={plan?.name ?? planKey ?? '—'}
+            amountPaise={amountPaise}
           />
         </motion.div>
 
@@ -181,7 +189,7 @@ export function PaymentMethodPage() {
           <button
             type="button"
             onClick={handleConfirm}
-            disabled={pageState.phase === 'submitting' || !state}
+            disabled={pageState.phase === 'submitting' || !hasSelection}
             className={cn(
               'flex h-14 w-full items-center justify-center gap-2 rounded-2xl',
               'bg-asm-blue text-base font-bold text-white',

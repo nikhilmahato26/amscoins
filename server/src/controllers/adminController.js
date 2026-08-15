@@ -6,6 +6,7 @@ const Wallet = require('../models/Wallet')
 const invSvc = require('../services/investmentService')
 const wdSvc = require('../services/withdrawalService')
 const walletService = require('../services/walletService')
+const { cacheGet, cacheSet, cacheDel } = require('../config/redis')
 
 const listInvestments = asyncHandler(async (req, res) => {
   const q = req.query.status ? { status: req.query.status } : {}
@@ -47,10 +48,21 @@ const adjustWallet = asyncHandler(async (req, res) => {
   const { amount, direction, note } = req.body
   const fn = direction === 'credit' ? walletService.credit : walletService.debit
   const w = await fn(req.params.userId, amount, { type: 'adjustment', actor: 'admin', note })
+  await cacheDel('cache:admin:stats')
   res.json({ balance: w.balance })
 })
 
 const getStats = asyncHandler(async (_req, res) => {
+  const cacheKey = 'cache:admin:stats'
+  const cached = await cacheGet(cacheKey)
+  if (cached) {
+    try {
+      return res.json(JSON.parse(cached))
+    } catch {
+      // fallback
+    }
+  }
+
   const [users, pendingDeposits, pendingWithdrawals, invAgg, walAgg] = await Promise.all([
     User.countDocuments(),
     Investment.countDocuments({ status: 'pending' }),
@@ -58,12 +70,15 @@ const getStats = asyncHandler(async (_req, res) => {
     Investment.aggregate([{ $match: { status: 'active' } }, { $group: { _id: null, s: { $sum: '$amount' } } }]),
     Wallet.aggregate([{ $group: { _id: null, s: { $sum: '$balance' } } }]),
   ])
-  res.json({
+  const result = {
     users,
     pendingDeposits,
     pendingWithdrawals,
     totals: { invested: invAgg[0]?.s || 0, walletLiability: walAgg[0]?.s || 0 },
-  })
+  }
+
+  await cacheSet(cacheKey, JSON.stringify(result), 30)
+  res.json(result)
 })
 
 module.exports = {

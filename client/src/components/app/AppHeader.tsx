@@ -50,7 +50,7 @@ export function AppHeader({
       {/* Gradient accent bar at the very top of the header */}
       <div
         aria-hidden
-        className="absolute inset-x-0 top-0 h-[2.5px] bg-gradient-to-r from-asm-blue via-[#0B4FD8] to-asm-greenInk opacity-80"
+        className="absolute inset-x-0 top-0 h-[2.5px] bg-gradient-to-r from-asm-blue via-asm-blue to-asm-greenInk opacity-80"
       />
       {/* Subtle bottom separator */}
       <div
@@ -62,8 +62,8 @@ export function AppHeader({
         className={cn(
           'mx-auto flex w-full items-center justify-between',
           width === 'wide'
-            ? 'max-w-[375px] sm:max-w-[600px] lg:max-w-[860px] xl:max-w-[1120px]'
-            : 'max-w-[375px] sm:max-w-[560px] lg:max-w-[720px]',
+            ? 'sm:max-w-[600px] lg:max-w-[860px] xl:max-w-[1120px]'
+            : 'sm:max-w-[560px] lg:max-w-[720px]',
           variant === 'root' ? 'px-[15px] py-3' : 'px-5 pb-2 pt-3'
         )}
       >
@@ -91,37 +91,38 @@ export function AppHeader({
           <span className="font-script text-[22px] text-asm-greenInk">Coins</span>
         </div>
 
-        {variant === 'detail' ? (
-          <button
-            type="button"
-            onClick={onHelp}
-            aria-label="Help"
-            className="flex size-11 items-center justify-end rounded-lg text-asm-muted transition-colors hover:text-asm-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue"
-          >
-            <svg viewBox="0 0 24 24" fill="none" className="size-[18px]" aria-hidden>
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-              <path
-                d="M9.5 9a2.5 2.5 0 1 1 3.6 2.25c-.7.35-1.1.9-1.1 1.6v.4"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-              <circle cx="12" cy="17" r="1.1" fill="currentColor" />
-            </svg>
-          </button>
-        ) : (
+        <div className="flex items-center justify-end gap-0.5">
+          {variant === 'detail' ? (
+            <button
+              type="button"
+              onClick={onHelp}
+              aria-label="Help"
+              className="flex size-11 items-center justify-center rounded-lg text-asm-muted transition-colors hover:text-asm-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue"
+            >
+              <svg viewBox="0 0 24 24" fill="none" className="size-[18px]" aria-hidden>
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
+                <path
+                  d="M9.5 9a2.5 2.5 0 1 1 3.6 2.25c-.7.35-1.1.9-1.1 1.6v.4"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+                <circle cx="12" cy="17" r="1.1" fill="currentColor" />
+              </svg>
+            </button>
+          ) : null}
+          {/* Hamburger opens the nav drawer — on every page, mobile only (SideNav covers lg). */}
           <button
             ref={menuButtonRef}
             type="button"
             onClick={onMenu}
             aria-label="Open menu"
-            aria-expanded={false}
             aria-haspopup="dialog"
             className="flex size-11 items-center justify-center rounded-lg text-asm-body transition-colors hover:text-asm-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue lg:hidden"
           >
             <Menu className="size-6" strokeWidth={2.5} />
           </button>
-        )}
+        </div>
       </div>
     </header>
   )

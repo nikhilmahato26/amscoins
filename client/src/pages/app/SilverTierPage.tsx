@@ -20,13 +20,13 @@ export function SilverTierPage() {
   const roi = silver ? `${silver.returnPct}% Fixed` : '—'
 
   return (
-    <AppShell backTo="/app" contentClassName="px-7 pt-[140px]">
+    <AppShell backTo="/app" contentClassName="px-5 pt-[140px]">
       {isLoading ? (
         <div
           role="status"
           aria-live="polite"
           aria-label="Loading Silver plan"
-          className="h-[280px] animate-pulse rounded-2xl bg-surface lg:mx-auto lg:max-w-[420px]"
+          className="h-[280px] animate-pulse rounded-2xl bg-white/70 ring-1 ring-asm-line lg:mx-auto lg:max-w-[420px]"
         />
       ) : (
         <TierPlanCard
@@ -36,6 +36,7 @@ export function SilverTierPage() {
           duration={duration}
           minInvestment={minInvestment}
           roi={roi}
+          to="/app/invest?plan=silver"
           className="lg:mx-auto lg:max-w-[420px]"
         />
       )}

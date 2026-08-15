@@ -143,7 +143,7 @@ export function ReferralPage() {
               </span>
               <div className="flex items-stretch gap-2">
                 <div className="flex h-14 min-w-0 flex-1 items-center justify-between gap-3 rounded-xl border border-asm-line bg-asm-tint px-4">
-                  <span className="truncate font-mono text-[22px] font-extrabold uppercase tracking-[4px] text-asm-navy">
+                  <span className="min-w-0 font-mono text-[20px] font-extrabold uppercase tracking-[3px] text-asm-navy">
                     {data.referralCode}
                   </span>
                   <CopyButton value={data.referralCode} label="Copy referral code" />
@@ -420,7 +420,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
       onClick={copy}
       aria-label={label}
       className={cn(
-        'flex size-9 shrink-0 items-center justify-center rounded-lg border border-asm-line bg-white',
+        'flex size-11 shrink-0 items-center justify-center rounded-lg border border-asm-line bg-white',
         'transition-colors hover:bg-asm-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue'
       )}
     >

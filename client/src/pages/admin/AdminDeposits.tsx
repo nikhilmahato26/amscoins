@@ -195,7 +195,7 @@ export function AdminDeposits() {
   const isMutating = approveMutation.isPending || rejectMutation.isPending
 
   return (
-    <div className="flex flex-col gap-6 p-8">
+    <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
       {/* Header */}
       <div>
         <h1 className="text-[22px] font-bold tracking-tight text-asm-navy">Deposits</h1>
@@ -295,7 +295,7 @@ export function AdminDeposits() {
                         onClick={() => setApprovingId(dep._id)}
                         disabled={isMutating}
                         className={cn(
-                          'rounded-md bg-asm-blue px-2.5 py-1 text-[11px] font-semibold text-white',
+                          'rounded-md bg-asm-blue inline-flex min-h-[40px] items-center px-3 py-1.5 text-[11px] font-semibold text-white',
                           'hover:bg-asm-blue-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1',
                           'disabled:cursor-not-allowed disabled:opacity-40',
                         )}
@@ -307,7 +307,7 @@ export function AdminDeposits() {
                         onClick={() => setRejectingId(dep._id)}
                         disabled={isMutating}
                         className={cn(
-                          'rounded-md border border-asm-line px-2.5 py-1 text-[11px] font-semibold text-asm-red',
+                          'rounded-md border border-asm-line inline-flex min-h-[40px] items-center px-3 py-1.5 text-[11px] font-semibold text-asm-red',
                           'hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-red focus-visible:ring-offset-1',
                           'disabled:cursor-not-allowed disabled:opacity-40',
                         )}

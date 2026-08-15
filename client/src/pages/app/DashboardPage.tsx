@@ -209,8 +209,8 @@ export function DashboardPage() {
               Active Investments
             </h2>
             <Link
-              to="/app/plans"
-              className="flex items-center gap-0.5 text-[11px] font-semibold text-asm-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1 rounded"
+              to="/app/invest"
+              className="-my-1 -mr-1 inline-flex min-h-[40px] items-center gap-0.5 rounded px-1.5 text-[11px] font-semibold text-asm-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1"
             >
               Plans <ArrowRight className="size-3" strokeWidth={2.5} aria-hidden />
             </Link>
@@ -230,9 +230,9 @@ export function DashboardPage() {
                 <p className="text-[13px] font-semibold text-asm-navy">No active investments yet</p>
                 <p className="text-[12px] text-asm-body">Start growing your wealth today.</p>
                 <Link
-                  to="/app/plans"
+                  to="/app/invest"
                   className={cn(
-                    'mt-1 inline-flex items-center gap-1.5 rounded-xl bg-asm-blue px-4 py-2.5',
+                    'mt-1 inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-asm-blue px-4 py-2.5',
                     'text-[12px] font-bold uppercase tracking-[0.06em] text-white',
                     'transition-colors hover:bg-asm-blue-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-2'
                   )}

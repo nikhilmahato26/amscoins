@@ -1,12 +1,13 @@
 import { Medal } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import { Link } from 'react-router'
 
 import { cn } from '@/lib/utils'
 
 /**
- * Figma "SilverPackage" (4:5126) — the fixed-ROI card variant. Distinct from
- * the Home/Package-detail cards: a rate-per-period headline, a duration pill,
- * and Min Investment / Total ROI rows instead of a Min/Max panel.
+ * Figma "SilverPackage" (4:5126) — the fixed-ROI card variant, re-skinned to the
+ * light ASM system. A rate-per-period headline, a duration pill, and Min
+ * Investment / Total ROI rows. Pass `to` to make the action a real link.
  */
 export function TierPlanCard({
   tierLabel = 'Silver Tier',
@@ -16,6 +17,7 @@ export function TierPlanCard({
   minInvestment = '₹25,000',
   roi = '13.0% Fixed',
   Icon = Medal,
+  to,
   className,
 }: {
   tierLabel?: string
@@ -25,37 +27,41 @@ export function TierPlanCard({
   minInvestment?: string
   roi?: string
   Icon?: LucideIcon
+  /** When set, the action renders as a link to this route. */
+  to?: string
   className?: string
 }) {
+  const actionClass = cn(
+    'mt-6 flex h-[52px] w-full items-center justify-center rounded-xl bg-asm-blue',
+    'text-sm font-bold uppercase leading-[21px] tracking-[0.35px] text-white',
+    'shadow-[0_8px_24px_-8px_rgba(11,79,216,0.5)] transition-colors hover:bg-asm-blue-dark',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-2'
+  )
+
   return (
     <article
       className={cn(
-        'relative overflow-hidden rounded-[20px] border-[0.677px] border-slate-400/20 bg-white/[0.03] p-[25px]',
+        'relative overflow-hidden rounded-[20px] border border-asm-line bg-white p-[25px] shadow-[0_2px_16px_-6px_rgba(16,42,92,0.1)]',
         className
       )}
     >
-      <span
-        aria-hidden
-        className="pointer-events-none absolute -top-10 right-[-14px] size-32 rounded-full bg-slate-400/10 blur-[32px]"
-      />
-
       <div className="flex items-start justify-between">
         <div className="flex flex-col gap-1">
           <span className="flex items-center gap-2">
-            <Icon className="h-4 w-[18px] text-slate-400" strokeWidth={2} aria-hidden />
-            <span className="text-xs font-bold uppercase leading-[18px] tracking-[1.2px] text-slate-400">
+            <Icon className="h-4 w-[18px] text-asm-blue" strokeWidth={2} aria-hidden />
+            <span className="text-xs font-bold uppercase leading-[18px] tracking-[1.2px] text-asm-muted">
               {tierLabel}
             </span>
           </span>
           <span className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold leading-8">{rate}</span>
-            <span className="text-sm leading-5 text-gray-400">{period}</span>
+            <span className="text-2xl font-extrabold leading-8 text-asm-navy">{rate}</span>
+            <span className="text-sm leading-5 text-asm-muted">{period}</span>
           </span>
         </div>
 
         <div className="flex flex-col items-end gap-1">
-          <span className="text-[10px] uppercase leading-[15px] text-gray-400">Duration</span>
-          <span className="rounded-lg border-[0.677px] border-slate-400/30 bg-slate-400/10 px-[13px] py-[4.5px] text-xs font-bold leading-[18px] text-slate-400">
+          <span className="text-[10px] font-semibold uppercase leading-[15px] tracking-[0.08em] text-asm-muted">Duration</span>
+          <span className="rounded-lg bg-asm-blue-tint px-[13px] py-[4.5px] text-xs font-bold leading-[18px] text-asm-blue">
             {duration}
           </span>
         </div>
@@ -63,25 +69,24 @@ export function TierPlanCard({
 
       <div className="flex flex-col gap-3 pt-6">
         <div className="flex items-start justify-between">
-          <span className="text-sm leading-5 text-gray-400">Min Investment</span>
-          <span className="text-sm font-bold leading-5">{minInvestment}</span>
+          <span className="text-sm leading-5 text-asm-body">Min Investment</span>
+          <span className="text-sm font-bold leading-5 text-asm-navy">{minInvestment}</span>
         </div>
         <div className="flex items-start justify-between">
-          <span className="text-sm leading-5 text-gray-400">Total ROI</span>
-          <span className="text-sm font-bold leading-5 text-emerald-400">{roi}</span>
+          <span className="text-sm leading-5 text-asm-body">Total ROI</span>
+          <span className="text-sm font-bold leading-5 text-asm-green">{roi}</span>
         </div>
       </div>
 
-      <button
-        type="button"
-        className={cn(
-          'mt-6 flex h-[55px] w-full items-center justify-center rounded-xl border-[0.677px] border-slate-400/30',
-          'text-sm font-bold uppercase leading-[21px] tracking-[0.35px] text-slate-400',
-          'transition-colors hover:bg-slate-400/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand'
-        )}
-      >
-        Invest Now
-      </button>
+      {to ? (
+        <Link to={to} className={actionClass}>
+          Invest Now
+        </Link>
+      ) : (
+        <button type="button" className={actionClass}>
+          Invest Now
+        </button>
+      )}
     </article>
   )
 }

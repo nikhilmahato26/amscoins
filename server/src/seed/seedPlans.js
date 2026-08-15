@@ -1,4 +1,5 @@
 const Plan = require('../models/Plan')
+const logger = require('../lib/logger').child({ service: 'seed' })
 
 // Amounts in paise. Defaults are placeholders pending commercial sign-off
 // (see PRODUCT.md). Tier thresholds match the client spec: gold@11, diamond@21.
@@ -21,9 +22,9 @@ if (require.main === module) {
   connectDb()
     .then(seedPlans)
     .then(disconnectDb)
-    .then(() => console.log('Plans seeded'))
+    .then(() => logger.info('Plans seeded'))
     .catch((err) => {
-      console.error(err)
+      logger.error('Plan seeding failed', { stack: err.stack })
       process.exit(1)
     })
 }

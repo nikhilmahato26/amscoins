@@ -1,28 +1,15 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import {
-  CircleUserRound,
-  House,
-  LogOut,
-  Users,
-  Wallet,
-  X,
-} from 'lucide-react'
+import { LogOut, X } from 'lucide-react'
 import { NavLink, useNavigate } from 'react-router'
 
 import { useAuth } from '@/auth/AuthContext'
 import { AppHeader } from '@/components/app/AppHeader'
 import { GridBackdrop } from '@/components/app/GridBackdrop'
+import { APP_NAV_LINKS } from '@/components/app/navLinks'
 import { SideNav } from '@/components/app/SideNav'
 import { cn } from '@/lib/utils'
-
-const NAV_LINKS = [
-  { to: '/app',          label: 'Home',     Icon: House,            end: true  },
-  { to: '/app/withdraw', label: 'Withdraw', Icon: Wallet,           end: false },
-  { to: '/app/referral', label: 'Referral', Icon: Users,            end: false },
-  { to: '/app/account',  label: 'Account',  Icon: CircleUserRound,  end: false },
-] as const
 
 /* ── Mobile slide-in drawer ─────────────────────────────────────── */
 
@@ -174,7 +161,7 @@ function MobileDrawer({
 
             {/* Nav links — stagger on mount */}
             <nav aria-label="Primary" className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2.5 py-4">
-              {NAV_LINKS.map(({ to, label, Icon, end }, i) => (
+              {APP_NAV_LINKS.map(({ to, label, Icon, end }, i) => (
                 <motion.div
                   key={to}
                   custom={i}
@@ -305,10 +292,11 @@ export function AppShell({
 
         <main
           className={cn(
+            /* Full-width on phones (no 375px cap that stranded wide phones); centers only from sm up. */
             'relative mx-auto w-full px-5 pb-10 pt-[72px] lg:pb-14',
             width === 'wide'
-              ? 'max-w-[375px] sm:max-w-[600px] lg:max-w-[860px] xl:max-w-[1120px]'
-              : 'max-w-[375px] sm:max-w-[560px] lg:max-w-[720px]',
+              ? 'sm:max-w-[600px] lg:max-w-[860px] xl:max-w-[1120px]'
+              : 'sm:max-w-[560px] lg:max-w-[720px]',
             contentClassName
           )}
         >

@@ -24,7 +24,7 @@ export function ReferralBanner({ className }: { className?: string }) {
         <Link
           to="/app/referral"
           className={cn(
-            'mt-3 inline-flex w-fit items-center justify-center rounded-lg bg-asm-blue px-4 py-2',
+            'mt-3 inline-flex min-h-[44px] w-fit items-center justify-center rounded-lg bg-asm-blue px-4 py-2',
             'text-[11px] font-bold uppercase leading-[16.5px] tracking-[0.06em] text-white',
             'transition-colors hover:bg-asm-blue-dark active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-2'
           )}
