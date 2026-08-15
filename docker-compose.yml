@@ -1,0 +1,105 @@
+# VPS deployment stack for ASM Coins. Lives at /opt/amscoins/docker-compose.yml
+# on the server. mongo/redis/mongo-express are never exposed beyond 127.0.0.1 —
+# reach them via `ssh -L <port>:localhost:<port> deploy@vps-ip`.
+#
+# mongo_data / redis_data are named volumes: they survive `up`, `up --build`,
+# and plain `down`. Only `down -v` destroys them — never run that flag here
+# once real data exists.
+#
+# Compose only auto-loads a file literally named `.env` for ${VAR}
+# substitution in *this* file (env_file: on the backend service below is a
+# separate mechanism that only injects vars inside that one container). On
+# the VPS, `.env` is a symlink to `.env.production` — see .env.production.example.
+
+services:
+  mongo:
+    image: mongo:7
+    restart: always
+    # --replSet is required: server/src/services/*Service.js run Mongoose
+    # transactions, which MongoDB refuses on a standalone instance. See
+    # deploy/mongo/init-mongo.js for the one-time rs.initiate().
+    #
+    # --keyFile is required *because* --replSet is combined with root auth:
+    # MongoDB mandates a keyfile for replica-set internal auth even for a
+    # single-member set, or mongod refuses to start ("security.keyFile is
+    # required when authorization is enabled with replica sets"). Generate
+    # it once on the host and lock it down to the container's mongodb uid:
+    #   openssl rand -base64 756 > deploy/mongo/keyfile
+    #   chown 999:999 deploy/mongo/keyfile && chmod 400 deploy/mongo/keyfile
+    # (999 is mongo:7's baked-in `mongodb` uid/gid — verify with
+    # `docker run --rm mongo:7 id mongodb` if a future image changes it.)
+    # Never commit deploy/mongo/keyfile — it's gitignored.
+    command: ["--replSet", "rs0", "--keyFile", "/etc/mongo-keyfile", "--wiredTigerCacheSizeGB", "1.5"]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: asmcoins
+      MONGO_APP_USER: ${MONGO_APP_USER}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD}
+    volumes:
+      - mongo_data:/data/db
+      - ./deploy/mongo/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - ./deploy/mongo/keyfile:/etc/mongo-keyfile:ro
+    ports:
+      - "127.0.0.1:27017:27017" # loopback only — never 0.0.0.0
+    mem_limit: 2.5g
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    # Optional dependency for the backend (server/src/config/redis.js degrades
+    # gracefully if this is unreachable) — used for response caching and
+    # rate-limit-redis. Not a hard requirement, but kept healthy anyway.
+    command: ["redis-server", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    ports:
+      - "127.0.0.1:6379:6379" # loopback only
+    mem_limit: 300m
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_ROOT_USER}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_ROOT_PASSWORD}
+      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_BASICAUTH_USERNAME: ${MONGOEXPRESS_USER}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGOEXPRESS_PASSWORD}
+    ports:
+      - "127.0.0.1:8081:8081" # loopback only — this is your DB browser
+    depends_on:
+      - mongo
+
+  backend:
+    build: ./server
+    restart: always
+    env_file: .env.production
+    depends_on:
+      mongo: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    ports:
+      - "127.0.0.1:4000:4000"
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+volumes:
+  mongo_data:
+  redis_data:

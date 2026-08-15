@@ -34,3 +34,6 @@ dist-ssr
 
 # Local env files
 .env
+.env.production
+backups/
+deploy/mongo/keyfile

@@ -13,7 +13,17 @@ if (!isTest && env.REDIS_URL) {
     redis = new Redis(env.REDIS_URL, {
       lazyConnect: true,
       maxRetriesPerRequest: 1,
-      enableOfflineQueue: false,
+      // true: commands issued before the initial connect() resolves are
+      // queued and flushed once ready, instead of throwing immediately.
+      // Needed because rateLimits.js builds its RedisStore-backed limiters
+      // at module-load time (synchronously, before connect() resolves) and
+      // rate-limit-redis caches that first failure permanently — with this
+      // false, every /auth/register and /auth/login request 500s for the
+      // life of the process. cacheGet/cacheSet/cacheDel below already guard
+      // on `redis.status !== 'ready'` themselves, so they're unaffected;
+      // this only changes behavior for callers (the rate limiter) that
+      // don't do their own readiness check.
+      enableOfflineQueue: true,
     })
 
     redis.connect().catch((err) => {

@@ -1,0 +1,56 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: cd client && npm ci && npm run build
+        env: { VITE_API_URL: /api }
+      - uses: actions/upload-artifact@v4
+        with: { name: frontend-dist, path: client/dist }
+
+  deploy:
+    needs: build-frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { name: frontend-dist, path: client/dist }
+
+      - uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "client/dist/,server/,docker-compose.yml,deploy/"
+          target: "/opt/amscoins/"
+
+      - uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /opt/amscoins
+            docker compose up -d --build backend --remove-orphans
+            sudo systemctl reload nginx
+
+# Secrets required in the GitHub repo (Settings -> Secrets and variables -> Actions):
+#   VPS_HOST, VPS_USER, VPS_SSH_KEY (private key for the `deploy` user, not root)
+#
+# .env.production and docker-compose.yml's mongo/redis/mongo-express services
+# are NOT touched by this workflow on every push — only `backend` is rebuilt
+# and restarted. Bring up mongo/redis/mongo-express manually once during
+# initial VPS setup (`docker compose up -d`), they don't need per-deploy churn.
+#
+# Rollback: nothing here keeps old images tagged. If a deploy breaks
+# something, `git revert` the bad commit on main and let this redeploy — for
+# anything stricter, tag images with the git SHA instead of always rebuilding
+# on top of `latest`.
