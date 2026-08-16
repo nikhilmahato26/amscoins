@@ -27,7 +27,7 @@ export function SideNav({ className }: { className?: string }) {
       {/* Logo */}
       <div className="flex select-none items-center gap-2.5 px-3 pb-8">
         <div className="relative flex size-10 shrink-0 items-center justify-center rounded-xl bg-asm-blue-tint">
-          <img src="/asm.png" alt="" className="size-8 shrink-0 rounded-xl object-contain" aria-hidden />
+          <img src="/asm.png" alt="" className="size-8 shrink-0 rounded-xl object-contain" decoding="async" aria-hidden />
         </div>
         <span>
           <span className="font-jakarta text-[20px] font-extrabold tracking-tight text-asm-navy">ASM </span>

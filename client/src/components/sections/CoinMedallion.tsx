@@ -22,7 +22,7 @@ export function CoinMedallion({
         aria-hidden
         className="absolute inset-0 rounded-full bg-gold-antique/20 blur-[30px]"
       />
-      <img src={coinImage} alt="" className="relative size-full object-contain" loading="lazy" />
+      <img src={coinImage} alt="" className="relative size-full object-contain" loading="lazy" decoding="async" />
     </div>
   )
 }

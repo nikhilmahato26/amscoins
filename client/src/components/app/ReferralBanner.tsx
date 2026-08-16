@@ -38,6 +38,7 @@ export function ReferralBanner({ className }: { className?: string }) {
         alt=""
         className="h-[114px] w-32 shrink-0 object-contain"
         loading="lazy"
+        decoding="async"
       />
     </section>
   )

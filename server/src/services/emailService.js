@@ -710,6 +710,179 @@ const supportTicketResolved = (user, ticket) => {
   })
 }
 
+// ---------------------------------------------------------------------------
+// Account welcome — sent once, right after an account is first created
+// (email/password signup or first-time Google sign-in).
+// ---------------------------------------------------------------------------
+const welcome = (user) => {
+  const firstName = String(user.name || '').trim().split(/\s+/)[0] || 'there'
+  const body = `
+    <div style="text-align:center;margin:4px 0 22px 0;">
+      <svg width="220" height="60" viewBox="0 0 220 60" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;max-width:100%;">
+        <circle cx="30" cy="18" r="3" fill="#22c55e"/>
+        <circle cx="55" cy="10" r="2.5" fill="#f59e0b"/>
+        <circle cx="190" cy="18" r="3" fill="#22c55e"/>
+        <circle cx="165" cy="10" r="2.5" fill="#f59e0b"/>
+        <circle cx="110" cy="30" r="22" fill="#22c55e"/>
+        <path d="M100 30l6 6 12-12" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <h2 class="asm-heading" style="margin:10px 0 4px 0;font-size:22px;font-weight:800;color:${C.heading};letter-spacing:0.3px;">Welcome to <span class="asm-accent" style="color:${C.accent};">ASM Coins</span>!</h2>
+      <p class="asm-text" style="margin:0;font-size:14px;color:${C.text};line-height:1.5;">Your account is ready. &#x1F389;</p>
+    </div>
+
+    <p class="asm-heading" style="margin:0 0 16px 0;font-size:15px;color:${C.heading};">
+      Hello <span class="asm-accent" style="color:${C.accent};font-weight:600;">${escapeHtml(firstName)}</span>,
+    </p>
+
+    <p class="asm-text" style="margin:0 0 16px 0;font-size:14px;color:${C.text};line-height:1.6;">
+      Thanks for joining ASM Coins — smart investing with clear, time-boxed plans. Pick a plan, invest, and track your returns right from the app.
+    </p>
+
+    ${
+      user.referralCode
+        ? `<p class="asm-text" style="margin:0 0 8px 0;font-size:14px;color:${C.text};line-height:1.6;">
+             Share your referral code and earn when friends invest:
+           </p>
+           <div style="text-align:center;margin:14px 0 20px 0;">
+             <div class="asm-code" style="display:inline-block;padding:12px 22px;border:1.5px solid ${C.accent};border-radius:10px;background-color:${C.accentSoft};font-size:22px;font-weight:800;letter-spacing:4px;color:${C.accent};">
+               ${escapeHtml(user.referralCode)}
+             </div>
+           </div>`
+        : ''
+    }
+
+    <div style="text-align:center;margin:22px 0;">
+      <a href="${env.FRONTEND_URL}/app" class="asm-accent" style="display:inline-block;padding:12px 28px;background-color:${C.accent};color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;border-radius:10px;">Explore Plans</a>
+    </div>
+
+    <p class="asm-muted" style="margin:0 0 16px 0;font-size:13px;color:${C.muted};line-height:1.6;">
+      Need a hand? Raise a support ticket <a href="${env.FRONTEND_URL}/support" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a> any time.
+    </p>
+
+    <p class="asm-text" style="margin:0;font-size:14px;color:${C.text};line-height:1.6;">
+      Thank You,<br/>Team <span class="asm-accent" style="color:${C.accent};font-weight:600;">ASM Coins</span> &#x1F49A;
+    </p>
+  `
+  return sendMail({
+    to: user.email,
+    subject: 'Welcome to ASM Coins 🎉',
+    html: emailShell(user._id, body),
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Deposit request received — sent when a user purchases a plan (pending review)
+// ---------------------------------------------------------------------------
+const depositSubmitted = (user, inv, planName) => {
+  const amountPrefix = formatInrPrefix(inv.amount)
+  const returnSuffix = formatInrSuffix(inv.expectedReturn || 0)
+  const planLabel = planName || (inv.planKey ? inv.planKey[0].toUpperCase() + inv.planKey.slice(1) : 'Plan')
+  const dateStr = fmtDate(inv.createdAt || new Date())
+
+  const body = `
+    <p class="asm-heading" style="margin:0 0 16px 0;font-size:15px;color:${C.heading};">
+      Hello <span class="asm-accent" style="color:${C.accent};font-weight:600;">${escapeHtml(user.name)}</span>,
+    </p>
+
+    <p class="asm-text" style="margin:0 0 16px 0;font-size:14px;color:${C.text};line-height:1.6;">
+      We've received your request to invest <strong>${amountPrefix}</strong> in the <strong>${escapeHtml(planLabel)}</strong> plan. It's now <span class="asm-accent" style="color:${C.accent};font-weight:600;">pending review</span>.
+    </p>
+
+    <p class="asm-muted" style="margin:0 0 16px 0;font-size:14px;color:${C.muted};line-height:1.6;">
+      If you haven't completed the payment yet, please finish it so we can verify and activate your investment. Deposits are confirmed with a manual review, usually within a few hours.
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0"
+           class="asm-panel" style="background-color:${C.panel};border:1px solid ${C.line};border-radius:8px;overflow:hidden;margin:20px 0;">
+      ${row('Plan', escapeHtml(planLabel))}
+      <tr>
+        <td class="asm-cell asm-text" style="padding:11px 16px;border-bottom:1px solid ${C.line};border-right:1px solid ${C.line};color:${C.text};font-size:14px;width:35%;">Amount</td>
+        <td class="asm-cell asm-accent" style="padding:11px 16px;border-bottom:1px solid ${C.line};color:${C.accent};font-size:14px;font-weight:700;">${formatInrSuffix(inv.amount)}</td>
+      </tr>
+      ${row('Expected return', returnSuffix)}
+      ${row('Reference', escapeHtml(inv.referenceCode))}
+      ${row('Requested', dateStr)}
+    </table>
+
+    <p class="asm-text" style="margin:0 0 20px 0;font-size:14px;color:${C.text};line-height:1.6;">
+      We'll email you the moment it's approved. You can track its status <a href="${env.FRONTEND_URL}/app/dashboard" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a>.
+    </p>
+
+    <p class="asm-text" style="margin:0;font-size:14px;color:${C.text};line-height:1.6;">
+      Thank You,<br/>Team <span class="asm-accent" style="color:${C.accent};font-weight:600;">ASM Coins</span>
+    </p>
+  `
+  return sendMail({
+    to: user.email,
+    subject: `Deposit request for ${amountPrefix} received`,
+    html: emailShell(user._id, body),
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Deposit approved — sent when an admin approves the deposit (funds credited)
+// ---------------------------------------------------------------------------
+const depositApproved = (user, inv, planName) => {
+  const amountPrefix = formatInrPrefix(inv.amount)
+  const returnSuffix = formatInrSuffix(inv.expectedReturn || 0)
+  const planLabel = planName || (inv.planKey ? inv.planKey[0].toUpperCase() + inv.planKey.slice(1) : 'Plan')
+  const maturesStr = inv.maturesAt ? fmtDate(inv.maturesAt) : '—'
+  const approvedStr = fmtDate(inv.approvedAt || new Date())
+
+  const body = `
+    <div style="text-align:center;margin:4px 0 22px 0;">
+      <svg width="220" height="60" viewBox="0 0 220 60" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;max-width:100%;">
+        <circle cx="30" cy="18" r="3" fill="#22c55e"/>
+        <circle cx="55" cy="10" r="2.5" fill="#f59e0b"/>
+        <circle cx="190" cy="18" r="3" fill="#22c55e"/>
+        <circle cx="165" cy="10" r="2.5" fill="#f59e0b"/>
+        <circle cx="110" cy="30" r="22" fill="#22c55e"/>
+        <path d="M100 30l6 6 12-12" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <h2 class="asm-heading" style="margin:10px 0 4px 0;font-size:22px;font-weight:800;color:${C.heading};letter-spacing:0.3px;">Deposit <span class="asm-accent" style="color:${C.accent};">Approved!</span></h2>
+      <p class="asm-text" style="margin:0;font-size:14px;color:${C.text};line-height:1.5;">Your ${amountPrefix} investment is now active. &#x1F680;</p>
+    </div>
+
+    <p class="asm-heading" style="margin:0 0 16px 0;font-size:15px;color:${C.heading};">
+      Hello <span class="asm-accent" style="color:${C.accent};font-weight:600;">${escapeHtml(user.name)}</span>,
+    </p>
+
+    <p class="asm-text" style="margin:0 0 16px 0;font-size:14px;color:${C.text};line-height:1.6;">
+      Great news — your deposit of <strong>${amountPrefix}</strong> in the <strong>${escapeHtml(planLabel)}</strong> plan has been verified and approved. Your investment term has started.
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0"
+           class="asm-panel" style="background-color:${C.panel};border:1px solid ${C.line};border-radius:8px;overflow:hidden;margin:20px 0;">
+      ${row('Plan', escapeHtml(planLabel))}
+      <tr>
+        <td class="asm-cell asm-text" style="padding:11px 16px;border-bottom:1px solid ${C.line};border-right:1px solid ${C.line};color:${C.text};font-size:14px;width:35%;">Amount</td>
+        <td class="asm-cell asm-accent" style="padding:11px 16px;border-bottom:1px solid ${C.line};color:${C.accent};font-size:14px;font-weight:700;">${formatInrSuffix(inv.amount)}</td>
+      </tr>
+      ${row('Expected return', returnSuffix)}
+      ${row('Matures on', maturesStr)}
+      ${row('Reference', escapeHtml(inv.referenceCode))}
+      ${row('Approved', approvedStr)}
+    </table>
+
+    <p class="asm-text" style="margin:0 0 20px 0;font-size:14px;color:${C.text};line-height:1.6;">
+      Track your investment and returns <a href="${env.FRONTEND_URL}/app/dashboard" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a>.
+    </p>
+
+    <p class="asm-muted" style="margin:24px 0 18px 0;font-size:13px;color:${C.muted};line-height:1.6;">
+      Questions? Raise a support ticket <a href="${env.FRONTEND_URL}/support" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a>.
+    </p>
+
+    <p class="asm-text" style="margin:0;font-size:14px;color:${C.text};line-height:1.6;">
+      Thank You,<br/>Team <span class="asm-accent" style="color:${C.accent};font-weight:600;">ASM Coins</span> &#x1F49A;
+    </p>
+  `
+  return sendMail({
+    to: user.email,
+    subject: `Your ${amountPrefix} deposit is approved`,
+    html: emailShell(user._id, body),
+  })
+}
+
 module.exports = {
   sendMail,
   withdrawalInitiated,
@@ -719,4 +892,7 @@ module.exports = {
   supportTicketAdmin,
   supportTicketConfirmation,
   supportTicketResolved,
+  welcome,
+  depositSubmitted,
+  depositApproved,
 }

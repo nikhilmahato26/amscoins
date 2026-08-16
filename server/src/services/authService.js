@@ -37,6 +37,7 @@ async function register({ name, email, password, referralCode }) {
   await Wallet.create({ user: user._id, balance: 0 })
 
   logger.info('User registered', { userId: user._id, email: user.email })
+  emailService.welcome(user).catch(() => {}) // fire-and-forget
   return { user, token: signToken(user) }
 }
 
@@ -57,7 +58,7 @@ async function login({ email, password }) {
   return { user, token: signToken(user) }
 }
 
-async function findOrCreateGoogleUser({ googleId, email, name }) {
+async function findOrCreateGoogleUser({ googleId, email, name, referralCode }) {
   const lowerEmail = String(email).toLowerCase()
 
   let user = await User.findOne({ googleId })
@@ -76,11 +77,21 @@ async function findOrCreateGoogleUser({ googleId, email, name }) {
     return user
   }
 
+  // New account: attribute the referral exactly as the email flow does. The
+  // referral only applies on first creation — linking Google to an existing
+  // account above never changes an established referrer.
+  let referredBy = null
+  if (referralCode) {
+    const referrer = await User.findOne({ referralCode: String(referralCode).trim().toUpperCase() })
+    if (referrer) referredBy = referrer._id // invalid codes are silently ignored
+  }
+
   const code = await generateUniqueCode()
   const publicId = await generateUniquePublicId()
-  user = await User.create({ name: name || lowerEmail, email: lowerEmail, googleId, referralCode: code, publicId })
+  user = await User.create({ name: name || lowerEmail, email: lowerEmail, googleId, referralCode: code, publicId, referredBy })
   await Wallet.create({ user: user._id, balance: 0 })
   logger.info('User registered via Google', { userId: user._id, email: user.email })
+  emailService.welcome(user).catch(() => {}) // fire-and-forget
   return user
 }
 

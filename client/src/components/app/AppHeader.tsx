@@ -85,6 +85,7 @@ export function AppHeader({
               src="/asm.png"
               alt="ASM Coins"
               className="size-9 shrink-0 rounded-xl object-contain"
+              decoding="async"
             />
           </div>
           <span className="font-jakarta text-[20px] font-extrabold tracking-tight text-asm-navy">ASM</span>

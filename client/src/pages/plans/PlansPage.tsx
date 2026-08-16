@@ -44,7 +44,7 @@ export function PlansPage() {
             to="/app"
             className="inline-flex items-center gap-2 text-[13px] font-semibold text-asm-blue transition-colors hover:text-asm-blue-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue rounded"
           >
-            <img src="/asm.png" alt="" className="size-7 rounded-lg object-contain" aria-hidden />
+            <img src="/asm.png" alt="" className="size-7 rounded-lg object-contain" decoding="async" aria-hidden />
             ASM Coins
           </Link>
         </div>
