@@ -12,5 +12,6 @@ router.use('/support', require('./supportRoutes'))
 router.use('/admin', require('./adminRoutes'))
 router.use('/leaderboard', require('./leaderboardRoutes'))
 router.use('/dashboard', require('./dashboardRoutes'))
+router.use('/settings', require('./settingsRoutes'))
 
 module.exports = router
