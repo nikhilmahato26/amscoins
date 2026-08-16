@@ -18,21 +18,23 @@ import { Link, useLocation, useSearchParams } from 'react-router'
 import { AppShell } from '@/components/app/AppShell'
 import { BnbIcon, TelegramIcon, TetherIcon, WhatsAppIcon } from '@/components/app/icons'
 import {
-  binancePay,
+  deriveBinancePay,
+  deriveTelegram,
+  deriveUsdtWallets,
+  deriveWhatsapp,
   isMethodConfigured,
-  telegram,
-  usdtWallets,
-  whatsapp,
   whatsappUrl,
 } from '@/config/payment'
 import type { PaymentMethodId, UsdtWallet } from '@/config/payment'
-import { usePlans } from '@/hooks/queries'
+import { usePlans, useSettings } from '@/hooks/queries'
 import { ApiError } from '@/lib/api'
 import { inr } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { createInvestment } from '@/services/api/investments'
 import type { Investment } from '@/services/api/investments'
+import type { PublicSettings } from '@/services/api/settings'
 import type { Tier } from '@/types'
+import { InrQrScreen } from './InrQrScreen'
 
 interface LocationState {
   planKey: Tier
@@ -40,11 +42,11 @@ interface LocationState {
 }
 
 /* ── Framer variants ── */
-const container = {
+export const container = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.07, delayChildren: 0.03 } },
 }
-const fadeUp = {
+export const fadeUp = {
   hidden: { opacity: 0, y: 16 },
   visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 90, damping: 18 } },
 }
@@ -55,6 +57,10 @@ const METHOD_LABEL: Record<PaymentMethodId, string> = {
   whatsapp: 'WhatsApp',
   telegram: 'Telegram',
 }
+
+// `'inr-qr'` is a pseudo-method: it reuses the single createInvestment call but
+// routes straight to the dedicated INR QR pay screen instead of PayScreen.
+type ChooserMethod = PaymentMethodId | 'inr-qr'
 
 export function PaymentMethodPage() {
   const location = useLocation()
@@ -72,6 +78,13 @@ export function PaymentMethodPage() {
   const plan = plans?.find((p) => p.key === planKey)
   const planName = plan?.name ?? planKey ?? '—'
 
+  const { data: settings } = useSettings()
+  // Below the INR threshold, small deposits get a currency toggle (INR QR vs
+  // USDT wallets); above it, the full four-option chooser stands.
+  const [mode, setMode] = useState<'INR' | 'USDT'>('INR')
+  const threshold = settings?.inrThresholdPaise ?? 200000
+  const isSmall = amountPaise > 0 && amountPaise <= threshold
+
   /*
    * The investment record is created once, on the first method the user picks,
    * and then reused. Switching from Trust Wallet to Binance Pay is a change of
@@ -80,12 +93,12 @@ export function PaymentMethodPage() {
    */
   const [investment, setInvestment] = useState<Investment | null>(null)
   const [supportLink, setSupportLink] = useState<string>('')
-  const [method, setMethod] = useState<PaymentMethodId | null>(null)
-  const [pending, setPending] = useState<PaymentMethodId | null>(null)
+  const [method, setMethod] = useState<ChooserMethod | null>(null)
+  const [pending, setPending] = useState<ChooserMethod | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const handleSelect = useCallback(
-    async (next: PaymentMethodId) => {
+    async (next: ChooserMethod) => {
       if (!planKey || !hasSelection || pending) return
       setError(null)
 
@@ -110,17 +123,41 @@ export function PaymentMethodPage() {
   )
 
   /* ── Pay screen: one method, with its own instructions ── */
-  if (method && investment) {
+  if (method && investment && settings) {
     return (
       <AppShell backTo="/app" contentClassName="px-5">
-        <PayScreen
-          method={method}
-          investment={investment}
-          planName={planName}
-          amountPaise={amountPaise || investment.amount}
-          telegramFallback={supportLink}
-          onBack={() => setMethod(null)}
-        />
+        {method === 'inr-qr' ? (
+          <InrQrScreen
+            settings={settings}
+            investment={investment}
+            planName={planName}
+            amountPaise={amountPaise || investment.amount}
+            telegramFallback={supportLink}
+          />
+        ) : (
+          <PayScreen
+            method={method}
+            settings={settings}
+            investment={investment}
+            planName={planName}
+            amountPaise={amountPaise || investment.amount}
+            telegramFallback={supportLink}
+            onBack={() => setMethod(null)}
+          />
+        )}
+      </AppShell>
+    )
+  }
+
+  // Every method shape is derived from settings now, so hold the chooser until
+  // it lands rather than rendering a chooser with no configured methods.
+  if (!settings) {
+    return (
+      <AppShell backTo="/app" contentClassName="px-5">
+        <div className="flex min-h-[40vh] items-center justify-center">
+          <Loader2 className="size-6 animate-spin text-asm-blue" aria-hidden />
+          <span className="sr-only">Loading payment options…</span>
+        </div>
       </AppShell>
     )
   }
@@ -184,96 +221,182 @@ export function PaymentMethodPage() {
           <span aria-hidden className="h-px flex-1 bg-asm-line" />
         </motion.div>
 
-        {/* ── USDT (crypto) ── */}
-        <motion.section
-          variants={fadeUp}
-          aria-labelledby="pay-usdt-heading"
-          className="flex flex-col gap-4 rounded-2xl border border-asm-line bg-white p-4 shadow-[0_4px_20px_-8px_rgba(16,42,92,0.12)]"
-        >
-          <div className="flex items-start gap-3">
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-asm-green-tint">
-              <TetherIcon className="size-6 text-asm-greenInk" />
-            </span>
-            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-              <div className="flex items-center gap-2">
-                <h3 id="pay-usdt-heading" className="text-[15px] font-extrabold leading-tight text-asm-navy">
-                  USDT (Crypto)
+        {/*
+         * Small deposits (≤ threshold) get a currency toggle: INR settles via a
+         * single UPI QR screen, USDT keeps the crypto wallet options. Larger
+         * deposits fall through to the full four-option chooser below.
+         */}
+        {isSmall && (
+          <motion.div
+            variants={fadeUp}
+            role="tablist"
+            aria-label="Deposit currency"
+            className="flex gap-2 rounded-xl bg-asm-tint p-1"
+          >
+            {(['INR', 'USDT'] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                role="tab"
+                aria-selected={mode === m}
+                onClick={() => setMode(m)}
+                className={cn(
+                  'flex-1 rounded-lg px-3 py-2 text-[12px] font-bold transition-colors',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue',
+                  mode === m
+                    ? 'bg-white text-asm-navy shadow-[0_2px_8px_-3px_rgba(16,42,92,0.2)]'
+                    : 'text-asm-muted hover:text-asm-navy'
+                )}
+              >
+                {m === 'INR' ? 'Pay in INR' : 'Pay in USDT'}
+              </button>
+            ))}
+          </motion.div>
+        )}
+
+        {/* ── INR quick-pay (small deposits, INR mode) ── */}
+        {isSmall && mode === 'INR' && (
+          <motion.section
+            variants={fadeUp}
+            aria-labelledby="pay-inr-qr-heading"
+            className="flex flex-col gap-4 rounded-2xl border border-asm-line bg-white p-4 shadow-[0_4px_20px_-8px_rgba(16,42,92,0.12)]"
+          >
+            <div className="flex items-start gap-3">
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-asm-blue-tint">
+                <IndianRupee className="size-5 text-asm-blue" strokeWidth={2.5} aria-hidden />
+              </span>
+              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <h3 id="pay-inr-qr-heading" className="text-[15px] font-extrabold leading-tight text-asm-navy">
+                  INR Payment
                 </h3>
-                <span className="rounded-full border border-asm-greenInk/25 bg-asm-green-tint px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] text-asm-greenInk">
-                  Recommended
-                </span>
+                <p className="text-[12px] leading-relaxed text-asm-body">
+                  Scan a UPI QR and pay in Indian Rupee (INR)
+                </p>
               </div>
-              <p className="text-[12px] leading-relaxed text-asm-body">
-                Pay using USDT (TRC20 / BEP20)
-              </p>
             </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <MethodButton
-              method="trust-wallet"
-              title="Trust Wallet"
-              subtitle="Send to wallet"
-              icon={<Wallet className="size-5 text-[#0500FF]" strokeWidth={2.2} aria-hidden />}
-              iconClassName="bg-[#EDF1FF]"
-              pending={pending === 'trust-wallet'}
+            <button
+              type="button"
+              onClick={() => handleSelect('inr-qr')}
               disabled={!hasSelection || Boolean(pending)}
-              onSelect={handleSelect}
-            />
-            <MethodButton
-              method="binance-pay"
-              title="Binance Pay"
-              subtitle="Pay ID transfer"
-              icon={<BnbIcon className="size-5 text-[#B8860B]" />}
-              iconClassName="bg-[#FFF7E0]"
-              pending={pending === 'binance-pay'}
-              disabled={!hasSelection || Boolean(pending)}
-              onSelect={handleSelect}
-            />
-          </div>
-        </motion.section>
+              className={cn(
+                'flex h-14 w-full items-center justify-center gap-2 rounded-2xl',
+                'bg-asm-blue text-base font-bold text-white',
+                'shadow-[0_4px_20px_-4px_rgba(11,79,216,0.5)] transition-opacity hover:opacity-90',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-2',
+                'disabled:pointer-events-none disabled:opacity-45'
+              )}
+            >
+              {pending === 'inr-qr' ? (
+                <Loader2 className="size-5 animate-spin" aria-hidden />
+              ) : (
+                <>
+                  Continue with UPI
+                  <ChevronRight className="size-4 opacity-80" aria-hidden />
+                </>
+              )}
+            </button>
+          </motion.section>
+        )}
 
-        {/* ── INR ── */}
-        <motion.section
-          variants={fadeUp}
-          aria-labelledby="pay-inr-heading"
-          className="flex flex-col gap-4 rounded-2xl border border-asm-line bg-white p-4 shadow-[0_4px_20px_-8px_rgba(16,42,92,0.12)]"
-        >
-          <div className="flex items-start gap-3">
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-asm-blue-tint">
-              <IndianRupee className="size-5 text-asm-blue" strokeWidth={2.5} aria-hidden />
-            </span>
-            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-              <h3 id="pay-inr-heading" className="text-[15px] font-extrabold leading-tight text-asm-navy">
-                INR Payment
-              </h3>
-              <p className="text-[12px] leading-relaxed text-asm-body">Pay using Indian Rupee (INR)</p>
+        {/* ── USDT (crypto) ── */}
+        {(!isSmall || mode === 'USDT') && (
+          <motion.section
+            variants={fadeUp}
+            aria-labelledby="pay-usdt-heading"
+            className="flex flex-col gap-4 rounded-2xl border border-asm-line bg-white p-4 shadow-[0_4px_20px_-8px_rgba(16,42,92,0.12)]"
+          >
+            <div className="flex items-start gap-3">
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-asm-green-tint">
+                <TetherIcon className="size-6 text-asm-greenInk" />
+              </span>
+              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <div className="flex items-center gap-2">
+                  <h3 id="pay-usdt-heading" className="text-[15px] font-extrabold leading-tight text-asm-navy">
+                    USDT (Crypto)
+                  </h3>
+                  <span className="rounded-full border border-asm-greenInk/25 bg-asm-green-tint px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] text-asm-greenInk">
+                    Recommended
+                  </span>
+                </div>
+                <p className="text-[12px] leading-relaxed text-asm-body">
+                  Pay using USDT (TRC20 / BEP20)
+                </p>
+              </div>
             </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <MethodButton
-              method="whatsapp"
-              title="WhatsApp"
-              subtitle="Chat with us"
-              icon={<WhatsAppIcon className="size-5 text-[#1FA855]" />}
-              iconClassName="bg-[#E7F8EE]"
-              pending={pending === 'whatsapp'}
-              disabled={!hasSelection || Boolean(pending)}
-              onSelect={handleSelect}
-            />
-            <MethodButton
-              method="telegram"
-              title="Telegram"
-              subtitle="Chat with us"
-              icon={<TelegramIcon className="size-5 text-[#0088CC]" />}
-              iconClassName="bg-[#E5F5FC]"
-              pending={pending === 'telegram'}
-              disabled={!hasSelection || Boolean(pending)}
-              onSelect={handleSelect}
-            />
-          </div>
-        </motion.section>
+            <div className="grid grid-cols-2 gap-3">
+              <MethodButton
+                method="trust-wallet"
+                title="Trust Wallet"
+                subtitle="Send to wallet"
+                icon={<Wallet className="size-5 text-[#0500FF]" strokeWidth={2.2} aria-hidden />}
+                iconClassName="bg-[#EDF1FF]"
+                settings={settings}
+                pending={pending === 'trust-wallet'}
+                disabled={!hasSelection || Boolean(pending)}
+                onSelect={handleSelect}
+              />
+              <MethodButton
+                method="binance-pay"
+                title="Binance Pay"
+                subtitle="Pay ID transfer"
+                icon={<BnbIcon className="size-5 text-[#B8860B]" />}
+                iconClassName="bg-[#FFF7E0]"
+                settings={settings}
+                pending={pending === 'binance-pay'}
+                disabled={!hasSelection || Boolean(pending)}
+                onSelect={handleSelect}
+              />
+            </div>
+          </motion.section>
+        )}
+
+        {/* ── INR (large deposits: WhatsApp / Telegram handoff) ── */}
+        {!isSmall && (
+          <motion.section
+            variants={fadeUp}
+            aria-labelledby="pay-inr-heading"
+            className="flex flex-col gap-4 rounded-2xl border border-asm-line bg-white p-4 shadow-[0_4px_20px_-8px_rgba(16,42,92,0.12)]"
+          >
+            <div className="flex items-start gap-3">
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-asm-blue-tint">
+                <IndianRupee className="size-5 text-asm-blue" strokeWidth={2.5} aria-hidden />
+              </span>
+              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <h3 id="pay-inr-heading" className="text-[15px] font-extrabold leading-tight text-asm-navy">
+                  INR Payment
+                </h3>
+                <p className="text-[12px] leading-relaxed text-asm-body">Pay using Indian Rupee (INR)</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <MethodButton
+                method="whatsapp"
+                title="WhatsApp"
+                subtitle="Chat with us"
+                icon={<WhatsAppIcon className="size-5 text-[#1FA855]" />}
+                iconClassName="bg-[#E7F8EE]"
+                settings={settings}
+                pending={pending === 'whatsapp'}
+                disabled={!hasSelection || Boolean(pending)}
+                onSelect={handleSelect}
+              />
+              <MethodButton
+                method="telegram"
+                title="Telegram"
+                subtitle="Chat with us"
+                icon={<TelegramIcon className="size-5 text-[#0088CC]" />}
+                iconClassName="bg-[#E5F5FC]"
+                settings={settings}
+                pending={pending === 'telegram'}
+                disabled={!hasSelection || Boolean(pending)}
+                onSelect={handleSelect}
+              />
+            </div>
+          </motion.section>
+        )}
 
         {/* ── Secure notice ── */}
         <motion.section
@@ -305,6 +428,7 @@ function MethodButton({
   subtitle,
   icon,
   iconClassName,
+  settings,
   pending,
   disabled,
   onSelect,
@@ -314,11 +438,12 @@ function MethodButton({
   subtitle: string
   icon: React.ReactNode
   iconClassName: string
+  settings: PublicSettings
   pending: boolean
   disabled: boolean
   onSelect: (method: PaymentMethodId) => void
 }) {
-  const configured = isMethodConfigured(method)
+  const configured = isMethodConfigured(settings, method)
 
   return (
     <button
@@ -348,7 +473,7 @@ function MethodButton({
 }
 
 /* ── Package Summary ── */
-function PackageSummary({ planName, amountPaise }: { planName: string; amountPaise: number }) {
+export function PackageSummary({ planName, amountPaise }: { planName: string; amountPaise: number }) {
   return (
     <section className="relative overflow-hidden rounded-2xl border border-asm-line bg-white p-5 shadow-[0_4px_20px_-6px_rgba(16,42,92,0.10)]">
       {/* Decorative rupee watermark */}
@@ -386,6 +511,7 @@ function PackageSummary({ planName, amountPaise }: { planName: string; amountPai
  */
 function PayScreen({
   method,
+  settings,
   investment,
   planName,
   amountPaise,
@@ -393,6 +519,7 @@ function PayScreen({
   onBack,
 }: {
   method: PaymentMethodId
+  settings: PublicSettings
   investment: Investment
   planName: string
   amountPaise: number
@@ -401,7 +528,7 @@ function PayScreen({
   onBack: () => void
 }) {
   const { copied, copy } = useCopy()
-  const telegramHref = telegram.url || telegramFallback
+  const telegramHref = deriveTelegram(settings).url || telegramFallback
 
   const message = [
     `ASM Coins deposit — ${METHOD_LABEL[method]}`,
@@ -467,11 +594,18 @@ function PayScreen({
       </motion.div>
 
       {/* Method-specific body */}
-      {method === 'trust-wallet' && <UsdtInstructions copied={copied} onCopy={copy} />}
-      {method === 'binance-pay' && <BinanceInstructions copied={copied} onCopy={copy} />}
-      {method === 'whatsapp' && <ChatInstructions channel="whatsapp" message={message} />}
+      {method === 'trust-wallet' && (
+        <UsdtInstructions settings={settings} copied={copied} onCopy={copy} />
+      )}
+      {method === 'binance-pay' && (
+        <BinanceInstructions settings={settings} copied={copied} onCopy={copy} />
+      )}
+      {method === 'whatsapp' && (
+        <ChatInstructions settings={settings} channel="whatsapp" message={message} />
+      )}
       {method === 'telegram' && (
         <ChatInstructions
+          settings={settings}
           channel="telegram"
           message={message}
           copied={copied === 'msg'}
@@ -525,13 +659,16 @@ function PayScreen({
 
 /* ── USDT wallet transfer (Trust Wallet) ── */
 function UsdtInstructions({
+  settings,
   copied,
   onCopy,
 }: {
+  settings: PublicSettings
   copied: string | null
   onCopy: (key: string, value: string) => void
 }) {
-  const [active, setActive] = useState<UsdtWallet | undefined>(usdtWallets[0])
+  const wallets = deriveUsdtWallets(settings)
+  const [active, setActive] = useState<UsdtWallet | undefined>(wallets[0])
   /* Each chain has its own QR file, so a missing one is tracked per network. */
   const [hasQr, setHasQr] = useState(true)
 
@@ -544,9 +681,9 @@ function UsdtInstructions({
       className="flex flex-col gap-4 rounded-2xl border border-asm-line bg-white p-4 shadow-[0_4px_20px_-8px_rgba(16,42,92,0.12)]"
     >
       {/* Network picker — only when more than one chain is configured */}
-      {usdtWallets.length > 1 && (
+      {wallets.length > 1 && (
         <div role="tablist" aria-label="USDT network" className="flex gap-2 rounded-xl bg-asm-tint p-1">
-          {usdtWallets.map((wallet) => (
+          {wallets.map((wallet) => (
             <button
               key={wallet.network}
               type="button"
@@ -608,12 +745,15 @@ function UsdtInstructions({
 
 /* ── Binance Pay ── */
 function BinanceInstructions({
+  settings,
   copied,
   onCopy,
 }: {
+  settings: PublicSettings
   copied: string | null
   onCopy: (key: string, value: string) => void
 }) {
+  const binancePay = deriveBinancePay(settings)
   if (!binancePay.id) return <UnavailableNotice method="Binance Pay" />
 
   return (
@@ -670,18 +810,22 @@ function BinanceInstructions({
 
 /* ── WhatsApp / Telegram chat handoff (INR) ── */
 function ChatInstructions({
+  settings,
   channel,
   message,
   copied,
   onCopy,
 }: {
+  settings: PublicSettings
   channel: 'whatsapp' | 'telegram'
   message: string
   copied?: boolean
   onCopy?: () => void
 }) {
   const isWhatsApp = channel === 'whatsapp'
-  const href = isWhatsApp ? whatsappUrl(message) : telegram.url
+  const telegram = deriveTelegram(settings)
+  const whatsapp = deriveWhatsapp(settings)
+  const href = isWhatsApp ? whatsappUrl(settings, message) : telegram.url
   const handle = isWhatsApp ? whatsapp.display : telegram.display
 
   if (!href) return <UnavailableNotice method={isWhatsApp ? 'WhatsApp' : 'Telegram'} />
@@ -770,7 +914,7 @@ function ChatInstructions({
 
 /* ── Shared bits ── */
 
-function TelegramCta({ href, label }: { href: string; label: string }) {
+export function TelegramCta({ href, label }: { href: string; label: string }) {
   if (!href) return null
   return (
     <a
@@ -815,7 +959,7 @@ function AddressField({
   )
 }
 
-function CopyButton({
+export function CopyButton({
   label,
   copied,
   onCopy,
@@ -850,7 +994,7 @@ function CopyButton({
  * normal state rather than a bug — the block removes itself and the copyable
  * address carries the flow.
  */
-function QrCode({ src, alt, onMissing }: { src: string; alt: string; onMissing?: () => void }) {
+export function QrCode({ src, alt, onMissing }: { src: string; alt: string; onMissing?: () => void }) {
   const [failed, setFailed] = useState(false)
   if (failed) return null
 
@@ -874,7 +1018,7 @@ function QrCode({ src, alt, onMissing }: { src: string; alt: string; onMissing?:
   )
 }
 
-function Steps({ items }: { items: string[] }) {
+export function Steps({ items }: { items: string[] }) {
   return (
     <ol className="flex flex-col gap-2">
       {items.map((text, i) => (
@@ -907,7 +1051,7 @@ function UnavailableNotice({ method }: { method: string }) {
 }
 
 /** Copy-to-clipboard with a 2s "copied" acknowledgement, keyed per field. */
-function useCopy() {
+export function useCopy() {
   const [copied, setCopied] = useState<string | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
