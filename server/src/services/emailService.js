@@ -12,16 +12,56 @@ const LOGO_URL =
   env.LOGO_URL ||
   'https://raw.githubusercontent.com/nikhilmahato26/amscoins/feat/backend/amscoins/client/public/asm.png'
 
-// In tests use a JSON transport so nothing is actually sent over SMTP.
-const transport =
-  process.env.NODE_ENV === 'test'
-    ? nodemailer.createTransport({ jsonTransport: true })
-    : nodemailer.createTransport({
-        host: env.SMTP_HOST,
-        port: env.SMTP_PORT,
-        secure: env.SMTP_PORT === 465,
-        auth: { user: env.SMTP_USER, pass: env.SMTP_PASS },
-      })
+/**
+ * Build the SMTP transport.
+ *
+ * Preferred path: Resend SMTP. When RESEND_API_KEY is set, mail is sent from an
+ * authenticated asmcoins.com address (SPF + DKIM + DMARC aligned), which is what
+ * keeps it out of spam. The username is the literal string "resend" and the
+ * password is the API key.
+ *
+ * Fallback: whatever generic SMTP_* creds are in the env (e.g. Gmail in local dev).
+ * In tests: a JSON transport so nothing is actually sent over the wire.
+ */
+function buildTransport() {
+  if (process.env.NODE_ENV === 'test') {
+    return nodemailer.createTransport({ jsonTransport: true })
+  }
+  if (env.RESEND_API_KEY) {
+    return nodemailer.createTransport({
+      host: 'smtp.resend.com',
+      port: 465,
+      secure: true,
+      auth: { user: 'resend', pass: env.RESEND_API_KEY },
+    })
+  }
+  return nodemailer.createTransport({
+    host: env.SMTP_HOST,
+    port: env.SMTP_PORT,
+    secure: env.SMTP_PORT === 465,
+    auth: { user: env.SMTP_USER, pass: env.SMTP_PASS },
+  })
+}
+
+const transport = buildTransport()
+
+/**
+ * Derive a plain-text version from the HTML body. HTML-only emails score worse
+ * with spam filters, so every message ships a `text` alternative alongside `html`.
+ */
+function htmlToText(html) {
+  return String(html)
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<head[\s\S]*?<\/head>/gi, '')
+    .replace(/<\/(p|div|tr|h[1-6]|li)>/gi, '\n')
+    .replace(/<br\s*\/?>(?=)/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
 
 const formatInrPrefix = (paise) => `INR ${(paise / 100).toLocaleString('en-IN')}`
 const formatInrSuffix = (paise) => `${(paise / 100).toLocaleString('en-IN')} INR`
@@ -335,10 +375,17 @@ ${DARK_RULES.replace(/^ {4}\./gm, '    [data-ogsc] .')}
 </html>`
 }
 
-async function sendMail({ to, subject, html }) {
+async function sendMail({ to, subject, html, text }) {
   try {
     logger.info('Sending email', { to, subject })
-    return await transport.sendMail({ from: env.MAIL_FROM, to, subject, html })
+    return await transport.sendMail({
+      from: env.MAIL_FROM,
+      replyTo: env.MAIL_REPLY_TO,
+      to,
+      subject,
+      html,
+      text: text || htmlToText(html),
+    })
   } catch (e) {
     // A mail failure must never roll back a wallet transaction.
     logger.error('Email send failed', { to, subject, error: e.message })
