@@ -157,7 +157,7 @@ export function AdminUserDetail() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-center gap-4">
             {user.avatar ? (
-              <img src={user.avatar} alt="" className="size-14 rounded-2xl object-cover" />
+              <img src={user.avatar} alt="" loading="lazy" decoding="async" className="size-14 rounded-2xl object-cover" />
             ) : (
               <span className="flex size-14 items-center justify-center rounded-2xl bg-asm-blue text-[18px] font-extrabold text-white" aria-hidden>
                 {user.name.slice(0, 2).toUpperCase()}

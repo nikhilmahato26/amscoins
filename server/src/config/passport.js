@@ -16,15 +16,21 @@ if (isGoogleConfigured) {
         clientID: env.GOOGLE_CLIENT_ID,
         clientSecret: env.GOOGLE_CLIENT_SECRET,
         callbackURL: env.GOOGLE_CALLBACK_URL,
+        // We need req to recover the referral code, which is round-tripped
+        // through Google as the OAuth `state` param (set on /auth/google).
+        passReqToCallback: true,
       },
-      async (_accessToken, _refreshToken, profile, done) => {
+      async (req, _accessToken, _refreshToken, profile, done) => {
         try {
           const email = profile.emails && profile.emails[0] && profile.emails[0].value
           if (!email) return done(new Error('Google account has no email'))
+          // Google echoes `state` back verbatim as a query param on the callback.
+          const referralCode = typeof req.query.state === 'string' ? req.query.state : undefined
           const user = await authService.findOrCreateGoogleUser({
             googleId: profile.id,
             email,
             name: profile.displayName || email,
+            referralCode,
           })
           return done(null, user)
         } catch (e) {

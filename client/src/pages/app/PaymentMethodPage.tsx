@@ -859,6 +859,8 @@ function QrCode({ src, alt, onMissing }: { src: string; alt: string; onMissing?:
       <img
         src={src}
         alt={alt}
+        loading="lazy"
+        decoding="async"
         onError={() => {
           setFailed(true)
           onMissing?.()

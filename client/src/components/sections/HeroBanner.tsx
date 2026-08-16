@@ -20,6 +20,7 @@ export function HeroBanner({ className }: { className?: string }) {
         alt=""
         className="absolute inset-0 size-full object-cover opacity-60"
         loading="lazy"
+        decoding="async"
       />
       <span
         aria-hidden

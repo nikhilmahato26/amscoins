@@ -142,7 +142,7 @@ function MobileDrawer({
             {/* Header */}
             <div className="flex items-center justify-between border-b border-asm-line px-4 pb-4 pt-5">
               <div className="flex items-center gap-2">
-                <img src="/asm.png" alt="" className="size-8 shrink-0 rounded-xl object-contain" aria-hidden />
+                <img src="/asm.png" alt="" className="size-8 shrink-0 rounded-xl object-contain" decoding="async" aria-hidden />
                 <span>
                   <span className="font-jakarta text-[18px] font-extrabold tracking-tight text-asm-navy">ASM </span>
                   <span className="font-script text-[20px] text-asm-greenInk">Coins</span>

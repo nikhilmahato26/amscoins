@@ -313,6 +313,7 @@ export function AccountPage() {
                   <img
                     src={avatar}
                     alt=""
+                    decoding="async"
                     className="size-[64px] shrink-0 rounded-2xl border-4 border-white object-cover shadow-[0_4px_12px_-2px_rgba(11,79,216,0.4)]"
                   />
                 ) : (

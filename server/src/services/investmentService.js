@@ -12,6 +12,7 @@ const { randomCode } = require('./referralCode')
 const { ApiError } = require('../middleware/errorHandler')
 const logger = require('../lib/logger').child({ service: 'investment' })
 const { cacheDel } = require('../config/redis')
+const email = require('./emailService')
 
 async function uniqueRef() {
   for (let i = 0; i < 10; i++) {
@@ -72,6 +73,8 @@ async function createInvestment(user, { planKey, amount, referralCode }) {
 
   await cacheDel('cache:admin:stats', `cache:dashboard:${user._id}`)
 
+  email.depositSubmitted(user, investment, plan).catch(() => {}) // fire-and-forget
+
   return { investment, telegramLink: env.TELEGRAM_LINK }
 }
 
@@ -109,7 +112,8 @@ async function approveInvestment(investmentId, adminId) {
       const user = await User.findById(inv.user).session(session)
       const referralResult = await creditReferralIfFirst(user, session)
 
-      result = inv
+      // Send approval notification after the transaction commits (below)
+      result = { inv, user }
 
       logger.info('Investment approved', {
         investmentId: inv._id,
@@ -125,15 +129,16 @@ async function approveInvestment(investmentId, adminId) {
     if (result) {
       await cacheDel(
         'cache:admin:stats',
-        `cache:dashboard:${result.user}`,
-        `cache:wallet:${result.user}`,
+        `cache:dashboard:${result.inv.user}`,
+        `cache:wallet:${result.inv.user}`,
         'cache:leaderboard:daily',
         'cache:leaderboard:monthly',
         'cache:leaderboard:yearly'
       )
+      email.depositApproved(result.user, result.inv).catch(() => {}) // fire-and-forget
     }
 
-    return result
+    return result?.inv
   } catch (err) {
     // Only log if it's an unexpected error (not a deliberate ApiError).
     if (!err.statusCode) {

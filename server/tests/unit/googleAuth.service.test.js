@@ -18,6 +18,33 @@ test('creates a new client user + wallet on first Google sign-in', async () => {
   expect(await Wallet.findOne({ user: user._id })).toBeTruthy()
 })
 
+test('attributes referredBy when a new Google user arrives with a valid referral code', async () => {
+  const referrer = await User.create({
+    name: 'Ref', email: 'ref@b.com', passwordHash: await bcrypt.hash('secret1', 10), referralCode: 'REF001',
+  })
+  // Lower-case here to prove the service normalises before matching.
+  const user = await findOrCreateGoogleUser({ googleId: 'gid-r', email: 'invitee@b.com', name: 'Inv', referralCode: 'ref001' })
+  expect(String(user.referredBy)).toBe(String(referrer._id))
+})
+
+test('ignores an invalid referral code but still creates the Google user', async () => {
+  const user = await findOrCreateGoogleUser({ googleId: 'gid-x', email: 'noref@b.com', name: 'NoRef', referralCode: 'NOPE99' })
+  expect(user.referredBy).toBeNull()
+})
+
+test('does not overwrite referrer when linking Google to an existing account', async () => {
+  const referrer = await User.create({
+    name: 'R2', email: 'r2@b.com', passwordHash: await bcrypt.hash('secret1', 10), referralCode: 'REF002',
+  })
+  const existing = await User.create({
+    name: 'E', email: 'ex@b.com', passwordHash: await bcrypt.hash('secret1', 10), referralCode: 'EXS001',
+    referredBy: referrer._id,
+  })
+  const linked = await findOrCreateGoogleUser({ googleId: 'gid-link2', email: 'ex@b.com', name: 'E', referralCode: 'SOMEONE' })
+  expect(String(linked._id)).toBe(String(existing._id))
+  expect(String(linked.referredBy)).toBe(String(referrer._id))
+})
+
 test('is idempotent — same googleId returns the same user', async () => {
   const a = await findOrCreateGoogleUser({ googleId: 'gid-2', email: 'a@b.com', name: 'A' })
   const b = await findOrCreateGoogleUser({ googleId: 'gid-2', email: 'a@b.com', name: 'A' })

@@ -33,9 +33,12 @@ export const authService = {
     setToken(null)
   },
 
-  googleLoginUrl(): string {
+  googleLoginUrl(referralCode?: string): string {
     const base = import.meta.env.VITE_API_URL ?? '/api'
-    return `${base}/auth/google`
+    const ref = referralCode?.trim().toUpperCase()
+    // The referral rides along as a query param; the server round-trips it
+    // through Google's OAuth `state` so it survives the redirect dance.
+    return ref ? `${base}/auth/google?ref=${encodeURIComponent(ref)}` : `${base}/auth/google`
   },
 
   async completeOAuth(token: string): Promise<User> {

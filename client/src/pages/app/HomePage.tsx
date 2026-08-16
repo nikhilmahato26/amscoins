@@ -144,8 +144,11 @@ export function HomePage() {
             <motion.img
               src="/vault.png"
               alt=""
+              width={600}
+              height={548}
               className="relative w-full object-contain drop-shadow-[0_12px_40px_rgba(21,128,61,0.15)]"
               fetchPriority="high"
+              decoding="async"
               animate={{ y: [0, -10, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
             />

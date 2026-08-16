@@ -149,6 +149,8 @@ function LeaderboardRow({
             <img
               src={avatar}
               alt=""
+              loading="lazy"
+              decoding="async"
               className={cn('rounded-full object-cover', isTop3 ? 'size-11' : 'size-9', isTop3 && 'drop-shadow-lg')}
             />
           ) : (
