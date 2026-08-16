@@ -19,7 +19,11 @@ module.exports = {
   SMTP_PORT: Number(process.env.SMTP_PORT || 465),
   SMTP_USER: process.env.SMTP_USER,
   SMTP_PASS: process.env.SMTP_PASS,
-  MAIL_FROM: process.env.MAIL_FROM || 'bhaveshsolminde@gmail.com',
+  // When set, mail is sent through Resend's SMTP with an authenticated
+  // asmcoins.com From address (SPF+DKIM+DMARC aligned) — see emailService.js.
+  RESEND_API_KEY: process.env.RESEND_API_KEY || null,
+  MAIL_FROM: process.env.MAIL_FROM || 'ASM Coins <noreply@asmcoins.com>',
+  MAIL_REPLY_TO: process.env.MAIL_REPLY_TO || 'support@asmcoins.com',
   ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'admin@asmcoins.com',
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'change-me-admin',
   REDIS_URL: process.env.REDIS_URL || null,
