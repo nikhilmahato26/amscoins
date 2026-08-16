@@ -53,9 +53,10 @@ test('admin withdrawals: bank payout shows account + IFSC, UPI shows VPA', async
   await expect(bankRow.getByText('HDFC0001234')).toBeVisible()
   await expect(bankRow.getByText('BANK', { exact: true })).toBeVisible()
 
-  // UPI row still shows the VPA
+  // UPI row still shows the VPA and the UPI badge
   const upiRow = page.locator('tr').filter({ hasText: 'Upi Payout User' })
   await expect(upiRow.getByText('9876543210@paytm')).toBeVisible()
+  await expect(upiRow.getByText('UPI', { exact: true })).toBeVisible()
 })
 
 test('admin withdrawals: mark-paid dialog shows the bank destination, not "via UPI"', async ({ page }) => {
