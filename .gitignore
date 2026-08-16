@@ -37,3 +37,8 @@ dist-ssr
 .env.production
 backups/
 deploy/mongo/keyfile
+
+# agent skill install artifacts
+.agents/
+skills-lock.json
+.claude/skills/vercel-react-best-practices/
