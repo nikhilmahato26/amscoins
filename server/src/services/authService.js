@@ -6,7 +6,7 @@ const User = require('../models/User')
 const Wallet = require('../models/Wallet')
 const env = require('../config/env')
 const { ApiError } = require('../middleware/errorHandler')
-const { generateUniqueCode } = require('./referralCode')
+const { generateUniqueCode, generateUniquePublicId } = require('./referralCode')
 const logger = require('../lib/logger').child({ service: 'auth' })
 const PasswordReset = require('../models/PasswordReset')
 const emailService = require('./emailService')
@@ -32,7 +32,8 @@ async function register({ name, email, password, referralCode }) {
 
   const passwordHash = await bcrypt.hash(password, 10)
   const code = await generateUniqueCode()
-  const user = await User.create({ name, email, passwordHash, referralCode: code, referredBy })
+  const publicId = await generateUniquePublicId()
+  const user = await User.create({ name, email, passwordHash, referralCode: code, publicId, referredBy })
   await Wallet.create({ user: user._id, balance: 0 })
 
   logger.info('User registered', { userId: user._id, email: user.email })
@@ -76,7 +77,8 @@ async function findOrCreateGoogleUser({ googleId, email, name }) {
   }
 
   const code = await generateUniqueCode()
-  user = await User.create({ name: name || lowerEmail, email: lowerEmail, googleId, referralCode: code })
+  const publicId = await generateUniquePublicId()
+  user = await User.create({ name: name || lowerEmail, email: lowerEmail, googleId, referralCode: code, publicId })
   await Wallet.create({ user: user._id, balance: 0 })
   logger.info('User registered via Google', { userId: user._id, email: user.email })
   return user

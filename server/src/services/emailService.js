@@ -618,4 +618,105 @@ const passwordResetOtp = (user, otp) => {
   })
 }
 
-module.exports = { sendMail, withdrawalInitiated, withdrawalCompleted, withdrawalRejected, passwordResetOtp }
+// ---------------------------------------------------------------------------
+// Support tickets
+// ---------------------------------------------------------------------------
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+const row = (label, value) =>
+  `<tr>
+     <td class="asm-cell asm-text" style="padding:11px 16px;border-bottom:1px solid ${C.line};border-right:1px solid ${C.line};color:${C.text};font-size:14px;width:35%;">${label}</td>
+     <td class="asm-cell asm-heading" style="padding:11px 16px;border-bottom:1px solid ${C.line};color:${C.heading};font-size:14px;">${value}</td>
+   </tr>`
+
+// Sent to the admin inbox when a user raises a query.
+const supportTicketAdmin = (user, ticket) => {
+  const body = `
+    <p class="asm-heading" style="margin:0 0 16px 0;font-size:15px;color:${C.heading};">
+      New support query — <span class="asm-accent" style="color:${C.accent};font-weight:600;">${escapeHtml(ticket.publicRef)}</span>
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" class="asm-panel" style="background-color:${C.panel};border:1px solid ${C.line};border-radius:8px;overflow:hidden;margin:16px 0;">
+      ${row('User', `${escapeHtml(user.name)} (${escapeHtml(user.email)})`)}
+      ${row('User ID', escapeHtml(user.publicId || user._id))}
+      ${row('Subject', escapeHtml(ticket.subject))}
+      ${row('Raised', fmtDate(ticket.createdAt || new Date()))}
+    </table>
+    <p class="asm-text" style="margin:0 0 8px 0;font-size:14px;color:${C.text};"><strong>Message</strong></p>
+    <p class="asm-muted" style="margin:0;font-size:14px;color:${C.muted};line-height:1.6;white-space:pre-wrap;">${escapeHtml(ticket.message)}</p>
+  `
+  return sendMail({
+    to: env.ADMIN_EMAIL,
+    subject: `New support query ${ticket.publicRef}: ${ticket.subject}`,
+    html: emailShell(user._id, body),
+  })
+}
+
+// Confirmation sent to the user who raised the query.
+const supportTicketConfirmation = (user, ticket) => {
+  const body = `
+    <p class="asm-heading" style="margin:0 0 16px 0;font-size:15px;color:${C.heading};">
+      Hello <span class="asm-accent" style="color:${C.accent};font-weight:600;">${escapeHtml(user.name)}</span>,
+    </p>
+    <p class="asm-text" style="margin:0 0 16px 0;font-size:14px;color:${C.text};line-height:1.6;">
+      We've received your support query <strong>${escapeHtml(ticket.publicRef)}</strong>. Our team will get back to you as soon as possible.
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" class="asm-panel" style="background-color:${C.panel};border:1px solid ${C.line};border-radius:8px;overflow:hidden;margin:16px 0;">
+      ${row('Reference', escapeHtml(ticket.publicRef))}
+      ${row('Subject', escapeHtml(ticket.subject))}
+    </table>
+    <p class="asm-muted" style="margin:0 0 16px 0;font-size:14px;color:${C.muted};line-height:1.6;white-space:pre-wrap;">${escapeHtml(ticket.message)}</p>
+    <p class="asm-text" style="margin:0;font-size:14px;color:${C.text};line-height:1.6;">
+      Thank You,<br/>Team <span class="asm-accent" style="color:${C.accent};font-weight:600;">ASM Coins</span>
+    </p>
+  `
+  return sendMail({
+    to: user.email,
+    subject: `We received your query ${ticket.publicRef}`,
+    html: emailShell(user._id, body),
+  })
+}
+
+// Sent to the user when an admin marks their query resolved.
+const supportTicketResolved = (user, ticket) => {
+  const note = ticket.adminNote
+    ? `<p class="asm-text" style="margin:0 0 8px 0;font-size:14px;color:${C.text};"><strong>Our response</strong></p>
+       <p class="asm-muted" style="margin:0 0 16px 0;font-size:14px;color:${C.muted};line-height:1.6;white-space:pre-wrap;">${escapeHtml(ticket.adminNote)}</p>`
+    : ''
+  const body = `
+    <p class="asm-heading" style="margin:0 0 16px 0;font-size:15px;color:${C.heading};">
+      Hello <span class="asm-accent" style="color:${C.accent};font-weight:600;">${escapeHtml(user.name)}</span>,
+    </p>
+    <p class="asm-text" style="margin:0 0 16px 0;font-size:14px;color:${C.text};line-height:1.6;">
+      Your support query <strong>${escapeHtml(ticket.publicRef)}</strong> — “${escapeHtml(ticket.subject)}” — has been marked <strong>resolved</strong>.
+    </p>
+    ${note}
+    <p class="asm-muted" style="margin:0 0 16px 0;font-size:13px;color:${C.muted};line-height:1.6;">
+      If this isn't fully resolved, just raise a new query from the app and we'll pick it up.
+    </p>
+    <p class="asm-text" style="margin:0;font-size:14px;color:${C.text};line-height:1.6;">
+      Thank You,<br/>Team <span class="asm-accent" style="color:${C.accent};font-weight:600;">ASM Coins</span>
+    </p>
+  `
+  return sendMail({
+    to: user.email,
+    subject: `Your query ${ticket.publicRef} has been resolved`,
+    html: emailShell(user._id, body),
+  })
+}
+
+module.exports = {
+  sendMail,
+  withdrawalInitiated,
+  withdrawalCompleted,
+  withdrawalRejected,
+  passwordResetOtp,
+  supportTicketAdmin,
+  supportTicketConfirmation,
+  supportTicketResolved,
+}

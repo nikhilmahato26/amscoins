@@ -259,10 +259,11 @@ export function AppShell({
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const hamburgerRef = useRef<HTMLButtonElement>(null)
+  const navigate = useNavigate()
 
   const defaultHelp = useCallback(() => {
-    window.open('mailto:support@asmcoins.com?subject=ASM%20Coins%20Support', '_blank')
-  }, [])
+    void navigate('/app/support')
+  }, [navigate])
 
   const openDrawer = useCallback(() => setDrawerOpen(true), [])
   const closeDrawer = useCallback(() => setDrawerOpen(false), [])

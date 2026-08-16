@@ -33,8 +33,8 @@ test.describe('Investment flow', () => {
     await expect(page.getByText(/unlock with 11 referrals/i)).toBeVisible({ timeout: 10_000 })
 
     /* ── 4. Click Silver's "INVEST NOW" button ── */
-    // aria-label="Invest in the Silver plan"
-    await page.getByRole('button', { name: /invest in the silver plan/i }).click()
+    // aria-label="Invest in the Silver package" (Packages gallery)
+    await page.getByRole('button', { name: /invest in the silver package/i }).click()
 
     /* ── 5. Select amount on PackageDetailPage ── */
     // PackageDetailPage shows preset amount cards (Entry ₹1,000 already selected by default).

@@ -6,6 +6,7 @@ import {
   useRejectWithdrawal,
 } from '@/hooks/queries'
 import type { AdminWithdrawal } from '@/services/api/admin'
+import { SearchInput } from '@/components/admin/SearchInput'
 import { inr } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
@@ -162,9 +163,20 @@ export function AdminWithdrawals() {
   const [completingId, setCompletingId] = useState<string | null>(null)
   const [rejectingId, setRejectingId] = useState<string | null>(null)
   const [statusMsg, setStatusMsg] = useState('')
+  const [q, setQ] = useState('')
 
   const completingWithdrawal = data?.find((w) => w._id === completingId) ?? null
   const rejectingWithdrawal = data?.find((w) => w._id === rejectingId) ?? null
+
+  const filtered = (data ?? []).filter((w) => {
+    if (!q.trim()) return true
+    const s = q.toLowerCase()
+    return (
+      w.user.name.toLowerCase().includes(s) ||
+      w.user.email.toLowerCase().includes(s) ||
+      (w.upiId ?? '').toLowerCase().includes(s)
+    )
+  })
 
   function handleCompleteConfirm() {
     if (!completingId) return
@@ -203,6 +215,8 @@ export function AdminWithdrawals() {
         <h1 className="text-[22px] font-bold tracking-tight text-asm-navy">Withdrawals</h1>
         <p className="mt-0.5 text-[13px] text-asm-muted">Pending withdrawal requests awaiting payment.</p>
       </div>
+
+      <SearchInput value={q} onChange={setQ} placeholder="Search by name, email or UPI ID" />
 
       {/* Status announcer */}
       <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">
@@ -250,18 +264,22 @@ export function AdminWithdrawals() {
                   Failed to load withdrawals. Please refresh.
                 </td>
               </tr>
-            ) : !data || data.length === 0 ? (
+            ) : filtered.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-4 py-16 text-center">
                   <span className="mx-auto flex size-10 items-center justify-center rounded-full bg-asm-tint">
                     <Inbox className="size-5 text-asm-muted" strokeWidth={1.5} aria-hidden />
                   </span>
-                  <p className="mt-3 text-[13px] font-semibold text-asm-navy">No pending withdrawals</p>
-                  <p className="mt-1 text-[12px] text-asm-muted">All withdrawal requests have been processed.</p>
+                  <p className="mt-3 text-[13px] font-semibold text-asm-navy">
+                    {q ? 'No matching withdrawals' : 'No pending withdrawals'}
+                  </p>
+                  <p className="mt-1 text-[12px] text-asm-muted">
+                    {q ? 'Try a different search.' : 'All withdrawal requests have been processed.'}
+                  </p>
                 </td>
               </tr>
             ) : (
-              data.map((wd, idx) => (
+              filtered.map((wd, idx) => (
                 <tr
                   key={wd._id}
                   className={cn(

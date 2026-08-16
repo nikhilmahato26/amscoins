@@ -28,6 +28,33 @@
     --ring: 272 67% 52%; /* brand violet */
     --radius: 0.5rem;
   }
+
+  /*
+   * Light dialog surface. shadcn primitives (Dialog, Input, Button) read the
+   * shadcn tokens above, which are the app's dark set. Dialogs portal to
+   * <body>, outside `.theme-light-home`, so they'd render dark/amber. Applying
+   * `.asm-dialog` to a DialogContent remaps those tokens to the light asm
+   * palette (white surfaces, navy text, asm-blue primary) for the whole subtree.
+   */
+  .asm-dialog {
+    --background: 0 0% 100%;
+    --foreground: 219 70% 21%;        /* asm-navy #102A5C */
+    --card: 0 0% 100%;
+    --card-foreground: 219 70% 21%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 219 70% 21%;
+    --primary: 220 90% 45%;           /* asm-blue #0B4FD8 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 222 60% 97%;         /* asm-tint */
+    --secondary-foreground: 219 70% 21%;
+    --muted: 222 60% 97%;
+    --muted-foreground: 219 25% 45%;  /* asm-muted */
+    --accent: 222 60% 97%;
+    --accent-foreground: 219 70% 21%;
+    --border: 219 37% 93%;            /* asm-line #E5EAF3 */
+    --input: 219 37% 93%;
+    --ring: 220 90% 45%;
+  }
 }
 
 @layer base {

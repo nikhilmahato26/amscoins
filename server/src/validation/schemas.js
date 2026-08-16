@@ -18,15 +18,63 @@ const createInvestmentSchema = z.object({
   referralCode: z.string().trim().toUpperCase().optional(),
 })
 
-const createWithdrawalSchema = z.object({
-  amount: z.number().int().positive(), // gross paise
-  upiId: z.string().min(3),
-})
+const IFSC_RE = /^[A-Z]{4}0[A-Z0-9]{6}$/
+const ACCOUNT_RE = /^\d{6,18}$/
+
+// A withdrawal destination: a saved method id, an inline UPI id, or inline bank
+// details. Method is inferred from which fields are present (upiId → upi,
+// account fields → bank), so the legacy `{ amount, upiId }` shape still works.
+const createWithdrawalSchema = z
+  .object({
+    amount: z.number().int().positive(), // gross paise
+    payoutMethodId: z.string().optional(),
+    upiId: z.string().trim().min(3).optional(),
+    accountName: z.string().trim().min(2).max(80).optional(),
+    accountNumber: z.string().trim().regex(ACCOUNT_RE, 'Enter a valid account number').optional(),
+    ifsc: z.string().trim().toUpperCase().regex(IFSC_RE, 'Enter a valid IFSC code').optional(),
+  })
+  .refine(
+    (v) => !!v.payoutMethodId || !!v.upiId || !!(v.accountName && v.accountNumber && v.ifsc),
+    { message: 'Provide a UPI id, bank details, or a saved payout method' }
+  )
+
+// Adding a saved payout method to the user's profile.
+const payoutMethodSchema = z
+  .object({
+    type: z.enum(['upi', 'bank']),
+    label: z.string().trim().max(40).optional(),
+    upiId: z.string().trim().min(3).optional(),
+    accountName: z.string().trim().min(2).max(80).optional(),
+    accountNumber: z.string().trim().regex(ACCOUNT_RE, 'Enter a valid account number').optional(),
+    ifsc: z.string().trim().toUpperCase().regex(IFSC_RE, 'Enter a valid IFSC code').optional(),
+    isDefault: z.boolean().optional(),
+  })
+  .refine((v) => (v.type === 'upi' ? !!v.upiId : !!(v.accountName && v.accountNumber && v.ifsc)), {
+    message: 'Provide complete details for the selected payout type',
+  })
+
+const updateProfileSchema = z
+  .object({
+    name: z.string().trim().min(1).max(80).optional(),
+    phone: z.string().trim().min(7).max(20).regex(/^[0-9+\-\s]+$/, 'Enter a valid phone number').optional(),
+  })
+  .refine((v) => v.name !== undefined || v.phone !== undefined, {
+    message: 'Provide at least one field to update',
+  })
 
 const adjustWalletSchema = z.object({
   amount: z.number().int().positive(),
   direction: z.enum(['credit', 'debit']),
   note: z.string().optional(),
+})
+
+const supportTicketSchema = z.object({
+  subject: z.string().trim().min(3).max(120),
+  message: z.string().trim().min(5).max(2000),
+})
+
+const resolveTicketSchema = z.object({
+  adminNote: z.string().trim().max(1000).optional(),
 })
 
 const forgotPasswordSchema = z.object({ email: z.string().email() })
@@ -38,6 +86,10 @@ module.exports = {
   loginSchema,
   createInvestmentSchema,
   createWithdrawalSchema,
+  payoutMethodSchema,
+  updateProfileSchema,
+  supportTicketSchema,
+  resolveTicketSchema,
   adjustWalletSchema,
   forgotPasswordSchema,
   verifyOtpSchema,

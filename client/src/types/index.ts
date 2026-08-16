@@ -1,16 +1,33 @@
 export type Role = 'user' | 'admin'
 export type Tier = 'silver' | 'gold' | 'diamond'
+export type PayoutType = 'upi' | 'bank'
+
+/** A saved payout destination on the user's profile. */
+export interface PayoutMethod {
+  id: string
+  type: PayoutType
+  label: string
+  upiId: string | null
+  accountName: string | null
+  accountNumber: string | null
+  ifsc: string | null
+  isDefault: boolean
+}
 
 /** Matches the backend `user.toPublic()` payload — no password client-side. */
 export interface User {
   id: string
+  publicId: string | null
   name: string
   email: string
+  phone: string | null
+  avatar: string | null
   role: Role
   status: 'active' | 'frozen'
   referralCode: string
   referralCount: number
   tier: Tier
+  payoutMethods: PayoutMethod[]
   createdAt: string
 }
 

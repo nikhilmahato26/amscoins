@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { Routes, Route } from 'react-router'
 
-import { LandingPage } from './pages/landing/LandingPage'
+import { LandingRoute } from './pages/landing/LandingRoute'
 import { RequireAuth } from './auth/RequireAuth'
 
 /*
@@ -55,6 +55,9 @@ const AccountPage = lazy(() =>
 const LeaderboardPage = lazy(() =>
   import('./pages/app/LeaderboardPage').then((m) => ({ default: m.LeaderboardPage }))
 )
+const SupportPage = lazy(() =>
+  import('./pages/app/SupportPage').then((m) => ({ default: m.SupportPage }))
+)
 const AppPlaceholder = lazy(() =>
   import('./pages/placeholder/AppPlaceholder').then((m) => ({ default: m.AppPlaceholder }))
 )
@@ -79,6 +82,12 @@ const AdminWithdrawals = lazy(() =>
 const AdminUsers = lazy(() =>
   import('./pages/admin/AdminUsers').then((m) => ({ default: m.AdminUsers }))
 )
+const AdminSupport = lazy(() =>
+  import('./pages/admin/AdminSupport').then((m) => ({ default: m.AdminSupport }))
+)
+const AdminUserDetail = lazy(() =>
+  import('./pages/admin/AdminUserDetail').then((m) => ({ default: m.AdminUserDetail }))
+)
 
 /** Shown while a route chunk downloads. Announced, so it is not a silent gap. */
 function RouteFallback() {
@@ -101,7 +110,7 @@ export default function App() {
   return (
     <Suspense fallback={<RouteFallback />}>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<LandingRoute />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/register" element={<RegisterPage />} />
@@ -209,6 +218,15 @@ export default function App() {
         />
 
         <Route
+          path="/app/support"
+          element={
+            <RequireAuth role="user">
+              <SupportPage />
+            </RequireAuth>
+          }
+        />
+
+        <Route
           path="/app/*"
           element={
             <RequireAuth role="user">
@@ -230,6 +248,8 @@ export default function App() {
           <Route path="deposits" element={<AdminDeposits />} />
           <Route path="withdrawals" element={<AdminWithdrawals />} />
           <Route path="users" element={<AdminUsers />} />
+          <Route path="users/:id" element={<AdminUserDetail />} />
+          <Route path="support" element={<AdminSupport />} />
         </Route>
 
         <Route path="*" element={<NotFound />} />

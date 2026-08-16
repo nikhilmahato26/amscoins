@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Users } from 'lucide-react'
+import { Link } from 'react-router'
+import { Search, Users } from 'lucide-react'
 import {
   useAdminUsers,
   useFreezeUser,
@@ -207,7 +208,9 @@ function StatusChip({ status }: { status: AdminUser['status'] }) {
 
 /* ── Main page ── */
 export function AdminUsers() {
-  const { data, isLoading, isError } = useAdminUsers()
+  const [input, setInput] = useState('')
+  const [q, setQ] = useState('')
+  const { data, isLoading, isError } = useAdminUsers(q)
   const freezeMutation = useFreezeUser()
   const unfreezeMutation = useUnfreezeUser()
   const adjustMutation = useAdjustWallet()
@@ -256,6 +259,29 @@ export function AdminUsers() {
         <h1 className="text-[22px] font-bold tracking-tight text-asm-navy">Users</h1>
         <p className="mt-0.5 text-[13px] text-asm-muted">All registered platform members.</p>
       </div>
+
+      {/* Search */}
+      <form onSubmit={(e) => { e.preventDefault(); setQ(input.trim()) }} className="flex items-center gap-2">
+        <div className="relative max-w-sm flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-asm-muted" aria-hidden />
+          <input
+            type="search"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Search by User ID, name or email"
+            aria-label="Search users"
+            className="w-full rounded-lg border border-asm-line bg-white py-2 pl-9 pr-3 text-[13px] text-asm-navy placeholder:text-asm-muted focus:border-asm-blue focus:outline-none focus:ring-2 focus:ring-asm-blue"
+          />
+        </div>
+        <button type="submit" className="rounded-lg bg-asm-blue px-3.5 py-2 text-[12px] font-semibold text-white hover:bg-asm-blue-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue">
+          Search
+        </button>
+        {q && (
+          <button type="button" onClick={() => { setInput(''); setQ('') }} className="text-[12px] font-semibold text-asm-muted hover:text-asm-navy">
+            Clear
+          </button>
+        )}
+      </form>
 
       {/* Status announcer */}
       <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">
@@ -323,6 +349,7 @@ export function AdminUsers() {
                   <td className="px-3 py-2.5">
                     <p className="font-medium text-asm-navy">{user.name}</p>
                     <p className="text-[11px] text-asm-muted">{user.email}</p>
+                    {user.publicId && <p className="font-mono text-[10px] text-asm-blue">{user.publicId}</p>}
                   </td>
                   <td className="px-3 py-2.5">
                     <TierChip tier={user.tier} />
@@ -342,6 +369,12 @@ export function AdminUsers() {
                   </td>
                   <td className="px-3 py-2.5">
                     <div className="flex justify-end gap-2">
+                      <Link
+                        to={`/admin/users/${user._id}`}
+                        className="inline-flex min-h-[40px] items-center rounded-md border border-asm-line px-3 py-1.5 text-[11px] font-semibold text-asm-blue hover:bg-asm-blue-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1"
+                      >
+                        View
+                      </Link>
                       <button
                         type="button"
                         onClick={() => handleToggleFreeze(user)}

@@ -80,16 +80,30 @@ function SkeletonRow({ index }: { index: number }) {
   )
 }
 
+/* First initial for the avatar fallback, e.g. "Bhanu" → "B". */
+function firstInitial(name: string): string {
+  return name.trim().charAt(0).toUpperCase() || '?'
+}
+
+/* Fallback avatar background, tinted per tier. */
+const TIER_AVATAR_BG: Record<'silver' | 'gold' | 'diamond', string> = {
+  silver:  'bg-[#868B95]',
+  gold:    'bg-[#F37400]',
+  diamond: 'bg-asm-blue',
+}
+
 /* ── Leaderboard row ── */
 function LeaderboardRow({
   rank,
   name,
   tier,
+  avatar,
   totalInvested,
 }: {
   rank: number
   name: string
   tier: 'silver' | 'gold' | 'diamond'
+  avatar?: string | null
   totalInvested: number
 }) {
   const isTop3 = rank <= 3
@@ -129,12 +143,32 @@ function LeaderboardRow({
           )}
         </div>
 
-        {/* Tier badge */}
-        <TierBadge
-          tier={tier}
-          size={isTop3 ? 40 : 34}
-          className={isTop3 ? 'drop-shadow-lg' : undefined}
-        />
+        {/* Profile photo (or first-initial fallback) with a tier corner badge */}
+        <div className="relative shrink-0">
+          {avatar ? (
+            <img
+              src={avatar}
+              alt=""
+              className={cn('rounded-full object-cover', isTop3 ? 'size-11' : 'size-9', isTop3 && 'drop-shadow-lg')}
+            />
+          ) : (
+            <span
+              className={cn(
+                'flex items-center justify-center rounded-full font-jakarta font-bold text-white',
+                isTop3 ? 'size-11 text-[15px] drop-shadow-lg' : 'size-9 text-[13px]',
+                TIER_AVATAR_BG[tier],
+              )}
+              aria-hidden
+            >
+              {firstInitial(name)}
+            </span>
+          )}
+          <TierBadge
+            tier={tier}
+            size={isTop3 ? 18 : 16}
+            className="absolute -bottom-0.5 -right-0.5 rounded-full ring-2 ring-white"
+          />
+        </div>
 
         {/* Name + tier label */}
         <div className="flex min-w-0 flex-1 flex-col">
@@ -299,6 +333,7 @@ export function LeaderboardPage() {
                   rank={entry.rank}
                   name={entry.name}
                   tier={entry.tier}
+                  avatar={entry.avatar}
                   totalInvested={entry.totalInvested}
                 />
               ))

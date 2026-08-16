@@ -1,4 +1,4 @@
-import { CircleUserRound, House, Trophy, Users, Wallet } from 'lucide-react'
+import { CircleUserRound, House, LifeBuoy, Package, Trophy, Users, Wallet } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 export interface AppNavLink {
@@ -18,8 +18,10 @@ export interface AppNavLink {
  */
 export const APP_NAV_LINKS: readonly AppNavLink[] = [
   { to: '/app', label: 'Home', Icon: House, end: true },
+  { to: '/plans', label: 'Packages', Icon: Package, end: false },
   { to: '/app/withdraw', label: 'Withdraw', Icon: Wallet, end: false },
   { to: '/app/leaderboard', label: 'Leaderboard', short: 'Leaders', Icon: Trophy, end: false },
   { to: '/app/referral', label: 'Referral', Icon: Users, end: false },
+  { to: '/app/support', label: 'Support', Icon: LifeBuoy, end: false },
   { to: '/app/account', label: 'Account', Icon: CircleUserRound, end: false },
 ]

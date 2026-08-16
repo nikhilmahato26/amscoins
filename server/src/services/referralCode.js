@@ -16,4 +16,13 @@ async function generateUniqueCode() {
   throw new Error('Could not generate unique referral code')
 }
 
-module.exports = { generateUniqueCode, randomCode }
+/** Human-readable public account id, e.g. ASM-8F3K2Q. Unique across users. */
+async function generateUniquePublicId() {
+  for (let i = 0; i < 10; i++) {
+    const publicId = `ASM-${randomCode(6)}`
+    if (!(await User.exists({ publicId }))) return publicId
+  }
+  throw new Error('Could not generate unique public id')
+}
+
+module.exports = { generateUniqueCode, generateUniquePublicId, randomCode }
