@@ -14,7 +14,7 @@
  *   - Large deposit: ₹5,000 (500,000 paise) — exercises four-option chooser branch
  */
 import { test, expect } from '@playwright/test'
-import { uniqueEmail, register } from './helpers'
+import { uniqueEmail } from './helpers'
 
 test.describe('deposit payment threshold', () => {
   /** Register a fresh user and log them in via the UI, returning the page at /app */
