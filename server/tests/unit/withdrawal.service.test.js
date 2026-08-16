@@ -81,3 +81,18 @@ test('completing an already-completed withdrawal throws 409', async () => {
   await completeWithdrawal(w._id, adminId)
   await expect(completeWithdrawal(w._id, adminId)).rejects.toMatchObject({ statusCode: 409 })
 })
+
+test('complete a bank withdrawal succeeds and clears no upiId', async () => {
+  const u = await makeFundedUser(200000)
+  const w = await initiateWithdrawal(u, {
+    amount: 100000,
+    accountName: 'Me',
+    accountNumber: '123456789',
+    ifsc: 'HDFC0001234',
+  })
+  const done = await completeWithdrawal(w._id, adminId)
+  expect(done.status).toBe('completed')
+  expect(done.method).toBe('bank')
+  expect(done.upiId).toBeUndefined()
+  expect((await Withdrawal.findById(w._id)).status).toBe('completed')
+})
