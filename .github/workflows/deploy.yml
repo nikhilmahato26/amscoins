@@ -12,7 +12,11 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
       - run: cd client && npm ci && npm run build
-        env: { VITE_API_URL: /api }
+        env:
+          VITE_API_URL: /api
+          # Public by design (client/.env.example) — Vite inlines every
+          # VITE_* value into the bundle, so nothing sensitive belongs here.
+          VITE_TELEGRAM_USERNAME: iamhim_bss
       - uses: actions/upload-artifact@v4
         with: { name: frontend-dist, path: client/dist }
 
