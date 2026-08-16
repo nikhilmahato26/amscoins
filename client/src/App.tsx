@@ -88,6 +88,9 @@ const AdminSupport = lazy(() =>
 const AdminUserDetail = lazy(() =>
   import('./pages/admin/AdminUserDetail').then((m) => ({ default: m.AdminUserDetail }))
 )
+const AdminSettings = lazy(() =>
+  import('./pages/admin/AdminSettings').then((m) => ({ default: m.AdminSettings }))
+)
 
 /** Shown while a route chunk downloads. Announced, so it is not a silent gap. */
 function RouteFallback() {
@@ -250,6 +253,7 @@ export default function App() {
           <Route path="users" element={<AdminUsers />} />
           <Route path="users/:id" element={<AdminUserDetail />} />
           <Route path="support" element={<AdminSupport />} />
+          <Route path="settings" element={<AdminSettings />} />
         </Route>
 
         <Route path="*" element={<NotFound />} />
