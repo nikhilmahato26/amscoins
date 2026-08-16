@@ -4,19 +4,23 @@ import {
   AlertCircle,
   ArrowRight,
   AtSign,
+  Building2,
   Check,
   ChevronRight,
   Clock,
   IndianRupee,
   Info,
+  Landmark,
   Loader2,
-  Smartphone,
+  Plus,
+  User,
   Wallet,
   XCircle,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 import { AppShell } from '@/components/app/AppShell'
+import { useAuth } from '@/auth/AuthContext'
 import { useWallet, useWithdrawals, useCreateWithdrawal } from '@/hooks/queries'
 import { inr } from '@/lib/format'
 import { ApiError } from '@/lib/api'
@@ -51,12 +55,23 @@ function statusLabel(status: Withdrawal['status']): { label: string; cls: string
 
 /* ── Page ── */
 export function WithdrawPage() {
+  const { user } = useAuth()
   const { data: walletData, isLoading: walletLoading } = useWallet()
   const { data: withdrawalsData, isLoading: withdrawalsLoading } = useWithdrawals()
   const mutation = useCreateWithdrawal()
 
+  const payoutMethods = user?.payoutMethods ?? []
+
   const [amount, setAmount]       = useState('')
+  const [destMode, setDestMode]   = useState<'saved' | 'new'>(payoutMethods.length ? 'saved' : 'new')
+  const [selectedMethodId, setSelectedMethodId] = useState<string>(
+    () => payoutMethods.find((m) => m.isDefault)?.id ?? payoutMethods[0]?.id ?? ''
+  )
+  const [newType, setNewType]     = useState<'upi' | 'bank'>('upi')
   const [upiId, setUpiId]         = useState('')
+  const [accountName, setAccountName]     = useState('')
+  const [accountNumber, setAccountNumber] = useState('')
+  const [ifsc, setIfsc]           = useState('')
   const [fieldError, setFieldError] = useState<string | null>(null)
 
   /* Balance in paise from API; convert to rupees for UI */
@@ -73,7 +88,15 @@ export function WithdrawPage() {
     if (validRs < MIN_WITHDRAWAL_RS)           return `Minimum withdrawal is ₹${rupeesCompact(MIN_WITHDRAWAL_RS)}.`
     if (validRs > MAX_WITHDRAWAL_RS)           return `Maximum withdrawal is ₹${rupeesCompact(MAX_WITHDRAWAL_RS)}.`
     if (validPaise > balancePaise)             return 'Amount exceeds your available balance.'
-    if (!upiId.trim().includes('@'))           return 'Enter a valid UPI ID (e.g. name@okicici).'
+    if (destMode === 'saved') {
+      if (!selectedMethodId)                   return 'Select a payout method.'
+    } else if (newType === 'upi') {
+      if (!upiId.trim().includes('@'))         return 'Enter a valid UPI ID (e.g. name@okicici).'
+    } else {
+      if (accountName.trim().length < 2)                 return 'Enter the account holder name.'
+      if (!/^\d{6,18}$/.test(accountNumber.trim()))       return 'Enter a valid account number.'
+      if (!/^[A-Za-z]{4}0[A-Za-z0-9]{6}$/.test(ifsc.trim())) return 'Enter a valid IFSC code (e.g. HDFC0001234).'
+    }
     return null
   }
 
@@ -81,7 +104,18 @@ export function WithdrawPage() {
     setFieldError(null)
     const err = validate()
     if (err) { setFieldError(err); return }
-    mutation.mutate({ amount: validPaise, upiId: upiId.trim() })
+    if (destMode === 'saved') {
+      mutation.mutate({ amount: validPaise, payoutMethodId: selectedMethodId })
+    } else if (newType === 'upi') {
+      mutation.mutate({ amount: validPaise, upiId: upiId.trim() })
+    } else {
+      mutation.mutate({
+        amount: validPaise,
+        accountName: accountName.trim(),
+        accountNumber: accountNumber.trim(),
+        ifsc: ifsc.trim().toUpperCase(),
+      })
+    }
   }
 
   /* ── Success state — TDS breakdown ── */
@@ -117,7 +151,7 @@ export function WithdrawPage() {
 
           <button
             type="button"
-            onClick={() => { mutation.reset(); setAmount(''); setUpiId('') }}
+            onClick={() => { mutation.reset(); setAmount(''); setUpiId(''); setAccountName(''); setAccountNumber(''); setIfsc('') }}
             className="flex min-h-[44px] items-center text-[13px] font-semibold text-asm-muted transition-colors hover:text-asm-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue rounded"
           >
             Make another withdrawal
@@ -189,24 +223,103 @@ export function WithdrawPage() {
           </p>
         </motion.section>
 
-        {/* ── UPI ID ── */}
+        {/* ── Payout destination ── */}
         <motion.section variants={fadeUp} className="flex flex-col gap-3">
-          <SectionLabel>UPI details</SectionLabel>
-          <div className="flex flex-col gap-1.5">
-            <FormField
-              label="UPI ID"
-              placeholder="name@upi or name@okaxis"
-              Icon={AtSign}
-              trailing={<Smartphone className="size-4 text-asm-muted" aria-hidden />}
-              value={upiId}
-              onChange={(e) => { setUpiId(e.target.value); setFieldError(null) }}
-            />
-            <p className="px-1 text-[11px] leading-snug text-asm-muted">
-              Must include @ — e.g. yourname@okicici or 9876543210@paytm.
-            </p>
-          </div>
+          <SectionLabel>Payout destination</SectionLabel>
+
+          {payoutMethods.length > 0 && (
+            <div className="flex flex-col gap-2">
+              {payoutMethods.map((m) => {
+                const active = destMode === 'saved' && selectedMethodId === m.id
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => { setDestMode('saved'); setSelectedMethodId(m.id); setFieldError(null) }}
+                    className={cn(
+                      'flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors',
+                      active ? 'border-asm-blue bg-asm-blue-tint' : 'border-asm-line bg-white hover:border-asm-blue/40'
+                    )}
+                  >
+                    <span className={cn('flex size-9 shrink-0 items-center justify-center rounded-lg', active ? 'bg-asm-blue text-white' : 'bg-asm-tint text-asm-muted')}>
+                      {m.type === 'bank' ? <Landmark className="size-4" aria-hidden /> : <AtSign className="size-4" aria-hidden />}
+                    </span>
+                    <span className="flex min-w-0 flex-1 flex-col">
+                      <span className="truncate text-[13px] font-semibold text-asm-navy">
+                        {m.type === 'bank' ? `Bank ••${(m.accountNumber ?? '').slice(-4)}` : m.upiId}
+                      </span>
+                      <span className="truncate text-[11px] text-asm-muted">
+                        {m.type === 'bank' ? m.accountName : 'UPI'}{m.isDefault ? ' · Default' : ''}
+                      </span>
+                    </span>
+                    {active && <Check className="size-4 shrink-0 text-asm-blue" strokeWidth={2.5} aria-hidden />}
+                  </button>
+                )
+              })}
+
+              <button
+                type="button"
+                onClick={() => { setDestMode('new'); setFieldError(null) }}
+                className={cn(
+                  'flex items-center gap-2 rounded-xl border border-dashed px-4 py-3 text-[13px] font-semibold transition-colors',
+                  destMode === 'new' ? 'border-asm-blue bg-asm-blue-tint/50 text-asm-blue' : 'border-asm-line text-asm-muted hover:text-asm-navy'
+                )}
+              >
+                <Plus className="size-4" aria-hidden /> Use a new account
+              </button>
+            </div>
+          )}
+
+          {destMode === 'new' && (
+            <div className="flex flex-col gap-3 rounded-xl border border-asm-line bg-white p-4">
+              <div className="grid grid-cols-2 gap-2">
+                <TypeToggle active={newType === 'upi'}  onClick={() => { setNewType('upi');  setFieldError(null) }} Icon={AtSign}   label="UPI ID" />
+                <TypeToggle active={newType === 'bank'} onClick={() => { setNewType('bank'); setFieldError(null) }} Icon={Landmark} label="Bank account" />
+              </div>
+
+              {newType === 'upi' ? (
+                <FormField
+                  label="UPI ID"
+                  placeholder="name@okicici or 9876543210@paytm"
+                  Icon={AtSign}
+                  value={upiId}
+                  onChange={(e) => { setUpiId(e.target.value); setFieldError(null) }}
+                />
+              ) : (
+                <>
+                  <FormField
+                    label="Account holder name"
+                    placeholder="As per bank records"
+                    Icon={User}
+                    value={accountName}
+                    onChange={(e) => { setAccountName(e.target.value); setFieldError(null) }}
+                  />
+                  <FormField
+                    label="Account number"
+                    placeholder="Bank account number"
+                    Icon={Landmark}
+                    inputMode="numeric"
+                    value={accountNumber}
+                    onChange={(e) => { setAccountNumber(e.target.value); setFieldError(null) }}
+                  />
+                  <FormField
+                    label="IFSC code"
+                    placeholder="e.g. HDFC0001234"
+                    Icon={Building2}
+                    className="uppercase"
+                    value={ifsc}
+                    onChange={(e) => { setIfsc(e.target.value); setFieldError(null) }}
+                  />
+                </>
+              )}
+              <p className="px-1 text-[11px] leading-snug text-asm-muted">
+                Manage saved payout methods on your <span className="font-semibold text-asm-navy">Account</span> page.
+              </p>
+            </div>
+          )}
+
           <Callout>
-            The UPI ID must be active and registered to your name. A wrong ID causes an
+            Double-check the destination. A wrong UPI ID or bank account causes an
             immediate failed transfer with no reversal.
           </Callout>
         </motion.section>
@@ -402,6 +515,32 @@ function FormField({
         {trailing}
       </span>
     </label>
+  )
+}
+
+function TypeToggle({
+  active,
+  onClick,
+  Icon,
+  label,
+}: {
+  active: boolean
+  onClick: () => void
+  Icon: LucideIcon
+  label: string
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-[12px] font-semibold transition-colors',
+        active ? 'border-asm-blue bg-asm-blue-tint text-asm-blue' : 'border-asm-line bg-white text-asm-muted hover:text-asm-navy'
+      )}
+    >
+      <Icon className="size-4" aria-hidden />
+      {label}
+    </button>
   )
 }
 

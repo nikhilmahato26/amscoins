@@ -6,7 +6,13 @@ const withdrawalSchema = new Schema(
     gross: { type: Number, required: true }, // paise requested
     tds: { type: Number, required: true }, // paise
     net: { type: Number, required: true }, // paise paid to bank
-    upiId: { type: String, required: true },
+    method: { type: String, enum: ['upi', 'bank'], default: 'upi' },
+    // Present when method === 'upi'.
+    upiId: { type: String, required: function () { return this.method === 'upi' } },
+    // Present when method === 'bank'.
+    accountName: { type: String },
+    accountNumber: { type: String },
+    ifsc: { type: String },
     status: { type: String, enum: ['pending', 'completed', 'rejected'], default: 'pending' },
     initiatedAt: { type: Date, default: Date.now },
     completedAt: { type: Date },

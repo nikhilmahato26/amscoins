@@ -2,6 +2,8 @@ import React from 'react'
 import { Link } from 'react-router'
 import { Headphones, ShieldCheck, Zap } from 'lucide-react'
 
+import { AsmMark } from '@/components/home/AsmLogo'
+
 const TRUST_POINTS = [
   { Icon: ShieldCheck, text: '100% SSL encrypted and secure' },
   { Icon: Zap,        text: 'Withdraw to UPI whenever your term closes' },
@@ -34,21 +36,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
             to="/"
             className="flex w-fit items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:rounded-lg"
           >
-            <svg viewBox="0 0 40 40" className="size-9 shrink-0" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M20 0L40 40H0L20 0Z" fill="url(#al_g0)" />
-              <path d="M20 8L36 40H4L20 8Z" fill="rgba(11,79,216,0.55)" />
-              <path d="M20 16L30.5 37H9.5L20 16Z" fill="url(#al_g1)" />
-              <defs>
-                <linearGradient id="al_g0" x1="20" y1="0" x2="20" y2="40" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#ffffff" stopOpacity="0.95" />
-                  <stop offset="1" stopColor="#ffffff" stopOpacity="0.55" />
-                </linearGradient>
-                <linearGradient id="al_g1" x1="20" y1="16" x2="20" y2="37" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#22C55E" />
-                  <stop offset="1" stopColor="#16A34A" />
-                </linearGradient>
-              </defs>
-            </svg>
+            <AsmMark className="size-9" />
             <div>
               <p className="text-[22px] font-extrabold tracking-tight text-white leading-none">ASM Coins</p>
               <p className="mt-0.5 text-[10px] tracking-[0.2em] uppercase text-white/55">Invest · Grow · Prosper</p>
@@ -56,7 +44,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
           </Link>
 
           {/* Headline + trust — desktop only */}
-          <div className="mt-auto hidden flex-col justify-center md:flex">
+          <div className="my-auto hidden flex-col justify-center md:flex">
             <h2 className="font-display text-[34px] font-bold leading-[1.15] tracking-tight text-white">
               Smart returns.<br />Clear terms.<br />Your money,&nbsp;moving.
             </h2>
@@ -74,23 +62,6 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
                 </li>
               ))}
             </ul>
-          </div>
-
-          {/* Demo credentials */}
-          <div className="mt-6 rounded-xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm md:mt-10">
-            <p className="mb-2.5 font-mono text-[10px] font-bold uppercase tracking-widest text-white/45">
-              Demo accounts
-            </p>
-            <div className="space-y-1.5 text-[12px]">
-              <div className="flex justify-between gap-3">
-                <span className="text-white/55">investor@taksal.in</span>
-                <span className="font-mono text-white/90">taksal123</span>
-              </div>
-              <div className="flex justify-between gap-3">
-                <span className="text-white/55">admin@taksal.in</span>
-                <span className="font-mono text-white/90">admin123</span>
-              </div>
-            </div>
           </div>
         </div>
       </div>

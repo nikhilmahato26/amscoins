@@ -11,7 +11,34 @@ const { ApiError } = require('../middleware/errorHandler')
 const logger = require('../lib/logger').child({ service: 'withdrawal' })
 const { cacheDel } = require('../config/redis')
 
-async function initiateWithdrawal(user, { amount, upiId }) {
+// Resolve the payout destination from the request body: a saved payout method,
+// inline bank details, or an inline UPI id (in that order of precedence).
+function resolveDestination(user, body) {
+  const { payoutMethodId, upiId, accountName, accountNumber, ifsc } = body
+
+  if (payoutMethodId) {
+    const m = user.payoutMethods && user.payoutMethods.id(payoutMethodId)
+    if (!m) throw new ApiError(400, 'Saved payout method not found')
+    return m.type === 'bank'
+      ? { method: 'bank', accountName: m.accountName, accountNumber: m.accountNumber, ifsc: m.ifsc }
+      : { method: 'upi', upiId: m.upiId }
+  }
+  if (accountName && accountNumber && ifsc) {
+    return { method: 'bank', accountName, accountNumber, ifsc }
+  }
+  if (upiId) return { method: 'upi', upiId }
+  throw new ApiError(400, 'No payout destination provided')
+}
+
+function destinationLabel(dest) {
+  return dest.method === 'bank'
+    ? `bank A/C ••${String(dest.accountNumber).slice(-4)}`
+    : dest.upiId
+}
+
+async function initiateWithdrawal(user, body) {
+  const { amount } = body
+  const dest = resolveDestination(user, body)
   const { tds, net } = computeTds(amount, env.TDS_PCT)
   const session = await mongoose.startSession()
   let withdrawal
@@ -21,11 +48,11 @@ async function initiateWithdrawal(user, { amount, upiId }) {
       await walletService.debit(
         user._id,
         amount,
-        { type: 'withdrawal', actor: 'user', note: `Withdrawal to ${upiId}` },
+        { type: 'withdrawal', actor: 'user', note: `Withdrawal to ${destinationLabel(dest)}` },
         session
       )
       ;[withdrawal] = await Withdrawal.create(
-        [{ user: user._id, gross: amount, tds, net, upiId, status: 'pending' }],
+        [{ user: user._id, gross: amount, tds, net, status: 'pending', ...dest }],
         { session }
       )
     })
@@ -49,7 +76,8 @@ async function initiateWithdrawal(user, { amount, upiId }) {
     gross: amount,
     tds,
     net,
-    upiId,
+    method: dest.method,
+    destination: destinationLabel(dest),
   })
 
   await cacheDel('cache:admin:stats', `cache:dashboard:${user._id}`, `cache:wallet:${user._id}`)

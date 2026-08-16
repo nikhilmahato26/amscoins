@@ -1,5 +1,5 @@
 import { apiFetch } from '@/lib/api'
-import type { Role, Tier } from '@/types'
+import type { PayoutMethod, Role, Tier, Transaction } from '@/types'
 import type { Investment } from './investments'
 import type { Withdrawal } from './withdrawals'
 
@@ -25,6 +25,7 @@ export type AdminWithdrawal = Withdrawal & { user: PopulatedRef }
 
 export interface AdminUser {
   _id: string
+  publicId: string | null
   name: string
   email: string
   role: Role
@@ -32,6 +33,22 @@ export interface AdminUser {
   tier: Tier
   referralCount: number
   createdAt: string
+}
+
+/** Full user document (minus passwordHash) returned by the detail endpoint. */
+export interface AdminUserFull extends AdminUser {
+  phone: string | null
+  avatar: string | null
+  referralCode: string
+  payoutMethods: Array<PayoutMethod & { _id: string }>
+}
+
+export interface AdminUserDetail {
+  user: AdminUserFull
+  balance: number
+  investments: Investment[]
+  withdrawals: Withdrawal[]
+  transactions: Transaction[]
 }
 
 export const adminStats = () => apiFetch<AdminStats>('/admin/stats')
@@ -50,7 +67,9 @@ export const completeWithdrawal = (id: string, note?: string) =>
 export const rejectWithdrawal = (id: string, note?: string) =>
   apiFetch<Withdrawal>(`/admin/withdrawals/${id}/reject`, { method: 'POST', body: { note } })
 
-export const adminUsers = () => apiFetch<AdminUser[]>('/admin/users')
+export const adminUsers = (q = '') =>
+  apiFetch<AdminUser[]>(`/admin/users${q ? `?q=${encodeURIComponent(q)}` : ''}`)
+export const adminUserDetail = (id: string) => apiFetch<AdminUserDetail>(`/admin/users/${id}`)
 export const freezeUser = (id: string) => apiFetch<AdminUser>(`/admin/users/${id}/freeze`, { method: 'POST' })
 export const unfreezeUser = (id: string) => apiFetch<AdminUser>(`/admin/users/${id}/unfreeze`, { method: 'POST' })
 export const adjustWallet = (userId: string, input: { amount: number; direction: 'credit' | 'debit'; note?: string }) =>

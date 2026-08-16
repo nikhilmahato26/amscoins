@@ -205,20 +205,7 @@ export function PackageDetailPage() {
 
             {/* Investment grid */}
             <section className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold leading-7 text-asm-navy">Select Investment</h2>
-                <button
-                  type="button"
-                  onClick={() => setSelected('custom')}
-                  className={cn(
-                    'inline-flex min-h-[40px] items-center rounded-lg px-2.5 py-1.5 text-sm font-semibold text-asm-blue transition-colors',
-                    'hover:bg-asm-blue-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue',
-                    selected === 'custom' && 'bg-asm-blue-tint'
-                  )}
-                >
-                  Custom amount
-                </button>
-              </div>
+              <h2 className="text-lg font-bold leading-7 text-asm-navy">Select Investment</h2>
 
               <div className="grid grid-cols-2 gap-x-4 gap-y-5 pt-2">
                 {quickPicks.map(({ id, label, rupees, popular }) => {
@@ -270,37 +257,39 @@ export function PackageDetailPage() {
                 })}
               </div>
 
-              {/* Custom amount input */}
-              {selected === 'custom' && (
-                <div className="mt-2 flex flex-col gap-1.5">
-                  <label htmlFor="custom-amount" className="text-xs font-medium leading-4 text-asm-body">
-                    Enter amount in ₹
-                  </label>
-                  <div className="relative">
-                    <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg font-semibold text-asm-muted">
-                      ₹
-                    </span>
-                    <input
-                      id="custom-amount"
-                      type="number"
-                      inputMode="numeric"
-                      min={plan.minInvest / 100}
-                      max={plan.maxInvest / 100}
-                      value={customRupees}
-                      onChange={(e) => {
-                        setCustomRupees(e.target.value)
-                        setValidationError(null)
-                      }}
-                      placeholder={`${plan.minInvest / 100}–${plan.maxInvest / 100}`}
-                      className={cn(
-                        'h-[62px] w-full rounded-2xl border border-asm-line bg-white pl-9 pr-4 text-xl font-bold text-asm-navy',
-                        'placeholder:font-semibold placeholder:text-asm-muted',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue hover:border-asm-blue/40'
-                      )}
-                    />
-                  </div>
+              {/* Custom amount — always visible so users can enter any value
+                  without first tapping a toggle. Focusing or typing selects it. */}
+              <div className="mt-2 flex flex-col gap-1.5">
+                <label htmlFor="custom-amount" className="text-xs font-medium leading-4 text-asm-body">
+                  Or enter a custom amount (₹)
+                </label>
+                <div className="relative">
+                  <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg font-semibold text-asm-muted">
+                    ₹
+                  </span>
+                  <input
+                    id="custom-amount"
+                    type="number"
+                    inputMode="numeric"
+                    min={plan.minInvest / 100}
+                    max={plan.maxInvest / 100}
+                    value={customRupees}
+                    onFocus={() => setSelected('custom')}
+                    onChange={(e) => {
+                      setCustomRupees(e.target.value)
+                      setSelected('custom')
+                      setValidationError(null)
+                    }}
+                    placeholder={`${plan.minInvest / 100}–${plan.maxInvest / 100}`}
+                    className={cn(
+                      'h-[62px] w-full rounded-2xl border bg-white pl-9 pr-4 text-xl font-bold text-asm-navy',
+                      'placeholder:font-semibold placeholder:text-asm-muted',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue hover:border-asm-blue/40',
+                      selected === 'custom' ? 'border-asm-blue' : 'border-asm-line'
+                    )}
+                  />
                 </div>
-              )}
+              </div>
 
               {/* Validation error */}
               {validationError && (

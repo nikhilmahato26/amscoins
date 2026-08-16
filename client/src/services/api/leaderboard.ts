@@ -8,6 +8,7 @@ export interface LeaderboardEntry {
   userId: string
   name: string
   tier: Tier
+  avatar?: string | null
   totalInvested: number // paise
 }
 

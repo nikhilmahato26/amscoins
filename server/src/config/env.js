@@ -31,4 +31,8 @@ module.exports = {
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || null,
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || null,
   GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL || null,
+  CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME || null,
+  CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY || null,
+  CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || null,
+  CLOUDINARY_URL: process.env.CLOUDINARY_URL || null,
 }

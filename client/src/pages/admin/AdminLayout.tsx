@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router'
 import { AnimatePresence, motion } from 'framer-motion'
-import { LayoutDashboard, ArrowDownToLine, ArrowUpFromLine, Users, LogOut, Menu, X } from 'lucide-react'
+import { LayoutDashboard, ArrowDownToLine, ArrowUpFromLine, Users, LifeBuoy, LogOut, Menu, X } from 'lucide-react'
 import { useAuth } from '@/auth/AuthContext'
 import { authService } from '@/services/authService'
 import { cn } from '@/lib/utils'
@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { to: '/admin/deposits', label: 'Deposits', icon: ArrowDownToLine, end: false },
   { to: '/admin/withdrawals', label: 'Withdrawals', icon: ArrowUpFromLine, end: false },
   { to: '/admin/users', label: 'Users', icon: Users, end: false },
+  { to: '/admin/support', label: 'Support', icon: LifeBuoy, end: false },
 ] as const
 
 function Brand() {

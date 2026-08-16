@@ -13,6 +13,10 @@ const { MongoMemoryReplSet } = require('mongodb-memory-server')
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'e2e-secret'
 process.env.ADMIN_EMAIL = 'admin@e2e.test'
 process.env.ADMIN_PASSWORD = 'admin123'
+// Run as a test env: skips rate limiters (see rateLimits `skipInTest`) so the
+// suite's many registrations don't trip the 5-per-15min register throttle, and
+// routes email to nodemailer's jsonTransport instead of sending real mail.
+process.env.NODE_ENV = process.env.NODE_ENV || 'test'
 
 ;(async () => {
   // A single-node replica set so transactions are available (same as Jest suite)

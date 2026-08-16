@@ -52,6 +52,29 @@ test('reject re-credits the gross amount', async () => {
   expect((await Withdrawal.findById(w._id)).status).toBe('rejected')
 })
 
+test('initiate to a bank account stores bank fields and no upiId', async () => {
+  const u = await makeFundedUser(200000)
+  const w = await initiateWithdrawal(u, {
+    amount: 100000,
+    accountName: 'Me',
+    accountNumber: '123456789',
+    ifsc: 'HDFC0001234',
+  })
+  expect(w.method).toBe('bank')
+  expect(w.accountNumber).toBe('123456789')
+  expect(w.ifsc).toBe('HDFC0001234')
+  expect(w.upiId).toBeUndefined()
+})
+
+test('initiate via a saved payout method id resolves the destination', async () => {
+  const u = await makeFundedUser(200000)
+  u.payoutMethods.push({ type: 'upi', upiId: 'saved@okicici', isDefault: true })
+  await u.save()
+  const w = await initiateWithdrawal(u, { amount: 100000, payoutMethodId: String(u.payoutMethods[0]._id) })
+  expect(w.method).toBe('upi')
+  expect(w.upiId).toBe('saved@okicici')
+})
+
 test('completing an already-completed withdrawal throws 409', async () => {
   const u = await makeFundedUser(100000)
   const w = await initiateWithdrawal(u, { amount: 100000, upiId: 'x@upi' })

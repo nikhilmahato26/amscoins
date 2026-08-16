@@ -36,8 +36,10 @@ test('withdraw: seed balance, submit UI form, see breakdown + pending in list', 
   const amountInput = page.getByLabel(/amount to withdraw in rupees/i)
   await amountInput.fill('1000')
 
-  /* ── 6. Fill UPI ID ── */
-  await page.getByPlaceholder(/name@upi|name@okaxis/i).fill('testuser@okaxis')
+  /* ── 6. Fill UPI ID ──
+     A freshly-registered user has no saved payout methods, so the withdraw
+     page shows the "new UPI" field directly (placeholder: name@okicici …). */
+  await page.getByPlaceholder(/name@okicici/i).fill('testuser@okaxis')
 
   /* ── 7. Submit withdrawal request ── */
   await page.getByRole('button', { name: /submit withdrawal/i }).click()

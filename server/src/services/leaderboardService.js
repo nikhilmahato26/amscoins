@@ -36,7 +36,7 @@ async function topInvestors(period, limit = 20) {
     { $limit: limit },
     { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'u' } },
     { $unwind: '$u' },
-    { $project: { _id: 0, userId: '$_id', name: '$u.name', tier: '$u.tier', totalInvested: 1 } },
+    { $project: { _id: 0, userId: '$_id', name: '$u.name', tier: '$u.tier', avatar: '$u.avatar', totalInvested: 1 } },
   ])
 
   logger.debug('Leaderboard queried', { period, resultCount: rows.length })

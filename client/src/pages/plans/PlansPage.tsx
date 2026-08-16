@@ -1,93 +1,100 @@
-import { Clock, Gem, Lock, Medal, Trophy } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
-import { useNavigate } from 'react-router'
+import { motion } from 'framer-motion'
+import { Clock, Lock } from 'lucide-react'
+import { Link, useNavigate } from 'react-router'
 
+import { TierBadge, type Tier } from '@/components/app/TierBadge'
 import { usePlans } from '@/hooks/queries'
 import { inr } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import type { Plan } from '@/services/api/plans'
 
 /**
- * Desktop plans section (Figma 26:8496 "Choose Your Growth Path").
- *
- * Now fetches real plan data from the API via usePlans(). Locked plans (unlocked
- * === false) show a locked overlay with the referral threshold. Unlocked plans
- * navigate to /app/invest with { planKey } in location state.
+ * Packages / Plans gallery — the authoritative light theme (`theme-light-home`):
+ * white surfaces, navy text, asm-blue primary action, green profit accent.
+ * Mirrors the plan cards on the app home so the two never read as two products.
  */
 
-const TIER_ICONS: Record<string, LucideIcon> = {
-  silver: Medal,
-  gold: Trophy,
-  diamond: Gem,
+/** Per-tier accent, matching the home plan cards. */
+const PLAN_STYLE: Record<Tier, { ring: string; figure: string; glow: string }> = {
+  silver:  { ring: 'ring-[#CED5E1]',      figure: 'text-[#868B95]', glow: 'rgba(134,139,149,0.14)' },
+  gold:    { ring: 'ring-[#FF9E45]/50',   figure: 'text-[#F37400]', glow: 'rgba(243,116,0,0.14)' },
+  diamond: { ring: 'ring-asm-blue/30',    figure: 'text-asm-blue',  glow: 'rgba(11,79,216,0.14)' },
 }
 
-const CARD_GRADIENT =
-  'linear-gradient(140deg, rgba(184,200,224,0.06) 6.17%, rgba(184,200,224,0.01) 93.83%), linear-gradient(90deg, #0E1520 0%, #0E1520 100%)'
-
-const BUTTON_SHEEN =
-  'linear-gradient(146.5deg, rgba(255,255,255,0) 41.55%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 58.45%)'
+const fadeUp = {
+  hidden: { opacity: 0, y: 22 },
+  visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 90, damping: 18 } },
+}
 
 export function PlansPage() {
   const { data: plans, isLoading, isError } = usePlans()
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-abyss font-jakarta text-white">
+    <div className="theme-light-home relative min-h-screen overflow-x-hidden bg-asm-tint font-jakarta text-asm-navy">
+      {/* Soft brand wash */}
       <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-        <span className="absolute -top-40 left-[10%] size-[600px] rounded-full bg-steel/[0.05] blur-[140px]" />
-        <span className="absolute -right-24 top-[386px] size-[500px] rounded-full bg-brand/[0.06] blur-[140px]" />
-        <span className="absolute -left-28 top-[242px] size-[400px] rounded-full bg-steel/[0.03] blur-[120px]" />
+        <span className="absolute -top-32 left-[8%] size-[520px] rounded-full bg-asm-blue/[0.06] blur-[140px]" />
+        <span className="absolute -right-24 top-[320px] size-[440px] rounded-full bg-asm-greenInk/[0.05] blur-[140px]" />
       </div>
 
-      <main className="relative mx-auto w-full max-w-[1129px] px-6 py-16">
+      <main className="relative mx-auto w-full max-w-[1120px] px-5 py-12 sm:py-16">
+        {/* Top bar */}
+        <div className="mb-8 flex items-center justify-between">
+          <Link
+            to="/app"
+            className="inline-flex items-center gap-2 text-[13px] font-semibold text-asm-blue transition-colors hover:text-asm-blue-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue rounded"
+          >
+            <img src="/asm.png" alt="" className="size-7 rounded-lg object-contain" aria-hidden />
+            ASM Coins
+          </Link>
+        </div>
+
         <header className="flex flex-col items-center text-center">
-          <span className="flex items-center gap-2 rounded-xl border border-steel/[0.18] bg-steel/[0.08] px-4 py-1.5">
-            <span className="size-1.5 rounded-full bg-steel" />
-            <span className="text-[11px] font-semibold uppercase tracking-[1.65px] text-steel">
-              Investment Plans
+          <span className="inline-flex items-center gap-2 rounded-full border border-asm-blue/15 bg-asm-blue-tint px-3.5 py-1.5">
+            <span className="size-1.5 rounded-full bg-asm-blue" />
+            <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-asm-blue">
+              Investment Packages
             </span>
           </span>
 
-          <h1 className="pt-4 font-dmserif text-[40px] leading-[49px] tracking-[-0.4px] text-frost">
+          <h1 className="mt-4 text-[30px] font-extrabold leading-tight tracking-tight text-asm-navy sm:text-[40px]">
             Choose Your Growth Path
           </h1>
-
-          <p className="pt-3 text-sm leading-[23px] text-haze/45">
+          <p className="mt-3 max-w-md text-[14px] leading-relaxed text-asm-body">
             Structured returns. Transparent terms. No surprises.
           </p>
         </header>
 
         {isLoading && (
-          <div
-            role="status"
-            aria-live="polite"
-            aria-label="Loading investment plans"
-            className="grid gap-8 pt-14 md:grid-cols-2 lg:grid-cols-3"
-          >
+          <div role="status" aria-live="polite" aria-label="Loading investment plans" className="grid gap-6 pt-12 sm:grid-cols-2 lg:grid-cols-3">
             {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className="h-[340px] animate-pulse rounded-[20px] border border-steel/20 bg-steel/[0.08]"
-              />
+              <div key={i} className="h-[360px] animate-pulse rounded-2xl border border-asm-line bg-white/70" />
             ))}
           </div>
         )}
 
         {isError && (
-          <p role="alert" className="pt-14 text-center text-sm text-red-400">
-            Failed to load plans. Please refresh.
+          <p role="alert" className="pt-12 text-center text-sm text-asm-red">
+            Failed to load packages. Please refresh.
           </p>
         )}
 
         {plans && (
-          <div className="grid gap-8 pt-14 md:grid-cols-2 lg:grid-cols-3">
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            transition={{ staggerChildren: 0.08 }}
+            className="grid gap-6 pt-12 sm:grid-cols-2 lg:grid-cols-3"
+          >
             {plans.map((plan) => (
               <PlanCard key={plan.key} plan={plan} />
             ))}
-          </div>
+          </motion.div>
         )}
 
-        <p className="pt-12 text-center text-[13px] leading-[18px] text-haze/38">
-          All returns are indicative. Investments subject to terms.
+        <p className="mt-10 text-center text-[12px] leading-relaxed text-asm-muted">
+          Returns shown are plan terms, not guarantees.{' '}
+          <span className="text-asm-body">Read the full terms before you invest.</span>
         </p>
       </main>
     </div>
@@ -96,109 +103,81 @@ export function PlansPage() {
 
 function PlanCard({ plan }: { plan: Plan }) {
   const navigate = useNavigate()
-  const Icon = TIER_ICONS[plan.key] ?? Medal
-  const isLocked = !plan.unlocked
-
-  function handleInvest() {
-    navigate('/app/invest', { state: { planKey: plan.key } })
-  }
+  const tier = plan.key as Tier
+  const s = PLAN_STYLE[tier] ?? PLAN_STYLE.silver
+  const unlocked = plan.unlocked
 
   return (
-    <article
+    <motion.article
+      variants={fadeUp}
+      whileHover={unlocked ? { y: -4, boxShadow: `0 20px 40px -12px ${s.glow}, 0 4px 16px -4px rgba(16,42,92,0.10)` } : undefined}
+      transition={{ type: 'spring', stiffness: 380, damping: 28 }}
       className={cn(
-        'flex flex-col overflow-hidden rounded-[20px] border border-steel/20 p-7',
-        'shadow-[0px_8px_32px_0px_rgba(0,0,0,0.35)]',
-        isLocked && 'opacity-70'
+        'relative flex flex-col items-center overflow-hidden rounded-2xl bg-white p-6 ring-1',
+        'shadow-[0_2px_16px_-4px_rgba(16,42,92,0.08)]',
+        s.ring
       )}
-      style={{ backgroundImage: CARD_GRADIENT }}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-steel/[0.18] bg-steel/[0.08]">
-            <Icon className="size-6 text-steel" strokeWidth={1.5} aria-hidden />
-          </span>
+      <div className={cn('flex w-full flex-col items-center transition-all duration-300', !unlocked && 'pointer-events-none select-none opacity-50 blur-[1.5px]')}>
+        <TierBadge tier={tier} size={92} />
+
+        <div className="mt-3 flex flex-col items-center gap-0.5">
+          <span className={cn('text-[34px] font-extrabold leading-none tabular-nums', s.figure)}>{plan.returnPct}%</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-asm-muted">Returns</span>
+        </div>
+
+        <div className="mt-3 flex items-center gap-2">
+          <Clock className="size-4 text-asm-blue" aria-hidden />
+          <span className="text-[15px] font-bold text-asm-navy">{plan.durationHours} Hours</span>
+        </div>
+
+        <div className="mt-4 flex w-full items-stretch justify-between rounded-xl bg-asm-tint px-4 py-2.5">
           <span className="flex flex-col">
-            <span className="text-[10px] uppercase leading-[15px] tracking-[1.8px] text-haze/45">
-              Plan
-            </span>
-            <span className="pt-0.5 text-[17px] font-semibold leading-[25.5px] tracking-[0.34px] text-steel">
-              {plan.name}
-            </span>
+            <span className="text-[9px] font-bold uppercase tracking-widest text-asm-muted">Min</span>
+            <span className="mt-0.5 font-mono text-[14px] font-bold tabular-nums text-asm-navy">{inr(plan.minInvest)}</span>
+          </span>
+          <span className="w-px self-stretch bg-asm-line" />
+          <span className="flex flex-col items-end">
+            <span className="text-[9px] font-bold uppercase tracking-widest text-asm-muted">Max</span>
+            <span className="mt-0.5 font-mono text-[14px] font-bold tabular-nums text-asm-navy">{inr(plan.maxInvest)}</span>
           </span>
         </div>
 
-        <div className="flex w-[92px] flex-col items-center rounded-xl border border-steel/20 bg-steel/[0.15] px-4 py-2.5">
-          <span className="font-dmserif text-[30px] leading-[30px] text-steel">{plan.returnPct}%</span>
-          <span className="pt-0.5 text-[9px] uppercase leading-[13.5px] tracking-[1.8px] text-steel opacity-70">
-            Returns
-          </span>
-        </div>
-      </div>
-
-      <span
-        aria-hidden
-        className="mt-7 h-px w-full bg-gradient-to-r from-steel/20 to-transparent"
-      />
-
-      <div className="flex flex-col pt-6">
-        <span className="text-[10px] uppercase leading-[15px] tracking-[1.5px] text-haze/38">
-          Duration
-        </span>
-        <span className="flex items-center gap-2 pt-1.5">
-          <Clock className="size-4 text-frost" aria-hidden />
-          <span className="text-xl font-medium leading-[30px] text-frost">{plan.durationHours} Hours</span>
-        </span>
-      </div>
-
-      <div className="flex items-stretch justify-between rounded-xl border border-white/5 bg-white/[0.03] px-[18px] py-4 my-6">
-        <span className="flex flex-col">
-          <span className="text-[10px] uppercase leading-[15px] tracking-[1.5px] text-haze/38">
-            Min
-          </span>
-          <span className="pt-[5px] text-lg font-semibold leading-[27px] text-frost">{inr(plan.minInvest)}</span>
-        </span>
-        <span className="w-px self-stretch bg-white/[0.07]" />
-        <span className="flex flex-col items-end">
-          <span className="text-[10px] uppercase leading-[15px] tracking-[1.5px] text-haze/38">
-            Max
-          </span>
-          <span className="pt-[5px] text-lg font-semibold leading-[27px] text-frost">{inr(plan.maxInvest)}</span>
-        </span>
-      </div>
-
-      {isLocked ? (
-        <div
-          className={cn(
-            'relative mt-auto flex h-[50px] items-center justify-center gap-2 overflow-hidden rounded-xl',
-            'border border-steel/20 bg-steel/[0.08]',
-            'text-[12px] font-semibold uppercase tracking-[1.2px] text-haze/50'
-          )}
-          aria-label={`Locked plan: unlock with ${plan.unlockReferrals} referrals`}
-        >
-          <Lock className="size-4" aria-hidden />
-          Unlock with {plan.unlockReferrals} referrals
-        </div>
-      ) : (
         <button
           type="button"
-          onClick={handleInvest}
-          aria-label={`Invest in the ${plan.name} plan`}
+          onClick={() => navigate(`/app/invest?plan=${plan.key}`, { state: { planKey: plan.key } })}
+          aria-label={`Invest in the ${plan.name} package`}
           className={cn(
-            'relative mt-auto flex h-[50px] items-center justify-center overflow-hidden rounded-xl',
-            'bg-gradient-to-b from-bluesteel-from to-bluesteel-to',
-            'text-[13px] font-bold uppercase tracking-[1.56px] text-white',
-            'shadow-[0px_4px_20px_0px_rgba(143,168,192,0.4)] transition-opacity hover:opacity-90',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-steel'
+            'mt-4 flex min-h-[46px] w-full items-center justify-center rounded-xl bg-asm-blue',
+            'text-[12px] font-bold uppercase tracking-[0.08em] text-white',
+            'transition-colors hover:bg-asm-blue-dark active:scale-[0.98]',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1'
           )}
         >
-          <span className="relative z-10">Invest Now</span>
-          <span
-            aria-hidden
-            className="absolute inset-0"
-            style={{ backgroundImage: BUTTON_SHEEN }}
-          />
+          Invest Now
         </button>
+      </div>
+
+      {/* Locked overlay */}
+      {!unlocked && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/70 p-5 text-center backdrop-blur-[1px]">
+          <div className="mb-3 flex size-14 items-center justify-center rounded-full border border-slate-200 bg-slate-100 shadow-sm">
+            <Lock className="size-7 text-slate-500" strokeWidth={2.2} aria-hidden />
+          </div>
+          <span className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-slate-500">{plan.name} Locked</span>
+          <h3 className="mt-1 text-[16px] font-extrabold leading-tight text-asm-navy">
+            Unlock with {plan.unlockReferrals} referrals
+          </h3>
+          <Link
+            to="/app/referral"
+            aria-label={`Unlock ${plan.name} on referral page`}
+            className="mt-4 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#F08800] via-[#E67E00] to-[#DC7000] px-4 text-[12px] font-extrabold uppercase tracking-[0.08em] text-white shadow-[0_8px_20px_-6px_rgba(230,126,0,0.55)] transition-all hover:brightness-105 active:scale-[0.98]"
+          >
+            <Lock className="size-4" strokeWidth={2.4} aria-hidden />
+            Unlock Tier
+          </Link>
+        </div>
       )}
-    </article>
+    </motion.article>
   )
 }

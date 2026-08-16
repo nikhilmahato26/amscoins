@@ -15,8 +15,26 @@ export interface RegisterPayload {
 }
 
 export interface RegisterResult {
-  user: { id: string; name: string; email: string; role: string }
+  user: { id: string; name: string; email: string; role: string; referralCode: string }
   token: string
+}
+
+export interface ReferralOverview {
+  referralCode: string
+  count: number
+  referrals: { name: string; joinedAt: string; credited: boolean }[]
+}
+
+/** Fetch a user's referral overview (who they referred) using their token. */
+export async function referralOverview(token: string): Promise<ReferralOverview> {
+  const res = await fetch(`${API}/referral`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`referralOverview failed ${res.status}: ${body}`)
+  }
+  return res.json()
 }
 
 export async function register(payload: RegisterPayload): Promise<RegisterResult> {

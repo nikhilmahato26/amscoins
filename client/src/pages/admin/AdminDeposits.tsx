@@ -6,6 +6,7 @@ import {
   useRejectInvestment,
 } from '@/hooks/queries'
 import type { AdminInvestment } from '@/services/api/admin'
+import { SearchInput } from '@/components/admin/SearchInput'
 import { inr } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
@@ -160,9 +161,21 @@ export function AdminDeposits() {
   const [approvingId, setApprovingId] = useState<string | null>(null)
   const [rejectingId, setRejectingId] = useState<string | null>(null)
   const [statusMsg, setStatusMsg] = useState('')
+  const [q, setQ] = useState('')
 
   const approvingInvestment = data?.find((d) => d._id === approvingId) ?? null
   const rejectingInvestment = data?.find((d) => d._id === rejectingId) ?? null
+
+  const filtered = (data ?? []).filter((d) => {
+    if (!q.trim()) return true
+    const s = q.toLowerCase()
+    return (
+      d.user.name.toLowerCase().includes(s) ||
+      d.user.email.toLowerCase().includes(s) ||
+      d.referenceCode.toLowerCase().includes(s) ||
+      d.planKey.toLowerCase().includes(s)
+    )
+  })
 
   function handleApproveConfirm() {
     if (!approvingId) return
@@ -201,6 +214,8 @@ export function AdminDeposits() {
         <h1 className="text-[22px] font-bold tracking-tight text-asm-navy">Deposits</h1>
         <p className="mt-0.5 text-[13px] text-asm-muted">Pending deposit requests awaiting review.</p>
       </div>
+
+      <SearchInput value={q} onChange={setQ} placeholder="Search by name, email, reference or plan" />
 
       {/* Status announcer */}
       <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">
@@ -247,18 +262,22 @@ export function AdminDeposits() {
                   Failed to load deposits. Please refresh.
                 </td>
               </tr>
-            ) : !data || data.length === 0 ? (
+            ) : filtered.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-4 py-16 text-center">
                   <span className="mx-auto flex size-10 items-center justify-center rounded-full bg-asm-tint">
                     <Inbox className="size-5 text-asm-muted" strokeWidth={1.5} aria-hidden />
                   </span>
-                  <p className="mt-3 text-[13px] font-semibold text-asm-navy">No pending deposits</p>
-                  <p className="mt-1 text-[12px] text-asm-muted">All deposit requests have been reviewed.</p>
+                  <p className="mt-3 text-[13px] font-semibold text-asm-navy">
+                    {q ? 'No matching deposits' : 'No pending deposits'}
+                  </p>
+                  <p className="mt-1 text-[12px] text-asm-muted">
+                    {q ? 'Try a different search.' : 'All deposit requests have been reviewed.'}
+                  </p>
                 </td>
               </tr>
             ) : (
-              data.map((dep, idx) => (
+              filtered.map((dep, idx) => (
                 <tr
                   key={dep._id}
                   className={cn(
