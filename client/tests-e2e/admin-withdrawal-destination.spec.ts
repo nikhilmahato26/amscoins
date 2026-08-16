@@ -57,3 +57,37 @@ test('admin withdrawals: bank payout shows account + IFSC, UPI shows VPA', async
   const upiRow = page.locator('tr').filter({ hasText: 'Upi Payout User' })
   await expect(upiRow.getByText('9876543210@paytm')).toBeVisible()
 })
+
+test('admin withdrawals: mark-paid dialog shows the bank destination, not "via UPI"', async ({ page }) => {
+  const adminToken = await adminLogin()
+
+  const bank = await register({
+    name: 'Dialog Bank User',
+    email: uniqueEmail('wd-dlg'),
+    password: 'userpass1',
+  })
+  await adminAdjustWallet(adminToken, bank.user.id, 1_000_000, 'credit', 'e2e seed')
+  await createWithdrawal(bank.token, {
+    amount: 100_000,
+    accountName: 'Dialog Bank User',
+    accountNumber: '000987654321',
+    ifsc: 'ICIC0004321',
+  })
+
+  await page.goto('/login')
+  await page.getByPlaceholder('you@example.com').fill('admin@e2e.test')
+  await page.getByPlaceholder('Your password').fill('admin123')
+  await page.getByRole('button', { name: /sign in/i }).click()
+  await expect(page).toHaveURL(/\/admin/, { timeout: 15_000 })
+
+  await page.goto('/admin/withdrawals')
+  const row = page.locator('tr').filter({ hasText: 'Dialog Bank User' })
+  await expect(row.getByText('000987654321')).toBeVisible({ timeout: 15_000 })
+  await row.getByRole('button', { name: /mark paid/i }).click()
+
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByText('000987654321')).toBeVisible()
+  await expect(dialog.getByText('ICIC0004321')).toBeVisible()
+  await expect(dialog.getByText(/via UPI/i)).toHaveCount(0)
+})

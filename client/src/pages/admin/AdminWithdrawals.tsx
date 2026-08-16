@@ -19,6 +19,7 @@ interface MarkPaidDialogProps {
 }
 
 function MarkPaidDialog({ withdrawal, onConfirm, onCancel, isPending }: MarkPaidDialogProps) {
+  const dest = payoutView(withdrawal)
   return (
     <div
       role="dialog"
@@ -33,8 +34,8 @@ function MarkPaidDialog({ withdrawal, onConfirm, onCancel, isPending }: MarkPaid
         <p className="mt-2 text-[13px] text-asm-body">
           Confirm payment of{' '}
           <strong className="font-semibold text-asm-navy">{inr(withdrawal.net)}</strong> to{' '}
-          <strong className="font-semibold text-asm-navy">{withdrawal.user.name}</strong> via UPI{' '}
-          <span className="font-mono text-asm-navy">{withdrawal.upiId}</span>. This cannot be undone.
+          <strong className="font-semibold text-asm-navy">{withdrawal.user.name}</strong>{' '}
+          <span className="font-mono text-asm-navy">{dest.sentence}</span>. This cannot be undone.
         </p>
         <div className="mt-5 flex justify-end gap-2.5">
           <button
