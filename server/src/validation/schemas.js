@@ -81,6 +81,36 @@ const forgotPasswordSchema = z.object({ email: z.string().email() })
 const verifyOtpSchema = z.object({ email: z.string().email(), otp: z.string().regex(/^\d{6}$/) })
 const resetPasswordSchema = z.object({ resetToken: z.string().min(10), password: z.string().min(6) })
 
+const updateSettingsSchema = z
+  .object({
+    inrThresholdPaise: z.number().int().min(0).optional(),
+    usdtTrc20Address: z.string().trim().optional(),
+    usdtBep20Address: z.string().trim().optional(),
+    binancePayId: z.string().trim().optional(),
+    binancePayName: z.string().trim().optional(),
+    binancePayLink: z.string().trim().optional(),
+    whatsappNumber: z
+      .string()
+      .transform((v) => v.replace(/\D/g, ''))
+      .optional(),
+    telegramUsername: z
+      .string()
+      .transform((v) => v.trim().replace(/^@/, ''))
+      .optional(),
+    methods: z
+      .object({
+        trustWallet: z.boolean().optional(),
+        binancePay: z.boolean().optional(),
+        whatsapp: z.boolean().optional(),
+        telegram: z.boolean().optional(),
+        inrQr: z.boolean().optional(),
+      })
+      .optional(),
+  })
+  .refine((v) => Object.keys(v).length > 0, {
+    message: 'Provide at least one field to update',
+  })
+
 module.exports = {
   registerSchema,
   loginSchema,
@@ -88,6 +118,7 @@ module.exports = {
   createWithdrawalSchema,
   payoutMethodSchema,
   updateProfileSchema,
+  updateSettingsSchema,
   supportTicketSchema,
   resolveTicketSchema,
   adjustWalletSchema,
