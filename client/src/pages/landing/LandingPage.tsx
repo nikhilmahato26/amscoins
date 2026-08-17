@@ -74,8 +74,8 @@ const PLANS: {
   min: string; max: string; unlockNote: string; accent: 'silver' | 'gold' | 'diamond'
 }[] = [
   { slug: 'silver',  name: 'Silver Plan',  returns: '25%', duration: '24 Hours', min: '₹1,000', max: '₹10,000',   unlockNote: 'Default Tier',              accent: 'silver'  },
-  { slug: 'gold',    name: 'Gold Plan',    returns: '30%', duration: '24 Hours', min: '₹3,000', max: '₹50,000',   unlockNote: 'Unlocks with 11 referrals', accent: 'gold'    },
-  { slug: 'diamond', name: 'Diamond Plan', returns: '40%', duration: '24 Hours', min: '₹5,000', max: '₹1,00,000', unlockNote: 'Unlocks with 21 referrals', accent: 'diamond' },
+  { slug: 'gold',    name: 'Gold Plan',    returns: '30%', duration: '24 Hours', min: '₹3,000', max: '₹3,00,000',  unlockNote: 'Unlocks with 11 referrals', accent: 'gold'    },
+  { slug: 'diamond', name: 'Diamond Plan', returns: '40%', duration: '24 Hours', min: '₹5,000', max: '₹5,00,000',  unlockNote: 'Unlocks with 21 referrals', accent: 'diamond' },
 ]
 
 const HOW_IT_WORKS: { step: string; title: string; body: string }[] = [

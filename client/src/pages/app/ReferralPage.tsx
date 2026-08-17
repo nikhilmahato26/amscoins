@@ -51,14 +51,14 @@ const UNLOCK_LEVELS: {
     requirement: 'Unlock with 11 referrals',
     card: 'border-amber-200 bg-amber-50',
     requirementTone: 'text-amber-600',
-    perks: ['Invest up to ₹50,000', '30% Returns in 24h'],
+    perks: ['Invest up to ₹3,00,000', '30% Returns in 24h'],
   },
   {
     tier: 'diamond', name: 'Diamond',
     requirement: 'Unlock with 21 referrals',
     card: 'border-asm-blue/20 bg-asm-blue-tint/40',
     requirementTone: 'text-asm-blue',
-    perks: ['Invest up to ₹1,00,000', '40% Returns in 24h'],
+    perks: ['Invest up to ₹5,00,000', '40% Returns in 24h'],
   },
 ]
 

@@ -91,7 +91,7 @@ export function InvestmentGridGold({ className }: { className?: string }) {
             : 'border-white/5 hover:border-white/20'
         )}
       >
-        <span className="text-xl font-bold leading-7">₹50,000</span>
+        <span className="text-xl font-bold leading-7">₹3,00,000</span>
         <span className="text-xs leading-4 text-gray-400">Whale Tier</span>
       </button>
     </section>
