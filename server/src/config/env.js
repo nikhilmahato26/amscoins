@@ -13,6 +13,7 @@ module.exports = {
   JWT_SECRET: process.env.JWT_SECRET,
   JWT_EXPIRES: process.env.JWT_EXPIRES || '7d',
   TELEGRAM_LINK: process.env.TELEGRAM_LINK || 'https://t.me/asmcoins_support',
+  WHATSAPP_LINK: process.env.WHATSAPP_LINK || '',
   TDS_PCT: Number(process.env.TDS_PCT || 5),
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5173',
   SMTP_HOST: process.env.SMTP_HOST,

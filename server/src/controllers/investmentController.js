@@ -3,8 +3,8 @@ const Investment = require('../models/Investment')
 const { createInvestment } = require('../services/investmentService')
 
 const create = asyncHandler(async (req, res) => {
-  const { investment, telegramLink } = await createInvestment(req.user, req.body)
-  res.status(201).json({ investment, telegramLink })
+  const { investment, telegramLink, whatsappLink } = await createInvestment(req.user, req.body)
+  res.status(201).json({ investment, telegramLink, whatsappLink })
 })
 
 const mine = asyncHandler(async (req, res) =>
