@@ -941,9 +941,9 @@ export function QrCode({ src, alt, onMissing }: { src: string; alt: string; onMi
           setFailed(true)
           onMissing?.()
         }}
-        className="size-72 rounded-lg object-contain"
-        width={288}
-        height={288}
+        className="aspect-square w-full max-w-sm rounded-lg object-contain"
+        width={384}
+        height={384}
       />
       <span className="text-[11px] font-semibold text-asm-muted">Scan to pay</span>
     </div>
