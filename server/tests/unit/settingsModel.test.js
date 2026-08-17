@@ -20,8 +20,7 @@ describe('Settings model', () => {
   test('defaults are sensible', async () => {
     const s = await Settings.getSingleton()
     expect(s.inrThresholdPaise).toBe(200000)
-    expect(s.binancePayName).toBe('ASM Coins')
-    expect(s.methods.trustWallet).toBe(true)
+    expect(s.methods.usdtCrypto).toBe(true)
     expect(s.methods.inrQr).toBe(true)
   })
 
@@ -30,14 +29,13 @@ describe('Settings model', () => {
     const pub = s.toPublic()
     expect(Object.keys(pub).sort()).toEqual(
       [
-        'binancePayId', 'binancePayLink', 'binancePayName', 'binancePayQrUrl',
         'inrQrUrl', 'inrThresholdPaise', 'methods',
         'telegramUsername', 'usdtBep20Address', 'usdtBep20QrUrl',
         'usdtTrc20Address', 'usdtTrc20QrUrl', 'whatsappNumber',
       ].sort()
     )
     expect(pub.methods).toEqual({
-      trustWallet: true, binancePay: true, whatsapp: true, telegram: true, inrQr: true,
+      usdtCrypto: true, whatsapp: true, telegram: true, inrQr: true,
     })
   })
 })

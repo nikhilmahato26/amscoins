@@ -86,9 +86,6 @@ const updateSettingsSchema = z
     inrThresholdPaise: z.number().int().min(0).optional(),
     usdtTrc20Address: z.string().trim().optional(),
     usdtBep20Address: z.string().trim().optional(),
-    binancePayId: z.string().trim().optional(),
-    binancePayName: z.string().trim().optional(),
-    binancePayLink: z.string().trim().optional(),
     whatsappNumber: z
       .string()
       .transform((v) => v.replace(/\D/g, ''))
@@ -99,8 +96,7 @@ const updateSettingsSchema = z
       .optional(),
     methods: z
       .object({
-        trustWallet: z.boolean().optional(),
-        binancePay: z.boolean().optional(),
+        usdtCrypto: z.boolean().optional(),
         whatsapp: z.boolean().optional(),
         telegram: z.boolean().optional(),
         inrQr: z.boolean().optional(),

@@ -10,7 +10,6 @@ const IMAGE_KEYS = {
   'inr-qr': 'inrQrUrl',
   'usdt-trc20-qr': 'usdtTrc20QrUrl',
   'usdt-bep20-qr': 'usdtBep20QrUrl',
-  'binance-qr': 'binancePayQrUrl',
 }
 
 const getSettings = asyncHandler(async (_req, res) => {
