@@ -22,7 +22,14 @@ const isConfigured = () =>
  * Images land in the `asmcoins/avatars` folder, keyed by user id (overwrites the
  * user's previous avatar rather than piling up orphans).
  */
-function uploadImage(buffer, { folder = 'asmcoins/avatars', publicId } = {}) {
+function uploadImage(
+  buffer,
+  {
+    folder = 'asmcoins/avatars',
+    publicId,
+    transformation = [{ width: 512, height: 512, crop: 'fill', gravity: 'face' }],
+  } = {}
+) {
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       {
@@ -30,7 +37,7 @@ function uploadImage(buffer, { folder = 'asmcoins/avatars', publicId } = {}) {
         public_id: publicId,
         overwrite: true,
         resource_type: 'image',
-        transformation: [{ width: 512, height: 512, crop: 'fill', gravity: 'face' }],
+        transformation,
       },
       (err, result) => (err ? reject(err) : resolve(result))
     )

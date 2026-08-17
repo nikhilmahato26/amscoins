@@ -1,0 +1,76 @@
+'use strict'
+
+const { Schema, model } = require('mongoose')
+
+const methodsSchema = new Schema(
+  {
+    trustWallet: { type: Boolean, default: true },
+    binancePay: { type: Boolean, default: true },
+    whatsapp: { type: Boolean, default: true },
+    telegram: { type: Boolean, default: true },
+    inrQr: { type: Boolean, default: true },
+  },
+  { _id: false }
+)
+
+const settingsSchema = new Schema(
+  {
+    // A fixed key guarantees a single shared document for all admins.
+    key: { type: String, default: 'global', unique: true },
+
+    inrThresholdPaise: { type: Number, default: 200000, min: 0 },
+
+    inrQrUrl: { type: String, default: '' },
+
+    usdtTrc20Address: { type: String, default: '' },
+    usdtBep20Address: { type: String, default: '' },
+    usdtTrc20QrUrl: { type: String, default: '' },
+    usdtBep20QrUrl: { type: String, default: '' },
+
+    binancePayId: { type: String, default: '' },
+    binancePayName: { type: String, default: 'ASM Coins' },
+    binancePayLink: { type: String, default: '' },
+    binancePayQrUrl: { type: String, default: '' },
+
+    whatsappNumber: { type: String, default: '' },
+    telegramUsername: { type: String, default: '' },
+
+    methods: { type: methodsSchema, default: () => ({}) },
+
+    updatedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+  },
+  { timestamps: true }
+)
+
+// Find-or-create the one shared document.
+settingsSchema.statics.getSingleton = async function getSingleton() {
+  const existing = await this.findOne({ key: 'global' })
+  if (existing) return existing
+  return this.create({ key: 'global' })
+}
+
+settingsSchema.methods.toPublic = function toPublic() {
+  return {
+    inrThresholdPaise: this.inrThresholdPaise,
+    inrQrUrl: this.inrQrUrl,
+    usdtTrc20Address: this.usdtTrc20Address,
+    usdtBep20Address: this.usdtBep20Address,
+    usdtTrc20QrUrl: this.usdtTrc20QrUrl,
+    usdtBep20QrUrl: this.usdtBep20QrUrl,
+    binancePayId: this.binancePayId,
+    binancePayName: this.binancePayName,
+    binancePayLink: this.binancePayLink,
+    binancePayQrUrl: this.binancePayQrUrl,
+    whatsappNumber: this.whatsappNumber,
+    telegramUsername: this.telegramUsername,
+    methods: {
+      trustWallet: this.methods.trustWallet,
+      binancePay: this.methods.binancePay,
+      whatsapp: this.methods.whatsapp,
+      telegram: this.methods.telegram,
+      inrQr: this.methods.inrQr,
+    },
+  }
+}
+
+module.exports = model('Settings', settingsSchema)

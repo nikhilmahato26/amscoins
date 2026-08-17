@@ -88,6 +88,9 @@ const AdminSupport = lazy(() =>
 const AdminUserDetail = lazy(() =>
   import('./pages/admin/AdminUserDetail').then((m) => ({ default: m.AdminUserDetail }))
 )
+const AdminSettings = lazy(() =>
+  import('./pages/admin/AdminSettings').then((m) => ({ default: m.AdminSettings }))
+)
 
 /** Shown while a route chunk downloads. Announced, so it is not a silent gap. */
 function RouteFallback() {
@@ -115,7 +118,14 @@ export default function App() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
-        <Route path="/plans" element={<PlansPage />} />
+        <Route
+          path="/plans"
+          element={
+            <RequireAuth role="user">
+              <PlansPage />
+            </RequireAuth>
+          }
+        />
         <Route path="/gallery" element={<GalleryPage />} />
 
         <Route
@@ -250,6 +260,7 @@ export default function App() {
           <Route path="users" element={<AdminUsers />} />
           <Route path="users/:id" element={<AdminUserDetail />} />
           <Route path="support" element={<AdminSupport />} />
+          <Route path="settings" element={<AdminSettings />} />
         </Route>
 
         <Route path="*" element={<NotFound />} />

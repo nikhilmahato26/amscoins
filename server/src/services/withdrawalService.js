@@ -101,7 +101,8 @@ async function completeWithdrawal(id, adminId, note = '') {
     userId: w.user,
     adminId,
     net: w.net,
-    upiId: w.upiId,
+    method: w.method,
+    destination: destinationLabel(w),
   })
 
   await cacheDel('cache:admin:stats')

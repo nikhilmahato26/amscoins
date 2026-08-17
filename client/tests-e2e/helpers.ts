@@ -127,3 +127,29 @@ export async function adminAdjustWallet(
 export function uniqueEmail(prefix = 'user'): string {
   return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 10000)}@e2e.test`
 }
+
+/** Create a withdrawal via API with an inline destination; returns the created withdrawal. */
+export async function createWithdrawal(
+  userToken: string,
+  body: {
+    amount: number
+    upiId?: string
+    accountName?: string
+    accountNumber?: string
+    ifsc?: string
+  },
+): Promise<{ _id: string; net: number }> {
+  const res = await fetch(`${API}/withdrawals`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${userToken}`,
+    },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) {
+    const b = await res.text()
+    throw new Error(`createWithdrawal failed ${res.status}: ${b}`)
+  }
+  return res.json()
+}

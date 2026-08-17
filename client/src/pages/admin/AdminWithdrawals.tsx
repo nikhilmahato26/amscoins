@@ -7,7 +7,7 @@ import {
 } from '@/hooks/queries'
 import type { AdminWithdrawal } from '@/services/api/admin'
 import { SearchInput } from '@/components/admin/SearchInput'
-import { inr } from '@/lib/format'
+import { inr, payoutView } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
 /* ── Mark paid dialog ── */
@@ -19,6 +19,7 @@ interface MarkPaidDialogProps {
 }
 
 function MarkPaidDialog({ withdrawal, onConfirm, onCancel, isPending }: MarkPaidDialogProps) {
+  const dest = payoutView(withdrawal)
   return (
     <div
       role="dialog"
@@ -33,8 +34,8 @@ function MarkPaidDialog({ withdrawal, onConfirm, onCancel, isPending }: MarkPaid
         <p className="mt-2 text-[13px] text-asm-body">
           Confirm payment of{' '}
           <strong className="font-semibold text-asm-navy">{inr(withdrawal.net)}</strong> to{' '}
-          <strong className="font-semibold text-asm-navy">{withdrawal.user.name}</strong> via UPI{' '}
-          <span className="font-mono text-asm-navy">{withdrawal.upiId}</span>. This cannot be undone.
+          <strong className="font-semibold text-asm-navy">{withdrawal.user.name}</strong>{' '}
+          <span className="font-mono text-asm-navy">{dest.sentence}</span>. This cannot be undone.
         </p>
         <div className="mt-5 flex justify-end gap-2.5">
           <button
@@ -174,7 +175,7 @@ export function AdminWithdrawals() {
     return (
       w.user.name.toLowerCase().includes(s) ||
       w.user.email.toLowerCase().includes(s) ||
-      (w.upiId ?? '').toLowerCase().includes(s)
+      payoutView(w).search.includes(s)
     )
   })
 
@@ -216,7 +217,7 @@ export function AdminWithdrawals() {
         <p className="mt-0.5 text-[13px] text-asm-muted">Pending withdrawal requests awaiting payment.</p>
       </div>
 
-      <SearchInput value={q} onChange={setQ} placeholder="Search by name, email or UPI ID" />
+      <SearchInput value={q} onChange={setQ} placeholder="Search by name, email or destination" />
 
       {/* Status announcer */}
       <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">
@@ -246,7 +247,7 @@ export function AdminWithdrawals() {
               <th scope="col" className="px-3 py-2.5 text-right">Gross</th>
               <th scope="col" className="px-3 py-2.5 text-right">TDS</th>
               <th scope="col" className="px-3 py-2.5 text-right">Net</th>
-              <th scope="col" className="px-3 py-2.5 text-left">UPI ID</th>
+              <th scope="col" className="px-3 py-2.5 text-left">Destination</th>
               <th scope="col" className="px-3 py-2.5 text-left">Date</th>
               <th scope="col" className="px-3 py-2.5 text-right">Actions</th>
             </tr>
@@ -300,7 +301,25 @@ export function AdminWithdrawals() {
                   <td className="px-3 py-2.5 text-right font-mono tabular-nums font-semibold text-asm-navy">
                     {inr(wd.net)}
                   </td>
-                  <td className="px-3 py-2.5 font-mono text-[11px] text-asm-body">{wd.upiId}</td>
+                  <td className="px-3 py-2.5">
+                    {(() => {
+                      const dest = payoutView(wd)
+                      return (
+                        <div className="flex flex-col gap-0.5">
+                          <span
+                            className={cn(
+                              'inline-flex w-fit rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em]',
+                              dest.method === 'bank' ? 'bg-asm-blue/10 text-asm-blue' : 'bg-asm-green/10 text-asm-green',
+                            )}
+                          >
+                            {dest.badge}
+                          </span>
+                          <span className="font-mono text-[11px] text-asm-navy">{dest.primary}</span>
+                          {dest.secondary && <span className="text-[11px] text-asm-muted">{dest.secondary}</span>}
+                        </div>
+                      )
+                    })()}
+                  </td>
                   <td className="px-3 py-2.5 text-[12px] text-asm-body">
                     {new Date(wd.createdAt).toLocaleDateString('en-IN', {
                       day: '2-digit',

@@ -12,6 +12,7 @@ import {
   adminSupport,
   resolveSupport,
 } from '@/services/api/support'
+import { getSettings, updateSettings, type SettingsUpdate } from '@/services/api/settings'
 import {
   adminStats,
   adminInvestments,
@@ -54,6 +55,17 @@ export const useCreateSupportTicket = () => {
   return useMutation({
     mutationFn: (input: { subject: string; message: string }) => createSupportTicket(input),
     onSuccess: () => { void qc.invalidateQueries({ queryKey: ['support', 'mine'] }) },
+  })
+}
+
+export const useSettings = () =>
+  useQuery({ queryKey: ['settings'], queryFn: getSettings })
+
+export const useUpdateSettings = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: SettingsUpdate) => updateSettings(input),
+    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['settings'] }) },
   })
 }
 

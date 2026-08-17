@@ -206,7 +206,7 @@ export function WithdrawPage() {
               inputMode="decimal"
               placeholder="0"
               aria-label="Amount to withdraw in rupees"
-              className="min-w-0 flex-1 self-stretch bg-transparent font-mono text-base font-bold tabular-nums text-asm-navy outline-none placeholder:font-sans placeholder:font-bold placeholder:text-asm-muted/50"
+              className="min-w-0 flex-1 self-stretch bg-transparent font-mono text-base font-bold tabular-nums text-asm-navy outline-none focus-visible:!outline-none placeholder:font-sans placeholder:font-bold placeholder:text-asm-muted/50"
             />
             <span className="shrink-0 text-[12px] font-bold text-asm-muted">INR</span>
           </label>

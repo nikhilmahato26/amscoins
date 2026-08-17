@@ -28,3 +28,50 @@ export function timestamp(dateString: string): string {
     hour12: false
   })
 }
+
+export interface PayoutSource {
+  method?: 'upi' | 'bank'
+  upiId?: string
+  accountName?: string
+  accountNumber?: string
+  ifsc?: string
+}
+
+export interface PayoutView {
+  method: 'upi' | 'bank'
+  badge: string
+  primary: string
+  secondary?: string
+  search: string
+  sentence: string
+}
+
+/**
+ * Derive a display view for a withdrawal payout destination. Falls back to
+ * inferring the method from which fields are present so legacy rows (no
+ * `method`) still render. The full account number is intentionally shown —
+ * the admin needs it to execute the transfer.
+ */
+export function payoutView(w: PayoutSource): PayoutView {
+  const method = w.method ?? (w.upiId ? 'upi' : 'bank')
+  const search = [w.upiId, w.accountName, w.accountNumber, w.ifsc]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+
+  if (method === 'upi') {
+    const vpa = w.upiId ?? '—'
+    return { method: 'upi', badge: 'UPI', primary: vpa, search, sentence: `via UPI ${vpa}` }
+  }
+
+  const acct = w.accountNumber ?? '—'
+  const ifsc = w.ifsc ?? '—'
+  return {
+    method: 'bank',
+    badge: 'BANK',
+    primary: `${ifsc} · A/C ${acct}`,
+    secondary: w.accountName,
+    search,
+    sentence: `to bank account ${acct} (IFSC ${ifsc}${w.accountName ? `, ${w.accountName}` : ''})`,
+  }
+}

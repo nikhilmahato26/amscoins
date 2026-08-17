@@ -1,108 +1,94 @@
 /**
  * Where a deposit actually goes.
  *
- * Every handle a user sends money to — the two USDT wallet addresses, the
- * Binance Pay ID, and the two INR support contacts — is configuration, not
- * code. It lives in the environment so a rotated wallet or a new support
- * number is a redeploy of config rather than an edit to a component.
- *
- * QR codes are the one exception: they are images, not strings, so they sit in
- * `public/payment/` and are referenced by path below. A missing file is not an
- * error — the UI falls back to the copyable address.
+ * Every handle a user sends money to now lives in the shared "website settings"
+ * document (see server `Settings` model), fetched at runtime via `useSettings`.
+ * These pure helpers derive the UI-facing payment shapes from that fetched
+ * `PublicSettings` — no build-time env, so an admin can rotate a wallet or swap
+ * a QR without a redeploy.
  */
 
-export type PaymentMethodId = 'trust-wallet' | 'binance-pay' | 'whatsapp' | 'telegram'
+import type { PublicSettings } from '@/services/api/settings'
 
+export type PaymentMethodId = 'trust-wallet' | 'binance-pay' | 'whatsapp' | 'telegram'
 export type UsdtNetwork = 'TRC20' | 'BEP20'
 
 export interface UsdtWallet {
   network: UsdtNetwork
-  /** Human label for the chain, e.g. "Tron (TRC20)". */
   chain: string
   address: string
-  /** Path under `public/`; may not exist, callers must tolerate a 404. */
+  /** Cloudinary URL; may be empty — callers tolerate a missing image. */
   qr: string
 }
 
 const read = (value: string | undefined) => (value ?? '').trim()
 
-const env = import.meta.env
-
-/* ── USDT (crypto) ──────────────────────────────────────────────── */
-
 /**
  * Only networks with a configured address are offered. Listing a chain we
  * cannot receive on is worse than not listing it — the money is unrecoverable.
  */
-export const usdtWallets: UsdtWallet[] = (
-  [
-    {
-      network: 'TRC20',
-      chain: 'Tron (TRC20)',
-      address: read(env.VITE_USDT_TRC20_ADDRESS),
-      qr: '/payment/usdt-trc20.png',
-    },
-    {
-      network: 'BEP20',
-      chain: 'BNB Smart Chain (BEP20)',
-      address: read(env.VITE_USDT_BEP20_ADDRESS),
-      qr: '/payment/usdt-bep20.png',
-    },
-  ] satisfies UsdtWallet[]
-).filter((wallet) => wallet.address.length > 0)
-
-export const binancePay = {
-  /** Binance Pay ID (numeric) or the account's pay nickname. */
-  id: read(env.VITE_BINANCE_PAY_ID),
-  /** Display name shown so the payer can confirm they hit the right account. */
-  name: read(env.VITE_BINANCE_PAY_NAME) || 'ASM Coins',
-  /** Optional `app.binance.com` deep link; the button is hidden when unset. */
-  link: read(env.VITE_BINANCE_PAY_LINK),
-  qr: '/payment/binance-pay.png',
+export function deriveUsdtWallets(s: PublicSettings): UsdtWallet[] {
+  return (
+    [
+      {
+        network: 'TRC20' as const,
+        chain: 'Tron (TRC20)',
+        address: read(s.usdtTrc20Address),
+        qr: s.usdtTrc20QrUrl,
+      },
+      {
+        network: 'BEP20' as const,
+        chain: 'BNB Smart Chain (BEP20)',
+        address: read(s.usdtBep20Address),
+        qr: s.usdtBep20QrUrl,
+      },
+    ] satisfies UsdtWallet[]
+  ).filter((w) => w.address.length > 0)
 }
 
-/* ── INR (fiat) ─────────────────────────────────────────────────── */
-
-/** Digits only, country code included — `wa.me` rejects `+`, spaces and dashes. */
-const whatsappNumber = read(env.VITE_WHATSAPP_NUMBER).replace(/\D/g, '')
-
-export const whatsapp = {
-  number: whatsappNumber,
-  /** Pretty form for display: `+91 98765 43210`. */
-  display: whatsappNumber ? `+${whatsappNumber}` : '',
+export function deriveBinancePay(s: PublicSettings) {
+  return {
+    id: read(s.binancePayId),
+    name: read(s.binancePayName) || 'ASM Coins',
+    link: read(s.binancePayLink),
+    qr: s.binancePayQrUrl,
+  }
 }
 
-/** Stored without the leading `@`; both forms are accepted in the env value. */
-const telegramUsername = read(env.VITE_TELEGRAM_USERNAME).replace(/^@/, '')
-
-export const telegram = {
-  username: telegramUsername,
-  display: telegramUsername ? `@${telegramUsername}` : '',
-  url: telegramUsername ? `https://t.me/${telegramUsername}` : '',
+export function deriveWhatsapp(s: PublicSettings) {
+  const number = read(s.whatsappNumber).replace(/\D/g, '')
+  return { number, display: number ? `+${number}` : '' }
 }
 
-/* ── Links ──────────────────────────────────────────────────────── */
+export function deriveTelegram(s: PublicSettings) {
+  const username = read(s.telegramUsername).replace(/^@/, '')
+  return {
+    username,
+    display: username ? `@${username}` : '',
+    url: username ? `https://t.me/${username}` : '',
+  }
+}
 
 /**
- * WhatsApp supports a prefilled body, so the user does not have to retype the
- * reference code. Telegram has no equivalent for a chat with a person, which is
- * why the Telegram path offers a copy button instead — see `PaymentMethodPage`.
+ * WhatsApp supports a prefilled body; Telegram person-chats do not (only bots
+ * take `?start=`), which is why the Telegram path offers a copy button instead.
  */
-export function whatsappUrl(message: string): string {
-  if (!whatsapp.number) return ''
-  return `https://wa.me/${whatsapp.number}?text=${encodeURIComponent(message)}`
+export function whatsappUrl(s: PublicSettings, message: string): string {
+  const { number } = deriveWhatsapp(s)
+  if (!number) return ''
+  return `https://wa.me/${number}?text=${encodeURIComponent(message)}`
 }
 
-/** True when the method has enough configuration to be usable. */
-export function isMethodConfigured(method: PaymentMethodId): boolean {
+/** True when the method is enabled AND has enough configuration to be usable. */
+export function isMethodConfigured(s: PublicSettings, method: PaymentMethodId): boolean {
   switch (method) {
     case 'trust-wallet':
-      return usdtWallets.length > 0
+      return s.methods.trustWallet && deriveUsdtWallets(s).length > 0
     case 'binance-pay':
-      return binancePay.id.length > 0
+      return s.methods.binancePay && deriveBinancePay(s).id.length > 0
     case 'whatsapp':
-      return whatsapp.number.length > 0
+      return s.methods.whatsapp && deriveWhatsapp(s).number.length > 0
     case 'telegram':
-      return telegram.username.length > 0
+      return s.methods.telegram && deriveTelegram(s).username.length > 0
   }
 }
