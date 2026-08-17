@@ -154,6 +154,7 @@ export function PaymentMethodPage() {
             planName={planName}
             amountPaise={amountPaise || investment.amount}
             telegramFallback={supportLink}
+            whatsappFallback={whatsappSupport}
             onBack={() => setMethod(null)}
           />
         )}
@@ -516,6 +517,7 @@ function PayScreen({
   planName,
   amountPaise,
   telegramFallback,
+  whatsappFallback,
   onBack,
 }: {
   method: PaymentMethodId
@@ -525,6 +527,8 @@ function PayScreen({
   amountPaise: number
   /** Server-configured support link, used when the client env has no username. */
   telegramFallback: string
+  /** Server-configured WhatsApp support link, used when no number is set. */
+  whatsappFallback: string
   onBack: () => void
 }) {
   const { copied, copy } = useCopy()
@@ -536,6 +540,10 @@ function PayScreen({
     `Amount: ${inr(amountPaise)}`,
     `Reference: ${investment.referenceCode}`,
   ].join('\n')
+
+  // Prefer the configured number (prefills the deposit message); fall back to
+  // the support WhatsApp link so the button mirrors the Telegram one.
+  const whatsappHref = whatsappUrl(settings, message) || whatsappFallback
 
   return (
     <motion.div variants={container} initial="hidden" animate="visible" className="flex flex-col gap-5">
@@ -610,7 +618,7 @@ function PayScreen({
         />
       )}
 
-      {/* Crypto → proof of payment goes to Telegram */}
+      {/* Crypto → proof of payment goes to WhatsApp or Telegram */}
       {method === 'usdt' && (
         <motion.section
           variants={fadeUp}
@@ -625,11 +633,28 @@ function PayScreen({
                 Now send the screenshot
               </h3>
               <p className="text-[12px] leading-relaxed text-asm-body">
-                After you transfer, send a screenshot of the transaction on Telegram along with your
-                reference code. Your deposit stays pending until an admin verifies it.
+                After you transfer, send a screenshot of the transaction on WhatsApp or Telegram
+                along with your reference code. Your deposit stays pending until an admin verifies it.
               </p>
             </div>
           </div>
+          {whatsappHref && (
+            <a
+              href={whatsappHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                'flex h-14 w-full items-center justify-center gap-2 rounded-2xl',
+                'bg-[#1FA855] text-base font-bold text-white',
+                'shadow-[0_4px_20px_-4px_rgba(31,168,85,0.5)] transition-opacity hover:opacity-90',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1FA855] focus-visible:ring-offset-2'
+              )}
+            >
+              <WhatsAppIcon className="size-5" />
+              Send screenshot on WhatsApp
+              <ExternalLink className="size-4 opacity-70" aria-hidden />
+            </a>
+          )}
           <TelegramCta href={telegramHref} label="Send screenshot on Telegram" />
         </motion.section>
       )}
