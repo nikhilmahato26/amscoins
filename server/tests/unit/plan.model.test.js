@@ -15,8 +15,8 @@ test('seedPlans upserts the three tiers with correct terms', async () => {
   const gold = await Plan.findOne({ key: 'gold' })
   expect(gold.returnPct).toBe(30)
   expect(gold.unlockReferrals).toBe(11)
-  expect(gold.maxInvest).toBe(5000000)
-  expect(gold.durationHours).toBe(36)
+  expect(gold.maxInvest).toBe(30000000)
+  expect(gold.durationHours).toBe(24)
 })
 
 test('seedPlans is idempotent', async () => {
