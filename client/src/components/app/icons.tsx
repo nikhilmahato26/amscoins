@@ -16,14 +16,6 @@ export function TetherIcon({ className }: { className?: string }) {
   )
 }
 
-export function BnbIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
-      <path d="M12 2 7.6 6.4 9.9 8.7 12 6.6l2.1 2.1 2.3-2.3L12 2ZM6.4 7.6 2 12l4.4 4.4 2.3-2.3L6.6 12l2.1-2.1L6.4 7.6Zm11.2 0-2.3 2.3L17.4 12l-2.1 2.1 2.3 2.3L22 12l-4.4-4.4ZM12 9.9 9.9 12l2.1 2.1L14.1 12 12 9.9Zm-2.1 5.4-2.3 2.3L12 22l4.4-4.4-2.3-2.3-2.1 2.1-2.1-2.1Z" />
-    </svg>
-  )
-}
-
 export function WhatsAppIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
