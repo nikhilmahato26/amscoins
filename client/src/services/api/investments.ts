@@ -21,6 +21,6 @@ export interface CreateInvestmentInput {
 }
 
 export const createInvestment = (input: CreateInvestmentInput) =>
-  apiFetch<{ investment: Investment; telegramLink: string }>('/investments', { method: 'POST', body: input })
+  apiFetch<{ investment: Investment; telegramLink: string; whatsappLink: string }>('/investments', { method: 'POST', body: input })
 
 export const getInvestments = () => apiFetch<Investment[]>('/investments')

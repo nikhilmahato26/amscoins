@@ -102,6 +102,7 @@ export function PaymentMethodPage() {
    */
   const [investment, setInvestment] = useState<Investment | null>(null)
   const [supportLink, setSupportLink] = useState<string>('')
+  const [whatsappSupport, setWhatsappSupport] = useState<string>('')
   const [method, setMethod] = useState<ChooserMethod | null>(null)
   const [pending, setPending] = useState<ChooserMethod | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -121,6 +122,7 @@ export function PaymentMethodPage() {
         const result = await createInvestment({ planKey, amount: amountPaise })
         setInvestment(result.investment)
         setSupportLink(result.telegramLink)
+        setWhatsappSupport(result.whatsappLink)
         setMethod(next)
       } catch (err) {
         setError(err instanceof ApiError ? err.message : 'Something went wrong. Please try again.')
@@ -142,6 +144,7 @@ export function PaymentMethodPage() {
             planName={planName}
             amountPaise={amountPaise || investment.amount}
             telegramFallback={supportLink}
+            whatsappFallback={whatsappSupport}
           />
         ) : (
           <PayScreen
@@ -938,9 +941,9 @@ export function QrCode({ src, alt, onMissing }: { src: string; alt: string; onMi
           setFailed(true)
           onMissing?.()
         }}
-        className="size-40 rounded-lg object-contain"
-        width={160}
-        height={160}
+        className="size-72 rounded-lg object-contain"
+        width={288}
+        height={288}
       />
       <span className="text-[11px] font-semibold text-asm-muted">Scan to pay</span>
     </div>

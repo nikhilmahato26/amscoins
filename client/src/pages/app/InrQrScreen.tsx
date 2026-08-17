@@ -5,7 +5,6 @@ import { Link } from 'react-router'
 import { WhatsAppIcon } from '@/components/app/icons'
 import {
   deriveTelegram,
-  deriveWhatsapp,
   whatsappUrl,
 } from '@/config/payment'
 import type { PublicSettings } from '@/services/api/settings'
@@ -29,15 +28,16 @@ export function InrQrScreen({
   planName,
   amountPaise,
   telegramFallback,
+  whatsappFallback,
 }: {
   settings: PublicSettings
   investment: Investment
   planName: string
   amountPaise: number
   telegramFallback: string
+  whatsappFallback: string
 }) {
   const { copied, copy } = useCopy()
-  const wa = deriveWhatsapp(settings)
   const tg = deriveTelegram(settings)
   const telegramHref = tg.url || telegramFallback
 
@@ -47,6 +47,10 @@ export function InrQrScreen({
     `Amount: ${inr(amountPaise)}`,
     `Reference: ${investment.referenceCode}`,
   ].join('\n')
+
+  // Prefer the configured number (prefills the deposit message); fall back to
+  // the support WhatsApp link so the button mirrors the Telegram one.
+  const whatsappHref = whatsappUrl(settings, message) || whatsappFallback
 
   return (
     <motion.div variants={container} initial="hidden" animate="visible" className="flex flex-col gap-5">
@@ -126,9 +130,9 @@ export function InrQrScreen({
         <p className="text-[12px] leading-relaxed text-asm-body">
           Your deposit stays pending until an admin verifies the payment.
         </p>
-        {wa.number && (
+        {whatsappHref && (
           <a
-            href={whatsappUrl(settings, message)}
+            href={whatsappHref}
             target="_blank"
             rel="noopener noreferrer"
             className={cn(

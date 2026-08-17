@@ -75,7 +75,7 @@ async function createInvestment(user, { planKey, amount, referralCode }) {
 
   email.depositSubmitted(user, investment, plan.name).catch(() => {}) // fire-and-forget
 
-  return { investment, telegramLink: env.TELEGRAM_LINK }
+  return { investment, telegramLink: env.TELEGRAM_LINK, whatsappLink: env.WHATSAPP_LINK }
 }
 
 async function approveInvestment(investmentId, adminId) {
