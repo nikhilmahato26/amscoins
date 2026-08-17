@@ -88,7 +88,7 @@ function AdjustDialog({
 
 const DIR_META: Record<Transaction['direction'], { Icon: typeof ArrowDownLeft; sign: '+' | '−'; color: string; bg: string }> = {
   credit: { Icon: ArrowDownLeft, sign: '+', color: 'text-asm-greenInk', bg: 'bg-asm-green-tint' },
-  debit:  { Icon: ArrowUpRight,  sign: '−', color: 'text-asm-red',      bg: 'bg-red-50' },
+  debit: { Icon: ArrowUpRight, sign: '−', color: 'text-asm-red', bg: 'bg-red-50' },
 }
 
 export function AdminUserDetail() {
@@ -185,7 +185,7 @@ export function AdminUserDetail() {
             </button>
             <button type="button" onClick={() => setDialog('debit')} disabled={adjust.isPending}
               className="rounded-lg border border-asm-line px-3.5 py-2 text-[12px] font-semibold text-asm-red hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-red disabled:opacity-50">
-              Return / deduct
+              Deduct
             </button>
             <button type="button" onClick={toggleFreeze} disabled={freeze.isPending || unfreeze.isPending}
               className={cn(
