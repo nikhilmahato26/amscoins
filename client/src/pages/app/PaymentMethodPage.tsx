@@ -24,7 +24,7 @@ import {
   isMethodConfigured,
   whatsappUrl,
 } from '@/config/payment'
-import type { PaymentMethodId, UsdtWallet } from '@/config/payment'
+import type { PaymentMethodId, UsdtNetwork, UsdtWallet } from '@/config/payment'
 import { usePlans, useSettings } from '@/hooks/queries'
 import { ApiError } from '@/lib/api'
 import { inr } from '@/lib/format'
@@ -106,6 +106,9 @@ export function PaymentMethodPage() {
   const [method, setMethod] = useState<ChooserMethod | null>(null)
   const [pending, setPending] = useState<ChooserMethod | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // Which USDT chain the user tapped in the chooser, so the pay screen opens on
+  // that network's wallet instead of always defaulting to the first one.
+  const [usdtNetwork, setUsdtNetwork] = useState<UsdtNetwork | undefined>()
 
   const handleSelect = useCallback(
     async (next: ChooserMethod) => {
@@ -133,6 +136,14 @@ export function PaymentMethodPage() {
     [amountPaise, hasSelection, investment, pending, planKey]
   )
 
+  const handleSelectUsdt = useCallback(
+    (network: UsdtNetwork) => {
+      setUsdtNetwork(network)
+      void handleSelect('usdt')
+    },
+    [handleSelect]
+  )
+
   /* ── Pay screen: one method, with its own instructions ── */
   if (method && investment && settings) {
     return (
@@ -155,6 +166,7 @@ export function PaymentMethodPage() {
             amountPaise={amountPaise || investment.amount}
             telegramFallback={supportLink}
             whatsappFallback={whatsappSupport}
+            preferredNetwork={usdtNetwork}
             onBack={() => setMethod(null)}
           />
         )}
@@ -339,17 +351,24 @@ export function PaymentMethodPage() {
               </div>
             </div>
 
-            <MethodButton
-              method="usdt"
-              title="USDT (TRC20 / BEP20)"
-              subtitle="Scan the QR to pay"
-              icon={<TetherIcon className="size-5 text-asm-greenInk" />}
-              iconClassName="bg-asm-green-tint"
-              settings={settings}
-              pending={pending === 'usdt'}
-              disabled={!hasSelection || Boolean(pending)}
-              onSelect={handleSelect}
-            />
+            <div className="grid grid-cols-2 gap-3">
+              <UsdtNetworkButton
+                network="TRC20"
+                subtitle="Tron network"
+                settings={settings}
+                pending={Boolean(pending) && usdtNetwork === 'TRC20'}
+                disabled={!hasSelection || Boolean(pending)}
+                onSelect={handleSelectUsdt}
+              />
+              <UsdtNetworkButton
+                network="BEP20"
+                subtitle="BNB Smart Chain"
+                settings={settings}
+                pending={Boolean(pending) && usdtNetwork === 'BEP20'}
+                disabled={!hasSelection || Boolean(pending)}
+                onSelect={handleSelectUsdt}
+              />
+            </div>
           </motion.section>
         )}
 
@@ -473,6 +492,61 @@ function MethodButton({
   )
 }
 
+/* ── USDT network tile (TRC20 / BEP20) ── */
+function UsdtNetworkButton({
+  network,
+  subtitle,
+  settings,
+  pending,
+  disabled,
+  onSelect,
+}: {
+  network: UsdtNetwork
+  subtitle: string
+  settings: PublicSettings
+  pending: boolean
+  disabled: boolean
+  onSelect: (network: UsdtNetwork) => void
+}) {
+  // Offer a chain only when USDT is enabled AND that specific network has an
+  // address configured — sending to a chain we can't receive on is unrecoverable.
+  const configured =
+    settings.methods.usdtCrypto && deriveUsdtWallets(settings).some((w) => w.network === network)
+
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(network)}
+      disabled={disabled || !configured}
+      aria-describedby={configured ? undefined : `usdt-${network}-unavailable`}
+      className={cn(
+        'group flex min-h-[92px] flex-col items-start gap-2 rounded-xl border border-asm-line bg-white p-3 text-left',
+        'transition-[border-color,box-shadow,transform] duration-200',
+        'hover:-translate-y-0.5 hover:border-asm-blue/40 hover:shadow-[0_6px_18px_-8px_rgba(11,79,216,0.35)]',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-2',
+        'disabled:pointer-events-none disabled:opacity-45'
+      )}
+    >
+      <span className="flex size-9 items-center justify-center rounded-lg bg-asm-green-tint">
+        {pending ? (
+          <Loader2 className="size-4 animate-spin text-asm-blue" aria-hidden />
+        ) : (
+          <TetherIcon className="size-5 text-asm-greenInk" />
+        )}
+      </span>
+      <span className="flex flex-col gap-0.5">
+        <span className="text-[13px] font-bold leading-tight text-asm-navy">USDT · {network}</span>
+        <span
+          id={configured ? undefined : `usdt-${network}-unavailable`}
+          className="text-[11px] leading-tight text-asm-muted"
+        >
+          {configured ? subtitle : 'Temporarily unavailable'}
+        </span>
+      </span>
+    </button>
+  )
+}
+
 /* ── Package Summary ── */
 export function PackageSummary({ planName, amountPaise }: { planName: string; amountPaise: number }) {
   return (
@@ -518,6 +592,7 @@ function PayScreen({
   amountPaise,
   telegramFallback,
   whatsappFallback,
+  preferredNetwork,
   onBack,
 }: {
   method: PaymentMethodId
@@ -529,6 +604,8 @@ function PayScreen({
   telegramFallback: string
   /** Server-configured WhatsApp support link, used when no number is set. */
   whatsappFallback: string
+  /** USDT chain the user tapped in the chooser, so the pay screen opens on it. */
+  preferredNetwork?: UsdtNetwork
   onBack: () => void
 }) {
   const { copied, copy } = useCopy()
@@ -603,7 +680,12 @@ function PayScreen({
 
       {/* Method-specific body */}
       {method === 'usdt' && (
-        <UsdtInstructions settings={settings} copied={copied} onCopy={copy} />
+        <UsdtInstructions
+          settings={settings}
+          preferredNetwork={preferredNetwork}
+          copied={copied}
+          onCopy={copy}
+        />
       )}
       {method === 'whatsapp' && (
         <ChatInstructions settings={settings} channel="whatsapp" message={message} />
@@ -682,15 +764,21 @@ function PayScreen({
 /* ── USDT wallet transfer (TRC20 / BEP20) ── */
 function UsdtInstructions({
   settings,
+  preferredNetwork,
   copied,
   onCopy,
 }: {
   settings: PublicSettings
+  preferredNetwork?: UsdtNetwork
   copied: string | null
   onCopy: (key: string, value: string) => void
 }) {
   const wallets = deriveUsdtWallets(settings)
-  const [active, setActive] = useState<UsdtWallet | undefined>(wallets[0])
+  // Open on the chain the user picked in the chooser; fall back to the first
+  // configured wallet when it isn't available.
+  const [active, setActive] = useState<UsdtWallet | undefined>(
+    () => wallets.find((w) => w.network === preferredNetwork) ?? wallets[0]
+  )
   /* Each chain has its own QR file, so a missing one is tracked per network. */
   const [hasQr, setHasQr] = useState(true)
 
