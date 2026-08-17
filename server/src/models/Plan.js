@@ -8,7 +8,7 @@ const planSchema = new Schema(
     minInvest: { type: Number, required: true }, // paise
     maxInvest: { type: Number, required: true }, // paise
     unlockReferrals: { type: Number, required: true },
-    durationHours: { type: Number, default: 36 },
+    durationHours: { type: Number, default: 24 },
     active: { type: Boolean, default: true },
   },
   { timestamps: true }

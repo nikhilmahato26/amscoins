@@ -34,3 +34,13 @@ test('passwordResetOtp includes the code and a reset subject', async () => {
   expect(msg.html).toContain('123456')
   expect(msg.to[0].address).toBe('x@y.com')
 })
+
+test('depositSubmitted renders the plan name, not an object', async () => {
+  const user = { _id: 'u1', name: 'Nikhil', email: 'n@t.com' }
+  const inv = { amount: 300000, expectedReturn: 75000, referenceCode: 'ASM-1', planKey: 'silver', createdAt: new Date() }
+  const info = await email.depositSubmitted(user, inv, 'Silver')
+  const msg = JSON.parse(info.message)
+  expect(msg.html).toContain('Silver')
+  expect(msg.html).not.toContain('ObjectId')
+  expect(msg.html).not.toContain('[object Object]')
+})

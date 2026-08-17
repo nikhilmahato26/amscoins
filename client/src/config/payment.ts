@@ -10,7 +10,7 @@
 
 import type { PublicSettings } from '@/services/api/settings'
 
-export type PaymentMethodId = 'trust-wallet' | 'binance-pay' | 'whatsapp' | 'telegram'
+export type PaymentMethodId = 'usdt' | 'whatsapp' | 'telegram'
 export type UsdtNetwork = 'TRC20' | 'BEP20'
 
 export interface UsdtWallet {
@@ -46,15 +46,6 @@ export function deriveUsdtWallets(s: PublicSettings): UsdtWallet[] {
   ).filter((w) => w.address.length > 0)
 }
 
-export function deriveBinancePay(s: PublicSettings) {
-  return {
-    id: read(s.binancePayId),
-    name: read(s.binancePayName) || 'ASM Coins',
-    link: read(s.binancePayLink),
-    qr: s.binancePayQrUrl,
-  }
-}
-
 export function deriveWhatsapp(s: PublicSettings) {
   const number = read(s.whatsappNumber).replace(/\D/g, '')
   return { number, display: number ? `+${number}` : '' }
@@ -82,10 +73,8 @@ export function whatsappUrl(s: PublicSettings, message: string): string {
 /** True when the method is enabled AND has enough configuration to be usable. */
 export function isMethodConfigured(s: PublicSettings, method: PaymentMethodId): boolean {
   switch (method) {
-    case 'trust-wallet':
-      return s.methods.trustWallet && deriveUsdtWallets(s).length > 0
-    case 'binance-pay':
-      return s.methods.binancePay && deriveBinancePay(s).id.length > 0
+    case 'usdt':
+      return s.methods.usdtCrypto && deriveUsdtWallets(s).length > 0
     case 'whatsapp':
       return s.methods.whatsapp && deriveWhatsapp(s).number.length > 0
     case 'telegram':

@@ -117,18 +117,6 @@ function fmtRefNumber(w, dateObj) {
   }
 }
 
-/**
- * Generate a deterministic 8-char anti-phishing code from the user's _id.
- */
-function antiPhishingCode(userId) {
-  const hex = String(userId || 'ASMUSER')
-  let h = 0
-  for (let i = 0; i < hex.length; i++) {
-    h = (Math.imul(31, h) + hex.charCodeAt(i)) | 0
-  }
-  return Math.abs(h).toString(36).toUpperCase().slice(0, 8).padStart(8, '0')
-}
-
 function formatAccount(upiId) {
   if (!upiId) return 'bank account'
   if (upiId.includes('@')) {
@@ -196,14 +184,7 @@ const DARK_RULES = `
     .asm-icon { stroke:#22C55E !important; }
 `
 
-/**
- * NOTE: The anti-phishing code is a deterministic hash of the user's MongoDB _id.
- * It is displayed in every email so users can spot spoofed emails that don't know
- * their personal code. To allow users to verify it on the website, consider storing
- * it in the User model (e.g. user.antiPhishingCode).
- */
 function emailShell(userId, bodyHtml) {
-  const code = antiPhishingCode(userId)
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -231,7 +212,6 @@ ${DARK_RULES.replace(/^ {4}\./gm, '    [data-ogsc] .')}
     @media only screen and (max-width: 480px) {
       .asm-shell { padding: 12px 8px !important; }
       .asm-pad { padding: 22px 18px 16px 18px !important; }
-      .asm-phish { display: block !important; text-align: left !important; padding-top: 10px !important; }
     }
   </style>
 </head>
@@ -265,19 +245,6 @@ ${DARK_RULES.replace(/^ {4}\./gm, '    [data-ogsc] .')}
                     </table>
                   </td>
 
-                  <!-- Anti-Phishing Code -->
-                  <td align="right" class="asm-phish" style="vertical-align:middle;">
-                    <table cellpadding="0" cellspacing="0" align="right">
-                      <tr>
-                        <td style="padding-right:8px;font-size:12px;font-weight:600;color:#4b5563;white-space:nowrap;">Anti-Phishing Code:</td>
-                        <td>
-                          <div style="border:1.5px solid ${C.accent};border-radius:4px;padding:4px 10px;font-size:14px;font-weight:700;letter-spacing:1.5px;color:${C.accent};background-color:${C.accentSoft};text-align:center;">
-                            ${code}
-                          </div>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
                 </tr>
               </table>
             </td>
@@ -439,7 +406,7 @@ const withdrawalInitiated = (user, w) => {
     </table>
 
     <p class="asm-muted" style="margin:24px 0 18px 0;font-size:13px;color:${C.muted};line-height:1.6;">
-      Please raise a support ticket in case of any concerns <a href="${env.FRONTEND_URL}/support" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a>. We will sort out the issue on highest priority.
+      Please raise a support ticket in case of any concerns <a href="${env.FRONTEND_URL}/app/support" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a>. We will sort out the issue on highest priority.
     </p>
 
     <p class="asm-text" style="margin:0;font-size:14px;color:${C.text};line-height:1.6;">
@@ -513,7 +480,7 @@ const withdrawalCompleted = (user, w) => {
     </p>
 
     <p class="asm-text" style="margin:0 0 20px 0;font-size:14px;color:${C.text};line-height:1.6;">
-      You can check the updated wallet balance <a href="${env.FRONTEND_URL}/wallet" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a>
+      You can check the updated wallet balance <a href="${env.FRONTEND_URL}/app/account" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a>
     </p>
 
     <!-- Table with 2 columns and borders -->
@@ -538,7 +505,7 @@ const withdrawalCompleted = (user, w) => {
     </table>
 
     <p class="asm-muted" style="margin:24px 0 18px 0;font-size:13px;color:${C.muted};line-height:1.6;">
-      Please raise a support ticket in case of any concerns <a href="${env.FRONTEND_URL}/support" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a>. We will sort out the issue on highest priority.
+      Please raise a support ticket in case of any concerns <a href="${env.FRONTEND_URL}/app/support" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a>. We will sort out the issue on highest priority.
     </p>
 
     <p class="asm-text" style="margin:0;font-size:14px;color:${C.text};line-height:1.6;">
@@ -573,7 +540,7 @@ const withdrawalRejected = (user, w) => {
     ${w.note ? `<p class="asm-muted" style="margin:0 0 16px 0;color:${C.muted};font-size:13px;">Reason: ${w.note}</p>` : ''}
 
     <p class="asm-muted" style="margin:24px 0 18px 0;font-size:13px;color:${C.muted};line-height:1.6;">
-      Please raise a support ticket in case of any concerns <a href="${env.FRONTEND_URL}/support" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a>. We will sort out the issue on highest priority.
+      Please raise a support ticket in case of any concerns <a href="${env.FRONTEND_URL}/app/support" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a>. We will sort out the issue on highest priority.
     </p>
 
     <p class="asm-text" style="margin:0;font-size:14px;color:${C.text};line-height:1.6;">
@@ -756,7 +723,7 @@ const welcome = (user) => {
     </div>
 
     <p class="asm-muted" style="margin:0 0 16px 0;font-size:13px;color:${C.muted};line-height:1.6;">
-      Need a hand? Raise a support ticket <a href="${env.FRONTEND_URL}/support" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a> any time.
+      Need a hand? Raise a support ticket <a href="${env.FRONTEND_URL}/app/support" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a> any time.
     </p>
 
     <p class="asm-text" style="margin:0;font-size:14px;color:${C.text};line-height:1.6;">
@@ -869,7 +836,7 @@ const depositApproved = (user, inv, planName) => {
     </p>
 
     <p class="asm-muted" style="margin:24px 0 18px 0;font-size:13px;color:${C.muted};line-height:1.6;">
-      Questions? Raise a support ticket <a href="${env.FRONTEND_URL}/support" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a>.
+      Questions? Raise a support ticket <a href="${env.FRONTEND_URL}/app/support" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a>.
     </p>
 
     <p class="asm-text" style="margin:0;font-size:14px;color:${C.text};line-height:1.6;">

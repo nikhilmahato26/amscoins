@@ -29,7 +29,11 @@ import type { Withdrawal } from '@/services/api/withdrawals'
 
 /* ── Constants (in rupees for UI display; converted to paise on submit) ── */
 const MIN_WITHDRAWAL_RS = 500
-const MAX_WITHDRAWAL_RS = 100_000
+const MAX_WITHDRAWAL_BY_TIER: Record<'silver' | 'gold' | 'diamond', number> = {
+  silver: 30_000,
+  gold: 50_000,
+  diamond: 1_00_000,
+}
 
 /* ── Motion variants ── */
 const container = {
@@ -77,6 +81,7 @@ export function WithdrawPage() {
   /* Balance in paise from API; convert to rupees for UI */
   const balancePaise = walletData?.balance ?? 0
   const balanceRs    = balancePaise / 100
+  const maxWithdrawalRs = MAX_WITHDRAWAL_BY_TIER[user?.tier ?? 'silver']
 
   const parsedRs  = Number.parseFloat(amount)
   const validRs   = Number.isFinite(parsedRs) && parsedRs > 0 ? parsedRs : 0
@@ -86,7 +91,7 @@ export function WithdrawPage() {
   function validate(): string | null {
     if (validRs <= 0)                         return 'Enter a valid amount.'
     if (validRs < MIN_WITHDRAWAL_RS)           return `Minimum withdrawal is ₹${rupeesCompact(MIN_WITHDRAWAL_RS)}.`
-    if (validRs > MAX_WITHDRAWAL_RS)           return `Maximum withdrawal is ₹${rupeesCompact(MAX_WITHDRAWAL_RS)}.`
+    if (validRs > maxWithdrawalRs)           return `Maximum withdrawal is ₹${rupeesCompact(maxWithdrawalRs)}.`
     if (validPaise > balancePaise)             return 'Amount exceeds your available balance.'
     if (destMode === 'saved') {
       if (!selectedMethodId)                   return 'Select a payout method.'
@@ -213,7 +218,7 @@ export function WithdrawPage() {
           <p className="px-1 text-[11px] leading-[15px] text-asm-muted">
             Min <span className="font-bold text-asm-navy">₹{rupeesCompact(MIN_WITHDRAWAL_RS)}</span>
             {' '}·{' '}
-            Max <span className="font-bold text-asm-blue">₹{rupeesCompact(MAX_WITHDRAWAL_RS)}</span>
+            Max <span className="font-bold text-asm-blue">₹{rupeesCompact(maxWithdrawalRs)}</span>
             {!walletLoading && (
               <>
                 {' '}·{' '}
@@ -406,7 +411,7 @@ export function WithdrawPage() {
               </KeyPoint>
               <KeyPoint>
                 Amount must be between <Strong>₹{rupeesCompact(MIN_WITHDRAWAL_RS)}</Strong> and{' '}
-                <Strong>₹{rupeesCompact(MAX_WITHDRAWAL_RS)}</Strong>.
+                <Strong>₹{rupeesCompact(maxWithdrawalRs)}</Strong>.
               </KeyPoint>
               <KeyPoint>
                 Need help? Tap <Strong>?</Strong> or email <Strong>support@asmcoins.com</Strong>.

@@ -49,12 +49,12 @@ const TRUST_PILLS: { Icon: LucideIcon; label: string }[] = [
   { Icon: Zap,         label: '3-Hour Payouts'       },
   { Icon: Headphones,  label: 'Daily Support'        },
   { Icon: TrendingUp,  label: '25%–40% Returns'      },
-  { Icon: Clock,       label: '36-Hour Cycles'       },
+  { Icon: Clock,       label: '24-Hour Cycles'       },
   { Icon: Wallet,      label: 'Direct UPI Payout'    },
 ]
 
 const PLATFORM_STATS: { Icon: LucideIcon; value: string; label: string; tone: 'blue' | 'green' }[] = [
-  { Icon: Clock,       value: '36 Hours', label: 'Cycle Duration',          tone: 'blue'  },
+  { Icon: Clock,       value: '24 Hours', label: 'Cycle Duration',          tone: 'blue'  },
   { Icon: TrendingUp,  value: '25%–40%',  label: 'Tier-Based Returns',      tone: 'green' },
   { Icon: Wallet,      value: '3 Hours',  label: 'UPI Payout Speed',        tone: 'blue'  },
   { Icon: ShieldCheck, value: '100%',     label: 'Capital Refund Protected', tone: 'green' },
@@ -73,15 +73,15 @@ const PLANS: {
   slug: string; name: string; returns: string; duration: string;
   min: string; max: string; unlockNote: string; accent: 'silver' | 'gold' | 'diamond'
 }[] = [
-  { slug: 'silver',  name: 'Silver Plan',  returns: '25%', duration: '36 Hours', min: '₹1,000', max: '₹10,000',   unlockNote: 'Default Tier',              accent: 'silver'  },
-  { slug: 'gold',    name: 'Gold Plan',    returns: '30%', duration: '36 Hours', min: '₹3,000', max: '₹50,000',   unlockNote: 'Unlocks with 11 referrals', accent: 'gold'    },
-  { slug: 'diamond', name: 'Diamond Plan', returns: '40%', duration: '36 Hours', min: '₹5,000', max: '₹1,00,000', unlockNote: 'Unlocks with 21 referrals', accent: 'diamond' },
+  { slug: 'silver',  name: 'Silver Plan',  returns: '25%', duration: '24 Hours', min: '₹1,000', max: '₹10,000',   unlockNote: 'Default Tier',              accent: 'silver'  },
+  { slug: 'gold',    name: 'Gold Plan',    returns: '30%', duration: '24 Hours', min: '₹3,000', max: '₹3,00,000',  unlockNote: 'Unlocks with 11 referrals', accent: 'gold'    },
+  { slug: 'diamond', name: 'Diamond Plan', returns: '40%', duration: '24 Hours', min: '₹5,000', max: '₹5,00,000',  unlockNote: 'Unlocks with 21 referrals', accent: 'diamond' },
 ]
 
 const HOW_IT_WORKS: { step: string; title: string; body: string }[] = [
   { step: '01', title: 'Create your account', body: 'Register with your email and access the Silver tier immediately.' },
   { step: '02', title: 'Deposit & start plan', body: 'Choose an amount, complete payment via Telegram QR, and your plan activates upon admin confirmation.' },
-  { step: '03', title: 'Track and withdraw',   body: 'Follow your 36-hour investment from the dashboard. Withdraw to UPI within 3 hours, or invite friends to unlock Gold & Diamond.' },
+  { step: '03', title: 'Track and withdraw',   body: 'Follow your 24-hour investment from the dashboard. Withdraw to UPI within 3 hours, or invite friends to unlock Gold & Diamond.' },
 ]
 
 /* ── Page ── */
@@ -212,7 +212,7 @@ function Hero() {
 
         {/* Subtitle */}
         <motion.p variants={fadeUp} className="mt-4 max-w-[38ch] text-[14px] leading-relaxed text-asm-body">
-          ASM Coins is a time-boxed 36-hour investment platform designed for simple deposits, fast 3-hour UPI payouts, and progressive tier returns.
+          ASM Coins is a time-boxed 24-hour investment platform designed for simple deposits, fast 3-hour UPI payouts, and progressive tier returns.
         </motion.p>
 
         {/* CTA */}

@@ -24,7 +24,7 @@ const BENEFITS: { Icon: LucideIcon; title: string; subtitle: string }[] = [
   {
     Icon: TrendingUp,
     title: 'Structured Returns',
-    subtitle: 'Calculated and paid at term maturity (36 hours)',
+    subtitle: 'Calculated and paid at term maturity (24 hours)',
   },
 ]
 
@@ -32,7 +32,7 @@ const BENEFITS: { Icon: LucideIcon; title: string; subtitle: string }[] = [
 const TIER_QUICK_PICKS: Record<Tier, { id: string; label: string; rupees: number; popular?: boolean }[]> = {
   silver: [
     { id: 's1', label: 'Min Entry', rupees: 1000 },
-    { id: 's2', label: 'Starter', rupees: 3000 },
+    { id: 's2', label: 'Starter', rupees: 2000 },
     { id: 's3', label: 'Growth', rupees: 5000, popular: true },
     { id: 's4', label: 'Max Limit', rupees: 10000 },
   ],
@@ -40,13 +40,13 @@ const TIER_QUICK_PICKS: Record<Tier, { id: string; label: string; rupees: number
     { id: 'g1', label: 'Min Entry', rupees: 3000 },
     { id: 'g2', label: 'Starter', rupees: 10000 },
     { id: 'g3', label: 'Growth', rupees: 25000, popular: true },
-    { id: 'g4', label: 'Max Limit', rupees: 50000 },
+    { id: 'g4', label: 'Max Limit', rupees: 300000 },
   ],
   diamond: [
     { id: 'd1', label: 'Min Entry', rupees: 5000 },
     { id: 'd2', label: 'Starter', rupees: 25000 },
     { id: 'd3', label: 'Growth', rupees: 50000, popular: true },
-    { id: 'd4', label: 'Max Limit', rupees: 100000 },
+    { id: 'd4', label: 'Max Limit', rupees: 500000 },
   ],
 }
 

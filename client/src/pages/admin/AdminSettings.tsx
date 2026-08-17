@@ -11,14 +11,10 @@ type FormValues = {
   inrThresholdRupees: number
   usdtTrc20Address: string
   usdtBep20Address: string
-  binancePayId: string
-  binancePayName: string
-  binancePayLink: string
   whatsappNumber: string
   telegramUsername: string
   methods: {
-    trustWallet: boolean
-    binancePay: boolean
+    usdtCrypto: boolean
     whatsapp: boolean
     telegram: boolean
     inrQr: boolean
@@ -43,9 +39,6 @@ export function AdminSettings() {
       inrThresholdRupees: settings.inrThresholdPaise / 100,
       usdtTrc20Address: settings.usdtTrc20Address,
       usdtBep20Address: settings.usdtBep20Address,
-      binancePayId: settings.binancePayId,
-      binancePayName: settings.binancePayName,
-      binancePayLink: settings.binancePayLink,
       whatsappNumber: settings.whatsappNumber,
       telegramUsername: settings.telegramUsername,
       methods: settings.methods,
@@ -57,9 +50,6 @@ export function AdminSettings() {
       inrThresholdPaise: Math.round(v.inrThresholdRupees * 100),
       usdtTrc20Address: v.usdtTrc20Address,
       usdtBep20Address: v.usdtBep20Address,
-      binancePayId: v.binancePayId,
-      binancePayName: v.binancePayName,
-      binancePayLink: v.binancePayLink,
       whatsappNumber: v.whatsappNumber,
       telegramUsername: v.telegramUsername,
       methods: v.methods,
@@ -133,25 +123,6 @@ export function AdminSettings() {
           />
         </Section>
 
-        {/* ── Binance Pay ── */}
-        <Section title="Binance Pay">
-          <Field label="Pay ID">
-            <input {...register('binancePayId')} className={inputCls} />
-          </Field>
-          <Field label="Account name">
-            <input {...register('binancePayName')} className={inputCls} />
-          </Field>
-          <Field label="Deep link (optional)">
-            <input {...register('binancePayLink')} className={inputCls} />
-          </Field>
-          <ImageUploadField
-            label="Binance barcode / QR"
-            imageKey="binance-qr"
-            currentUrl={settings.binancePayQrUrl}
-            onUploaded={onImageUploaded}
-          />
-        </Section>
-
         {/* ── Contacts ── */}
         <Section title="Contacts">
           <Field label="WhatsApp number (with country code)">
@@ -166,8 +137,7 @@ export function AdminSettings() {
         <Section title="Payment methods available">
           {(
             [
-              ['methods.trustWallet', 'Trust Wallet (USDT)'],
-              ['methods.binancePay', 'Binance Pay'],
+              ['methods.usdtCrypto', 'USDT (Crypto)'],
               ['methods.whatsapp', 'WhatsApp (INR)'],
               ['methods.telegram', 'Telegram (INR)'],
               ['methods.inrQr', 'INR direct QR'],
@@ -266,7 +236,6 @@ function ImageUploadField({
         'inr-qr': next.inrQrUrl,
         'usdt-trc20-qr': next.usdtTrc20QrUrl,
         'usdt-bep20-qr': next.usdtBep20QrUrl,
-        'binance-qr': next.binancePayQrUrl,
       }
       setPreview(map[imageKey])
       onUploaded(next)

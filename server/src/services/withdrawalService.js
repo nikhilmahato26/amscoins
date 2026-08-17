@@ -10,6 +10,7 @@ const env = require('../config/env')
 const { ApiError } = require('../middleware/errorHandler')
 const logger = require('../lib/logger').child({ service: 'withdrawal' })
 const { cacheDel } = require('../config/redis')
+const { withdrawalLimitFor } = require('../config/limits')
 
 // Resolve the payout destination from the request body: a saved payout method,
 // inline bank details, or an inline UPI id (in that order of precedence).
@@ -38,6 +39,10 @@ function destinationLabel(dest) {
 
 async function initiateWithdrawal(user, body) {
   const { amount } = body
+  const limit = withdrawalLimitFor(user.tier)
+  if (amount > limit) {
+    throw new ApiError(400, 'Amount exceeds your withdrawal limit')
+  }
   const dest = resolveDestination(user, body)
   const { tds, net } = computeTds(amount, env.TDS_PCT)
   const session = await mongoose.startSession()

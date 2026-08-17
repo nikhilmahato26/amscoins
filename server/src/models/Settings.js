@@ -4,8 +4,7 @@ const { Schema, model } = require('mongoose')
 
 const methodsSchema = new Schema(
   {
-    trustWallet: { type: Boolean, default: true },
-    binancePay: { type: Boolean, default: true },
+    usdtCrypto: { type: Boolean, default: true },
     whatsapp: { type: Boolean, default: true },
     telegram: { type: Boolean, default: true },
     inrQr: { type: Boolean, default: true },
@@ -26,11 +25,6 @@ const settingsSchema = new Schema(
     usdtBep20Address: { type: String, default: '' },
     usdtTrc20QrUrl: { type: String, default: '' },
     usdtBep20QrUrl: { type: String, default: '' },
-
-    binancePayId: { type: String, default: '' },
-    binancePayName: { type: String, default: 'ASM Coins' },
-    binancePayLink: { type: String, default: '' },
-    binancePayQrUrl: { type: String, default: '' },
 
     whatsappNumber: { type: String, default: '' },
     telegramUsername: { type: String, default: '' },
@@ -57,15 +51,10 @@ settingsSchema.methods.toPublic = function toPublic() {
     usdtBep20Address: this.usdtBep20Address,
     usdtTrc20QrUrl: this.usdtTrc20QrUrl,
     usdtBep20QrUrl: this.usdtBep20QrUrl,
-    binancePayId: this.binancePayId,
-    binancePayName: this.binancePayName,
-    binancePayLink: this.binancePayLink,
-    binancePayQrUrl: this.binancePayQrUrl,
     whatsappNumber: this.whatsappNumber,
     telegramUsername: this.telegramUsername,
     methods: {
-      trustWallet: this.methods.trustWallet,
-      binancePay: this.methods.binancePay,
+      usdtCrypto: this.methods.usdtCrypto,
       whatsapp: this.methods.whatsapp,
       telegram: this.methods.telegram,
       inrQr: this.methods.inrQr,

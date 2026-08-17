@@ -34,11 +34,11 @@ describe('Settings API', () => {
     const res = await request(app).get('/api/settings')
     expect(res.status).toBe(200)
     expect(res.body.settings.inrThresholdPaise).toBe(200000)
-    expect(res.body.settings.binancePayName).toBe('ASM Coins')
+    expect(res.body.settings.methods.usdtCrypto).toBe(true)
   })
 
   test('PUT /api/settings requires auth', async () => {
-    const res = await request(app).put('/api/settings').send({ binancePayId: 'x' })
+    const res = await request(app).put('/api/settings').send({ inrThresholdPaise: 300000 })
     expect(res.status).toBe(401)
   })
 
@@ -47,7 +47,7 @@ describe('Settings API', () => {
     const res = await request(app)
       .put('/api/settings')
       .set('Authorization', `Bearer ${tokenFor(user)}`)
-      .send({ binancePayId: 'x' })
+      .send({ inrThresholdPaise: 300000 })
     expect(res.status).toBe(403)
   })
 
@@ -61,14 +61,14 @@ describe('Settings API', () => {
         whatsappNumber: '+91 98765 43210',
         telegramUsername: '@iamhim_bss',
         inrThresholdPaise: 300000,
-        methods: { binancePay: false },
+        methods: { usdtCrypto: false },
       })
     expect(res.status).toBe(200)
     expect(res.body.settings.usdtTrc20Address).toBe('TXYZ')
     expect(res.body.settings.whatsappNumber).toBe('919876543210')
     expect(res.body.settings.telegramUsername).toBe('iamhim_bss')
     expect(res.body.settings.inrThresholdPaise).toBe(300000)
-    expect(res.body.settings.methods.binancePay).toBe(false)
+    expect(res.body.settings.methods.usdtCrypto).toBe(false)
   })
 
   test('POST image returns 503 when Cloudinary is not configured', async () => {

@@ -94,6 +94,16 @@ const STATUS_PILL: Record<Transaction['status'], string> = {
   rejected: 'bg-red-50 text-asm-red',
 }
 
+/* ── Tier-specific header gradients ── */
+// Tier-specific header gradients for the identity card. All are dark enough
+// to keep the white status pill and avatar ring legible.
+const TIER_BANNER: Record<'silver' | 'gold' | 'diamond', string> = {
+  silver: 'linear-gradient(135deg, #6B7280 0%, #9CA3AF 45%, #4B5563 100%)',
+  gold: 'linear-gradient(135deg, #B45309 0%, #F59E0B 50%, #92400E 100%)',
+  diamond: 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 45%, #1E3A8A 100%)',
+}
+const DEFAULT_BANNER = 'linear-gradient(135deg, #0B4FD8 0%, #15803D 100%)'
+
 /* ── Skeleton ── */
 function SkeletonRow() {
   return (
@@ -290,7 +300,7 @@ export function AccountPage() {
           <div
             aria-hidden
             className="h-[72px] w-full"
-            style={{ background: 'linear-gradient(135deg, #0B4FD8 0%, #15803D 100%)' }}
+            style={{ background: tier ? TIER_BANNER[tier] : DEFAULT_BANNER }}
           />
 
           {/* Status pill — sits on the gradient, reads in white */}
