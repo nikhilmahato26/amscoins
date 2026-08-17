@@ -406,7 +406,7 @@ const withdrawalInitiated = (user, w) => {
     </table>
 
     <p class="asm-muted" style="margin:24px 0 18px 0;font-size:13px;color:${C.muted};line-height:1.6;">
-      Please raise a support ticket in case of any concerns <a href="${env.FRONTEND_URL}/support" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a>. We will sort out the issue on highest priority.
+      Please raise a support ticket in case of any concerns <a href="${env.FRONTEND_URL}/app/support" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a>. We will sort out the issue on highest priority.
     </p>
 
     <p class="asm-text" style="margin:0;font-size:14px;color:${C.text};line-height:1.6;">
@@ -480,7 +480,7 @@ const withdrawalCompleted = (user, w) => {
     </p>
 
     <p class="asm-text" style="margin:0 0 20px 0;font-size:14px;color:${C.text};line-height:1.6;">
-      You can check the updated wallet balance <a href="${env.FRONTEND_URL}/wallet" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a>
+      You can check the updated wallet balance <a href="${env.FRONTEND_URL}/app/account" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a>
     </p>
 
     <!-- Table with 2 columns and borders -->
@@ -505,7 +505,7 @@ const withdrawalCompleted = (user, w) => {
     </table>
 
     <p class="asm-muted" style="margin:24px 0 18px 0;font-size:13px;color:${C.muted};line-height:1.6;">
-      Please raise a support ticket in case of any concerns <a href="${env.FRONTEND_URL}/support" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a>. We will sort out the issue on highest priority.
+      Please raise a support ticket in case of any concerns <a href="${env.FRONTEND_URL}/app/support" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a>. We will sort out the issue on highest priority.
     </p>
 
     <p class="asm-text" style="margin:0;font-size:14px;color:${C.text};line-height:1.6;">
@@ -540,7 +540,7 @@ const withdrawalRejected = (user, w) => {
     ${w.note ? `<p class="asm-muted" style="margin:0 0 16px 0;color:${C.muted};font-size:13px;">Reason: ${w.note}</p>` : ''}
 
     <p class="asm-muted" style="margin:24px 0 18px 0;font-size:13px;color:${C.muted};line-height:1.6;">
-      Please raise a support ticket in case of any concerns <a href="${env.FRONTEND_URL}/support" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a>. We will sort out the issue on highest priority.
+      Please raise a support ticket in case of any concerns <a href="${env.FRONTEND_URL}/app/support" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a>. We will sort out the issue on highest priority.
     </p>
 
     <p class="asm-text" style="margin:0;font-size:14px;color:${C.text};line-height:1.6;">
@@ -723,7 +723,7 @@ const welcome = (user) => {
     </div>
 
     <p class="asm-muted" style="margin:0 0 16px 0;font-size:13px;color:${C.muted};line-height:1.6;">
-      Need a hand? Raise a support ticket <a href="${env.FRONTEND_URL}/support" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a> any time.
+      Need a hand? Raise a support ticket <a href="${env.FRONTEND_URL}/app/support" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a> any time.
     </p>
 
     <p class="asm-text" style="margin:0;font-size:14px;color:${C.text};line-height:1.6;">
@@ -836,7 +836,7 @@ const depositApproved = (user, inv, planName) => {
     </p>
 
     <p class="asm-muted" style="margin:24px 0 18px 0;font-size:13px;color:${C.muted};line-height:1.6;">
-      Questions? Raise a support ticket <a href="${env.FRONTEND_URL}/support" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a>.
+      Questions? Raise a support ticket <a href="${env.FRONTEND_URL}/app/support" class="asm-accent" style="color:${C.accent};text-decoration:underline;">here</a>.
     </p>
 
     <p class="asm-text" style="margin:0;font-size:14px;color:${C.text};line-height:1.6;">
