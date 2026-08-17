@@ -73,7 +73,7 @@ async function createInvestment(user, { planKey, amount, referralCode }) {
 
   await cacheDel('cache:admin:stats', `cache:dashboard:${user._id}`)
 
-  email.depositSubmitted(user, investment, plan).catch(() => {}) // fire-and-forget
+  email.depositSubmitted(user, investment, plan.name).catch(() => {}) // fire-and-forget
 
   return { investment, telegramLink: env.TELEGRAM_LINK }
 }
