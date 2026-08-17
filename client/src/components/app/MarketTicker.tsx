@@ -97,7 +97,7 @@ const ROWS: Row[] = [
 const TRUST = [
   { Icon: ShieldCheck, title: 'Admin Verified', sub: 'Manual Approval' },
   { Icon: TrendingUp,  title: 'Indicative Rates', sub: 'Market Snapshot' },
-  { Icon: Clock,       title: '36-Hour Term',   sub: 'Defined Cycle' },
+  { Icon: Clock,       title: '24-Hour Term',   sub: 'Defined Cycle' },
 ]
 
 /* Row stagger variants */

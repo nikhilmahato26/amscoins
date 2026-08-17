@@ -24,7 +24,7 @@ const BENEFITS: { Icon: LucideIcon; title: string; subtitle: string }[] = [
   {
     Icon: TrendingUp,
     title: 'Structured Returns',
-    subtitle: 'Calculated and paid at term maturity (36 hours)',
+    subtitle: 'Calculated and paid at term maturity (24 hours)',
   },
 ]
 

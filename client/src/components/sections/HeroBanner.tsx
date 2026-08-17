@@ -30,7 +30,7 @@ export function HeroBanner({ className }: { className?: string }) {
       <div className="relative flex flex-col p-6">
         <div className="flex items-center gap-2">
           <span className="rounded-full border border-ruby/30 bg-ruby/20 px-[9px] py-[3px] text-[10px] font-bold leading-[15px] text-ruby">
-            36-Hour Cycles
+            24-Hour Cycles
           </span>
           <span className="flex items-center gap-1">
             <ShieldCheck className="size-3 text-gray-300" aria-hidden />

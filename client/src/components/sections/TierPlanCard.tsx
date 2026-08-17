@@ -13,7 +13,7 @@ export function TierPlanCard({
   tierLabel = 'Silver Tier',
   rate = '25%',
   period = 'Per Term',
-  duration = '36 Hours',
+  duration = '24 Hours',
   minInvestment = '₹1,000',
   roi = '25% Fixed',
   Icon = Medal,
