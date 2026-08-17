@@ -16,9 +16,8 @@ import {
 import { Link, useLocation, useSearchParams } from 'react-router'
 
 import { AppShell } from '@/components/app/AppShell'
-import { BnbIcon, TelegramIcon, TetherIcon, WhatsAppIcon } from '@/components/app/icons'
+import { TelegramIcon, TetherIcon, WhatsAppIcon } from '@/components/app/icons'
 import {
-  deriveBinancePay,
   deriveTelegram,
   deriveUsdtWallets,
   deriveWhatsapp,
@@ -52,8 +51,7 @@ export const fadeUp = {
 }
 
 const METHOD_LABEL: Record<PaymentMethodId, string> = {
-  'trust-wallet': 'Trust Wallet',
-  'binance-pay': 'Binance Pay',
+  usdt: 'USDT (Crypto)',
   whatsapp: 'WhatsApp',
   telegram: 'Telegram',
 }
@@ -98,9 +96,9 @@ export function PaymentMethodPage() {
 
   /*
    * The investment record is created once, on the first method the user picks,
-   * and then reused. Switching from Trust Wallet to Binance Pay is a change of
-   * mind about *how* to pay, not a second deposit — creating another pending
-   * record would leave the admin two rows to reconcile for one payment.
+   * and then reused. Switching between payment methods is a change of mind about
+   * *how* to pay, not a second deposit — creating another pending record would
+   * leave the admin two rows to reconcile for one payment.
    */
   const [investment, setInvestment] = useState<Investment | null>(null)
   const [supportLink, setSupportLink] = useState<string>('')
@@ -337,30 +335,17 @@ export function PaymentMethodPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <MethodButton
-                method="trust-wallet"
-                title="Trust Wallet"
-                subtitle="Send to wallet"
-                icon={<Wallet className="size-5 text-[#0500FF]" strokeWidth={2.2} aria-hidden />}
-                iconClassName="bg-[#EDF1FF]"
-                settings={settings}
-                pending={pending === 'trust-wallet'}
-                disabled={!hasSelection || Boolean(pending)}
-                onSelect={handleSelect}
-              />
-              <MethodButton
-                method="binance-pay"
-                title="Binance Pay"
-                subtitle="Pay ID transfer"
-                icon={<BnbIcon className="size-5 text-[#B8860B]" />}
-                iconClassName="bg-[#FFF7E0]"
-                settings={settings}
-                pending={pending === 'binance-pay'}
-                disabled={!hasSelection || Boolean(pending)}
-                onSelect={handleSelect}
-              />
-            </div>
+            <MethodButton
+              method="usdt"
+              title="USDT (TRC20 / BEP20)"
+              subtitle="Scan the QR to pay"
+              icon={<TetherIcon className="size-5 text-asm-greenInk" />}
+              iconClassName="bg-asm-green-tint"
+              settings={settings}
+              pending={pending === 'usdt'}
+              disabled={!hasSelection || Boolean(pending)}
+              onSelect={handleSelect}
+            />
           </motion.section>
         )}
 
@@ -606,11 +591,8 @@ function PayScreen({
       </motion.div>
 
       {/* Method-specific body */}
-      {method === 'trust-wallet' && (
+      {method === 'usdt' && (
         <UsdtInstructions settings={settings} copied={copied} onCopy={copy} />
-      )}
-      {method === 'binance-pay' && (
-        <BinanceInstructions settings={settings} copied={copied} onCopy={copy} />
       )}
       {method === 'whatsapp' && (
         <ChatInstructions settings={settings} channel="whatsapp" message={message} />
@@ -626,7 +608,7 @@ function PayScreen({
       )}
 
       {/* Crypto → proof of payment goes to Telegram */}
-      {(method === 'trust-wallet' || method === 'binance-pay') && (
+      {method === 'usdt' && (
         <motion.section
           variants={fadeUp}
           className="flex flex-col gap-3 rounded-2xl border-2 border-[#0088CC]/25 bg-[#E5F5FC] p-4"
@@ -669,7 +651,7 @@ function PayScreen({
   )
 }
 
-/* ── USDT wallet transfer (Trust Wallet) ── */
+/* ── USDT wallet transfer (TRC20 / BEP20) ── */
 function UsdtInstructions({
   settings,
   copied,
@@ -684,7 +666,7 @@ function UsdtInstructions({
   /* Each chain has its own QR file, so a missing one is tracked per network. */
   const [hasQr, setHasQr] = useState(true)
 
-  if (!active) return <UnavailableNotice method="Trust Wallet" />
+  if (!active) return <UnavailableNotice method="USDT" />
 
   return (
     <motion.section
@@ -743,75 +725,10 @@ function UsdtInstructions({
 
       <Steps
         items={[
-          `Open Trust Wallet and choose USDT on ${active.network}.`,
+          `Open your wallet and choose USDT on ${active.network}.`,
           hasQr
             ? 'Scan the QR code above, or paste the address into the recipient field.'
             : 'Paste the address above into the recipient field.',
-          'Send the USDT equivalent of your investment amount.',
-          'Screenshot the completed transaction.',
-        ]}
-      />
-    </motion.section>
-  )
-}
-
-/* ── Binance Pay ── */
-function BinanceInstructions({
-  settings,
-  copied,
-  onCopy,
-}: {
-  settings: PublicSettings
-  copied: string | null
-  onCopy: (key: string, value: string) => void
-}) {
-  const binancePay = deriveBinancePay(settings)
-  if (!binancePay.id) return <UnavailableNotice method="Binance Pay" />
-
-  return (
-    <motion.section
-      variants={fadeUp}
-      aria-label="Binance Pay details"
-      className="flex flex-col gap-4 rounded-2xl border border-asm-line bg-white p-4 shadow-[0_4px_20px_-8px_rgba(16,42,92,0.12)]"
-    >
-      <QrCode src={binancePay.qr} alt="Binance Pay QR code" />
-
-      <AddressField
-        label="Binance Pay ID"
-        value={binancePay.id}
-        copied={copied === 'binance'}
-        onCopy={() => onCopy('binance', binancePay.id)}
-      />
-
-      <div className="flex items-center justify-between rounded-xl bg-asm-tint px-3 py-2.5">
-        <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-asm-muted">
-          Account name
-        </span>
-        <span className="text-[13px] font-bold text-asm-navy">{binancePay.name}</span>
-      </div>
-
-      {binancePay.link && (
-        <a
-          href={binancePay.link}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={cn(
-            'flex h-12 w-full items-center justify-center gap-2 rounded-xl',
-            'border border-[#F0B90B]/40 bg-[#FFF7E0] text-[14px] font-bold text-[#8A6300]',
-            'transition-colors hover:bg-[#FFF1C7]',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F0B90B] focus-visible:ring-offset-2'
-          )}
-        >
-          <BnbIcon className="size-4" />
-          Open Binance Pay
-          <ExternalLink className="size-3.5 opacity-70" aria-hidden />
-        </a>
-      )}
-
-      <Steps
-        items={[
-          'Open Binance → Pay → Send.',
-          'Enter the Pay ID above and confirm the account name matches.',
           'Send the USDT equivalent of your investment amount.',
           'Screenshot the completed transaction.',
         ]}

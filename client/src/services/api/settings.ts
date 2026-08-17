@@ -9,15 +9,10 @@ export interface PublicSettings {
   usdtBep20Address: string
   usdtTrc20QrUrl: string
   usdtBep20QrUrl: string
-  binancePayId: string
-  binancePayName: string
-  binancePayLink: string
-  binancePayQrUrl: string
   whatsappNumber: string
   telegramUsername: string
   methods: {
-    trustWallet: boolean
-    binancePay: boolean
+    usdtCrypto: boolean
     whatsapp: boolean
     telegram: boolean
     inrQr: boolean
@@ -27,11 +22,11 @@ export interface PublicSettings {
 export type SettingsUpdate = Partial<
   Omit<
     PublicSettings,
-    'inrQrUrl' | 'usdtTrc20QrUrl' | 'usdtBep20QrUrl' | 'binancePayQrUrl' | 'methods'
+    'inrQrUrl' | 'usdtTrc20QrUrl' | 'usdtBep20QrUrl' | 'methods'
   >
 > & { methods?: Partial<PublicSettings['methods']> }
 
-export type SettingsImageKey = 'inr-qr' | 'usdt-trc20-qr' | 'usdt-bep20-qr' | 'binance-qr'
+export type SettingsImageKey = 'inr-qr' | 'usdt-trc20-qr' | 'usdt-bep20-qr'
 
 export async function getSettings(): Promise<PublicSettings> {
   const { settings } = await apiFetch<{ settings: PublicSettings }>('/settings')
