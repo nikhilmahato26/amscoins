@@ -22,6 +22,7 @@ export const APP_NAV_LINKS: readonly AppNavLink[] = [
   { to: '/app/withdraw', label: 'Withdraw', Icon: Wallet, end: false },
   { to: '/app/leaderboard', label: 'Leaderboard', short: 'Leaders', Icon: Trophy, end: false },
   { to: '/app/referral', label: 'Referral', Icon: Users, end: false },
+  { to: '/app/community', label: 'Community', Icon: Users, end: false },
   { to: '/app/support', label: 'Support', Icon: LifeBuoy, end: false },
   { to: '/app/account', label: 'Account', Icon: CircleUserRound, end: false },
 ]

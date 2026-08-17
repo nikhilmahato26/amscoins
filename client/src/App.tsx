@@ -58,6 +58,9 @@ const LeaderboardPage = lazy(() =>
 const SupportPage = lazy(() =>
   import('./pages/app/SupportPage').then((m) => ({ default: m.SupportPage }))
 )
+const CommunityPage = lazy(() =>
+  import('./pages/app/CommunityPage').then((m) => ({ default: m.CommunityPage }))
+)
 const AppPlaceholder = lazy(() =>
   import('./pages/placeholder/AppPlaceholder').then((m) => ({ default: m.AppPlaceholder }))
 )
@@ -232,6 +235,15 @@ export default function App() {
           element={
             <RequireAuth role="user">
               <SupportPage />
+            </RequireAuth>
+          }
+        />
+
+        <Route
+          path="/app/community"
+          element={
+            <RequireAuth role="user">
+              <CommunityPage />
             </RequireAuth>
           }
         />
