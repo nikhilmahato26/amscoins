@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { Loader2, Settings, Upload } from 'lucide-react'
 
 import { useSettings, useUpdateSettings } from '@/hooks/queries'
-import { uploadSettingsImage, type SettingsImageKey, type SettingsUpdate } from '@/services/api/settings'
+import { uploadSettingsImage, type PublicSettings, type SettingsImageKey, type SettingsUpdate } from '@/services/api/settings'
 import { cn } from '@/lib/utils'
 
 type FormValues = {
@@ -27,8 +28,14 @@ type FormValues = {
 export function AdminSettings() {
   const { data: settings, isLoading } = useSettings()
   const update = useUpdateSettings()
+  const queryClient = useQueryClient()
   const { register, handleSubmit, reset } = useForm<FormValues>()
   const [saved, setSaved] = useState(false)
+
+  /** Called after a successful image upload — keeps the ['settings'] cache fresh. */
+  function onImageUploaded(next: PublicSettings) {
+    queryClient.setQueryData(['settings'], next)
+  }
 
   useEffect(() => {
     if (!settings) return
@@ -100,6 +107,7 @@ export function AdminSettings() {
             label="INR UPI QR"
             imageKey="inr-qr"
             currentUrl={settings.inrQrUrl}
+            onUploaded={onImageUploaded}
           />
         </Section>
 
@@ -112,6 +120,7 @@ export function AdminSettings() {
             label="USDT TRC20 QR"
             imageKey="usdt-trc20-qr"
             currentUrl={settings.usdtTrc20QrUrl}
+            onUploaded={onImageUploaded}
           />
           <Field label="BEP20 (BNB) address">
             <input {...register('usdtBep20Address')} className={inputCls} />
@@ -120,6 +129,7 @@ export function AdminSettings() {
             label="USDT BEP20 QR"
             imageKey="usdt-bep20-qr"
             currentUrl={settings.usdtBep20QrUrl}
+            onUploaded={onImageUploaded}
           />
         </Section>
 
@@ -138,6 +148,7 @@ export function AdminSettings() {
             label="Binance barcode / QR"
             imageKey="binance-qr"
             currentUrl={settings.binancePayQrUrl}
+            onUploaded={onImageUploaded}
           />
         </Section>
 
@@ -232,10 +243,13 @@ function ImageUploadField({
   label,
   imageKey,
   currentUrl,
+  onUploaded,
 }: {
   label: string
   imageKey: SettingsImageKey
   currentUrl: string
+  /** Called with the full fresh PublicSettings after a successful upload. */
+  onUploaded: (next: PublicSettings) => void
 }) {
   const [busy, setBusy] = useState(false)
   const [preview, setPreview] = useState(currentUrl)
@@ -255,6 +269,7 @@ function ImageUploadField({
         'binance-qr': next.binancePayQrUrl,
       }
       setPreview(map[imageKey])
+      onUploaded(next)
     } catch {
       setError('Upload failed')
     } finally {

@@ -81,9 +81,20 @@ export function PaymentMethodPage() {
   const { data: settings } = useSettings()
   // Below the INR threshold, small deposits get a currency toggle (INR QR vs
   // USDT wallets); above it, the full four-option chooser stands.
-  const [mode, setMode] = useState<'INR' | 'USDT'>('INR')
+  // When inrQr is disabled by the admin, the INR tab is hidden and mode
+  // defaults to (and stays on) USDT — matching the same guard the other four
+  // methods use via isMethodConfigured.
+  const inrQrAvailable = settings?.methods.inrQr ?? true
+  const [mode, setMode] = useState<'INR' | 'USDT'>(() =>
+    (settings?.methods.inrQr ?? true) ? 'INR' : 'USDT'
+  )
   const threshold = settings?.inrThresholdPaise ?? 200000
   const isSmall = amountPaise > 0 && amountPaise <= threshold
+
+  // Sync mode to availability when settings first load (inrQr off → force USDT).
+  useEffect(() => {
+    if (!inrQrAvailable) setMode('USDT')
+  }, [inrQrAvailable])
 
   /*
    * The investment record is created once, on the first method the user picks,
@@ -226,7 +237,8 @@ export function PaymentMethodPage() {
          * single UPI QR screen, USDT keeps the crypto wallet options. Larger
          * deposits fall through to the full four-option chooser below.
          */}
-        {isSmall && (
+        {/* Only render the toggle when both modes are available for small deposits */}
+        {isSmall && inrQrAvailable && (
           <motion.div
             variants={fadeUp}
             role="tablist"
@@ -255,7 +267,7 @@ export function PaymentMethodPage() {
         )}
 
         {/* ── INR quick-pay (small deposits, INR mode) ── */}
-        {isSmall && mode === 'INR' && (
+        {isSmall && inrQrAvailable && mode === 'INR' && (
           <motion.section
             variants={fadeUp}
             aria-labelledby="pay-inr-qr-heading"
