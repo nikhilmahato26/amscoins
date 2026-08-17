@@ -118,7 +118,14 @@ export default function App() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
-        <Route path="/plans" element={<PlansPage />} />
+        <Route
+          path="/plans"
+          element={
+            <RequireAuth role="user">
+              <PlansPage />
+            </RequireAuth>
+          }
+        />
         <Route path="/gallery" element={<GalleryPage />} />
 
         <Route

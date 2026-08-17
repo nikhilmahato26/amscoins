@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { Clock, Lock } from 'lucide-react'
 import { Link, useNavigate } from 'react-router'
 
+import { AppShell } from '@/components/app/AppShell'
 import { TierBadge, type Tier } from '@/components/app/TierBadge'
 import { usePlans } from '@/hooks/queries'
 import { inr } from '@/lib/format'
@@ -30,74 +31,55 @@ export function PlansPage() {
   const { data: plans, isLoading, isError } = usePlans()
 
   return (
-    <div className="theme-light-home relative min-h-screen overflow-x-hidden bg-asm-tint font-jakarta text-asm-navy">
-      {/* Soft brand wash */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-        <span className="absolute -top-32 left-[8%] size-[520px] rounded-full bg-asm-blue/[0.06] blur-[140px]" />
-        <span className="absolute -right-24 top-[320px] size-[440px] rounded-full bg-asm-greenInk/[0.05] blur-[140px]" />
-      </div>
-
-      <main className="relative mx-auto w-full max-w-[1120px] px-5 py-12 sm:py-16">
-        {/* Top bar */}
-        <div className="mb-8 flex items-center justify-between">
-          <Link
-            to="/app"
-            className="inline-flex items-center gap-2 text-[13px] font-semibold text-asm-blue transition-colors hover:text-asm-blue-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue rounded"
-          >
-            <img src="/asm.png" alt="" className="size-7 rounded-lg object-contain" decoding="async" aria-hidden />
-            ASM Coins
-          </Link>
-        </div>
-
-        <header className="flex flex-col items-center text-center">
-          <span className="inline-flex items-center gap-2 rounded-full border border-asm-blue/15 bg-asm-blue-tint px-3.5 py-1.5">
-            <span className="size-1.5 rounded-full bg-asm-blue" />
-            <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-asm-blue">
-              Investment Packages
-            </span>
+    <AppShell headerVariant="root" width="wide">
+      <header className="flex flex-col items-center pt-2 text-center">
+        <span className="inline-flex items-center gap-2 rounded-full border border-asm-blue/15 bg-asm-blue-tint px-3.5 py-1.5">
+          <span className="size-1.5 rounded-full bg-asm-blue" />
+          <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-asm-blue">
+            Investment Packages
           </span>
+        </span>
 
-          <h1 className="mt-4 text-[30px] font-extrabold leading-tight tracking-tight text-asm-navy sm:text-[40px]">
-            Choose Your Growth Path
-          </h1>
-          <p className="mt-3 max-w-md text-[14px] leading-relaxed text-asm-body">
-            Structured returns. Transparent terms. No surprises.
-          </p>
-        </header>
-
-        {isLoading && (
-          <div role="status" aria-live="polite" aria-label="Loading investment plans" className="grid gap-6 pt-12 sm:grid-cols-2 lg:grid-cols-3">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="h-[360px] animate-pulse rounded-2xl border border-asm-line bg-white/70" />
-            ))}
-          </div>
-        )}
-
-        {isError && (
-          <p role="alert" className="pt-12 text-center text-sm text-asm-red">
-            Failed to load packages. Please refresh.
-          </p>
-        )}
-
-        {plans && (
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            transition={{ staggerChildren: 0.08 }}
-            className="grid gap-6 pt-12 sm:grid-cols-2 lg:grid-cols-3"
-          >
-            {plans.map((plan) => (
-              <PlanCard key={plan.key} plan={plan} />
-            ))}
-          </motion.div>
-        )}
-
-        <p className="mt-10 text-center text-[12px] leading-relaxed text-asm-muted">
-          Returns shown are plan terms, not guarantees.{' '}
-          <span className="text-asm-body">Read the full terms before you invest.</span>
+        <h1 className="mt-4 text-[30px] font-extrabold leading-tight tracking-tight text-asm-navy sm:text-[40px]">
+          Choose Your Growth Path
+        </h1>
+        <p className="mt-3 max-w-md text-[14px] leading-relaxed text-asm-body">
+          Structured returns. Transparent terms. No surprises.
         </p>
-      </main>
-    </div>
+      </header>
+
+      {isLoading && (
+        <div role="status" aria-live="polite" aria-label="Loading investment plans" className="grid gap-6 pt-12 sm:grid-cols-2 lg:grid-cols-3">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-[360px] animate-pulse rounded-2xl border border-asm-line bg-white/70" />
+          ))}
+        </div>
+      )}
+
+      {isError && (
+        <p role="alert" className="pt-12 text-center text-sm text-asm-red">
+          Failed to load packages. Please refresh.
+        </p>
+      )}
+
+      {plans && (
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          transition={{ staggerChildren: 0.08 }}
+          className="grid gap-6 pt-12 sm:grid-cols-2 lg:grid-cols-3"
+        >
+          {plans.map((plan) => (
+            <PlanCard key={plan.key} plan={plan} />
+          ))}
+        </motion.div>
+      )}
+
+      <p className="mt-10 text-center text-[12px] leading-relaxed text-asm-muted">
+        Returns shown are plan terms, not guarantees.{' '}
+        <span className="text-asm-body">Read the full terms before you invest.</span>
+      </p>
+    </AppShell>
   )
 }
 
