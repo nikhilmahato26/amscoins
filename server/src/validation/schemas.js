@@ -84,6 +84,8 @@ const resetPasswordSchema = z.object({ resetToken: z.string().min(10), password:
 const updateSettingsSchema = z
   .object({
     inrThresholdPaise: z.number().int().min(0).optional(),
+    cycleDurationHours: z.number().int().min(1).optional(),
+    autoRejectHours: z.number().int().min(1).optional(),
     usdtTrc20Address: z.string().trim().optional(),
     usdtBep20Address: z.string().trim().optional(),
     whatsappNumber: z
