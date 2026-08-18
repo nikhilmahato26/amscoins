@@ -1,26 +1,28 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { InvestmentStatsBar } from './InvestmentStatsBar'
 
-vi.mock('@/hooks/queries', () => ({
-  useInvestmentStats: vi.fn(() => ({
-    data: {
-      pendingApprovals: 3,
-      returnsAwaiting: 1,
-      aboutToComplete: 2,
-      capitalUnderManagement: 500000, // ₹5,000
-      approvalRate: 85,
-      revenueThisMonth: 100000, // ₹1,000
-    },
-    isLoading: false,
-  })),
+vi.mock('@/services/api/admin', () => ({
+  getInvestmentStats: vi.fn().mockResolvedValue({
+    pendingApprovals: 3,
+    returnsAwaiting: 1,
+    aboutToComplete: 2,
+    capitalUnderManagement: 500000,
+    approvalRate: 85,
+    revenueThisMonth: 100000,
+  }),
 }))
 
+function wrap(ui: React.ReactElement) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>)
+}
+
 describe('InvestmentStatsBar', () => {
-  it('renders 6 stat labels', () => {
-    render(<InvestmentStatsBar />)
-    expect(screen.getByText('Pending Approvals')).toBeInTheDocument()
+  it('renders 6 stat labels', async () => {
+    wrap(<InvestmentStatsBar />)
+    expect(await screen.findByText('Pending Approvals')).toBeInTheDocument()
     expect(screen.getByText('Returns Awaiting')).toBeInTheDocument()
     expect(screen.getByText('About to Complete')).toBeInTheDocument()
     expect(screen.getByText('Capital Under Mgmt')).toBeInTheDocument()

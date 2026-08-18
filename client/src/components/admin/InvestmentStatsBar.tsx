@@ -10,9 +10,9 @@ interface StatCardProps {
 
 function StatCard({ label, value, urgency = 'neutral' }: StatCardProps) {
   const accent = {
-    red: 'border-l-4 border-l-asm-red bg-red-50',
-    yellow: 'border-l-4 border-l-yellow-400 bg-yellow-50',
-    green: 'border-l-4 border-l-asm-green bg-green-50',
+    red:     'border-l-4 border-l-asm-red bg-asm-tint',
+    yellow:  'border-l-4 border-l-asm-muted bg-asm-tint',
+    green:   'border-l-4 border-l-asm-green bg-asm-tint',
     neutral: 'bg-white',
   }[urgency]
 

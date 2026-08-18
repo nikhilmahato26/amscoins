@@ -29,6 +29,7 @@ import {
   freezeUser,
   unfreezeUser,
   adjustWallet,
+  getInvestmentStats,
 } from '@/services/api/admin'
 
 // ── User queries ──
@@ -118,3 +119,11 @@ export const useAdjustWallet = () =>
   )
 export const useResolveSupport = () =>
   useAdminMutation((id: string, adminNote?: string) => resolveSupport(id, adminNote), [['admin', 'support']])
+
+export function useInvestmentStats() {
+  return useQuery({
+    queryKey: ['admin', 'investment-stats'],
+    queryFn: getInvestmentStats,
+    refetchInterval: 30_000,
+  })
+}

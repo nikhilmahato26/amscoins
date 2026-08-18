@@ -84,3 +84,14 @@ export const freezeUser = (id: string) => apiFetch<AdminUser>(`/admin/users/${id
 export const unfreezeUser = (id: string) => apiFetch<AdminUser>(`/admin/users/${id}/unfreeze`, { method: 'POST' })
 export const adjustWallet = (userId: string, input: { amount: number; direction: 'credit' | 'debit'; note?: string }) =>
   apiFetch<{ balance: number }>(`/admin/wallets/${userId}/adjust`, { method: 'POST', body: input })
+
+export interface InvestmentStats {
+  pendingApprovals: number
+  returnsAwaiting: number
+  aboutToComplete: number
+  capitalUnderManagement: number
+  approvalRate: number | null
+  revenueThisMonth: number
+}
+
+export const getInvestmentStats = () => apiFetch<InvestmentStats>('/admin/investment-stats')
