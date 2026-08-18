@@ -123,7 +123,9 @@ const rejectReturn = asyncHandler(async (req, res) => {
 })
 
 const listWithdrawals = asyncHandler(async (req, res) => {
-  const q = req.query.status ? { status: req.query.status } : {}
+  const q = req.query.status
+    ? { status: { $in: String(req.query.status).split(',') } }
+    : {}
   res.json(await Withdrawal.find(q).sort('-createdAt').populate('user', 'name email'))
 })
 

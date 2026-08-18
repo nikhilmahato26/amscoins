@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Inbox } from 'lucide-react'
+import { CheckCircle2, Inbox, XCircle } from 'lucide-react'
 import {
   useAdminWithdrawals,
   useCompleteWithdrawal,
@@ -12,143 +12,39 @@ import { SearchInput } from '@/components/admin/SearchInput'
 import { inr, payoutView } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
-/* ── Mark paid dialog ── */
-interface MarkPaidDialogProps {
-  withdrawal: AdminWithdrawal
-  onConfirm: () => void
-  onCancel: () => void
-  isPending: boolean
-}
+type Tab = 'pending' | 'history'
 
-function MarkPaidDialog({ withdrawal, onConfirm, onCancel, isPending }: MarkPaidDialogProps) {
-  const dest = payoutView(withdrawal)
+/* ── Shared helpers ── */
+function DestCell({ wd }: { wd: AdminWithdrawal }) {
+  const dest = payoutView(wd)
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="markpaid-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
-    >
-      <div className="w-full max-w-sm rounded-2xl border border-asm-line bg-white p-6 shadow-xl">
-        <h2 id="markpaid-title" className="text-[15px] font-bold text-asm-navy">
-          Mark as paid?
-        </h2>
-        <p className="mt-2 text-[13px] text-asm-body">
-          Confirm payment of{' '}
-          <strong className="font-semibold text-asm-navy">{inr(withdrawal.net)}</strong> to{' '}
-          <strong className="font-semibold text-asm-navy">{withdrawal.user.name}</strong>{' '}
-          <span className="font-mono text-asm-navy">{dest.sentence}</span>. This cannot be undone.
-        </p>
-        <div className="mt-5 flex justify-end gap-2.5">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={isPending}
-            className={cn(
-              'rounded-lg border border-asm-line px-3.5 py-2 text-[12px] font-semibold text-asm-body',
-              'hover:bg-asm-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1',
-              'disabled:cursor-not-allowed disabled:opacity-50',
-            )}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={isPending}
-            className={cn(
-              'rounded-lg bg-asm-blue px-3.5 py-2 text-[12px] font-semibold text-white',
-              'hover:bg-asm-blue-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1',
-              'disabled:cursor-not-allowed disabled:opacity-50',
-            )}
-          >
-            {isPending ? 'Confirming…' : 'Mark paid'}
-          </button>
-        </div>
-      </div>
+    <div className="flex flex-col gap-0.5">
+      <span
+        className={cn(
+          'inline-flex w-fit rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em]',
+          dest.method === 'bank' ? 'bg-asm-blue/10 text-asm-blue' : 'bg-asm-green/10 text-asm-green',
+        )}
+      >
+        {dest.badge}
+      </span>
+      <span className="font-mono text-[11px] text-asm-navy">{dest.primary}</span>
+      {dest.secondary && <span className="text-[11px] text-asm-muted">{dest.secondary}</span>}
     </div>
   )
 }
 
-/* ── Reject/refund dialog ── */
-interface RejectDialogProps {
-  withdrawal: AdminWithdrawal
-  onConfirm: (note: string) => void
-  onCancel: () => void
-  isPending: boolean
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-function RejectDialog({ withdrawal, onConfirm, onCancel, isPending }: RejectDialogProps) {
-  const [note, setNote] = useState('')
-
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="rejectwd-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
-    >
-      <div className="w-full max-w-sm rounded-2xl border border-asm-line bg-white p-6 shadow-xl">
-        <h2 id="rejectwd-title" className="text-[15px] font-bold text-asm-navy">
-          Reject &amp; refund?
-        </h2>
-        <p className="mt-2 text-[13px] text-asm-body">
-          Withdrawal of <strong className="font-semibold text-asm-navy">{inr(withdrawal.net)}</strong>{' '}
-          for <strong className="font-semibold text-asm-navy">{withdrawal.user.name}</strong> will be
-          rejected and the gross amount refunded to their wallet.
-        </p>
-        <label className="mt-4 block">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-asm-muted">
-            Note (optional)
-          </span>
-          <textarea
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            rows={3}
-            placeholder="Reason for rejection…"
-            className={cn(
-              'mt-1.5 w-full resize-none rounded-lg border border-asm-line bg-asm-tint px-3 py-2',
-              'text-[13px] text-asm-navy placeholder:text-asm-muted',
-              'focus:border-asm-blue focus:outline-none focus:ring-2 focus:ring-asm-blue focus:ring-offset-1',
-            )}
-          />
-        </label>
-        <div className="mt-5 flex justify-end gap-2.5">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={isPending}
-            className={cn(
-              'rounded-lg border border-asm-line px-3.5 py-2 text-[12px] font-semibold text-asm-body',
-              'hover:bg-asm-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1',
-              'disabled:cursor-not-allowed disabled:opacity-50',
-            )}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={() => onConfirm(note)}
-            disabled={isPending}
-            className={cn(
-              'rounded-lg bg-asm-red px-3.5 py-2 text-[12px] font-semibold text-white',
-              'hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-red focus-visible:ring-offset-1',
-              'disabled:cursor-not-allowed disabled:opacity-50',
-            )}
-          >
-            {isPending ? 'Rejecting…' : 'Reject & refund'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
+function formatTime(iso: string) {
+  return new Date(iso).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true })
 }
 
-/* ── Table skeleton ── */
-function SkeletonRow() {
+function SkeletonRow({ cols }: { cols: number }) {
   return (
     <tr className="animate-pulse border-b border-asm-line">
-      {Array.from({ length: 8 }).map((_, i) => (
+      {Array.from({ length: cols }).map((_, i) => (
         <td key={i} className="px-3 py-3">
           <span className="block h-3.5 rounded bg-asm-tint" />
         </td>
@@ -157,8 +53,108 @@ function SkeletonRow() {
   )
 }
 
-/* ── Main page ── */
-export function AdminWithdrawals() {
+function EmptyRow({ colSpan, message, sub }: { colSpan: number; message: string; sub: string }) {
+  return (
+    <tr>
+      <td colSpan={colSpan} className="px-4 py-16 text-center">
+        <span className="mx-auto flex size-10 items-center justify-center rounded-full bg-asm-tint">
+          <Inbox className="size-5 text-asm-muted" strokeWidth={1.5} aria-hidden />
+        </span>
+        <p className="mt-3 text-[13px] font-semibold text-asm-navy">{message}</p>
+        <p className="mt-1 text-[12px] text-asm-muted">{sub}</p>
+      </td>
+    </tr>
+  )
+}
+
+/* ── Mark paid dialog ── */
+function MarkPaidDialog({
+  withdrawal, onConfirm, onCancel, isPending,
+}: {
+  withdrawal: AdminWithdrawal
+  onConfirm: () => void
+  onCancel: () => void
+  isPending: boolean
+}) {
+  const dest = payoutView(withdrawal)
+  return (
+    <div role="dialog" aria-modal="true" aria-labelledby="markpaid-title"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
+    >
+      <div className="w-full max-w-sm rounded-2xl border border-asm-line bg-white p-6 shadow-xl">
+        <h2 id="markpaid-title" className="text-[15px] font-bold text-asm-navy">Mark as paid?</h2>
+        <p className="mt-2 text-[13px] text-asm-body">
+          Confirm payment of{' '}
+          <strong className="font-semibold text-asm-navy">{inr(withdrawal.net)}</strong> to{' '}
+          <strong className="font-semibold text-asm-navy">{withdrawal.user.name}</strong>{' '}
+          <span className="font-mono text-asm-navy">{dest.sentence}</span>. This cannot be undone.
+        </p>
+        <div className="mt-5 flex justify-end gap-2.5">
+          <button type="button" onClick={onCancel} disabled={isPending}
+            className={cn('rounded-lg border border-asm-line px-3.5 py-2 text-[12px] font-semibold text-asm-body',
+              'hover:bg-asm-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1',
+              'disabled:cursor-not-allowed disabled:opacity-50')}
+          >Cancel</button>
+          <button type="button" onClick={onConfirm} disabled={isPending}
+            className={cn('rounded-lg bg-asm-blue px-3.5 py-2 text-[12px] font-semibold text-white',
+              'hover:bg-asm-blue-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1',
+              'disabled:cursor-not-allowed disabled:opacity-50')}
+          >{isPending ? 'Confirming…' : 'Mark paid'}</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ── Reject dialog ── */
+function RejectDialog({
+  withdrawal, onConfirm, onCancel, isPending,
+}: {
+  withdrawal: AdminWithdrawal
+  onConfirm: (note: string) => void
+  onCancel: () => void
+  isPending: boolean
+}) {
+  const [note, setNote] = useState('')
+  return (
+    <div role="dialog" aria-modal="true" aria-labelledby="rejectwd-title"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
+    >
+      <div className="w-full max-w-sm rounded-2xl border border-asm-line bg-white p-6 shadow-xl">
+        <h2 id="rejectwd-title" className="text-[15px] font-bold text-asm-navy">Reject &amp; refund?</h2>
+        <p className="mt-2 text-[13px] text-asm-body">
+          Withdrawal of <strong className="font-semibold text-asm-navy">{inr(withdrawal.net)}</strong>{' '}
+          for <strong className="font-semibold text-asm-navy">{withdrawal.user.name}</strong> will be
+          rejected and the gross amount refunded to their wallet.
+        </p>
+        <label className="mt-4 block">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-asm-muted">Note (optional)</span>
+          <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3}
+            placeholder="Reason for rejection…"
+            className={cn('mt-1.5 w-full resize-none rounded-lg border border-asm-line bg-asm-tint px-3 py-2',
+              'text-[13px] text-asm-navy placeholder:text-asm-muted',
+              'focus:border-asm-blue focus:outline-none focus:ring-2 focus:ring-asm-blue focus:ring-offset-1')}
+          />
+        </label>
+        <div className="mt-5 flex justify-end gap-2.5">
+          <button type="button" onClick={onCancel} disabled={isPending}
+            className={cn('rounded-lg border border-asm-line px-3.5 py-2 text-[12px] font-semibold text-asm-body',
+              'hover:bg-asm-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1',
+              'disabled:cursor-not-allowed disabled:opacity-50')}
+          >Cancel</button>
+          <button type="button" onClick={() => onConfirm(note)} disabled={isPending}
+            className={cn('rounded-lg bg-asm-red px-3.5 py-2 text-[12px] font-semibold text-white',
+              'hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-red focus-visible:ring-offset-1',
+              'disabled:cursor-not-allowed disabled:opacity-50')}
+          >{isPending ? 'Rejecting…' : 'Reject & refund'}</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ── Pending tab ── */
+function PendingTab() {
   const { data, isLoading, isError } = useAdminWithdrawals('pending')
   const completeMutation = useCompleteWithdrawal()
   const rejectMutation = useRejectWithdrawal()
@@ -172,7 +168,7 @@ export function AdminWithdrawals() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
 
   const completingWithdrawal = data?.find((w) => w._id === completingId) ?? null
-  const rejectingWithdrawal = data?.find((w) => w._id === rejectingId) ?? null
+  const rejectingWithdrawal  = data?.find((w) => w._id === rejectingId)  ?? null
 
   const filtered = (data ?? []).filter((w) => {
     if (!q.trim()) return true
@@ -187,44 +183,25 @@ export function AdminWithdrawals() {
   function handleCompleteConfirm() {
     if (!completingId) return
     completeMutation.mutate([completingId], {
-      onSuccess: () => {
-        setStatusMsg('Withdrawal marked as paid.')
-        setCompletingId(null)
-      },
-      onError: () => {
-        setStatusMsg('Failed to complete withdrawal.')
-        setCompletingId(null)
-      },
+      onSuccess: () => { setStatusMsg('Withdrawal marked as paid.'); setCompletingId(null) },
+      onError:   () => { setStatusMsg('Failed to complete withdrawal.'); setCompletingId(null) },
     })
   }
 
   function handleRejectConfirm(note: string) {
     if (!rejectingId) return
     rejectMutation.mutate([rejectingId, note || undefined], {
-      onSuccess: () => {
-        setStatusMsg('Withdrawal rejected and refunded.')
-        setRejectingId(null)
-      },
-      onError: () => {
-        setStatusMsg('Failed to reject withdrawal.')
-        setRejectingId(null)
-      },
+      onSuccess: () => { setStatusMsg('Withdrawal rejected and refunded.'); setRejectingId(null) },
+      onError:   () => { setStatusMsg('Failed to reject withdrawal.'); setRejectingId(null) },
     })
   }
 
   function toggleSelect(id: string) {
     setSelected((prev) => {
       const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
+      next.has(id) ? next.delete(id) : next.add(id)
       return next
     })
-  }
-
-  function selectAll() {
-    if (!data) return
-    const pending = data.filter((w) => w.status === 'pending').map((w) => w._id)
-    setSelected(new Set(pending))
   }
 
   function handleBulkApprove() {
@@ -240,74 +217,39 @@ export function AdminWithdrawals() {
   const isMutating = completeMutation.isPending || rejectMutation.isPending || bulkMutation.isPending
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-[22px] font-bold tracking-tight text-asm-navy">Withdrawals</h1>
-        <p className="mt-0.5 text-[13px] text-asm-muted">Pending withdrawal requests awaiting payment.</p>
-      </div>
-
+    <>
       <SearchInput value={q} onChange={setQ} placeholder="Search by name, email or destination" />
 
-      {/* Bulk actions bar */}
       {selected.size > 0 && (
         <div className="flex items-center gap-3 rounded-lg border border-asm-line bg-asm-tint px-4 py-2.5">
           <span className="text-[12px] font-semibold text-asm-navy">{selected.size} selected</span>
-          <button
-            type="button"
-            onClick={handleBulkApprove}
-            disabled={isMutating}
-            className={cn(
-              'rounded-md bg-asm-blue px-3 py-1.5 text-[11px] font-semibold text-white',
+          <button type="button" onClick={handleBulkApprove} disabled={isMutating}
+            className={cn('rounded-md bg-asm-blue px-3 py-1.5 text-[11px] font-semibold text-white',
               'hover:bg-asm-blue-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1',
-              'disabled:cursor-not-allowed disabled:opacity-50',
-            )}
-          >
-            {bulkMutation.isPending ? 'Approving…' : 'Bulk approve'}
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelected(new Set())}
+              'disabled:cursor-not-allowed disabled:opacity-50')}
+          >{bulkMutation.isPending ? 'Approving…' : 'Bulk approve'}</button>
+          <button type="button" onClick={() => setSelected(new Set())}
             className="text-[12px] text-asm-muted hover:text-asm-body"
-          >
-            Clear
-          </button>
+          >Clear</button>
         </div>
       )}
 
-      {/* Status announcer */}
-      <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">
-        {statusMsg}
-      </p>
-
-      {/* Status banner */}
+      <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">{statusMsg}</p>
       {statusMsg && (
-        <p
-          className={cn(
-            'rounded-lg px-4 py-3 text-[13px] font-medium',
-            statusMsg.toLowerCase().includes('fail') || statusMsg.toLowerCase().includes('failed')
-              ? 'bg-asm-tint text-asm-red'
-              : 'bg-asm-tint text-asm-green',
-          )}
-        >
-          {statusMsg}
-        </p>
+        <p className={cn('rounded-lg px-4 py-3 text-[13px] font-medium',
+          statusMsg.toLowerCase().includes('fail') ? 'bg-asm-tint text-asm-red' : 'bg-asm-tint text-asm-green')}
+        >{statusMsg}</p>
       )}
 
-      {/* Table */}
       <div className="overflow-x-auto rounded-xl border border-asm-line bg-white shadow-[0_1px_4px_-1px_rgba(16,42,92,0.06)]">
         <table className="w-full min-w-[800px] border-collapse text-[13px]">
           <thead>
             <tr className="border-b border-asm-line bg-asm-tint text-[11px] font-bold uppercase tracking-[0.07em] text-asm-muted">
               <th scope="col" className="w-8 px-3 py-2.5">
-                <button
-                  type="button"
-                  onClick={selectAll}
+                <button type="button" aria-label="Select all pending"
+                  onClick={() => setSelected(new Set((data ?? []).filter((w) => w.status === 'pending').map((w) => w._id)))}
                   className="text-[10px] font-semibold uppercase text-asm-muted hover:text-asm-navy"
-                  aria-label="Select all pending"
-                >
-                  All
-                </button>
+                >All</button>
               </th>
               <th scope="col" className="px-3 py-2.5 text-left">User</th>
               <th scope="col" className="px-3 py-2.5 text-right">Gross</th>
@@ -320,47 +262,21 @@ export function AdminWithdrawals() {
           </thead>
           <tbody>
             {isLoading ? (
-              Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} />)
+              Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} cols={8} />)
             ) : isError ? (
-              <tr>
-                <td
-                  colSpan={8}
-                  className="px-4 py-10 text-center text-[13px] text-asm-red"
-                  role="alert"
-                >
-                  Failed to load withdrawals. Please refresh.
-                </td>
-              </tr>
+              <tr><td colSpan={8} className="px-4 py-10 text-center text-[13px] text-asm-red" role="alert">Failed to load withdrawals. Please refresh.</td></tr>
             ) : filtered.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="px-4 py-16 text-center">
-                  <span className="mx-auto flex size-10 items-center justify-center rounded-full bg-asm-tint">
-                    <Inbox className="size-5 text-asm-muted" strokeWidth={1.5} aria-hidden />
-                  </span>
-                  <p className="mt-3 text-[13px] font-semibold text-asm-navy">
-                    {q ? 'No matching withdrawals' : 'No pending withdrawals'}
-                  </p>
-                  <p className="mt-1 text-[12px] text-asm-muted">
-                    {q ? 'Try a different search.' : 'All withdrawal requests have been processed.'}
-                  </p>
-                </td>
-              </tr>
+              <EmptyRow colSpan={8}
+                message={q ? 'No matching withdrawals' : 'No pending withdrawals'}
+                sub={q ? 'Try a different search.' : 'All withdrawal requests have been processed.'}
+              />
             ) : (
               filtered.map((wd, idx) => (
-                <tr
-                  key={wd._id}
-                  className={cn(
-                    'border-b border-asm-line last:border-0',
-                    idx % 2 === 0 ? 'bg-white' : 'bg-asm-tint/40',
-                  )}
-                >
+                <tr key={wd._id} className={cn('border-b border-asm-line last:border-0', idx % 2 === 0 ? 'bg-white' : 'bg-asm-tint/40')}>
                   <td className="px-3 py-2.5">
                     {wd.status === 'pending' ? (
-                      <input
-                        type="checkbox"
-                        aria-label={`Select withdrawal for ${wd.user.name}`}
-                        checked={selected.has(wd._id)}
-                        onChange={() => toggleSelect(wd._id)}
+                      <input type="checkbox" aria-label={`Select withdrawal for ${wd.user.name}`}
+                        checked={selected.has(wd._id)} onChange={() => toggleSelect(wd._id)}
                         className="h-3.5 w-3.5 cursor-pointer accent-asm-blue"
                       />
                     ) : wd.status === 'processing' ? (
@@ -373,20 +289,11 @@ export function AdminWithdrawals() {
                       </span>
                     ) : wd.status === 'failed' ? (
                       <div className="flex flex-col gap-0.5">
-                        <span className="inline-flex items-center rounded-full bg-asm-tint px-2 py-0.5 text-[11px] font-semibold text-asm-red">
-                          Failed
-                        </span>
-                        {wd.failureReason && (
-                          <p className="text-[10px] text-asm-muted">{wd.failureReason}</p>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => retryMutation.mutate(wd._id)}
-                          disabled={retryMutation.isPending}
+                        <span className="inline-flex items-center rounded-full bg-asm-tint px-2 py-0.5 text-[11px] font-semibold text-asm-red">Failed</span>
+                        {wd.failureReason && <p className="text-[10px] text-asm-muted">{wd.failureReason}</p>}
+                        <button type="button" onClick={() => retryMutation.mutate(wd._id)} disabled={retryMutation.isPending}
                           className="mt-1 rounded px-2 py-0.5 text-[10px] font-semibold text-asm-blue underline hover:opacity-80 disabled:opacity-50"
-                        >
-                          {retryMutation.isPending ? 'Retrying…' : 'Retry'}
-                        </button>
+                        >{retryMutation.isPending ? 'Retrying…' : 'Retry'}</button>
                       </div>
                     ) : null}
                   </td>
@@ -394,67 +301,26 @@ export function AdminWithdrawals() {
                     <p className="font-medium text-asm-navy">{wd.user.name}</p>
                     <p className="text-[11px] text-asm-muted">{wd.user.email}</p>
                   </td>
-                  <td className="px-3 py-2.5 text-right font-mono tabular-nums text-asm-navy">
-                    {inr(wd.gross)}
-                  </td>
-                  <td className="px-3 py-2.5 text-right font-mono tabular-nums text-asm-body">
-                    {inr(wd.tds)}
-                  </td>
-                  <td className="px-3 py-2.5 text-right font-mono tabular-nums font-semibold text-asm-navy">
-                    {inr(wd.net)}
-                  </td>
+                  <td className="px-3 py-2.5 text-right font-mono tabular-nums text-asm-navy">{inr(wd.gross)}</td>
+                  <td className="px-3 py-2.5 text-right font-mono tabular-nums text-asm-body">{inr(wd.tds)}</td>
+                  <td className="px-3 py-2.5 text-right font-mono tabular-nums font-semibold text-asm-navy">{inr(wd.net)}</td>
+                  <td className="px-3 py-2.5"><DestCell wd={wd} /></td>
                   <td className="px-3 py-2.5">
-                    {(() => {
-                      const dest = payoutView(wd)
-                      return (
-                        <div className="flex flex-col gap-0.5">
-                          <span
-                            className={cn(
-                              'inline-flex w-fit rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em]',
-                              dest.method === 'bank' ? 'bg-asm-blue/10 text-asm-blue' : 'bg-asm-green/10 text-asm-green',
-                            )}
-                          >
-                            {dest.badge}
-                          </span>
-                          <span className="font-mono text-[11px] text-asm-navy">{dest.primary}</span>
-                          {dest.secondary && <span className="text-[11px] text-asm-muted">{dest.secondary}</span>}
-                        </div>
-                      )
-                    })()}
-                  </td>
-                  <td className="px-3 py-2.5 text-[12px] text-asm-body">
-                    {new Date(wd.createdAt).toLocaleDateString('en-IN', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric',
-                    })}
+                    <p className="text-[12px] text-asm-body">{formatDate(wd.createdAt)}</p>
+                    <p className="font-mono text-[10px] text-asm-muted">{formatTime(wd.createdAt)}</p>
                   </td>
                   <td className="px-3 py-2.5">
                     <div className="flex justify-end gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setCompletingId(wd._id)}
-                        disabled={isMutating}
-                        className={cn(
-                          'rounded-md bg-asm-blue inline-flex min-h-[40px] items-center px-3 py-1.5 text-[11px] font-semibold text-white',
+                      <button type="button" onClick={() => setCompletingId(wd._id)} disabled={isMutating}
+                        className={cn('rounded-md bg-asm-blue inline-flex min-h-[40px] items-center px-3 py-1.5 text-[11px] font-semibold text-white',
                           'hover:bg-asm-blue-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1',
-                          'disabled:cursor-not-allowed disabled:opacity-40',
-                        )}
-                      >
-                        Mark paid
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setRejectingId(wd._id)}
-                        disabled={isMutating}
-                        className={cn(
-                          'rounded-md border border-asm-line inline-flex min-h-[40px] items-center px-3 py-1.5 text-[11px] font-semibold text-asm-red',
+                          'disabled:cursor-not-allowed disabled:opacity-40')}
+                      >Mark paid</button>
+                      <button type="button" onClick={() => setRejectingId(wd._id)} disabled={isMutating}
+                        className={cn('rounded-md border border-asm-line inline-flex min-h-[40px] items-center px-3 py-1.5 text-[11px] font-semibold text-asm-red',
                           'hover:bg-asm-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-red focus-visible:ring-offset-1',
-                          'disabled:cursor-not-allowed disabled:opacity-40',
-                        )}
-                      >
-                        Reject
-                      </button>
+                          'disabled:cursor-not-allowed disabled:opacity-40')}
+                      >Reject</button>
                     </div>
                   </td>
                 </tr>
@@ -464,23 +330,164 @@ export function AdminWithdrawals() {
         </table>
       </div>
 
-      {/* Dialogs */}
       {completingWithdrawal && (
-        <MarkPaidDialog
-          withdrawal={completingWithdrawal}
-          onConfirm={handleCompleteConfirm}
-          onCancel={() => setCompletingId(null)}
-          isPending={completeMutation.isPending}
+        <MarkPaidDialog withdrawal={completingWithdrawal} onConfirm={handleCompleteConfirm}
+          onCancel={() => setCompletingId(null)} isPending={completeMutation.isPending}
         />
       )}
       {rejectingWithdrawal && (
-        <RejectDialog
-          withdrawal={rejectingWithdrawal}
-          onConfirm={handleRejectConfirm}
-          onCancel={() => setRejectingId(null)}
-          isPending={rejectMutation.isPending}
+        <RejectDialog withdrawal={rejectingWithdrawal} onConfirm={handleRejectConfirm}
+          onCancel={() => setRejectingId(null)} isPending={rejectMutation.isPending}
         />
       )}
+    </>
+  )
+}
+
+/* ── History tab ── */
+function HistoryTab() {
+  const { data, isLoading, isError } = useAdminWithdrawals('completed,rejected')
+  const [q, setQ] = useState('')
+
+  const filtered = (data ?? [])
+    .filter((w) => {
+      if (!q.trim()) return true
+      const s = q.toLowerCase()
+      return (
+        w.user.name.toLowerCase().includes(s) ||
+        w.user.email.toLowerCase().includes(s) ||
+        payoutView(w).search.includes(s)
+      )
+    })
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+
+  return (
+    <>
+      <SearchInput value={q} onChange={setQ} placeholder="Search by name, email or destination" />
+
+      <div className="overflow-x-auto rounded-xl border border-asm-line bg-white shadow-[0_1px_4px_-1px_rgba(16,42,92,0.06)]">
+        <table className="w-full min-w-[860px] border-collapse text-[13px]">
+          <thead>
+            <tr className="border-b border-asm-line bg-asm-tint text-[11px] font-bold uppercase tracking-[0.07em] text-asm-muted">
+              <th scope="col" className="px-3 py-2.5 text-left">User</th>
+              <th scope="col" className="px-3 py-2.5 text-right">Gross</th>
+              <th scope="col" className="px-3 py-2.5 text-right">TDS</th>
+              <th scope="col" className="px-3 py-2.5 text-right">Net</th>
+              <th scope="col" className="px-3 py-2.5 text-left">Destination</th>
+              <th scope="col" className="px-3 py-2.5 text-left">Requested</th>
+              <th scope="col" className="px-3 py-2.5 text-left">Settled</th>
+              <th scope="col" className="px-3 py-2.5 text-left">Status</th>
+              <th scope="col" className="px-3 py-2.5 text-left">Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} cols={9} />)
+            ) : isError ? (
+              <tr><td colSpan={9} className="px-4 py-10 text-center text-[13px] text-asm-red" role="alert">Failed to load history. Please refresh.</td></tr>
+            ) : filtered.length === 0 ? (
+              <EmptyRow colSpan={9}
+                message={q ? 'No matching records' : 'No withdrawal history yet'}
+                sub={q ? 'Try a different search.' : 'Completed and rejected withdrawals will appear here.'}
+              />
+            ) : (
+              filtered.map((wd, idx) => {
+                const isCompleted = wd.status === 'completed'
+                const settledAt = wd.completedAt ?? wd.processedAt
+                return (
+                  <tr key={wd._id} className={cn('border-b border-asm-line last:border-0', idx % 2 === 0 ? 'bg-white' : 'bg-asm-tint/40')}>
+                    <td className="px-3 py-2.5">
+                      <p className="font-medium text-asm-navy">{wd.user.name}</p>
+                      <p className="text-[11px] text-asm-muted">{wd.user.email}</p>
+                    </td>
+                    <td className="px-3 py-2.5 text-right font-mono tabular-nums text-asm-navy">{inr(wd.gross)}</td>
+                    <td className="px-3 py-2.5 text-right font-mono tabular-nums text-asm-body">{inr(wd.tds)}</td>
+                    <td className="px-3 py-2.5 text-right font-mono tabular-nums font-semibold text-asm-navy">{inr(wd.net)}</td>
+                    <td className="px-3 py-2.5"><DestCell wd={wd} /></td>
+                    <td className="px-3 py-2.5">
+                      <p className="text-[12px] text-asm-body">{formatDate(wd.createdAt)}</p>
+                      <p className="font-mono text-[10px] text-asm-muted">{formatTime(wd.createdAt)}</p>
+                    </td>
+                    <td className="px-3 py-2.5">
+                      {settledAt ? (
+                        <>
+                          <p className="text-[12px] text-asm-body">{formatDate(settledAt)}</p>
+                          <p className="font-mono text-[10px] text-asm-muted">{formatTime(settledAt)}</p>
+                        </>
+                      ) : '—'}
+                    </td>
+                    <td className="px-3 py-2.5">
+                      {isCompleted ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-asm-green-tint px-2.5 py-1 text-[11px] font-bold text-asm-greenInk">
+                          <CheckCircle2 className="size-3" strokeWidth={2.5} aria-hidden />
+                          Paid
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-[11px] font-bold text-red-600">
+                          <XCircle className="size-3" strokeWidth={2.5} aria-hidden />
+                          Rejected
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2.5 text-[12px] text-asm-muted">
+                      {wd.note ?? '—'}
+                    </td>
+                  </tr>
+                )
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+    </>
+  )
+}
+
+/* ── Main page ── */
+export function AdminWithdrawals() {
+  const [activeTab, setActiveTab] = useState<Tab>('pending')
+  const { data: pendingData } = useAdminWithdrawals('pending')
+  const pendingCount = pendingData?.filter((w) => w.status === 'pending').length ?? 0
+
+  return (
+    <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
+      <div>
+        <h1 className="text-[22px] font-bold tracking-tight text-asm-navy">Withdrawals</h1>
+        <p className="mt-0.5 text-[13px] text-asm-muted">
+          Manage pending withdrawal requests and view completed history.
+        </p>
+      </div>
+
+      {/* Tabs */}
+      <div role="tablist" aria-label="Withdrawal sections"
+        className="flex gap-1 rounded-xl border border-asm-line bg-asm-tint p-1 w-fit"
+      >
+        {(['pending', 'history'] as const).map((tab) => (
+          <button
+            key={tab}
+            role="tab"
+            type="button"
+            aria-selected={activeTab === tab}
+            onClick={() => setActiveTab(tab)}
+            className={cn(
+              'flex items-center gap-2 rounded-lg px-4 py-2 text-[13px] font-medium capitalize transition-colors',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1',
+              activeTab === tab
+                ? 'bg-white text-asm-navy shadow-[0_1px_3px_rgba(16,42,92,0.08)]'
+                : 'text-asm-muted hover:text-asm-body',
+            )}
+          >
+            {tab === 'pending' ? 'Pending' : 'History'}
+            {tab === 'pending' && pendingCount > 0 && (
+              <span className="rounded-full bg-asm-red px-1.5 py-0.5 text-[9px] font-bold text-white">
+                {pendingCount}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'pending' ? <PendingTab /> : <HistoryTab />}
     </div>
   )
 }

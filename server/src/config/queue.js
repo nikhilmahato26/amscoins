@@ -22,8 +22,8 @@ if (!DISABLED) {
   logger.info('Investment job queue initialized')
 }
 
-const autoRejectJobId = (id) => `auto-reject:${id}`
-const matureJobId = (id) => `mature:${id}`
+const autoRejectJobId = (id) => `auto-reject-${id}`
+const matureJobId = (id) => `mature-${id}`
 
 async function scheduleAutoReject(inv) {
   if (!investmentQueue) return

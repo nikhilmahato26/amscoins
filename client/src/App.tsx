@@ -52,6 +52,9 @@ const SilverTierPage = lazy(() =>
 const DepositConfirmationPage = lazy(() =>
   import('./pages/app/DepositConfirmationPage').then((m) => ({ default: m.DepositConfirmationPage }))
 )
+const InvestmentsPage = lazy(() =>
+  import('./pages/app/InvestmentsPage').then((m) => ({ default: m.InvestmentsPage }))
+)
 const AccountPage = lazy(() =>
   import('./pages/app/AccountPage').then((m) => ({ default: m.AccountPage }))
 )
@@ -78,9 +81,6 @@ const AdminLayout = lazy(() =>
 )
 const AdminDashboard = lazy(() =>
   import('./pages/admin/AdminDashboard').then((m) => ({ default: m.AdminDashboard }))
-)
-const AdminDeposits = lazy(() =>
-  import('./pages/admin/AdminDeposits').then((m) => ({ default: m.AdminDeposits }))
 )
 const AdminInvestments = lazy(() =>
   import('./pages/admin/AdminInvestments').then((m) => ({ default: m.AdminInvestments }))
@@ -213,6 +213,15 @@ export default function App() {
         />
 
         <Route
+          path="/app/investments"
+          element={
+            <RequireAuth role="user">
+              <InvestmentsPage />
+            </RequireAuth>
+          }
+        />
+
+        <Route
           path="/app/summary"
           element={
             <RequireAuth role="user">
@@ -285,7 +294,6 @@ export default function App() {
           }
         >
           <Route index element={<AdminDashboard />} />
-          <Route path="deposits" element={<AdminDeposits />} />
           <Route path="investments" element={<AdminInvestments />} />
           <Route path="withdrawals" element={<AdminWithdrawals />} />
           <Route path="users" element={<AdminUsers />} />

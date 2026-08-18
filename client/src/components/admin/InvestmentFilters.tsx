@@ -4,7 +4,7 @@ import type { AdminInvestmentParams, InvestmentSortKey } from '@/services/api/ad
 import { paisaToRupees, rupeesToPaise } from '@/lib/filters'
 import { cn } from '@/lib/utils'
 
-const TIERS = ['bronze', 'silver', 'gold', 'platinum'] as const
+const TIERS = ['silver', 'gold', 'platinum'] as const
 const SORT_OPTIONS: { label: string; value: InvestmentSortKey }[] = [
   { label: 'Newest first', value: '-createdAt' },
   { label: 'Oldest first', value: 'createdAt' },

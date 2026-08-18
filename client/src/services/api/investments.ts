@@ -8,7 +8,9 @@ export interface Investment {
   returnPct: number
   expectedReturn: number // paise
   referenceCode: string
-  status: 'pending' | 'active' | 'rejected'
+  status: 'pending' | 'active' | 'matured' | 'returned' | 'rejected'
+  returnedAt?: string
+  creditedAmount?: number
   startAt?: string
   maturesAt?: string
   createdAt: string

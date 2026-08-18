@@ -33,6 +33,14 @@ function fmt(iso: string) {
   })
 }
 
+function fmtTime(iso: string) {
+  return new Date(iso).toLocaleTimeString('en-IN', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  })
+}
+
 function fmtDuration(from: string, to: string) {
   const ms = new Date(to).getTime() - new Date(from).getTime()
   if (ms < 0) return '-'
@@ -517,7 +525,7 @@ function InvestmentTab({ data, isLoading, isError }: TabDataProps) {
               <th scope="col" className="px-3 py-2.5 text-right">Amount</th>
               <th scope="col" className="px-3 py-2.5 text-left">Reference</th>
               <th scope="col" className="px-3 py-2.5 text-left">Date</th>
-              <th scope="col" className="px-3 py-2.5 text-left">Status / Countdown</th>
+              <th scope="col" className="px-3 py-2.5 text-left">Status</th>
               <th scope="col" className="px-3 py-2.5 text-right">Actions</th>
             </tr>
           </thead>
@@ -553,8 +561,9 @@ function InvestmentTab({ data, isLoading, isError }: TabDataProps) {
                   <td className="px-3 py-2.5 font-mono text-[11px] text-asm-body">
                     <IdChip label={formatInvestId(inv.referenceCode)} />
                   </td>
-                  <td className="px-3 py-2.5 text-[12px] text-asm-body">
-                    {fmt(inv.createdAt)}
+                  <td className="px-3 py-2.5">
+                    <p className="text-[12px] text-asm-body">{fmt(inv.createdAt)}</p>
+                    <p className="font-mono text-[10px] text-asm-muted">{fmtTime(inv.createdAt)}</p>
                   </td>
                   <td className="px-3 py-2.5">
                     {inv.status === 'active' && inv.maturesAt ? (
@@ -735,8 +744,13 @@ function ReturnTab({ data, isLoading, isError }: TabDataProps) {
                   <td className="px-3 py-2.5 font-mono text-[11px] text-asm-body">
                     <IdChip label={formatInvestId(inv.referenceCode)} />
                   </td>
-                  <td className="px-3 py-2.5 text-[12px] text-asm-body">
-                    {inv.maturesAt ? fmt(inv.maturesAt) : '-'}
+                  <td className="px-3 py-2.5">
+                    {inv.maturesAt ? (
+                      <>
+                        <p className="text-[12px] text-asm-body">{fmt(inv.maturesAt)}</p>
+                        <p className="font-mono text-[10px] text-asm-muted">{fmtTime(inv.maturesAt)}</p>
+                      </>
+                    ) : '-'}
                   </td>
                   <td className="px-3 py-2.5">
                     <div className="flex justify-end gap-2">

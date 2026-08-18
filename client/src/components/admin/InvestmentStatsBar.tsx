@@ -30,25 +30,9 @@ function StatCard({ label, value, urgency = 'neutral' }: StatCardProps) {
   )
 }
 
-function SkeletonCard() {
-  return (
-    <div className="rounded-xl border border-asm-line bg-white px-4 py-3.5 shadow-[0_1px_4px_-1px_rgba(16,42,92,0.06)]">
-      <div className="h-2.5 w-24 animate-pulse rounded bg-asm-line" />
-      <div className="mt-3 h-7 w-12 animate-pulse rounded bg-asm-line" />
-    </div>
-  )
-}
 
 export function InvestmentStatsBar() {
-  const { data, isLoading } = useInvestmentStats()
-
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
-      </div>
-    )
-  }
+  const { data } = useInvestmentStats()
 
   if (!data) return null
 

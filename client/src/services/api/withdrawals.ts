@@ -13,6 +13,8 @@ export interface Withdrawal {
   status: 'pending' | 'processing' | 'completed' | 'failed' | 'rejected'
   failureReason?: string | null
   processedAt?: string | null
+  completedAt?: string | null
+  note?: string | null
   createdAt: string
 }
 
