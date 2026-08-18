@@ -69,6 +69,20 @@ describe('POST /api/admin/withdrawals/bulk-approve', () => {
     expect(res.body.approved).toBe(1)
   })
 
+  it('returns count 0 when no withdrawals are pending', async () => {
+    const token = await adminToken()
+    const user = await createUser()
+    const w = await Withdrawal.create({
+      user: user._id, gross: 500, tds: 0, net: 500, method: 'upi', upiId: 'a@b', status: 'completed'
+    })
+    const res = await request(app)
+      .post('/api/admin/withdrawals/bulk-approve')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ ids: [String(w._id)] })
+    expect(res.status).toBe(200)
+    expect(res.body.approved).toBe(0)
+  })
+
   it('returns 401 without auth', async () => {
     const res = await request(app)
       .post('/api/admin/withdrawals/bulk-approve')

@@ -361,17 +361,24 @@ export function AdminWithdrawals() {
                         onChange={() => toggleSelect(wd._id)}
                         className="h-3.5 w-3.5 cursor-pointer accent-asm-blue"
                       />
-                    ) : (
-                      <span
-                        className={cn(
-                          'inline-flex rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em]',
-                          wd.status === 'processing' && 'bg-asm-tint text-asm-blue',
-                          wd.status === 'failed' && 'bg-asm-tint text-asm-red',
-                        )}
-                      >
-                        {wd.status}
+                    ) : wd.status === 'processing' ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-asm-tint px-2 py-0.5 text-[11px] font-semibold text-asm-blue">
+                        <span className="relative flex size-2">
+                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-asm-blue opacity-75" />
+                          <span className="relative inline-flex size-2 rounded-full bg-asm-blue" />
+                        </span>
+                        Processing
                       </span>
-                    )}
+                    ) : wd.status === 'failed' ? (
+                      <div className="flex flex-col gap-0.5">
+                        <span className="inline-flex items-center rounded-full bg-asm-tint px-2 py-0.5 text-[11px] font-semibold text-asm-red">
+                          Failed
+                        </span>
+                        {wd.failureReason && (
+                          <p className="text-[10px] text-asm-muted">{wd.failureReason}</p>
+                        )}
+                      </div>
+                    ) : null}
                   </td>
                   <td className="px-3 py-2.5">
                     <p className="font-medium text-asm-navy">{wd.user.name}</p>
