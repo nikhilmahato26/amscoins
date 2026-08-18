@@ -4,6 +4,7 @@ const requireAdmin = require('../middleware/requireAdmin')
 const validate = require('../middleware/validate')
 const { adjustWalletSchema, resolveTicketSchema, returnRejectSchema } = require('../validation/schemas')
 const c = require('../controllers/adminController')
+const reportsRoutes = require('./reportsRoutes')
 
 router.use(auth, requireAdmin)
 
@@ -29,5 +30,7 @@ router.post('/wallets/:userId/adjust', validate(adjustWalletSchema), c.adjustWal
 
 router.get('/support', c.listSupport)
 router.post('/support/:id/resolve', validate(resolveTicketSchema), c.resolveSupport)
+
+router.use('/reports', reportsRoutes)
 
 module.exports = router
