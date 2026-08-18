@@ -527,10 +527,12 @@ test('runMature moves active to matured (manual mode, no credit)', async () => {
 Run: `cd server && npm test -- investment.lifecycle`
 Expected: FAIL — `runAutoReject`/`runMature` undefined and/or approve still credits wallet.
 
-- [ ] **Step 3: Modify approveInvestment (remove credit, use Settings, schedule jobs)**
+- [ ] **Step 3: Modify approveInvestment (remove credit, use Settings)**
+
+> **Note (execution ordering):** The BullMQ job **scheduling** calls in `approveInvestment` are intentionally deferred to Task 5, which creates `config/queue.js`. Do **not** add `require('../config/queue')` or any `queue.*` call in this task — the module does not exist yet and would crash every `investmentService` test. This task only changes DB state; Task 5 wires the scheduling.
 
 In `server/src/services/investmentService.js` `approveInvestment`:
-1. Add near the top of the file: `const Settings = require('../models/Settings')` and `const queue = require('../config/queue')` (queue helpers are safe no-ops without Redis/in test — see Task 5).
+1. Add near the top of the file: `const Settings = require('../models/Settings')`. (Do NOT import `../config/queue` — see the note above.)
 2. Replace the `maturesAt` computation and **delete** the `walletService.credit(...)` call inside the transaction. The block becomes:
 
 ```js
@@ -544,17 +546,11 @@ In `server/src/services/investmentService.js` `approveInvestment`:
       await inv.save({ session })
 
       // NOTE: principal is intentionally NOT credited here. Funds stay locked
-      // until maturity (see approveReturn / runMature).
+      // until maturity (see approveReturn / runMature). Job scheduling
+      // (cancelAutoReject + scheduleMature) is wired in Task 5.
 
       const user = await User.findById(inv.user).session(session)
       const referralResult = await creditReferralIfFirst(user, session)
-```
-
-3. After the transaction commits (in the `if (result)` block), schedule/cancel jobs:
-
-```js
-      await queue.cancelAutoReject(result.inv._id)
-      await queue.scheduleMature(result.inv)
 ```
 
 - [ ] **Step 4: Add runMature and runAutoReject handlers**
@@ -704,12 +700,17 @@ const PREFIX = 'asm:jobs'
 const QUEUE_NAME = 'investments'
 
 let investmentQueue = null
+let queueConnection = null
 
 if (!DISABLED) {
   const { Queue } = require('bullmq')
-  // BullMQ requires a dedicated connection with maxRetriesPerRequest:null.
-  const connection = { url: env.REDIS_URL, maxRetriesPerRequest: null }
-  investmentQueue = new Queue(QUEUE_NAME, { connection, prefix: PREFIX })
+  const IORedis = require('ioredis')
+  // BullMQ requires a DEDICATED connection with maxRetriesPerRequest:null.
+  // Build an ioredis instance from the URL (BullMQ's `connection` takes an
+  // ioredis instance or ioredis options — a bare `{ url }` is NOT valid
+  // ioredis config). Exported as `queueConnection` so the worker reuses it.
+  queueConnection = new IORedis(env.REDIS_URL, { maxRetriesPerRequest: null })
+  investmentQueue = new Queue(QUEUE_NAME, { connection: queueConnection, prefix: PREFIX })
   logger.info('Investment job queue initialized')
 }
 
@@ -739,7 +740,7 @@ async function cancelAutoReject(id) {
 }
 
 module.exports = {
-  investmentQueue, scheduleAutoReject, scheduleMature, cancelAutoReject,
+  investmentQueue, queueConnection, scheduleAutoReject, scheduleMature, cancelAutoReject,
   QUEUE_NAME, PREFIX, autoRejectJobId, matureJobId,
 }
 ```
@@ -749,16 +750,33 @@ module.exports = {
 Run: `cd server && npm test -- queue.noop`
 Expected: PASS.
 
-- [ ] **Step 6: Schedule auto-reject at creation**
+- [ ] **Step 6: Wire job scheduling into the investment service (deferred from Task 4)**
 
-In `server/src/services/investmentService.js` `createInvestment`, after the
-investment is saved and before returning, add:
+Add the queue helper import once, near the other requires at the top of
+`server/src/services/investmentService.js`:
 
 ```js
-  await require('../config/queue').scheduleAutoReject(investment)
+const queue = require('../config/queue')
 ```
 
-(Place it alongside the existing `cacheDel` / `email.depositSubmitted` calls.)
+(a) In `createInvestment`, after the investment is saved and before returning
+(alongside the existing `cacheDel` / `email.depositSubmitted` calls), add:
+
+```js
+  await queue.scheduleAutoReject(investment)
+```
+
+(b) In `approveInvestment`, in the post-commit `if (result)` block (where
+`cacheDel` and `email.depositApproved` already run), add:
+
+```js
+      await queue.cancelAutoReject(result.inv._id)
+      await queue.scheduleMature(result.inv)
+```
+
+Both are safe no-ops in test / without Redis (the helpers guard on
+`investmentQueue`). Run `cd server && npm test -- investment` afterward to
+confirm no regressions (queue helpers no-op in test).
 
 - [ ] **Step 7: Implement the worker**
 
@@ -795,7 +813,10 @@ async function runSweep() {
 async function startInvestmentWorker() {
   if (env.NODE_ENV === 'test' || !env.REDIS_URL) return null
   const { Worker, Queue } = require('bullmq')
-  const connection = { url: env.REDIS_URL, maxRetriesPerRequest: null }
+  const IORedis = require('ioredis')
+  // Dedicated connection for the worker (BullMQ requires maxRetriesPerRequest:null
+  // and its own connection separate from the Queue producer).
+  const connection = new IORedis(env.REDIS_URL, { maxRetriesPerRequest: null })
 
   worker = new Worker(QUEUE_NAME, async (job) => {
     if (job.name === 'auto-reject') return svc.runAutoReject(job.data.investmentId)
