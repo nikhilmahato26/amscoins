@@ -5,6 +5,8 @@ const bcrypt = require('bcryptjs')
 const { setupDb, clearDb, teardownDb } = require('../helpers/db')
 const app = require('../../src/app')
 const User = require('../../src/models/User')
+const Investment = require('../../src/models/Investment')
+const invSvc = require('../../src/services/investmentService')
 const { generateUniqueCode } = require('../../src/services/referralCode')
 const { seedPlans } = require('../../src/seed/seedPlans')
 
@@ -58,15 +60,22 @@ test('full lifecycle: deposit -> approve -> referral tier unlock -> withdraw', a
   expect(inv.body.telegramLink).toBeTruthy()
   await request(app).post(`/api/admin/investments/${inv.body.investment._id}/approve`).set(bearer(adminToken))
 
-  // 5. U wallet credited; R referralCount == 1.
-  const wallet = await request(app).get('/api/wallet').set(bearer(U.token))
-  expect(wallet.body.balance).toBe(200000)
+  // 5. Lock-till-maturity: funds are NOT in the wallet at approval. Referral
+  //    reward still fires. Then drive the investment to maturity + return so
+  //    the wallet is credited principal (200000) + return (25% = 50000).
+  expect((await request(app).get('/api/wallet').set(bearer(U.token))).body.balance).toBe(0)
   expect((await User.findById(R.user.id)).referralCount).toBe(1)
 
-  // 6. U withdraws ₹1,000 -> net 95000, wallet 100000.
+  await Investment.updateOne({ _id: inv.body.investment._id }, { $set: { maturesAt: new Date(Date.now() - 1000) } })
+  await invSvc.runMature(inv.body.investment._id) // active -> matured (manual mode)
+  await invSvc.approveReturn(inv.body.investment._id, R.user.id) // matured -> returned, credit 250000
+  const wallet = await request(app).get('/api/wallet').set(bearer(U.token))
+  expect(wallet.body.balance).toBe(250000)
+
+  // 6. U withdraws ₹1,000 -> net 95000, wallet 150000.
   const wd = await request(app).post('/api/withdrawals').set(bearer(U.token)).send({ amount: 100000, upiId: 'u@upi' })
   expect(wd.body.net).toBe(95000)
-  expect((await request(app).get('/api/wallet').set(bearer(U.token))).body.balance).toBe(100000)
+  expect((await request(app).get('/api/wallet').set(bearer(U.token))).body.balance).toBe(150000)
 
   // 7. Admin completes the withdrawal.
   const complete = await request(app).post(`/api/admin/withdrawals/${wd.body._id}/complete`).set(bearer(adminToken))
