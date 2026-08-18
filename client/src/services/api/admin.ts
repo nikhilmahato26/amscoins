@@ -34,6 +34,7 @@ export interface AdminUser {
   status: 'active' | 'frozen'
   tier: Tier
   referralCount: number
+  totalInvested: number
   createdAt: string
 }
 
@@ -68,6 +69,12 @@ export interface AdminInvestmentParams {
   dateTo?: string
   q?: string
   sort?: InvestmentSortKey
+}
+
+export interface AdminUsersParams {
+  q?: string
+  investor?: 'true' | 'false'
+  sort?: 'invested' | '-invested'
 }
 
 export const adminStats = () => apiFetch<AdminStats>('/admin/stats')
@@ -108,8 +115,17 @@ export const completeWithdrawal = (id: string, note?: string) =>
 export const rejectWithdrawal = (id: string, note?: string) =>
   apiFetch<Withdrawal>(`/admin/withdrawals/${id}/reject`, { method: 'POST', body: { note } })
 
-export const adminUsers = (q = '') =>
-  apiFetch<AdminUser[]>(`/admin/users${q ? `?q=${encodeURIComponent(q)}` : ''}`)
+export const adminUsers = (params: AdminUsersParams | string = '') => {
+  if (typeof params === 'string') {
+    return apiFetch<AdminUser[]>(`/admin/users${params ? `?q=${encodeURIComponent(params)}` : ''}`)
+  }
+  const qs = new URLSearchParams()
+  if (params.q)        qs.set('q', params.q)
+  if (params.investor) qs.set('investor', params.investor)
+  if (params.sort)     qs.set('sort', params.sort)
+  const s = qs.toString()
+  return apiFetch<AdminUser[]>(`/admin/users${s ? `?${s}` : ''}`)
+}
 export const adminUserDetail = (id: string) => apiFetch<AdminUserDetail>(`/admin/users/${id}`)
 export const freezeUser = (id: string) => apiFetch<AdminUser>(`/admin/users/${id}/freeze`, { method: 'POST' })
 export const unfreezeUser = (id: string) => apiFetch<AdminUser>(`/admin/users/${id}/unfreeze`, { method: 'POST' })

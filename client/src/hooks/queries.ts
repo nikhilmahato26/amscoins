@@ -22,6 +22,7 @@ import {
   rejectReturn,
   type RejectReturnBody,
   type AdminInvestmentParams,
+  type AdminUsersParams,
   adminWithdrawals,
   completeWithdrawal,
   rejectWithdrawal,
@@ -83,8 +84,12 @@ export const useAdminInvestments = (params: AdminInvestmentParams | string = 'pe
   })
 export const useAdminWithdrawals = (status = 'pending') =>
   useQuery({ queryKey: ['admin', 'withdrawals', status], queryFn: () => adminWithdrawals(status) })
-export const useAdminUsers = (q = '') =>
-  useQuery({ queryKey: ['admin', 'users', q], queryFn: () => adminUsers(q) })
+export function useAdminUsers(params: AdminUsersParams | string = '') {
+  return useQuery({
+    queryKey: ['admin', 'users', params],
+    queryFn: () => adminUsers(params),
+  })
+}
 export const useAdminUserDetail = (id: string) =>
   useQuery({ queryKey: ['admin', 'user', id], queryFn: () => adminUserDetail(id), enabled: !!id })
 export const useAdminSupport = (status = 'open') =>
