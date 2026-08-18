@@ -12,7 +12,9 @@ const walletService = require('../services/walletService')
 const { cacheGet, cacheSet, cacheDel } = require('../config/redis')
 
 const listInvestments = asyncHandler(async (req, res) => {
-  const q = req.query.status ? { status: req.query.status } : {}
+  // Accept a single status or a comma-separated list (e.g. "returned,rejected")
+  // so the admin UI can drive the Investment / Return / History sections.
+  const q = req.query.status ? { status: { $in: String(req.query.status).split(',') } } : {}
   res.json(await Investment.find(q).sort('-createdAt').populate('user', 'name email'))
 })
 
@@ -23,6 +25,15 @@ const approveInvestment = asyncHandler(async (req, res) =>
 const rejectInvestment = asyncHandler(async (req, res) =>
   res.json(await invSvc.rejectInvestment(req.params.id, req.user._id, req.body && req.body.note))
 )
+
+const approveReturn = asyncHandler(async (req, res) =>
+  res.json(await invSvc.approveReturn(req.params.id, req.user._id))
+)
+
+const rejectReturn = asyncHandler(async (req, res) => {
+  const { reason, amount } = req.body
+  res.json(await invSvc.rejectReturn(req.params.id, req.user._id, { reason, amount }))
+})
 
 const listWithdrawals = asyncHandler(async (req, res) => {
   const q = req.query.status ? { status: req.query.status } : {}
@@ -125,6 +136,8 @@ module.exports = {
   listInvestments,
   approveInvestment,
   rejectInvestment,
+  approveReturn,
+  rejectReturn,
   listWithdrawals,
   completeWithdrawal,
   rejectWithdrawal,

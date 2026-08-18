@@ -107,10 +107,16 @@ const updateSettingsSchema = z
     message: 'Provide at least one field to update',
   })
 
+const returnRejectSchema = z.object({
+  reason: z.string().min(1),
+  amount: z.number().int().min(0),
+})
+
 module.exports = {
   registerSchema,
   loginSchema,
   createInvestmentSchema,
+  returnRejectSchema,
   createWithdrawalSchema,
   payoutMethodSchema,
   updateProfileSchema,
