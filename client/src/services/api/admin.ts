@@ -142,3 +142,18 @@ export interface InvestmentStats {
 }
 
 export const getInvestmentStats = () => apiFetch<InvestmentStats>('/admin/investment-stats')
+
+export type ReportType = 'monthly' | 'conversion' | 'roi' | 'performance'
+
+export interface ReportParams {
+  from?: string
+  to?: string
+}
+
+export const getReport = (type: ReportType, params: ReportParams = {}) => {
+  const qs = new URLSearchParams()
+  if (params.from) qs.set('from', params.from)
+  if (params.to)   qs.set('to', params.to)
+  const s = qs.toString()
+  return apiFetch<unknown>(`/admin/reports/${type}${s ? `?${s}` : ''}`)
+}

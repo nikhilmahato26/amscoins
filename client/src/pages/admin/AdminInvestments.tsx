@@ -17,6 +17,7 @@ import { SearchInput } from '@/components/admin/SearchInput'
 import { InvestmentCountdown } from '@/components/admin/InvestmentCountdown'
 import { InvestmentStatsBar } from '@/components/admin/InvestmentStatsBar'
 import { InvestmentFilters } from '@/components/admin/InvestmentFilters'
+import { ExportButton } from '@/components/admin/ExportButton'
 import { parseUrlFilters, filtersToSearch } from '@/lib/filters'
 import { inr } from '@/lib/format'
 import { formatInvestId, IdChip } from '@/lib/ids'
@@ -921,11 +922,12 @@ export function AdminInvestments() {
 
       <InvestmentFilters params={filterParams} onChange={handleFiltersChange} />
 
-      <div
-        role="tablist"
-        aria-label="Investment sections"
-        className="flex gap-1 rounded-xl border border-asm-line bg-asm-tint p-1"
-      >
+      <div className="flex items-center justify-between gap-3">
+        <div
+          role="tablist"
+          aria-label="Investment sections"
+          className="flex flex-1 gap-1 rounded-xl border border-asm-line bg-asm-tint p-1"
+        >
         {TABS.map(({ id, label }) => (
           <button
             key={id}
@@ -959,6 +961,8 @@ export function AdminInvestments() {
             )}
           </button>
         ))}
+        </div>
+        <ExportButton investments={data ?? []} filename={`investments-${activeTab}.csv`} />
       </div>
 
       <div

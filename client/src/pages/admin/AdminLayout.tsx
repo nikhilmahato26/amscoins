@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router'
 import { AnimatePresence, motion } from 'framer-motion'
-import { LayoutDashboard, ArrowDownToLine, ArrowUpFromLine, TrendingUp, Users, LifeBuoy, LogOut, Menu, Settings, X } from 'lucide-react'
+import { LayoutDashboard, ArrowDownToLine, ArrowUpFromLine, TrendingUp, Users, LifeBuoy, LogOut, Menu, Settings, X, BarChart2 } from 'lucide-react'
 import { useAuth } from '@/auth/AuthContext'
 import { authService } from '@/services/authService'
 import { NotificationBell } from '@/components/admin/NotificationBell'
@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { to: '/admin/withdrawals', label: 'Withdrawals', icon: ArrowUpFromLine, end: false },
   { to: '/admin/users', label: 'Users', icon: Users, end: false },
   { to: '/admin/support', label: 'Support', icon: LifeBuoy, end: false },
+  { to: '/admin/reports', label: 'Reports', icon: BarChart2, end: false },
   { to: '/admin/settings', label: 'Settings', icon: Settings, end: false },
 ] as const
 
