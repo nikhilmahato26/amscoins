@@ -49,6 +49,12 @@ const InvestSummaryPage = lazy(() =>
 const SilverTierPage = lazy(() =>
   import('./pages/app/SilverTierPage').then((m) => ({ default: m.SilverTierPage }))
 )
+const DepositConfirmationPage = lazy(() =>
+  import('./pages/app/DepositConfirmationPage').then((m) => ({ default: m.DepositConfirmationPage }))
+)
+const InvestmentsPage = lazy(() =>
+  import('./pages/app/InvestmentsPage').then((m) => ({ default: m.InvestmentsPage }))
+)
 const AccountPage = lazy(() =>
   import('./pages/app/AccountPage').then((m) => ({ default: m.AccountPage }))
 )
@@ -76,8 +82,8 @@ const AdminLayout = lazy(() =>
 const AdminDashboard = lazy(() =>
   import('./pages/admin/AdminDashboard').then((m) => ({ default: m.AdminDashboard }))
 )
-const AdminDeposits = lazy(() =>
-  import('./pages/admin/AdminDeposits').then((m) => ({ default: m.AdminDeposits }))
+const AdminInvestments = lazy(() =>
+  import('./pages/admin/AdminInvestments').then((m) => ({ default: m.AdminInvestments }))
 )
 const AdminWithdrawals = lazy(() =>
   import('./pages/admin/AdminWithdrawals').then((m) => ({ default: m.AdminWithdrawals }))
@@ -93,6 +99,9 @@ const AdminUserDetail = lazy(() =>
 )
 const AdminSettings = lazy(() =>
   import('./pages/admin/AdminSettings').then((m) => ({ default: m.AdminSettings }))
+)
+const AdminReports = lazy(() =>
+  import('./pages/admin/AdminReports').then((m) => ({ default: m.AdminReports }))
 )
 
 /** Shown while a route chunk downloads. Announced, so it is not a silent gap. */
@@ -177,6 +186,15 @@ export default function App() {
         />
 
         <Route
+          path="/app/invest/confirm/:id"
+          element={
+            <RequireAuth role="user">
+              <DepositConfirmationPage />
+            </RequireAuth>
+          }
+        />
+
+        <Route
           path="/app/benefits"
           element={
             <RequireAuth role="user">
@@ -190,6 +208,15 @@ export default function App() {
           element={
             <RequireAuth role="user">
               <DashboardPage />
+            </RequireAuth>
+          }
+        />
+
+        <Route
+          path="/app/investments"
+          element={
+            <RequireAuth role="user">
+              <InvestmentsPage />
             </RequireAuth>
           }
         />
@@ -267,12 +294,13 @@ export default function App() {
           }
         >
           <Route index element={<AdminDashboard />} />
-          <Route path="deposits" element={<AdminDeposits />} />
+          <Route path="investments" element={<AdminInvestments />} />
           <Route path="withdrawals" element={<AdminWithdrawals />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="users/:id" element={<AdminUserDetail />} />
           <Route path="support" element={<AdminSupport />} />
           <Route path="settings" element={<AdminSettings />} />
+          <Route path="reports" element={<AdminReports />} />
         </Route>
 
         <Route path="*" element={<NotFound />} />

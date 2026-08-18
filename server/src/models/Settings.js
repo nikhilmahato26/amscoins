@@ -19,6 +19,9 @@ const settingsSchema = new Schema(
 
     inrThresholdPaise: { type: Number, default: 200000, min: 0 },
 
+    cycleDurationHours: { type: Number, default: 24, min: 1 },
+    autoRejectHours: { type: Number, default: 8, min: 1 },
+
     inrQrUrl: { type: String, default: '' },
 
     usdtTrc20Address: { type: String, default: '' },
@@ -46,6 +49,8 @@ settingsSchema.statics.getSingleton = async function getSingleton() {
 settingsSchema.methods.toPublic = function toPublic() {
   return {
     inrThresholdPaise: this.inrThresholdPaise,
+    cycleDurationHours: this.cycleDurationHours,
+    autoRejectHours: this.autoRejectHours,
     inrQrUrl: this.inrQrUrl,
     usdtTrc20Address: this.usdtTrc20Address,
     usdtBep20Address: this.usdtBep20Address,

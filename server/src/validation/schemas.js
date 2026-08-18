@@ -84,6 +84,8 @@ const resetPasswordSchema = z.object({ resetToken: z.string().min(10), password:
 const updateSettingsSchema = z
   .object({
     inrThresholdPaise: z.number().int().min(0).optional(),
+    cycleDurationHours: z.number().int().min(1).optional(),
+    autoRejectHours: z.number().int().min(1).optional(),
     usdtTrc20Address: z.string().trim().optional(),
     usdtBep20Address: z.string().trim().optional(),
     whatsappNumber: z
@@ -107,10 +109,20 @@ const updateSettingsSchema = z
     message: 'Provide at least one field to update',
   })
 
+const returnRejectSchema = z.object({
+  reason: z.string().min(1),
+  amount: z.number().int().min(0),
+})
+
+const bulkApproveSchema = z.object({
+  ids: z.array(z.string().min(1)).min(1, 'At least one ID required'),
+})
+
 module.exports = {
   registerSchema,
   loginSchema,
   createInvestmentSchema,
+  returnRejectSchema,
   createWithdrawalSchema,
   payoutMethodSchema,
   updateProfileSchema,
@@ -121,4 +133,5 @@ module.exports = {
   forgotPasswordSchema,
   verifyOtpSchema,
   resetPasswordSchema,
+  bulkApproveSchema,
 }

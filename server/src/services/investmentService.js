@@ -13,6 +13,8 @@ const { ApiError } = require('../middleware/errorHandler')
 const logger = require('../lib/logger').child({ service: 'investment' })
 const { cacheDel } = require('../config/redis')
 const email = require('./emailService')
+const Settings = require('../models/Settings')
+const queue = require('../config/queue')
 
 async function uniqueRef() {
   for (let i = 0; i < 10; i++) {
@@ -75,6 +77,8 @@ async function createInvestment(user, { planKey, amount, referralCode }) {
 
   email.depositSubmitted(user, investment, plan.name).catch(() => {}) // fire-and-forget
 
+  await queue.scheduleAutoReject(investment)
+
   return { investment, telegramLink: env.TELEGRAM_LINK, whatsappLink: env.WHATSAPP_LINK }
 }
 
@@ -93,24 +97,23 @@ async function approveInvestment(investmentId, adminId) {
         throw new ApiError(409, 'Investment already processed')
       }
 
-      const plan = await Plan.findOne({ key: inv.planKey }).session(session)
+      const settings = await Settings.getSingleton()
       const now = new Date()
       inv.status = 'active'
       inv.startAt = now
-      inv.maturesAt = new Date(now.getTime() + plan.durationHours * 3600 * 1000)
+      inv.maturesAt = new Date(now.getTime() + settings.cycleDurationHours * 3600 * 1000)
       inv.approvedBy = adminId
       inv.approvedAt = now
       await inv.save({ session })
 
-      await walletService.credit(
-        inv.user,
-        inv.amount,
-        { type: 'deposit', actor: 'admin', note: `Deposit ${inv.referenceCode}`, ref: inv._id },
-        session
-      )
+      // NOTE: principal is intentionally NOT credited here. Funds stay locked
+      // until maturity (see approveReturn / runMature). Job scheduling
+      // (cancelAutoReject + scheduleMature) is wired in Task 5.
 
       const user = await User.findById(inv.user).session(session)
-      const referralResult = await creditReferralIfFirst(user, session)
+      const referralResult = user
+        ? await creditReferralIfFirst(user, session)
+        : { credited: false, referrerId: null }
 
       // Send approval notification after the transaction commits (below)
       result = { inv, user }
@@ -135,7 +138,9 @@ async function approveInvestment(investmentId, adminId) {
         'cache:leaderboard:monthly',
         'cache:leaderboard:yearly'
       )
-      email.depositApproved(result.user, result.inv).catch(() => {}) // fire-and-forget
+      if (result.user) email.depositApproved(result.user, result.inv).catch(() => {}) // fire-and-forget
+      await queue.cancelAutoReject(result.inv._id)
+      await queue.scheduleMature(result.inv)
     }
 
     return result?.inv
@@ -173,4 +178,122 @@ async function rejectInvestment(investmentId, adminId, note = '') {
   return inv
 }
 
-module.exports = { createInvestment, approveInvestment, rejectInvestment }
+async function approveReturn(investmentId, adminId) {
+  const session = await mongoose.startSession()
+  try {
+    let updated
+    await session.withTransaction(async () => {
+      const inv = await Investment.findById(investmentId).session(session)
+      if (!inv) throw new ApiError(404, 'Investment not found')
+      if (inv.status !== 'matured') throw new ApiError(409, 'Investment not awaiting return')
+
+      const wasCredited = inv.walletCredited
+      let credited = 0
+      if (!wasCredited) {
+        await walletService.credit(
+          inv.user, inv.amount,
+          { type: 'deposit', actor: adminId ? 'admin' : 'system', note: `Principal ${inv.referenceCode}`, ref: inv._id },
+          session
+        )
+        credited += inv.amount
+      }
+      // Guard >0: walletService.credit throws on non-positive amounts, so a
+      // future 0% plan (expectedReturn === 0) must not abort the transaction.
+      if (inv.expectedReturn > 0) {
+        await walletService.credit(
+          inv.user, inv.expectedReturn,
+          { type: 'return', actor: adminId ? 'admin' : 'system', note: `Return ${inv.referenceCode}`, ref: inv._id },
+          session
+        )
+        credited += inv.expectedReturn
+      }
+
+      inv.status = 'returned'
+      inv.walletCredited = true
+      inv.creditedAmount = credited
+      inv.returnDecidedBy = adminId
+      inv.returnDecidedAt = new Date()
+      await inv.save({ session })
+      updated = inv
+    })
+
+    if (updated) {
+      await cacheDel('cache:admin:stats', `cache:dashboard:${updated.user}`, `cache:wallet:${updated.user}`)
+      logger.info('Return approved', { investmentId, adminId, creditedAmount: updated.creditedAmount })
+    }
+    return updated
+  } finally {
+    session.endSession()
+  }
+}
+
+async function rejectReturn(investmentId, adminId, { reason, amount }) {
+  const session = await mongoose.startSession()
+  try {
+    let updated
+    await session.withTransaction(async () => {
+      const inv = await Investment.findById(investmentId).session(session)
+      if (!inv) throw new ApiError(404, 'Investment not found')
+      if (inv.status !== 'matured') throw new ApiError(409, 'Investment not awaiting return')
+      const max = inv.amount + inv.expectedReturn
+      if (amount < 0 || amount > max) throw new ApiError(400, 'Amount out of range')
+
+      if (amount > 0) {
+        await walletService.credit(
+          inv.user, amount,
+          { type: 'adjustment', actor: 'admin', note: `Return reject ${inv.referenceCode}: ${reason}`, ref: inv._id },
+          session
+        )
+        inv.walletCredited = true
+      }
+      inv.status = 'rejected'
+      inv.returnRejectionReason = reason
+      inv.creditedAmount = amount
+      inv.returnDecidedBy = adminId
+      inv.returnDecidedAt = new Date()
+      await inv.save({ session })
+      updated = inv
+    })
+
+    if (updated) {
+      await cacheDel('cache:admin:stats', `cache:dashboard:${updated.user}`, `cache:wallet:${updated.user}`)
+      logger.info('Return rejected', { investmentId, adminId, amount })
+    }
+    return updated
+  } finally {
+    session.endSession()
+  }
+}
+
+async function runAutoReject(investmentId) {
+  const settings = await Settings.getSingleton()
+  const hours = settings.autoRejectHours
+  const inv = await Investment.findOneAndUpdate(
+    { _id: investmentId, status: 'pending' },
+    { $set: { status: 'rejected', autoRejected: true, rejectionReason: `auto-rejected: approval timeout (${hours}h)`, approvedAt: new Date() } },
+    { returnDocument: 'after' }
+  )
+  if (!inv) return null // already approved/processed — idempotent no-op
+  await cacheDel('cache:admin:stats', `cache:dashboard:${inv.user}`)
+  logger.info('Investment auto-rejected (approval timeout)', { investmentId, hours }) // no email
+  return inv
+}
+
+async function runMature(investmentId) {
+  const inv = await Investment.findOneAndUpdate(
+    { _id: investmentId, status: 'active' },
+    { $set: { status: 'matured', maturedAt: new Date() } },
+    { returnDocument: 'after' }
+  )
+  if (!inv) return null // not active — idempotent no-op
+  await cacheDel('cache:admin:stats', `cache:dashboard:${inv.user}`)
+  logger.info('Investment matured', { investmentId })
+
+  if (env.WALLET_AUTO_CREDIT_ON_MATURITY) {
+    // Reuse the return-approve credit path with a system actor (adminId = null).
+    await approveReturn(inv._id, null)
+  }
+  return await Investment.findById(investmentId)
+}
+
+module.exports = { createInvestment, approveInvestment, rejectInvestment, approveReturn, rejectReturn, runAutoReject, runMature }

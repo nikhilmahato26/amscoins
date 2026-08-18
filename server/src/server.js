@@ -4,6 +4,7 @@ const env = require('./config/env')
 const { connectDb } = require('./config/db')
 const { seedPlans } = require('./seed/seedPlans')
 const { seedAdmin } = require('./seed/seedAdmin')
+const { startInvestmentWorker } = require('./jobs/investmentWorker')
 
 // ---------------------------------------------------------------------------
 // Global crash handlers — catch anything that slips past try/catch blocks.
@@ -24,6 +25,7 @@ connectDb()
   .then(async () => {
     await seedPlans()
     await seedAdmin()
+    startInvestmentWorker().catch((err) => logger.warn('Worker failed to start', { error: err.message }))
     app.listen(env.PORT, () => logger.info(`ASM Coins API on :${env.PORT}`))
   })
   .catch((err) => {

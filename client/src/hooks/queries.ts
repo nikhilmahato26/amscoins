@@ -3,7 +3,7 @@ import { getPlans } from '@/services/api/plans'
 import { getWallet } from '@/services/api/wallet'
 import { getReferral } from '@/services/api/referral'
 import { getDashboard } from '@/services/api/dashboard'
-import { getInvestments } from '@/services/api/investments'
+import { getInvestment, getInvestments } from '@/services/api/investments'
 import { getWithdrawals, createWithdrawal, type WithdrawalInput } from '@/services/api/withdrawals'
 import { getLeaderboard, type LeaderboardPeriod } from '@/services/api/leaderboard'
 import {
@@ -18,14 +18,22 @@ import {
   adminInvestments,
   approveInvestment,
   rejectInvestment,
+  approveReturn,
+  rejectReturn,
+  type RejectReturnBody,
+  type AdminInvestmentParams,
+  type AdminUsersParams,
   adminWithdrawals,
   completeWithdrawal,
   rejectWithdrawal,
+  retryWithdrawal,
+  bulkApproveWithdrawals,
   adminUsers,
   adminUserDetail,
   freezeUser,
   unfreezeUser,
   adjustWallet,
+  getInvestmentStats,
 } from '@/services/api/admin'
 
 // ── User queries ──
@@ -34,6 +42,15 @@ export const useWallet = () => useQuery({ queryKey: ['wallet'], queryFn: getWall
 export const useReferral = () => useQuery({ queryKey: ['referral'], queryFn: getReferral })
 export const useDashboard = () => useQuery({ queryKey: ['dashboard'], queryFn: getDashboard })
 export const useInvestments = () => useQuery({ queryKey: ['investments'], queryFn: getInvestments })
+export function useInvestment(id: string) {
+  return useQuery({
+    queryKey: ['investment', id],
+    queryFn: () => getInvestment(id),
+    refetchInterval: (query) =>
+      query.state.data?.status === 'pending' ? 30_000 : false,
+    enabled: !!id,
+  })
+}
 export const useWithdrawals = () => useQuery({ queryKey: ['withdrawals'], queryFn: getWithdrawals })
 export const useCreateWithdrawal = () => {
   const qc = useQueryClient()
@@ -71,12 +88,19 @@ export const useUpdateSettings = () => {
 
 // ── Admin queries ──
 export const useAdminStats = () => useQuery({ queryKey: ['admin', 'stats'], queryFn: adminStats })
-export const useAdminInvestments = (status = 'pending') =>
-  useQuery({ queryKey: ['admin', 'investments', status], queryFn: () => adminInvestments(status) })
+export const useAdminInvestments = (params: AdminInvestmentParams | string = 'pending') =>
+  useQuery({
+    queryKey: ['admin', 'investments', typeof params === 'string' ? { status: params } : params],
+    queryFn: () => adminInvestments(params),
+  })
 export const useAdminWithdrawals = (status = 'pending') =>
   useQuery({ queryKey: ['admin', 'withdrawals', status], queryFn: () => adminWithdrawals(status) })
-export const useAdminUsers = (q = '') =>
-  useQuery({ queryKey: ['admin', 'users', q], queryFn: () => adminUsers(q) })
+export function useAdminUsers(params: AdminUsersParams | string = '') {
+  return useQuery({
+    queryKey: ['admin', 'users', params],
+    queryFn: () => adminUsers(params),
+  })
+}
 export const useAdminUserDetail = (id: string) =>
   useQuery({ queryKey: ['admin', 'user', id], queryFn: () => adminUserDetail(id), enabled: !!id })
 export const useAdminSupport = (status = 'open') =>
@@ -98,10 +122,21 @@ export const useApproveInvestment = () =>
   useAdminMutation((id: string) => approveInvestment(id), [['admin', 'investments'], ['admin', 'stats']])
 export const useRejectInvestment = () =>
   useAdminMutation((id: string, note?: string) => rejectInvestment(id, note), [['admin', 'investments'], ['admin', 'stats']])
+export const useApproveReturn = () =>
+  useAdminMutation((id: string) => approveReturn(id), [['admin', 'investments'], ['admin', 'stats']])
+export const useRejectReturn = () =>
+  useAdminMutation((id: string, body: RejectReturnBody) => rejectReturn(id, body), [['admin', 'investments'], ['admin', 'stats']])
 export const useCompleteWithdrawal = () =>
   useAdminMutation((id: string, note?: string) => completeWithdrawal(id, note), [['admin', 'withdrawals'], ['admin', 'stats']])
 export const useRejectWithdrawal = () =>
   useAdminMutation((id: string, note?: string) => rejectWithdrawal(id, note), [['admin', 'withdrawals'], ['admin', 'stats']])
+export function useRetryWithdrawal() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => retryWithdrawal(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'withdrawals'] }),
+  })
+}
 export const useFreezeUser = () => useAdminMutation((id: string) => freezeUser(id), [['admin', 'users']])
 export const useUnfreezeUser = () => useAdminMutation((id: string) => unfreezeUser(id), [['admin', 'users']])
 export const useAdjustWallet = () =>
@@ -111,3 +146,22 @@ export const useAdjustWallet = () =>
   )
 export const useResolveSupport = () =>
   useAdminMutation((id: string, adminNote?: string) => resolveSupport(id, adminNote), [['admin', 'support']])
+
+export function useBulkApproveWithdrawals() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (ids: string[]) => bulkApproveWithdrawals(ids),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['admin', 'withdrawals'] })
+      void qc.invalidateQueries({ queryKey: ['admin', 'stats'] })
+    },
+  })
+}
+
+export function useInvestmentStats() {
+  return useQuery({
+    queryKey: ['admin', 'investment-stats'],
+    queryFn: getInvestmentStats,
+    refetchInterval: 30_000,
+  })
+}

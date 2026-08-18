@@ -11,4 +11,10 @@ const mine = asyncHandler(async (req, res) =>
   res.json(await Investment.find({ user: req.user._id }).sort('-createdAt'))
 )
 
-module.exports = { create, mine }
+const getOne = asyncHandler(async (req, res) => {
+  const investment = await Investment.findOne({ _id: req.params.id, user: req.user._id })
+  if (!investment) return res.status(404).json({ message: 'Investment not found' })
+  res.json(investment)
+})
+
+module.exports = { create, mine, getOne }

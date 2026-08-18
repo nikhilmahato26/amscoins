@@ -7,5 +7,6 @@ const c = require('../controllers/investmentController')
 
 router.post('/', auth, investmentCreateLimiter, validate(createInvestmentSchema), c.create)
 router.get('/', auth, c.mine)
+router.get('/:id', auth, c.getOne)
 
 module.exports = router

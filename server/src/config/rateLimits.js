@@ -196,25 +196,25 @@ const otpVerifyLimiter = rateLimit({
   handler: createHandler('Too many attempts, please try again in 15 minutes'),
 })
 
-// 5. Investment Creation — User-ID based
+// 5. Investment Creation — User-ID based (temporarily disabled)
 const investmentCreateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   limit: 3,
   keyGenerator: keyByUserId,
   store: makeStore('rl:inv:'),
-  skip: skipInTest,
+  skip: () => true,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   handler: createHandler('Investment limit reached, please try again later'),
 })
 
-// 6. Withdrawal Creation — User-ID based
+// 6. Withdrawal Creation — User-ID based (temporarily disabled)
 const withdrawalCreateLimiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000,
   limit: 5,
   keyGenerator: keyByUserId,
   store: makeStore('rl:wd:'),
-  skip: skipInTest,
+  skip: () => true,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   handler: createHandler('Daily withdrawal limit reached, please try again tomorrow'),

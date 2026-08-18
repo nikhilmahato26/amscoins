@@ -7,8 +7,9 @@ import {
   useUnfreezeUser,
   useAdjustWallet,
 } from '@/hooks/queries'
-import type { AdminUser } from '@/services/api/admin'
+import type { AdminUser, AdminUsersParams } from '@/services/api/admin'
 import { inr } from '@/lib/format'
+import { formatUserId } from '@/lib/ids'
 import { cn } from '@/lib/utils'
 
 /* ── Adjust wallet dialog ── */
@@ -162,7 +163,7 @@ function AdjustDialog({ user, onConfirm, onCancel, isPending }: AdjustDialogProp
 function SkeletonRow() {
   return (
     <tr className="animate-pulse border-b border-asm-line">
-      {Array.from({ length: 6 }).map((_, i) => (
+      {Array.from({ length: 7 }).map((_, i) => (
         <td key={i} className="px-3 py-3">
           <span className="block h-3.5 rounded bg-asm-tint" />
         </td>
@@ -210,7 +211,14 @@ function StatusChip({ status }: { status: AdminUser['status'] }) {
 export function AdminUsers() {
   const [input, setInput] = useState('')
   const [q, setQ] = useState('')
-  const { data, isLoading, isError } = useAdminUsers(q)
+  type InvestorFilter = 'all' | 'investor' | 'non-investor'
+  const [investorFilter, setInvestorFilter] = useState<InvestorFilter>('all')
+  const [amountSort, setAmountSort] = useState<'invested' | '-invested' | undefined>(undefined)
+  const { data, isLoading, isError } = useAdminUsers({
+    q,
+    investor: investorFilter === 'investor' ? 'true' : investorFilter === 'non-investor' ? 'false' : undefined,
+    sort: amountSort,
+  } as AdminUsersParams)
   const freezeMutation = useFreezeUser()
   const unfreezeMutation = useUnfreezeUser()
   const adjustMutation = useAdjustWallet()
@@ -283,6 +291,26 @@ export function AdminUsers() {
         )}
       </form>
 
+      {/* Investor filter */}
+      <div className="flex items-center gap-2">
+        {(['all', 'investor', 'non-investor'] as const).map((f) => (
+          <button
+            key={f}
+            type="button"
+            onClick={() => setInvestorFilter(f)}
+            className={cn(
+              'rounded-full px-3 py-1 text-[11px] font-semibold capitalize transition-colors',
+              investorFilter === f
+                ? 'bg-asm-blue text-white'
+                : 'border border-asm-line bg-white text-asm-body hover:border-asm-blue hover:text-asm-blue',
+            )}
+            aria-pressed={investorFilter === f}
+          >
+            {f === 'all' ? 'All Users' : f === 'investor' ? 'Investors' : 'Non-investors'}
+          </button>
+        ))}
+      </div>
+
       {/* Status announcer */}
       <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">
         {statusMsg}
@@ -310,6 +338,14 @@ export function AdminUsers() {
               <th scope="col" className="px-3 py-2.5 text-left">User</th>
               <th scope="col" className="px-3 py-2.5 text-left">Tier</th>
               <th scope="col" className="px-3 py-2.5 text-right">Referrals</th>
+              <th
+                scope="col"
+                className="px-3 py-2.5 text-right cursor-pointer hover:text-asm-blue select-none"
+                onClick={() => setAmountSort((s) => s === '-invested' ? 'invested' : '-invested')}
+                title="Sort by invested amount"
+              >
+                Total Invested {amountSort === 'invested' ? '↑' : amountSort === '-invested' ? '↓' : ''}
+              </th>
               <th scope="col" className="px-3 py-2.5 text-left">Status</th>
               <th scope="col" className="px-3 py-2.5 text-left">Joined</th>
               <th scope="col" className="px-3 py-2.5 text-right">Actions</th>
@@ -321,7 +357,7 @@ export function AdminUsers() {
             ) : isError ? (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={7}
                   className="px-4 py-10 text-center text-[13px] text-asm-red"
                   role="alert"
                 >
@@ -330,7 +366,7 @@ export function AdminUsers() {
               </tr>
             ) : !data || data.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-16 text-center">
+                <td colSpan={7} className="px-4 py-16 text-center">
                   <span className="mx-auto flex size-10 items-center justify-center rounded-full bg-asm-tint">
                     <Users className="size-5 text-asm-muted" strokeWidth={1.5} aria-hidden />
                   </span>
@@ -349,13 +385,18 @@ export function AdminUsers() {
                   <td className="px-3 py-2.5">
                     <p className="font-medium text-asm-navy">{user.name}</p>
                     <p className="text-[11px] text-asm-muted">{user.email}</p>
-                    {user.publicId && <p className="font-mono text-[10px] text-asm-blue">{user.publicId}</p>}
+                    {user.publicId && (
+                      <p className="font-mono text-[10px] text-asm-blue">{formatUserId(user.publicId)}</p>
+                    )}
                   </td>
                   <td className="px-3 py-2.5">
                     <TierChip tier={user.tier} />
                   </td>
                   <td className="px-3 py-2.5 text-right font-mono tabular-nums text-asm-body">
                     {user.referralCount}
+                  </td>
+                  <td className="px-3 py-2.5 text-right font-mono tabular-nums text-asm-navy">
+                    {user.totalInvested > 0 ? inr(user.totalInvested) : <span className="text-asm-muted">—</span>}
                   </td>
                   <td className="px-3 py-2.5">
                     <StatusChip status={user.status} />

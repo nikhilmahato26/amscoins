@@ -55,9 +55,12 @@ services:
   redis:
     image: redis:7-alpine
     restart: always
-    # Optional dependency for the backend (server/src/config/redis.js degrades
-    # gracefully if this is unreachable) — used for response caching and
-    # rate-limit-redis. Not a hard requirement, but kept healthy anyway.
+    # Caching / rate-limiting still degrade gracefully if Redis is unreachable
+    # (server/src/config/redis.js). BUT as of the investment automation, Redis
+    # is REQUIRED for the BullMQ worker: the 8h auto-reject, auto-maturity, and
+    # the safety sweep do NOT run without it (the HTTP API still serves). The
+    # queue uses the `asm:jobs` key prefix so it never collides with cache /
+    # rate-limit keys. Keep this service healthy in any real deployment.
     command: ["redis-server", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru", "--appendonly", "yes"]
     volumes:
       - redis_data:/data

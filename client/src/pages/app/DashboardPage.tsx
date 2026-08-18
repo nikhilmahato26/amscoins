@@ -107,39 +107,66 @@ export function DashboardPage() {
         </motion.div>
 
         {/* ── Balance hero card ── */}
-        <motion.section
-          variants={fadeUp}
-          aria-label="Wallet balance"
-          aria-live="polite"
-          className="relative overflow-hidden rounded-2xl bg-asm-navy px-5 py-5 shadow-[0_8px_32px_-8px_rgba(16,42,92,0.30)]"
-        >
-          {/* Decorative radial */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0"
-            style={{ background: 'radial-gradient(ellipse at 80% 20%, rgba(11,79,216,0.35) 0%, transparent 65%)' }}
-          />
-
-          <div className="relative flex flex-col gap-1">
-            <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-white/50">
-              Wallet Balance
-            </span>
-            {isLoading ? (
-              <span className="mt-1 h-9 w-40 animate-pulse rounded-lg bg-white/10" />
-            ) : (
-              <span className="font-mono text-[36px] font-extrabold tabular-nums leading-none text-white">
-                {displayBalance !== null ? inr(displayBalance) : '—'}
-              </span>
-            )}
-
-            {tier && (
-              <div className="mt-4 flex items-center gap-2.5">
-                <TierBadge tier={tier as Tier} size={28} />
-                <span className="text-[12px] font-semibold capitalize text-white/70">{tier} Member</span>
+        {(() => {
+          const TIER_CARD: Record<string, { bg: string; radial: string; labelColor: string; valueColor: string; memberColor: string; shadow: string }> = {
+            silver: {
+              bg:          'linear-gradient(135deg, #3D4F6B 0%, #5A6E8A 50%, #2C3D55 100%)',
+              radial:      'radial-gradient(ellipse at 80% 15%, rgba(192,210,230,0.30) 0%, transparent 60%)',
+              labelColor:  'rgba(220,232,245,0.65)',
+              valueColor:  '#FFFFFF',
+              memberColor: 'rgba(210,225,240,0.80)',
+              shadow:      '0_8px_32px_-8px_rgba(60,80,110,0.45)',
+            },
+            gold: {
+              bg:          'linear-gradient(135deg, #7A4F10 0%, #C17F2A 50%, #5C3A0A 100%)',
+              radial:      'radial-gradient(ellipse at 80% 15%, rgba(255,215,100,0.35) 0%, transparent 60%)',
+              labelColor:  'rgba(255,224,130,0.70)',
+              valueColor:  '#FFF8E7',
+              memberColor: 'rgba(255,220,120,0.85)',
+              shadow:      '0_8px_32px_-8px_rgba(120,80,10,0.50)',
+            },
+            diamond: {
+              bg:          'linear-gradient(135deg, #0B2A6B 0%, #1A4FCC 50%, #061840 100%)',
+              radial:      'radial-gradient(ellipse at 80% 15%, rgba(100,180,255,0.35) 0%, transparent 60%)',
+              labelColor:  'rgba(180,210,255,0.65)',
+              valueColor:  '#FFFFFF',
+              memberColor: 'rgba(160,200,255,0.85)',
+              shadow:      '0_8px_32px_-8px_rgba(11,79,216,0.45)',
+            },
+          }
+          const card = TIER_CARD[tier as string] ?? TIER_CARD.diamond
+          return (
+            <motion.section
+              variants={fadeUp}
+              aria-label="Wallet balance"
+              aria-live="polite"
+              className="relative overflow-hidden rounded-2xl px-5 py-5"
+              style={{ background: card.bg, boxShadow: card.shadow.replace(/_/g, ' ') }}
+            >
+              <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: card.radial }} />
+              <div className="relative flex flex-col gap-1">
+                <span className="text-[11px] font-bold uppercase tracking-[0.12em]" style={{ color: card.labelColor }}>
+                  Wallet Balance
+                </span>
+                {isLoading ? (
+                  <span className="mt-1 h-9 w-40 animate-pulse rounded-lg bg-white/10" />
+                ) : (
+                  <span className="font-mono text-[36px] font-extrabold tabular-nums leading-none" style={{ color: card.valueColor }}>
+                    {displayBalance !== null ? inr(displayBalance) : '—'}
+                  </span>
+                )}
+                {tier && (
+                  <div className="mt-4 flex items-center gap-2.5">
+                    <TierBadge tier={tier as Tier} size={28} />
+                    <span className="text-[12px] font-semibold capitalize" style={{ color: card.memberColor }}>
+                      {tier} Member
+                    </span>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </motion.section>
+            </motion.section>
+          )
+        })()}
 
         {/* ── Stats grid ── */}
         <motion.section variants={fadeUp} aria-label="Portfolio overview" aria-live="polite">

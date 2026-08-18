@@ -8,7 +8,9 @@ export interface Investment {
   returnPct: number
   expectedReturn: number // paise
   referenceCode: string
-  status: 'pending' | 'active' | 'rejected'
+  status: 'pending' | 'active' | 'matured' | 'returned' | 'rejected'
+  returnedAt?: string
+  creditedAmount?: number
   startAt?: string
   maturesAt?: string
   createdAt: string
@@ -24,3 +26,9 @@ export const createInvestment = (input: CreateInvestmentInput) =>
   apiFetch<{ investment: Investment; telegramLink: string; whatsappLink: string }>('/investments', { method: 'POST', body: input })
 
 export const getInvestments = () => apiFetch<Investment[]>('/investments')
+
+export const getInvestment = (id: string) => apiFetch<Investment>(`/investments/${id}`)
+
+// NOTE: the admin investment/return API lives in `./admin.ts` (the canonical
+// admin API module the admin pages consume via `@/hooks/queries`). It is not
+// duplicated here.

@@ -24,4 +24,14 @@ describe('updateSettingsSchema', () => {
   test('rejects an empty body', () => {
     expect(() => updateSettingsSchema.parse({})).toThrow()
   })
+
+  test('accepts and preserves the investment cycle + auto-reject fields', () => {
+    const parsed = updateSettingsSchema.parse({ cycleDurationHours: 36, autoRejectHours: 6 })
+    expect(parsed.cycleDurationHours).toBe(36)
+    expect(parsed.autoRejectHours).toBe(6)
+  })
+
+  test('rejects a zero/negative cycle duration', () => {
+    expect(() => updateSettingsSchema.parse({ cycleDurationHours: 0 })).toThrow()
+  })
 })

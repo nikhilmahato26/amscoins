@@ -164,4 +164,42 @@ async function rejectWithdrawal(id, adminId, note = '') {
   return w
 }
 
-module.exports = { initiateWithdrawal, completeWithdrawal, rejectWithdrawal }
+async function bulkApproveWithdrawals(ids, adminId) {
+  let approved = 0
+  for (const id of ids) {
+    try {
+      const w = await Withdrawal.findOneAndUpdate(
+        { _id: id, status: 'pending' },
+        { $set: { status: 'completed', processedAt: new Date() } },
+        { returnDocument: 'after' }
+      )
+      if (w) {
+        approved++
+        logger.info('Bulk withdrawal completed', { withdrawalId: w._id, adminId })
+        await cacheDel(
+          'cache:admin:stats',
+          `cache:wallet:${w.user}`,
+          `cache:dashboard:${w.user}`
+        )
+        const user = await User.findById(w.user).lean()
+        if (user) email.withdrawalCompleted(user, w).catch(() => {})
+      }
+    } catch (err) {
+      logger.error('Bulk withdrawal step failed', { id, error: err.message })
+    }
+  }
+  return { approved }
+}
+
+async function retryWithdrawal(id) {
+  const w = await Withdrawal.findOneAndUpdate(
+    { _id: id, status: 'failed' },
+    { $set: { status: 'pending', failureReason: null } },
+    { returnDocument: 'after' }
+  )
+  if (!w) throw new ApiError(400, 'Withdrawal is not in failed status')
+  logger.info('Withdrawal retry requested', { withdrawalId: w._id })
+  return w
+}
+
+module.exports = { initiateWithdrawal, completeWithdrawal, rejectWithdrawal, bulkApproveWithdrawals, retryWithdrawal }
