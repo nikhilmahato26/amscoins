@@ -146,7 +146,11 @@ export function AdminSettings() {
               type="number"
               min={1}
               step={1}
-              {...register('cycleDurationHours', { valueAsNumber: true, min: 1 })}
+              {...register('cycleDurationHours', {
+                valueAsNumber: true,
+                required: true,
+                validate: (v) => (Number.isInteger(v) && v >= 1) || 'Enter a whole number of hours (min 1)',
+              })}
               className={inputCls}
             />
           </Field>
@@ -155,7 +159,11 @@ export function AdminSettings() {
               type="number"
               min={1}
               step={1}
-              {...register('autoRejectHours', { valueAsNumber: true, min: 1 })}
+              {...register('autoRejectHours', {
+                valueAsNumber: true,
+                required: true,
+                validate: (v) => (Number.isInteger(v) && v >= 1) || 'Enter a whole number of hours (min 1)',
+              })}
               className={inputCls}
             />
           </Field>
