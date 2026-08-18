@@ -14,6 +14,7 @@ import type { AdminInvestment } from '@/services/api/admin'
 import { SearchInput } from '@/components/admin/SearchInput'
 import { InvestmentCountdown } from '@/components/admin/InvestmentCountdown'
 import { inr } from '@/lib/format'
+import { formatInvestId, formatUserId, IdChip } from '@/lib/ids'
 import { cn } from '@/lib/utils'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -539,7 +540,7 @@ function InvestmentTab() {
                     {inr(inv.amount)}
                   </td>
                   <td className="px-3 py-2.5 font-mono text-[11px] text-asm-body">
-                    {inv.referenceCode}
+                    <IdChip label={formatInvestId(inv.referenceCode)} />
                   </td>
                   <td className="px-3 py-2.5 text-[12px] text-asm-body">
                     {fmt(inv.createdAt)}
@@ -722,7 +723,7 @@ function ReturnTab() {
                     {inv.returnPct}%
                   </td>
                   <td className="px-3 py-2.5 font-mono text-[11px] text-asm-body">
-                    {inv.referenceCode}
+                    <IdChip label={formatInvestId(inv.referenceCode)} />
                   </td>
                   <td className="px-3 py-2.5 text-[12px] text-asm-body">
                     {inv.maturesAt ? fmt(inv.maturesAt) : '-'}
@@ -854,7 +855,7 @@ function HistoryTab() {
                       {inv.creditedAmount != null ? inr(inv.creditedAmount) : inr(inv.amount + (inv.expectedReturn ?? 0))}
                     </td>
                     <td className="px-3 py-2.5 font-mono text-[11px] text-asm-body">
-                      {inv.referenceCode}
+                      <IdChip label={formatInvestId(inv.referenceCode)} />
                     </td>
                     <td className="px-3 py-2.5 text-[12px] text-asm-body">
                       {fmtDuration(startDate, endDate)}

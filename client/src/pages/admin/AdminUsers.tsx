@@ -9,6 +9,7 @@ import {
 } from '@/hooks/queries'
 import type { AdminUser } from '@/services/api/admin'
 import { inr } from '@/lib/format'
+import { formatUserId } from '@/lib/ids'
 import { cn } from '@/lib/utils'
 
 /* ── Adjust wallet dialog ── */
@@ -349,7 +350,9 @@ export function AdminUsers() {
                   <td className="px-3 py-2.5">
                     <p className="font-medium text-asm-navy">{user.name}</p>
                     <p className="text-[11px] text-asm-muted">{user.email}</p>
-                    {user.publicId && <p className="font-mono text-[10px] text-asm-blue">{user.publicId}</p>}
+                    {user.publicId && (
+                      <p className="font-mono text-[10px] text-asm-blue">{formatUserId(user.publicId)}</p>
+                    )}
                   </td>
                   <td className="px-3 py-2.5">
                     <TierChip tier={user.tier} />
