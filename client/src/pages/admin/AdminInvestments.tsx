@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useLocation, useNavigate } from 'react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -10,10 +11,12 @@ import {
   useApproveReturn,
   useRejectReturn,
 } from '@/hooks/queries'
-import type { AdminInvestment } from '@/services/api/admin'
+import type { AdminInvestment, AdminInvestmentParams } from '@/services/api/admin'
 import { SearchInput } from '@/components/admin/SearchInput'
 import { InvestmentCountdown } from '@/components/admin/InvestmentCountdown'
 import { InvestmentStatsBar } from '@/components/admin/InvestmentStatsBar'
+import { InvestmentFilters } from '@/components/admin/InvestmentFilters'
+import { parseUrlFilters, filtersToSearch } from '@/lib/filters'
 import { inr } from '@/lib/format'
 import { formatInvestId, IdChip } from '@/lib/ids'
 import { cn } from '@/lib/utils'
@@ -341,7 +344,6 @@ function RejectReturnDialog({ inv, onConfirm, onCancel, isPending }: RejectRetur
         </p>
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-4 flex flex-col gap-4">
-          {/* Reason */}
           <label className="block">
             <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-asm-muted">
               Reason *
@@ -368,7 +370,6 @@ function RejectReturnDialog({ inv, onConfirm, onCancel, isPending }: RejectRetur
             )}
           </label>
 
-          {/* Custom amount */}
           <label className="block">
             <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-asm-muted">
               Partial credit amount (rupees)
@@ -443,10 +444,17 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'history', label: 'History' },
 ]
 
+// ── Shared tab props ───────────────────────────────────────────────────────
+
+interface TabDataProps {
+  data: AdminInvestment[] | undefined
+  isLoading: boolean
+  isError: boolean
+}
+
 // ── Investment tab ─────────────────────────────────────────────────────────
 
-function InvestmentTab() {
-  const { data, isLoading, isError } = useAdminInvestments('pending,active')
+function InvestmentTab({ data, isLoading, isError }: TabDataProps) {
   const approveMutation = useApproveInvestment()
   const rejectMutation = useRejectInvestment()
 
@@ -621,8 +629,7 @@ function InvestmentTab() {
 
 // ── Return tab ─────────────────────────────────────────────────────────────
 
-function ReturnTab() {
-  const { data, isLoading, isError } = useAdminInvestments('matured')
+function ReturnTab({ data, isLoading, isError }: TabDataProps) {
   const approveMutation = useApproveReturn()
   const rejectMutation = useRejectReturn()
 
@@ -788,8 +795,7 @@ function ReturnTab() {
 
 // ── History tab ────────────────────────────────────────────────────────────
 
-function HistoryTab() {
-  const { data, isLoading, isError } = useAdminInvestments('returned,rejected')
+function HistoryTab({ data, isLoading, isError }: TabDataProps) {
   const [q, setQ] = useState('')
 
   const filtered = (data ?? []).filter((d) => {
@@ -879,10 +885,29 @@ function HistoryTab() {
 
 export function AdminInvestments() {
   const [activeTab, setActiveTab] = useState<Tab>('investments')
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [filterParams, setFilterParams] = useState<AdminInvestmentParams>(() =>
+    parseUrlFilters(location.search)
+  )
+
+  function handleFiltersChange(params: AdminInvestmentParams) {
+    setFilterParams(params)
+    navigate({ search: filtersToSearch(params) }, { replace: true })
+  }
+
+  const activeStatus =
+    activeTab === 'investments' ? 'pending,active' :
+    activeTab === 'returns' ? 'matured' :
+    'returned,rejected'
+
+  const { data, isLoading, isError } = useAdminInvestments({
+    ...filterParams,
+    status: activeStatus,
+  })
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
-      {/* Header */}
       <div>
         <h1 className="text-[22px] font-bold tracking-tight text-asm-navy">Investments</h1>
         <p className="mt-0.5 text-[13px] text-asm-muted">
@@ -890,10 +915,10 @@ export function AdminInvestments() {
         </p>
       </div>
 
-      {/* Stats bar */}
       <InvestmentStatsBar />
 
-      {/* Tab bar */}
+      <InvestmentFilters params={filterParams} onChange={handleFiltersChange} />
+
       <div
         role="tablist"
         aria-label="Investment sections"
@@ -921,16 +946,15 @@ export function AdminInvestments() {
         ))}
       </div>
 
-      {/* Tab panels */}
       <div
         role="tabpanel"
         id={`tabpanel-${activeTab}`}
         aria-labelledby={`tab-${activeTab}`}
         className="flex flex-col gap-4"
       >
-        {activeTab === 'investments' && <InvestmentTab />}
-        {activeTab === 'returns' && <ReturnTab />}
-        {activeTab === 'history' && <HistoryTab />}
+        {activeTab === 'investments' && <InvestmentTab data={data} isLoading={isLoading} isError={isError} />}
+        {activeTab === 'returns' && <ReturnTab data={data} isLoading={isLoading} isError={isError} />}
+        {activeTab === 'history' && <HistoryTab data={data} isLoading={isLoading} isError={isError} />}
       </div>
     </div>
   )

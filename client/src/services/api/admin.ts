@@ -53,10 +53,41 @@ export interface AdminUserDetail {
   transactions: Transaction[]
 }
 
+export type InvestmentSortKey =
+  | 'createdAt' | '-createdAt'
+  | 'amount' | '-amount'
+  | 'maturesAt' | '-maturesAt'
+  | 'tier' | '-tier'
+
+export interface AdminInvestmentParams {
+  status?: string
+  tier?: string
+  amountMin?: number
+  amountMax?: number
+  dateFrom?: string
+  dateTo?: string
+  q?: string
+  sort?: InvestmentSortKey
+}
+
 export const adminStats = () => apiFetch<AdminStats>('/admin/stats')
 
-export const adminInvestments = (status = 'pending') =>
-  apiFetch<AdminInvestment[]>(`/admin/investments?status=${status}`)
+export const adminInvestments = (params: AdminInvestmentParams | string = 'pending') => {
+  if (typeof params === 'string') {
+    return apiFetch<AdminInvestment[]>(`/admin/investments?status=${params}`)
+  }
+  const qs = new URLSearchParams()
+  if (params.status)       qs.set('status', params.status)
+  if (params.tier)         qs.set('tier', params.tier)
+  if (params.sort)         qs.set('sort', params.sort)
+  if (params.q)            qs.set('q', params.q)
+  if (params.dateFrom)     qs.set('dateFrom', params.dateFrom)
+  if (params.dateTo)       qs.set('dateTo', params.dateTo)
+  if (params.amountMin != null) qs.set('amountMin', String(params.amountMin))
+  if (params.amountMax != null) qs.set('amountMax', String(params.amountMax))
+  const s = qs.toString()
+  return apiFetch<AdminInvestment[]>(`/admin/investments${s ? `?${s}` : ''}`)
+}
 export const approveInvestment = (id: string) =>
   apiFetch<Investment>(`/admin/investments/${id}/approve`, { method: 'POST' })
 export const rejectInvestment = (id: string, note?: string) =>
