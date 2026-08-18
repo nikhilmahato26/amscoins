@@ -14,8 +14,9 @@ test('monthly start = IST 1st of the month', () => {
   expect(periodStart('monthly', NOW).toISOString()).toBe('2026-07-31T18:30:00.000Z')
 })
 
-test('yearly start = IST Jan 1st', () => {
-  expect(periodStart('yearly', NOW).toISOString()).toBe('2025-12-31T18:30:00.000Z')
+test('weekly start = IST Monday of the current week', () => {
+  // 2026-08-15 IST is a Saturday → week began Monday 2026-08-10 IST.
+  expect(periodStart('weekly', NOW).toISOString()).toBe('2026-08-09T18:30:00.000Z')
 })
 
 test('instant just after IST midnight but before UTC midnight rolls to the correct IST day', () => {

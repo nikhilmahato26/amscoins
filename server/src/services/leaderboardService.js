@@ -4,18 +4,27 @@ const Investment = require('../models/Investment')
 const logger = require('../lib/logger').child({ service: 'leaderboard' })
 const { cacheGet, cacheSet } = require('../config/redis')
 
-// IST day/month/year starts. IST is UTC+5:30 with no DST.
+// IST day/week/month starts. IST is UTC+5:30 with no DST.
 const IST_OFFSET_MS = 5.5 * 3600 * 1000
+
+// How many ranked entries each period surfaces.
+const PERIOD_LIMITS = { daily: 5, weekly: 10, monthly: 20 }
+
 function periodStart(period, now = new Date()) {
   const ist = new Date(now.getTime() + IST_OFFSET_MS)
-  let y = ist.getUTCFullYear(), m = ist.getUTCMonth(), d = ist.getUTCDate()
+  const y = ist.getUTCFullYear(), m = ist.getUTCMonth()
+  let d = ist.getUTCDate()
+  // Week starts Monday; Date.UTC normalizes a non-positive day into the prior month.
+  if (period === 'weekly') {
+    const dow = ist.getUTCDay() // 0 = Sun … 6 = Sat
+    d -= dow === 0 ? 6 : dow - 1
+  }
   if (period === 'monthly') d = 1
-  if (period === 'yearly') { d = 1; m = 0 }
   const istMidnight = Date.UTC(y, m, d, 0, 0, 0)
   return new Date(istMidnight - IST_OFFSET_MS)
 }
 
-async function topInvestors(period, limit = 20) {
+async function topInvestors(period, limit = PERIOD_LIMITS[period] ?? 20) {
   const cacheKey = `cache:leaderboard:${period}`
   const cached = await cacheGet(cacheKey)
   if (cached) {
@@ -45,4 +54,4 @@ async function topInvestors(period, limit = 20) {
   return result
 }
 
-module.exports = { periodStart, topInvestors }
+module.exports = { periodStart, topInvestors, PERIOD_LIMITS }

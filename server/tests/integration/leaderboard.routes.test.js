@@ -16,7 +16,7 @@ async function registerToken() {
   return res.body.token
 }
 
-test('GET /api/leaderboard?period=yearly with auth returns 200 with entries', async () => {
+test('GET /api/leaderboard?period=weekly with auth returns 200 with entries', async () => {
   const token = await registerToken()
 
   // Create two active investments
@@ -30,9 +30,9 @@ test('GET /api/leaderboard?period=yearly with auth returns 200 with entries', as
   await Investment.create({ user: u2._id, planKey: 'silver', amount: 900000, returnPct: 25, expectedReturn: 225000,
     referenceCode: `ASM-${Math.random()}`, status: 'active', approvedAt: new Date(), startAt: new Date() })
 
-  const res = await request(app).get('/api/leaderboard?period=yearly').set('Authorization', `Bearer ${token}`)
+  const res = await request(app).get('/api/leaderboard?period=weekly').set('Authorization', `Bearer ${token}`)
   expect(res.status).toBe(200)
-  expect(res.body.period).toBe('yearly')
+  expect(res.body.period).toBe('weekly')
   expect(res.body.entries.length).toBe(2)
   expect(res.body.entries[0].name).toBe('Bob')
   expect(res.body.entries[0].rank).toBe(1)

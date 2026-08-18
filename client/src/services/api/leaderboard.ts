@@ -1,7 +1,7 @@
 import { apiFetch } from '@/lib/api'
 import type { Tier } from '@/types'
 
-export type LeaderboardPeriod = 'daily' | 'monthly' | 'yearly'
+export type LeaderboardPeriod = 'daily' | 'weekly' | 'monthly'
 
 export interface LeaderboardEntry {
   rank: number
