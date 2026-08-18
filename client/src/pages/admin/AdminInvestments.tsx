@@ -14,7 +14,7 @@ import type { AdminInvestment } from '@/services/api/admin'
 import { SearchInput } from '@/components/admin/SearchInput'
 import { InvestmentCountdown } from '@/components/admin/InvestmentCountdown'
 import { inr } from '@/lib/format'
-import { formatInvestId, formatUserId, IdChip } from '@/lib/ids'
+import { formatInvestId, IdChip } from '@/lib/ids'
 import { cn } from '@/lib/utils'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
