@@ -10,6 +10,7 @@ import {
   useRejectInvestment,
   useApproveReturn,
   useRejectReturn,
+  useInvestmentStats,
 } from '@/hooks/queries'
 import type { AdminInvestment, AdminInvestmentParams } from '@/services/api/admin'
 import { SearchInput } from '@/components/admin/SearchInput'
@@ -890,6 +891,7 @@ export function AdminInvestments() {
   const [filterParams, setFilterParams] = useState<AdminInvestmentParams>(() =>
     parseUrlFilters(location.search)
   )
+  const { data: stats } = useInvestmentStats()
 
   function handleFiltersChange(params: AdminInvestmentParams) {
     setFilterParams(params)
@@ -934,7 +936,7 @@ export function AdminInvestments() {
             type="button"
             onClick={() => setActiveTab(id)}
             className={cn(
-              'flex-1 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors',
+              'flex items-center gap-2 flex-1 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1',
               activeTab === id
                 ? 'bg-white text-asm-navy shadow-[0_1px_3px_rgba(16,42,92,0.08)]'
@@ -942,6 +944,19 @@ export function AdminInvestments() {
             )}
           >
             {label}
+            {id === 'investments' && stats && stats.pendingApprovals > 0 && (
+              <span className="ml-auto rounded-full bg-asm-red px-1.5 py-0.5 text-[9px] font-bold text-white">
+                {stats.pendingApprovals}
+              </span>
+            )}
+            {id === 'returns' && stats && (stats.returnsAwaiting > 0 || stats.aboutToComplete > 0) && (
+              <span className={cn(
+                'ml-auto rounded-full px-1.5 py-0.5 text-[9px] font-bold text-white',
+                stats.aboutToComplete > 0 ? 'bg-asm-red' : 'bg-yellow-500',
+              )}>
+                {stats.returnsAwaiting + stats.aboutToComplete}
+              </span>
+            )}
           </button>
         ))}
       </div>

@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { LayoutDashboard, ArrowDownToLine, ArrowUpFromLine, TrendingUp, Users, LifeBuoy, LogOut, Menu, Settings, X } from 'lucide-react'
 import { useAuth } from '@/auth/AuthContext'
 import { authService } from '@/services/authService'
+import { NotificationBell } from '@/components/admin/NotificationBell'
 import { cn } from '@/lib/utils'
 
 const NAV_ITEMS = [
@@ -87,7 +88,10 @@ export function AdminLayout() {
             </NavLink>
           ))}
         </nav>
-        <div className="shrink-0 border-t border-asm-line p-3">
+        <div className="flex flex-col gap-3 border-t border-asm-line p-3">
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+          </div>
           <button
             type="button"
             onClick={handleLogout}
@@ -106,16 +110,19 @@ export function AdminLayout() {
       {/* ── Mobile top bar with hamburger ── */}
       <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-asm-line bg-white/95 px-4 backdrop-blur-md lg:hidden">
         <Brand />
-        <button
-          ref={hamburgerRef}
-          type="button"
-          onClick={() => setDrawerOpen(true)}
-          aria-label="Open menu"
-          aria-haspopup="dialog"
-          className="flex size-11 items-center justify-center rounded-lg text-asm-body transition-colors hover:text-asm-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue"
-        >
-          <Menu className="size-6" strokeWidth={2} aria-hidden />
-        </button>
+        <div className="flex items-center gap-2">
+          <NotificationBell />
+          <button
+            ref={hamburgerRef}
+            type="button"
+            onClick={() => setDrawerOpen(true)}
+            aria-label="Open menu"
+            aria-haspopup="dialog"
+            className="flex size-11 items-center justify-center rounded-lg text-asm-body transition-colors hover:text-asm-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue"
+          >
+            <Menu className="size-6" strokeWidth={2} aria-hidden />
+          </button>
+        </div>
       </header>
 
       {/* ── Mobile drawer ── */}
