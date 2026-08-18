@@ -112,9 +112,29 @@ async function createInvestment(user, { planKey, amount, referralCode }) {
 
   await cacheDel('cache:admin:stats', `cache:dashboard:${user._id}`)
 
-  email.depositSubmitted(user, investment, plan.name).catch(() => {}) // fire-and-forget
+  // NOTE: the "deposit submitted" email is intentionally NOT sent here. The
+  // record is created up-front so the pay screen can quote a reference code,
+  // but the user has not paid yet. The email fires from notifyPaymentSubmitted
+  // once they tap "I've paid" on the pay screen.
 
   await queue.scheduleAutoReject(investment)
+
+  const { whatsappLink, telegramLink } = await buildSupportLinks(investment)
+  return { investment, telegramLink, whatsappLink }
+}
+
+/**
+ * Called when the user confirms they have paid (tapped "I've paid" on the pay
+ * screen). This is the point the deposit is actually submitted for review, so
+ * the confirmation email fires here rather than at record creation. Idempotent
+ * and safe to call once per pending investment.
+ */
+async function notifyPaymentSubmitted(user, investmentId) {
+  const investment = await Investment.findOne({ _id: investmentId, user: user._id })
+  if (!investment) throw new ApiError(404, 'Investment not found')
+
+  const plan = await Plan.findOne({ key: investment.planKey })
+  email.depositSubmitted(user, investment, plan?.name ?? investment.planKey).catch(() => {}) // fire-and-forget
 
   const { whatsappLink, telegramLink } = await buildSupportLinks(investment)
   return { investment, telegramLink, whatsappLink }
@@ -334,4 +354,4 @@ async function runMature(investmentId) {
   return await Investment.findById(investmentId)
 }
 
-module.exports = { createInvestment, approveInvestment, rejectInvestment, approveReturn, rejectReturn, runAutoReject, runMature }
+module.exports = { createInvestment, notifyPaymentSubmitted, approveInvestment, rejectInvestment, approveReturn, rejectReturn, runAutoReject, runMature }

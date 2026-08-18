@@ -59,13 +59,21 @@ test('runAutoReject is a no-op once active', async () => {
 })
 
 test('runMature moves active to matured (manual mode, no credit)', async () => {
-  const inv = await pendingInv({ status: 'active', maturesAt: new Date(Date.now() - 1000) })
-  await svc.runMature(inv._id)
-  const fresh = await Investment.findById(inv._id)
-  expect(fresh.status).toBe('matured')
-  expect(fresh.maturedAt).toBeInstanceOf(Date)
-  const w = await Wallet.findOne({ user: inv.user })
-  expect(w == null || w.balance === 0).toBe(true)
+  // Pin manual mode: auto-credit now defaults on, so force it off to exercise
+  // the manual-maturation path this test is about.
+  const prev = process.env.WALLET_AUTO_CREDIT_ON_MATURITY
+  process.env.WALLET_AUTO_CREDIT_ON_MATURITY = 'false'
+  try {
+    const inv = await pendingInv({ status: 'active', maturesAt: new Date(Date.now() - 1000) })
+    await svc.runMature(inv._id)
+    const fresh = await Investment.findById(inv._id)
+    expect(fresh.status).toBe('matured')
+    expect(fresh.maturedAt).toBeInstanceOf(Date)
+    const w = await Wallet.findOne({ user: inv.user })
+    expect(w == null || w.balance === 0).toBe(true)
+  } finally {
+    process.env.WALLET_AUTO_CREDIT_ON_MATURITY = prev
+  }
 })
 
 test('runMature auto-credits when WALLET_AUTO_CREDIT_ON_MATURITY is on', async () => {
@@ -86,17 +94,25 @@ test('runMature auto-credits when WALLET_AUTO_CREDIT_ON_MATURITY is on', async (
 })
 
 test('runSweep matures due and auto-rejects stale', async () => {
-  const { runSweep } = require('../../src/jobs/investmentWorker')
-  const s = await Settings.getSingleton(); s.autoRejectHours = 8; await s.save()
+  // Pin manual maturation so the due investment lands on 'matured' rather than
+  // being auto-credited to 'returned' (auto-credit now defaults on).
+  const prev = process.env.WALLET_AUTO_CREDIT_ON_MATURITY
+  process.env.WALLET_AUTO_CREDIT_ON_MATURITY = 'false'
+  try {
+    const { runSweep } = require('../../src/jobs/investmentWorker')
+    const s = await Settings.getSingleton(); s.autoRejectHours = 8; await s.save()
 
-  const stale = await pendingInv() // createdAt now; force it old.
-  // createdAt is immutable under timestamps:true, so bypass Mongoose via the
-  // native driver to backdate it past the auto-reject window.
-  await Investment.collection.updateOne({ _id: stale._id }, { $set: { createdAt: new Date(Date.now() - 9 * 3600e3) } })
-  const due = await pendingInv({ status: 'active', maturesAt: new Date(Date.now() - 1000) })
+    const stale = await pendingInv() // createdAt now; force it old.
+    // createdAt is immutable under timestamps:true, so bypass Mongoose via the
+    // native driver to backdate it past the auto-reject window.
+    await Investment.collection.updateOne({ _id: stale._id }, { $set: { createdAt: new Date(Date.now() - 9 * 3600e3) } })
+    const due = await pendingInv({ status: 'active', maturesAt: new Date(Date.now() - 1000) })
 
-  await runSweep()
+    await runSweep()
 
-  expect((await Investment.findById(stale._id)).status).toBe('rejected')
-  expect((await Investment.findById(due._id)).status).toBe('matured')
+    expect((await Investment.findById(stale._id)).status).toBe('rejected')
+    expect((await Investment.findById(due._id)).status).toBe('matured')
+  } finally {
+    process.env.WALLET_AUTO_CREDIT_ON_MATURITY = prev
+  }
 })

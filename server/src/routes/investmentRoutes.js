@@ -6,6 +6,7 @@ const { investmentCreateLimiter } = require('../config/rateLimits')
 const c = require('../controllers/investmentController')
 
 router.post('/', auth, investmentCreateLimiter, validate(createInvestmentSchema), c.create)
+router.post('/:id/notify', auth, c.notify)
 router.get('/', auth, c.mine)
 router.get('/:id', auth, c.getOne)
 
