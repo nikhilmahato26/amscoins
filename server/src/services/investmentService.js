@@ -173,4 +173,87 @@ async function rejectInvestment(investmentId, adminId, note = '') {
   return inv
 }
 
-module.exports = { createInvestment, approveInvestment, rejectInvestment }
+async function approveReturn(investmentId, adminId) {
+  const session = await mongoose.startSession()
+  try {
+    let updated
+    await session.withTransaction(async () => {
+      const inv = await Investment.findById(investmentId).session(session)
+      if (!inv) throw new ApiError(404, 'Investment not found')
+      if (inv.status !== 'matured') throw new ApiError(409, 'Investment not awaiting return')
+
+      const wasCredited = inv.walletCredited
+      let credited = 0
+      if (!wasCredited) {
+        await walletService.credit(
+          inv.user, inv.amount,
+          { type: 'deposit', actor: 'admin', note: `Principal ${inv.referenceCode}`, ref: inv._id },
+          session
+        )
+        credited += inv.amount
+      }
+      await walletService.credit(
+        inv.user, inv.expectedReturn,
+        { type: 'return', actor: 'admin', note: `Return ${inv.referenceCode}`, ref: inv._id },
+        session
+      )
+      credited += inv.expectedReturn
+
+      inv.status = 'returned'
+      inv.walletCredited = true
+      inv.creditedAmount = credited
+      inv.returnDecidedBy = adminId
+      inv.returnDecidedAt = new Date()
+      await inv.save({ session })
+      updated = inv
+    })
+
+    if (updated) {
+      await cacheDel('cache:admin:stats', `cache:dashboard:${updated.user}`, `cache:wallet:${updated.user}`)
+      logger.info('Return approved', { investmentId, adminId, creditedAmount: updated.creditedAmount })
+    }
+    return updated
+  } finally {
+    session.endSession()
+  }
+}
+
+async function rejectReturn(investmentId, adminId, { reason, amount }) {
+  const session = await mongoose.startSession()
+  try {
+    let updated
+    await session.withTransaction(async () => {
+      const inv = await Investment.findById(investmentId).session(session)
+      if (!inv) throw new ApiError(404, 'Investment not found')
+      if (inv.status !== 'matured') throw new ApiError(409, 'Investment not awaiting return')
+      const max = inv.amount + inv.expectedReturn
+      if (amount < 0 || amount > max) throw new ApiError(400, 'Amount out of range')
+
+      if (amount > 0) {
+        await walletService.credit(
+          inv.user, amount,
+          { type: 'adjustment', actor: 'admin', note: `Return reject ${inv.referenceCode}: ${reason}`, ref: inv._id },
+          session
+        )
+        inv.walletCredited = true
+      }
+      inv.status = 'rejected'
+      inv.returnRejectionReason = reason
+      inv.creditedAmount = amount
+      inv.returnDecidedBy = adminId
+      inv.returnDecidedAt = new Date()
+      await inv.save({ session })
+      updated = inv
+    })
+
+    if (updated) {
+      await cacheDel('cache:admin:stats', `cache:dashboard:${updated.user}`, `cache:wallet:${updated.user}`)
+      logger.info('Return rejected', { investmentId, adminId, amount })
+    }
+    return updated
+  } finally {
+    session.endSession()
+  }
+}
+
+module.exports = { createInvestment, approveInvestment, rejectInvestment, approveReturn, rejectReturn }
