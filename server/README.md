@@ -30,6 +30,8 @@ cp .env.example .env      # then edit values
 | `SMTP_HOST/PORT/USER/PASS` | Gmail SMTP. For `bhaveshsolminde@gmail.com` create a **Gmail App Password** (Google Account → Security → 2-Step Verification → App passwords) and use it as `SMTP_PASS` — a normal account password will not work. |
 | `MAIL_FROM` | From header, e.g. `"ASM Coins <bhaveshsolminde@gmail.com>"`. |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Bootstrapped admin account on server start. |
+| `REDIS_URL` | Caching/rate-limiting degrade gracefully without it, but it is **required** for the investment automation — the BullMQ worker (8h auto-reject, auto-maturity, safety sweep) does not run without Redis. Queue keys use the `asm:jobs` prefix. |
+| `WALLET_AUTO_CREDIT_ON_MATURITY` | `true`/`false` (default `false`). When `true`, a matured investment auto-credits the wallet (`principal + return`) with no admin click; when `false`, it waits in the Return section for admin approve/reject. |
 
 ## Run
 ```bash
@@ -41,8 +43,16 @@ npm test         # full test suite (in-memory Mongo; no external services)
 ## Domain rules
 - **Tiers by referral count:** Silver `0–10`, Gold `11–20`, Diamond `21+`.
   Gold unlocks at the 11th credited member, Diamond at the 21st.
-- **Returns (plan terms):** Silver 25% · Gold 30% · Diamond 40% · 36-hour term.
-  Return crediting is **not automated** (pending business decision).
+- **Returns (plan terms):** Silver 25% · Gold 30% · Diamond 40%. Cycle length is
+  configurable in Settings (`cycleDurationHours`, default 24h).
+- **Investment lifecycle (lock-till-maturity):** `pending → active → matured →
+  returned` (or `rejected`). Approval starts the countdown but does **not**
+  credit the wallet — funds stay locked. At `maturesAt` the investment moves to
+  the Return section; the wallet is credited `principal + return` either
+  automatically (`WALLET_AUTO_CREDIT_ON_MATURITY=true`) or on admin approval.
+  Unapproved investments are silently auto-rejected after `autoRejectHours`
+  (default 8h, configurable in Settings). All timing is driven by the BullMQ
+  worker (see `REDIS_URL` above).
 - **Referral credit:** a member is credited to the referrer only when that
   referred user's **first** deposit is admin-approved. Idempotent.
 - **Withdrawal:** gross debited immediately; `net = gross − 5% TDS`; admin
