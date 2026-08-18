@@ -952,7 +952,7 @@ export function AdminInvestments() {
             {id === 'returns' && stats && (stats.returnsAwaiting > 0 || stats.aboutToComplete > 0) && (
               <span className={cn(
                 'ml-auto rounded-full px-1.5 py-0.5 text-[9px] font-bold text-white',
-                stats.aboutToComplete > 0 ? 'bg-asm-red' : 'bg-yellow-500',
+                stats.aboutToComplete > 0 ? 'bg-asm-red' : 'bg-asm-muted',
               )}>
                 {stats.returnsAwaiting + stats.aboutToComplete}
               </span>

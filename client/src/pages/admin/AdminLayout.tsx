@@ -89,9 +89,6 @@ export function AdminLayout() {
           ))}
         </nav>
         <div className="flex flex-col gap-3 border-t border-asm-line p-3">
-          <div className="flex items-center gap-2">
-            <NotificationBell />
-          </div>
           <button
             type="button"
             onClick={handleLogout}

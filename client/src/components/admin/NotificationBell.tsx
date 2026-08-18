@@ -25,7 +25,7 @@ export function NotificationBell() {
           className={cn(
             'absolute -right-0.5 -top-0.5 flex min-w-[18px] items-center justify-center',
             'rounded-full px-1 text-[10px] font-bold text-white',
-            count > 0 ? 'bg-asm-red' : 'bg-asm-muted',
+            'bg-asm-red',
           )}
         >
           {count > 99 ? '99+' : count}

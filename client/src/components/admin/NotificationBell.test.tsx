@@ -22,7 +22,6 @@ function wrap(ui: React.ReactElement) {
 describe('NotificationBell', () => {
   it('renders badge count as sum of actionable items', async () => {
     wrap(<NotificationBell />)
-    // 4 pending + 2 returns + 1 aboutToComplete = 7
     const badge = await screen.findByText('7')
     expect(badge).toBeInTheDocument()
   })
