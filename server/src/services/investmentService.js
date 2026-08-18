@@ -197,12 +197,16 @@ async function approveReturn(investmentId, adminId) {
         )
         credited += inv.amount
       }
-      await walletService.credit(
-        inv.user, inv.expectedReturn,
-        { type: 'return', actor: adminId ? 'admin' : 'system', note: `Return ${inv.referenceCode}`, ref: inv._id },
-        session
-      )
-      credited += inv.expectedReturn
+      // Guard >0: walletService.credit throws on non-positive amounts, so a
+      // future 0% plan (expectedReturn === 0) must not abort the transaction.
+      if (inv.expectedReturn > 0) {
+        await walletService.credit(
+          inv.user, inv.expectedReturn,
+          { type: 'return', actor: adminId ? 'admin' : 'system', note: `Return ${inv.referenceCode}`, ref: inv._id },
+          session
+        )
+        credited += inv.expectedReturn
+      }
 
       inv.status = 'returned'
       inv.walletCredited = true
@@ -262,14 +266,16 @@ async function rejectReturn(investmentId, adminId, { reason, amount }) {
 }
 
 async function runAutoReject(investmentId) {
+  const settings = await Settings.getSingleton()
+  const hours = settings.autoRejectHours
   const inv = await Investment.findOneAndUpdate(
     { _id: investmentId, status: 'pending' },
-    { $set: { status: 'rejected', autoRejected: true, rejectionReason: 'auto-rejected: approval timeout (8h)', approvedAt: new Date() } },
+    { $set: { status: 'rejected', autoRejected: true, rejectionReason: `auto-rejected: approval timeout (${hours}h)`, approvedAt: new Date() } },
     { returnDocument: 'after' }
   )
   if (!inv) return null // already approved/processed — idempotent no-op
   await cacheDel('cache:admin:stats', `cache:dashboard:${inv.user}`)
-  logger.info('Investment auto-rejected (8h timeout)', { investmentId }) // no email
+  logger.info('Investment auto-rejected (approval timeout)', { investmentId, hours }) // no email
   return inv
 }
 
@@ -283,7 +289,7 @@ async function runMature(investmentId) {
   await cacheDel('cache:admin:stats', `cache:dashboard:${inv.user}`)
   logger.info('Investment matured', { investmentId })
 
-  if (process.env.WALLET_AUTO_CREDIT_ON_MATURITY === 'true') {
+  if (env.WALLET_AUTO_CREDIT_ON_MATURITY) {
     // Reuse the return-approve credit path with a system actor (adminId = null).
     await approveReturn(inv._id, null)
   }
