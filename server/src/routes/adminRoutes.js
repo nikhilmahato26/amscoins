@@ -10,6 +10,7 @@ router.use(auth, requireAdmin)
 router.get('/stats', c.getStats)
 
 router.get('/investments', c.listInvestments)
+router.get('/investments/stats', c.getInvestmentStats)
 router.post('/investments/:id/approve', c.approveInvestment)
 router.post('/investments/:id/reject', c.rejectInvestment)
 router.post('/investments/:id/return/approve', c.approveReturn)
