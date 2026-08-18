@@ -101,7 +101,6 @@ function formatDate(iso?: string) {
 
 function InvestmentCard({ inv }: { inv: Investment }) {
   const tier = inv.planKey as Tier
-  const profit = inv.expectedReturn - inv.amount
   const creditedAmount = inv.creditedAmount
 
   return (
