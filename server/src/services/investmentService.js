@@ -14,6 +14,7 @@ const logger = require('../lib/logger').child({ service: 'investment' })
 const { cacheDel } = require('../config/redis')
 const email = require('./emailService')
 const Settings = require('../models/Settings')
+const queue = require('../config/queue')
 
 async function uniqueRef() {
   for (let i = 0; i < 10; i++) {
@@ -76,6 +77,8 @@ async function createInvestment(user, { planKey, amount, referralCode }) {
 
   email.depositSubmitted(user, investment, plan.name).catch(() => {}) // fire-and-forget
 
+  await queue.scheduleAutoReject(investment)
+
   return { investment, telegramLink: env.TELEGRAM_LINK, whatsappLink: env.WHATSAPP_LINK }
 }
 
@@ -136,6 +139,8 @@ async function approveInvestment(investmentId, adminId) {
         'cache:leaderboard:yearly'
       )
       if (result.user) email.depositApproved(result.user, result.inv).catch(() => {}) // fire-and-forget
+      await queue.cancelAutoReject(result.inv._id)
+      await queue.scheduleMature(result.inv)
     }
 
     return result?.inv

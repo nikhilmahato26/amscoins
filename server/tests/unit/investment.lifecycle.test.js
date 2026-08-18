@@ -84,3 +84,19 @@ test('runMature auto-credits when WALLET_AUTO_CREDIT_ON_MATURITY is on', async (
   expect(w.balance).toBe(125000)
   process.env.WALLET_AUTO_CREDIT_ON_MATURITY = prev
 })
+
+test('runSweep matures due and auto-rejects stale', async () => {
+  const { runSweep } = require('../../src/jobs/investmentWorker')
+  const s = await Settings.getSingleton(); s.autoRejectHours = 8; await s.save()
+
+  const stale = await pendingInv() // createdAt now; force it old.
+  // createdAt is immutable under timestamps:true, so bypass Mongoose via the
+  // native driver to backdate it past the auto-reject window.
+  await Investment.collection.updateOne({ _id: stale._id }, { $set: { createdAt: new Date(Date.now() - 9 * 3600e3) } })
+  const due = await pendingInv({ status: 'active', maturesAt: new Date(Date.now() - 1000) })
+
+  await runSweep()
+
+  expect((await Investment.findById(stale._id)).status).toBe('rejected')
+  expect((await Investment.findById(due._id)).status).toBe('matured')
+})
