@@ -3,7 +3,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { InvestmentCountdown } from './InvestmentCountdown'
 
 describe('InvestmentCountdown', () => {
-  beforeEach(() => vi.useFakeTimers())
+  // Pin the clock so the delta between building `maturesAt` and the component's
+  // Date.now() read is exact (no wall-clock slippage on a slow CI runner).
+  beforeEach(() => vi.useFakeTimers({ now: new Date('2025-01-01T00:00:00Z') }))
   afterEach(() => vi.useRealTimers())
 
   it('renders a reverse HH:MM:SS timer for a future maturity', () => {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 function format(ms: number): string {
   if (ms <= 0) return 'Matured'
@@ -10,11 +10,16 @@ function format(ms: number): string {
 }
 
 export function InvestmentCountdown({ maturesAt }: { maturesAt: string }) {
-  const target = new Date(maturesAt).getTime()
+  const target = useMemo(() => new Date(maturesAt).getTime(), [maturesAt])
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000)
+    if (Date.now() >= target) return // already matured — no ticking needed
+    const id = setInterval(() => {
+      const t = Date.now()
+      setNow(t)
+      if (t >= target) clearInterval(id) // stop once matured; no wasted renders
+    }, 1000)
     return () => clearInterval(id)
-  }, [])
+  }, [target])
   return <span className="tabular-nums">{format(target - now)}</span>
 }
