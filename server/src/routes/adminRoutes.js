@@ -19,6 +19,7 @@ router.post('/investments/:id/return/reject', validate(returnRejectSchema), c.re
 
 router.get('/withdrawals', c.listWithdrawals)
 router.post('/withdrawals/bulk-approve', validate(bulkApproveSchema), c.bulkApproveWithdrawals)
+router.post('/withdrawals/:id/retry', c.retryWithdrawal)
 router.post('/withdrawals/:id/complete', c.completeWithdrawal)
 router.post('/withdrawals/:id/reject', c.rejectWithdrawal)
 

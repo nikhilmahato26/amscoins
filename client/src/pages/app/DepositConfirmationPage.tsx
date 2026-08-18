@@ -11,9 +11,10 @@ const TIER_LABEL: Record<string, string> = {
 
 function StatusPill({ status }: { status: string }) {
   const map: Record<string, { label: string; cls: string }> = {
-    pending: { label: 'Awaiting Approval', cls: 'bg-yellow-100 text-yellow-800' },
-    active: { label: 'Active', cls: 'bg-green-100 text-asm-green' },
-    rejected: { label: 'Rejected', cls: 'bg-red-100 text-asm-red' },
+    pending:   { label: 'Awaiting Approval', cls: 'bg-asm-tint text-asm-muted' },
+    active:    { label: 'Active',            cls: 'bg-asm-tint text-asm-green' },
+    completed: { label: 'Completed',         cls: 'bg-asm-tint text-asm-green' },
+    rejected:  { label: 'Rejected',          cls: 'bg-asm-tint text-asm-red' },
   }
   const { label, cls } = map[status] ?? { label: status, cls: 'bg-asm-tint text-asm-body' }
   return (

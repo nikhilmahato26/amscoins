@@ -46,3 +46,22 @@ test('referral overview returns own code and next tier target 11', async () => {
   expect(res.body.nextTier).toBe('gold')
   expect(res.body.nextTierAt).toBe(11)
 })
+
+test("returns 404 when fetching another user's investment by id", async () => {
+  const token1 = await registerToken()
+  const token2 = await registerToken()
+
+  // user1 creates an investment
+  const createRes = await request(app)
+    .post('/api/investments')
+    .set('Authorization', `Bearer ${token1}`)
+    .send({ planKey: 'silver', amount: 200000 })
+  expect(createRes.status).toBe(201)
+  const investmentId = createRes.body.investment._id
+
+  // user2 tries to fetch user1's investment — must get 404 (ownership guard)
+  const res = await request(app)
+    .get(`/api/investments/${investmentId}`)
+    .set('Authorization', `Bearer ${token2}`)
+  expect(res.status).toBe(404)
+})

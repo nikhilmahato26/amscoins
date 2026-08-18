@@ -4,6 +4,7 @@ import {
   useAdminWithdrawals,
   useCompleteWithdrawal,
   useRejectWithdrawal,
+  useRetryWithdrawal,
   useBulkApproveWithdrawals,
 } from '@/hooks/queries'
 import type { AdminWithdrawal } from '@/services/api/admin'
@@ -161,6 +162,7 @@ export function AdminWithdrawals() {
   const { data, isLoading, isError } = useAdminWithdrawals('pending')
   const completeMutation = useCompleteWithdrawal()
   const rejectMutation = useRejectWithdrawal()
+  const retryMutation = useRetryWithdrawal()
   const bulkMutation = useBulkApproveWithdrawals()
 
   const [completingId, setCompletingId] = useState<string | null>(null)
@@ -377,6 +379,14 @@ export function AdminWithdrawals() {
                         {wd.failureReason && (
                           <p className="text-[10px] text-asm-muted">{wd.failureReason}</p>
                         )}
+                        <button
+                          type="button"
+                          onClick={() => retryMutation.mutate(wd._id)}
+                          disabled={retryMutation.isPending}
+                          className="mt-1 rounded px-2 py-0.5 text-[10px] font-semibold text-asm-blue underline hover:opacity-80 disabled:opacity-50"
+                        >
+                          {retryMutation.isPending ? 'Retrying…' : 'Retry'}
+                        </button>
                       </div>
                     ) : null}
                   </td>

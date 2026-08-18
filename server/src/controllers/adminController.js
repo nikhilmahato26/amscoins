@@ -140,6 +140,10 @@ const bulkApproveWithdrawals = asyncHandler(async (req, res) => {
   res.json(await wdSvc.bulkApproveWithdrawals(ids, req.user._id))
 })
 
+const retryWithdrawal = asyncHandler(async (req, res) => {
+  res.json(await wdSvc.retryWithdrawal(req.params.id))
+})
+
 const listUsers = asyncHandler(async (req, res) => {
   const q = String(req.query.q || '').trim()
   const filter = {}
@@ -255,6 +259,7 @@ module.exports = {
   completeWithdrawal,
   rejectWithdrawal,
   bulkApproveWithdrawals,
+  retryWithdrawal,
   listUsers,
   getUserDetail,
   freeze: setStatus('frozen'),

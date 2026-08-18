@@ -26,6 +26,7 @@ import {
   adminWithdrawals,
   completeWithdrawal,
   rejectWithdrawal,
+  retryWithdrawal,
   bulkApproveWithdrawals,
   adminUsers,
   adminUserDetail,
@@ -129,6 +130,13 @@ export const useCompleteWithdrawal = () =>
   useAdminMutation((id: string, note?: string) => completeWithdrawal(id, note), [['admin', 'withdrawals'], ['admin', 'stats']])
 export const useRejectWithdrawal = () =>
   useAdminMutation((id: string, note?: string) => rejectWithdrawal(id, note), [['admin', 'withdrawals'], ['admin', 'stats']])
+export function useRetryWithdrawal() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => retryWithdrawal(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'withdrawals'] }),
+  })
+}
 export const useFreezeUser = () => useAdminMutation((id: string) => freezeUser(id), [['admin', 'users']])
 export const useUnfreezeUser = () => useAdminMutation((id: string) => unfreezeUser(id), [['admin', 'users']])
 export const useAdjustWallet = () =>

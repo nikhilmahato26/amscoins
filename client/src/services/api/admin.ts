@@ -114,6 +114,8 @@ export const completeWithdrawal = (id: string, note?: string) =>
   apiFetch<Withdrawal>(`/admin/withdrawals/${id}/complete`, { method: 'POST', body: { note } })
 export const rejectWithdrawal = (id: string, note?: string) =>
   apiFetch<Withdrawal>(`/admin/withdrawals/${id}/reject`, { method: 'POST', body: { note } })
+export const retryWithdrawal = (id: string) =>
+  apiFetch<AdminWithdrawal>(`/admin/withdrawals/${id}/retry`, { method: 'POST' })
 
 export interface BulkApproveResult {
   approved: number

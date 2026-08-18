@@ -3,12 +3,21 @@ const asyncHandler = require('../middleware/asyncHandler')
 const Investment = require('../models/Investment')
 const { ApiError } = require('../middleware/errorHandler')
 
+function validDate(str) {
+  const d = new Date(str)
+  return isNaN(d.getTime()) ? null : d
+}
+
 function dateFilter(from, to) {
+  const fromDate = from ? validDate(from) : null
+  const toDate = to ? validDate(to) : null
+  if (from && !fromDate) throw new ApiError(400, 'Invalid from date')
+  if (to && !toDate) throw new ApiError(400, 'Invalid to date')
   const filter = {}
-  if (from || to) {
+  if (fromDate || toDate) {
     filter.createdAt = {}
-    if (from) filter.createdAt.$gte = new Date(from)
-    if (to)   filter.createdAt.$lte = new Date(to)
+    if (fromDate) filter.createdAt.$gte = fromDate
+    if (toDate)   filter.createdAt.$lte = toDate
   }
   return filter
 }
