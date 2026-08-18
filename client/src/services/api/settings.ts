@@ -11,6 +11,8 @@ export interface PublicSettings {
   usdtBep20QrUrl: string
   whatsappNumber: string
   telegramUsername: string
+  cycleDurationHours: number
+  autoRejectHours: number
   methods: {
     usdtCrypto: boolean
     whatsapp: boolean

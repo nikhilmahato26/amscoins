@@ -13,6 +13,8 @@ type FormValues = {
   usdtBep20Address: string
   whatsappNumber: string
   telegramUsername: string
+  cycleDurationHours: number
+  autoRejectHours: number
   methods: {
     usdtCrypto: boolean
     whatsapp: boolean
@@ -41,6 +43,8 @@ export function AdminSettings() {
       usdtBep20Address: settings.usdtBep20Address,
       whatsappNumber: settings.whatsappNumber,
       telegramUsername: settings.telegramUsername,
+      cycleDurationHours: settings.cycleDurationHours,
+      autoRejectHours: settings.autoRejectHours,
       methods: settings.methods,
     })
   }, [settings, reset])
@@ -52,6 +56,8 @@ export function AdminSettings() {
       usdtBep20Address: v.usdtBep20Address,
       whatsappNumber: v.whatsappNumber,
       telegramUsername: v.telegramUsername,
+      cycleDurationHours: v.cycleDurationHours,
+      autoRejectHours: v.autoRejectHours,
       methods: v.methods,
     }
     await update.mutateAsync(payload)
@@ -130,6 +136,28 @@ export function AdminSettings() {
           </Field>
           <Field label="Telegram username">
             <input {...register('telegramUsername')} className={inputCls} />
+          </Field>
+        </Section>
+
+        {/* ── Investment cycle ── */}
+        <Section title="Investment cycle">
+          <Field label="Cycle duration (hours) — length of one investment term">
+            <input
+              type="number"
+              min={1}
+              step={1}
+              {...register('cycleDurationHours', { valueAsNumber: true, min: 1 })}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Auto-reject window (hours) — pending investments rejected after this period">
+            <input
+              type="number"
+              min={1}
+              step={1}
+              {...register('autoRejectHours', { valueAsNumber: true, min: 1 })}
+              className={inputCls}
+            />
           </Field>
         </Section>
 

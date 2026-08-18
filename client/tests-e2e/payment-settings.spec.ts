@@ -91,3 +91,32 @@ test('admin can open settings page and see Payment Settings heading', async ({ p
   // ── 3. The "Payment Settings" h1 must be visible ──
   await expect(page.getByRole('heading', { name: 'Payment Settings' })).toBeVisible({ timeout: 10_000 })
 })
+
+test('admin can set cycle duration and auto-reject window', async ({ page }) => {
+  // ── 1. Admin logs in ──
+  await page.goto('/login')
+  await page.getByPlaceholder('you@example.com').fill('admin@e2e.test')
+  await page.getByPlaceholder('Your password').fill('admin123')
+  await page.getByRole('button', { name: /sign in/i }).click()
+  await expect(page).toHaveURL(/\/admin/, { timeout: 15_000 })
+
+  // ── 2. Open settings ──
+  await page.goto('/admin/settings')
+  await expect(page.getByRole('heading', { name: 'Payment Settings' })).toBeVisible({ timeout: 10_000 })
+
+  // ── 3. Set cycle duration to 36 and auto-reject to 12 ──
+  const cycleDurationInput = page.getByLabel(/cycle duration \(hours\)/i)
+  await cycleDurationInput.fill('36')
+  const autoRejectInput = page.getByLabel(/auto-reject window \(hours\)/i)
+  await autoRejectInput.fill('12')
+
+  // ── 4. Save and confirm success ──
+  await page.getByRole('button', { name: /save settings/i }).click()
+  await expect(page.getByRole('button', { name: /saved/i })).toBeVisible({ timeout: 8_000 })
+
+  // ── 5. Reload and confirm values persist ──
+  await page.reload()
+  await expect(page.getByRole('heading', { name: 'Payment Settings' })).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByLabel(/cycle duration \(hours\)/i)).toHaveValue('36')
+  await expect(page.getByLabel(/auto-reject window \(hours\)/i)).toHaveValue('12')
+})
