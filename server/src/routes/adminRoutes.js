@@ -2,7 +2,7 @@ const router = require('express').Router()
 const auth = require('../middleware/auth')
 const requireAdmin = require('../middleware/requireAdmin')
 const validate = require('../middleware/validate')
-const { adjustWalletSchema, resolveTicketSchema, returnRejectSchema } = require('../validation/schemas')
+const { adjustWalletSchema, resolveTicketSchema, returnRejectSchema, bulkApproveSchema } = require('../validation/schemas')
 const c = require('../controllers/adminController')
 const reportsRoutes = require('./reportsRoutes')
 
@@ -18,6 +18,7 @@ router.post('/investments/:id/return/approve', c.approveReturn)
 router.post('/investments/:id/return/reject', validate(returnRejectSchema), c.rejectReturn)
 
 router.get('/withdrawals', c.listWithdrawals)
+router.post('/withdrawals/bulk-approve', validate(bulkApproveSchema), c.bulkApproveWithdrawals)
 router.post('/withdrawals/:id/complete', c.completeWithdrawal)
 router.post('/withdrawals/:id/reject', c.rejectWithdrawal)
 

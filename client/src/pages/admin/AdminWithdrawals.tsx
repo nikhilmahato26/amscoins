@@ -4,6 +4,7 @@ import {
   useAdminWithdrawals,
   useCompleteWithdrawal,
   useRejectWithdrawal,
+  useBulkApproveWithdrawals,
 } from '@/hooks/queries'
 import type { AdminWithdrawal } from '@/services/api/admin'
 import { SearchInput } from '@/components/admin/SearchInput'
@@ -146,7 +147,7 @@ function RejectDialog({ withdrawal, onConfirm, onCancel, isPending }: RejectDial
 function SkeletonRow() {
   return (
     <tr className="animate-pulse border-b border-asm-line">
-      {Array.from({ length: 7 }).map((_, i) => (
+      {Array.from({ length: 8 }).map((_, i) => (
         <td key={i} className="px-3 py-3">
           <span className="block h-3.5 rounded bg-asm-tint" />
         </td>
@@ -160,11 +161,13 @@ export function AdminWithdrawals() {
   const { data, isLoading, isError } = useAdminWithdrawals('pending')
   const completeMutation = useCompleteWithdrawal()
   const rejectMutation = useRejectWithdrawal()
+  const bulkMutation = useBulkApproveWithdrawals()
 
   const [completingId, setCompletingId] = useState<string | null>(null)
   const [rejectingId, setRejectingId] = useState<string | null>(null)
-  const [statusMsg, setStatusMsg] = useState('')
+  const [statusMsg, setStatusMsg] = useState<string | null>(null)
   const [q, setQ] = useState('')
+  const [selected, setSelected] = useState<Set<string>>(new Set())
 
   const completingWithdrawal = data?.find((w) => w._id === completingId) ?? null
   const rejectingWithdrawal = data?.find((w) => w._id === rejectingId) ?? null
@@ -207,7 +210,32 @@ export function AdminWithdrawals() {
     })
   }
 
-  const isMutating = completeMutation.isPending || rejectMutation.isPending
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function selectAll() {
+    if (!data) return
+    const pending = data.filter((w) => w.status === 'pending').map((w) => w._id)
+    setSelected(new Set(pending))
+  }
+
+  function handleBulkApprove() {
+    bulkMutation.mutate([...selected], {
+      onSuccess: ({ approved }) => {
+        setStatusMsg(`${approved} withdrawal${approved !== 1 ? 's' : ''} approved.`)
+        setSelected(new Set())
+      },
+      onError: () => setStatusMsg('Bulk approve failed.'),
+    })
+  }
+
+  const isMutating = completeMutation.isPending || rejectMutation.isPending || bulkMutation.isPending
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
@@ -219,6 +247,32 @@ export function AdminWithdrawals() {
 
       <SearchInput value={q} onChange={setQ} placeholder="Search by name, email or destination" />
 
+      {/* Bulk actions bar */}
+      {selected.size > 0 && (
+        <div className="flex items-center gap-3 rounded-lg border border-asm-line bg-asm-tint px-4 py-2.5">
+          <span className="text-[12px] font-semibold text-asm-navy">{selected.size} selected</span>
+          <button
+            type="button"
+            onClick={handleBulkApprove}
+            disabled={isMutating}
+            className={cn(
+              'rounded-md bg-asm-blue px-3 py-1.5 text-[11px] font-semibold text-white',
+              'hover:bg-asm-blue-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1',
+              'disabled:cursor-not-allowed disabled:opacity-50',
+            )}
+          >
+            {bulkMutation.isPending ? 'Approving…' : 'Bulk approve'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelected(new Set())}
+            className="text-[12px] text-asm-muted hover:text-asm-body"
+          >
+            Clear
+          </button>
+        </div>
+      )}
+
       {/* Status announcer */}
       <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">
         {statusMsg}
@@ -229,9 +283,9 @@ export function AdminWithdrawals() {
         <p
           className={cn(
             'rounded-lg px-4 py-3 text-[13px] font-medium',
-            statusMsg.includes('Failed')
-              ? 'bg-red-50 text-asm-red'
-              : 'bg-green-50 text-asm-green',
+            statusMsg.toLowerCase().includes('fail') || statusMsg.toLowerCase().includes('failed')
+              ? 'bg-asm-tint text-asm-red'
+              : 'bg-asm-tint text-asm-green',
           )}
         >
           {statusMsg}
@@ -243,6 +297,16 @@ export function AdminWithdrawals() {
         <table className="w-full min-w-[800px] border-collapse text-[13px]">
           <thead>
             <tr className="border-b border-asm-line bg-asm-tint text-[11px] font-bold uppercase tracking-[0.07em] text-asm-muted">
+              <th scope="col" className="w-8 px-3 py-2.5">
+                <button
+                  type="button"
+                  onClick={selectAll}
+                  className="text-[10px] font-semibold uppercase text-asm-muted hover:text-asm-navy"
+                  aria-label="Select all pending"
+                >
+                  All
+                </button>
+              </th>
               <th scope="col" className="px-3 py-2.5 text-left">User</th>
               <th scope="col" className="px-3 py-2.5 text-right">Gross</th>
               <th scope="col" className="px-3 py-2.5 text-right">TDS</th>
@@ -258,7 +322,7 @@ export function AdminWithdrawals() {
             ) : isError ? (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={8}
                   className="px-4 py-10 text-center text-[13px] text-asm-red"
                   role="alert"
                 >
@@ -267,7 +331,7 @@ export function AdminWithdrawals() {
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-16 text-center">
+                <td colSpan={8} className="px-4 py-16 text-center">
                   <span className="mx-auto flex size-10 items-center justify-center rounded-full bg-asm-tint">
                     <Inbox className="size-5 text-asm-muted" strokeWidth={1.5} aria-hidden />
                   </span>
@@ -288,6 +352,27 @@ export function AdminWithdrawals() {
                     idx % 2 === 0 ? 'bg-white' : 'bg-asm-tint/40',
                   )}
                 >
+                  <td className="px-3 py-2.5">
+                    {wd.status === 'pending' ? (
+                      <input
+                        type="checkbox"
+                        aria-label={`Select withdrawal for ${wd.user.name}`}
+                        checked={selected.has(wd._id)}
+                        onChange={() => toggleSelect(wd._id)}
+                        className="h-3.5 w-3.5 cursor-pointer accent-asm-blue"
+                      />
+                    ) : (
+                      <span
+                        className={cn(
+                          'inline-flex rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em]',
+                          wd.status === 'processing' && 'bg-asm-tint text-asm-blue',
+                          wd.status === 'failed' && 'bg-asm-tint text-asm-red',
+                        )}
+                      >
+                        {wd.status}
+                      </span>
+                    )}
+                  </td>
                   <td className="px-3 py-2.5">
                     <p className="font-medium text-asm-navy">{wd.user.name}</p>
                     <p className="text-[11px] text-asm-muted">{wd.user.email}</p>
@@ -347,7 +432,7 @@ export function AdminWithdrawals() {
                         disabled={isMutating}
                         className={cn(
                           'rounded-md border border-asm-line inline-flex min-h-[40px] items-center px-3 py-1.5 text-[11px] font-semibold text-asm-red',
-                          'hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-red focus-visible:ring-offset-1',
+                          'hover:bg-asm-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-red focus-visible:ring-offset-1',
                           'disabled:cursor-not-allowed disabled:opacity-40',
                         )}
                       >

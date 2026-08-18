@@ -164,4 +164,24 @@ async function rejectWithdrawal(id, adminId, note = '') {
   return w
 }
 
-module.exports = { initiateWithdrawal, completeWithdrawal, rejectWithdrawal }
+async function bulkApproveWithdrawals(ids, adminId) {
+  let approved = 0
+  for (const id of ids) {
+    try {
+      const w = await Withdrawal.findOneAndUpdate(
+        { _id: id, status: 'pending' },
+        { $set: { status: 'completed', processedAt: new Date() } },
+        { returnDocument: 'after' }
+      )
+      if (w) {
+        approved++
+        logger.info('Bulk withdrawal completed', { withdrawalId: w._id, adminId })
+      }
+    } catch (err) {
+      logger.error('Bulk withdrawal step failed', { id, error: err.message })
+    }
+  }
+  return { approved }
+}
+
+module.exports = { initiateWithdrawal, completeWithdrawal, rejectWithdrawal, bulkApproveWithdrawals }

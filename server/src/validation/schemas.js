@@ -114,6 +114,10 @@ const returnRejectSchema = z.object({
   amount: z.number().int().min(0),
 })
 
+const bulkApproveSchema = z.object({
+  ids: z.array(z.string().min(1)).min(1, 'At least one ID required'),
+})
+
 module.exports = {
   registerSchema,
   loginSchema,
@@ -129,4 +133,5 @@ module.exports = {
   forgotPasswordSchema,
   verifyOtpSchema,
   resetPasswordSchema,
+  bulkApproveSchema,
 }

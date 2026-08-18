@@ -115,6 +115,13 @@ export const completeWithdrawal = (id: string, note?: string) =>
 export const rejectWithdrawal = (id: string, note?: string) =>
   apiFetch<Withdrawal>(`/admin/withdrawals/${id}/reject`, { method: 'POST', body: { note } })
 
+export interface BulkApproveResult {
+  approved: number
+}
+
+export const bulkApproveWithdrawals = (ids: string[]) =>
+  apiFetch<BulkApproveResult>('/admin/withdrawals/bulk-approve', { method: 'POST', body: { ids } })
+
 export const adminUsers = (params: AdminUsersParams | string = '') => {
   if (typeof params === 'string') {
     return apiFetch<AdminUser[]>(`/admin/users${params ? `?q=${encodeURIComponent(params)}` : ''}`)

@@ -10,7 +10,9 @@ export interface Withdrawal {
   accountName?: string
   accountNumber?: string
   ifsc?: string
-  status: 'pending' | 'completed' | 'rejected'
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'rejected'
+  failureReason?: string | null
+  processedAt?: string | null
   createdAt: string
 }
 

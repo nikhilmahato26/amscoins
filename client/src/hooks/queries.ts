@@ -26,6 +26,7 @@ import {
   adminWithdrawals,
   completeWithdrawal,
   rejectWithdrawal,
+  bulkApproveWithdrawals,
   adminUsers,
   adminUserDetail,
   freezeUser,
@@ -137,6 +138,17 @@ export const useAdjustWallet = () =>
   )
 export const useResolveSupport = () =>
   useAdminMutation((id: string, adminNote?: string) => resolveSupport(id, adminNote), [['admin', 'support']])
+
+export function useBulkApproveWithdrawals() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (ids: string[]) => bulkApproveWithdrawals(ids),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['admin', 'withdrawals'] })
+      void qc.invalidateQueries({ queryKey: ['admin', 'stats'] })
+    },
+  })
+}
 
 export function useInvestmentStats() {
   return useQuery({
