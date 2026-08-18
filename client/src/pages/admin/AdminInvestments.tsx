@@ -13,6 +13,7 @@ import {
 import type { AdminInvestment } from '@/services/api/admin'
 import { SearchInput } from '@/components/admin/SearchInput'
 import { InvestmentCountdown } from '@/components/admin/InvestmentCountdown'
+import { InvestmentStatsBar } from '@/components/admin/InvestmentStatsBar'
 import { inr } from '@/lib/format'
 import { formatInvestId, IdChip } from '@/lib/ids'
 import { cn } from '@/lib/utils'
@@ -888,6 +889,9 @@ export function AdminInvestments() {
           Review pending investments, process matured returns, and view history.
         </p>
       </div>
+
+      {/* Stats bar */}
+      <InvestmentStatsBar />
 
       {/* Tab bar */}
       <div
