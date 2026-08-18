@@ -13,6 +13,7 @@ const { ApiError } = require('../middleware/errorHandler')
 const logger = require('../lib/logger').child({ service: 'investment' })
 const { cacheDel } = require('../config/redis')
 const email = require('./emailService')
+const Settings = require('../models/Settings')
 
 async function uniqueRef() {
   for (let i = 0; i < 10; i++) {
@@ -93,24 +94,23 @@ async function approveInvestment(investmentId, adminId) {
         throw new ApiError(409, 'Investment already processed')
       }
 
-      const plan = await Plan.findOne({ key: inv.planKey }).session(session)
+      const settings = await Settings.getSingleton()
       const now = new Date()
       inv.status = 'active'
       inv.startAt = now
-      inv.maturesAt = new Date(now.getTime() + plan.durationHours * 3600 * 1000)
+      inv.maturesAt = new Date(now.getTime() + settings.cycleDurationHours * 3600 * 1000)
       inv.approvedBy = adminId
       inv.approvedAt = now
       await inv.save({ session })
 
-      await walletService.credit(
-        inv.user,
-        inv.amount,
-        { type: 'deposit', actor: 'admin', note: `Deposit ${inv.referenceCode}`, ref: inv._id },
-        session
-      )
+      // NOTE: principal is intentionally NOT credited here. Funds stay locked
+      // until maturity (see approveReturn / runMature). Job scheduling
+      // (cancelAutoReject + scheduleMature) is wired in Task 5.
 
       const user = await User.findById(inv.user).session(session)
-      const referralResult = await creditReferralIfFirst(user, session)
+      const referralResult = user
+        ? await creditReferralIfFirst(user, session)
+        : { credited: false, referrerId: null }
 
       // Send approval notification after the transaction commits (below)
       result = { inv, user }
@@ -135,7 +135,7 @@ async function approveInvestment(investmentId, adminId) {
         'cache:leaderboard:monthly',
         'cache:leaderboard:yearly'
       )
-      email.depositApproved(result.user, result.inv).catch(() => {}) // fire-and-forget
+      if (result.user) email.depositApproved(result.user, result.inv).catch(() => {}) // fire-and-forget
     }
 
     return result?.inv
@@ -187,14 +187,14 @@ async function approveReturn(investmentId, adminId) {
       if (!wasCredited) {
         await walletService.credit(
           inv.user, inv.amount,
-          { type: 'deposit', actor: 'admin', note: `Principal ${inv.referenceCode}`, ref: inv._id },
+          { type: 'deposit', actor: adminId ? 'admin' : 'system', note: `Principal ${inv.referenceCode}`, ref: inv._id },
           session
         )
         credited += inv.amount
       }
       await walletService.credit(
         inv.user, inv.expectedReturn,
-        { type: 'return', actor: 'admin', note: `Return ${inv.referenceCode}`, ref: inv._id },
+        { type: 'return', actor: adminId ? 'admin' : 'system', note: `Return ${inv.referenceCode}`, ref: inv._id },
         session
       )
       credited += inv.expectedReturn
@@ -256,4 +256,33 @@ async function rejectReturn(investmentId, adminId, { reason, amount }) {
   }
 }
 
-module.exports = { createInvestment, approveInvestment, rejectInvestment, approveReturn, rejectReturn }
+async function runAutoReject(investmentId) {
+  const inv = await Investment.findOneAndUpdate(
+    { _id: investmentId, status: 'pending' },
+    { $set: { status: 'rejected', autoRejected: true, rejectionReason: 'auto-rejected: approval timeout (8h)', approvedAt: new Date() } },
+    { returnDocument: 'after' }
+  )
+  if (!inv) return null // already approved/processed — idempotent no-op
+  await cacheDel('cache:admin:stats', `cache:dashboard:${inv.user}`)
+  logger.info('Investment auto-rejected (8h timeout)', { investmentId }) // no email
+  return inv
+}
+
+async function runMature(investmentId) {
+  const inv = await Investment.findOneAndUpdate(
+    { _id: investmentId, status: 'active' },
+    { $set: { status: 'matured', maturedAt: new Date() } },
+    { returnDocument: 'after' }
+  )
+  if (!inv) return null // not active — idempotent no-op
+  await cacheDel('cache:admin:stats', `cache:dashboard:${inv.user}`)
+  logger.info('Investment matured', { investmentId })
+
+  if (process.env.WALLET_AUTO_CREDIT_ON_MATURITY === 'true') {
+    // Reuse the return-approve credit path with a system actor (adminId = null).
+    await approveReturn(inv._id, null)
+  }
+  return await Investment.findById(investmentId)
+}
+
+module.exports = { createInvestment, approveInvestment, rejectInvestment, approveReturn, rejectReturn, runAutoReject, runMature }
