@@ -193,8 +193,8 @@ async function approveInvestment(investmentId, adminId) {
         `cache:dashboard:${result.inv.user}`,
         `cache:wallet:${result.inv.user}`,
         'cache:leaderboard:daily',
-        'cache:leaderboard:monthly',
-        'cache:leaderboard:yearly'
+        'cache:leaderboard:weekly',
+        'cache:leaderboard:monthly'
       )
       if (result.user) email.depositApproved(result.user, result.inv).catch(() => {}) // fire-and-forget
       await queue.cancelAutoReject(result.inv._id)

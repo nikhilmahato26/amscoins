@@ -24,10 +24,10 @@ const fadeUp = {
 }
 
 /* ── Period tab config ── */
-const PERIODS: { value: LeaderboardPeriod; label: string }[] = [
-  { value: 'daily',   label: 'Daily'   },
-  { value: 'monthly', label: 'Monthly' },
-  { value: 'yearly',  label: 'Yearly'  },
+const PERIODS: { value: LeaderboardPeriod; label: string; count: number }[] = [
+  { value: 'daily',   label: 'Daily',   count: 5  },
+  { value: 'weekly',  label: 'Weekly',  count: 10 },
+  { value: 'monthly', label: 'Monthly', count: 20 },
 ]
 
 /* ── Medal config for top 3 ── */
@@ -253,6 +253,7 @@ export function LeaderboardPage() {
   const { data, isLoading, isError } = useLeaderboard(period)
 
   const entries = data?.entries ?? []
+  const topCount = PERIODS.find((p) => p.value === period)?.count ?? entries.length
 
   return (
     <AppShell headerVariant="root">
@@ -349,7 +350,7 @@ export function LeaderboardPage() {
             variants={fadeUp}
             className="pb-4 text-center text-[11px] text-asm-muted"
           >
-            Amounts shown in INR · Updated every hour
+            Top {topCount} this period · Amounts in INR · Updated hourly
           </motion.p>
         )}
       </motion.div>

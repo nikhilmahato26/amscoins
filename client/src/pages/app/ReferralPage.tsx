@@ -6,8 +6,6 @@ import {
   Gift,
   Headphones,
   Loader2,
-  Send,
-  Share2,
   ShieldCheck,
   Users,
   Zap,
@@ -141,29 +139,11 @@ export function ReferralPage() {
               <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-asm-muted">
                 Your referral code
               </span>
-              <div className="flex items-stretch gap-2">
-                <div className="flex h-14 min-w-0 flex-1 items-center justify-between gap-3 rounded-xl border border-asm-line bg-asm-tint px-4">
-                  <span className="min-w-0 font-mono text-[20px] font-extrabold uppercase tracking-[3px] text-asm-navy">
-                    {data.referralCode}
-                  </span>
-                  <CopyButton value={data.referralCode} label="Copy referral code" />
-                </div>
-                <motion.button
-                  type="button"
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  transition={{ type: 'spring' as const, stiffness: 400, damping: 25 }}
-                  className={cn(
-                    'flex h-14 shrink-0 items-center gap-2 rounded-xl',
-                    'border border-asm-blue/20 bg-asm-blue-tint px-4',
-                    'text-[12px] font-bold uppercase tracking-[0.06em] text-asm-blue',
-                    'transition-colors hover:bg-asm-blue hover:text-white',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue'
-                  )}
-                >
-                  <Share2 className="size-4" aria-hidden />
-                  Share
-                </motion.button>
+              <div className="flex h-14 items-center justify-between gap-3 rounded-xl border border-asm-line bg-asm-tint px-4">
+                <span className="min-w-0 font-mono text-[20px] font-extrabold uppercase tracking-[3px] text-asm-navy">
+                  {data.referralCode}
+                </span>
+                <CopyButton value={data.referralCode} label="Copy referral code" />
               </div>
             </div>
 
@@ -358,26 +338,6 @@ export function ReferralPage() {
               </ul>
             )}
           </motion.section>
-
-          {/* ── Invite CTA ── */}
-          <motion.div variants={fadeUp}>
-            <motion.button
-              type="button"
-              whileHover={{ scale: 1.02, boxShadow: '0 12px 32px -8px rgba(21,128,61,0.45)' }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ type: 'spring' as const, stiffness: 380, damping: 26 }}
-              className={cn(
-                'flex min-h-[56px] w-full items-center justify-center gap-3 rounded-2xl',
-                'bg-asm-greenInk shadow-[0_8px_24px_-8px_rgba(21,128,61,0.5)]',
-                'text-[15px] font-bold uppercase tracking-[0.06em] text-white',
-                'transition-colors hover:bg-green-800',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-greenInk focus-visible:ring-offset-2'
-              )}
-            >
-              <Send className="size-5" aria-hidden />
-              Invite Now
-            </motion.button>
-          </motion.div>
 
           {/* ── Trust badges ── */}
           <motion.div variants={fadeUp} className="grid grid-cols-2 gap-3 pb-2">
