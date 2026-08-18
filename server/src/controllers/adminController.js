@@ -137,13 +137,33 @@ const rejectWithdrawal = asyncHandler(async (req, res) =>
 
 const listUsers = asyncHandler(async (req, res) => {
   const q = String(req.query.q || '').trim()
-  let filter = {}
+  const filter = {}
   if (q) {
     // Escape regex metacharacters so a search term is matched literally.
     const rx = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
-    filter = { $or: [{ name: rx }, { email: rx }, { publicId: rx }] }
+    filter.$or = [{ name: rx }, { email: rx }, { publicId: rx }]
   }
-  res.json(await User.find(filter).select('-passwordHash').sort('-createdAt'))
+
+  const users = await User.find(filter).select('-passwordHash').lean()
+
+  // Lifetime total invested per user — sum of ALL their investment amounts,
+  // regardless of individual status (pending/active/matured/returned/rejected).
+  const agg = await Investment.aggregate([{ $group: { _id: '$user', total: { $sum: '$amount' } } }])
+  const totals = new Map(agg.map((a) => [String(a._id), a.total]))
+  let result = users.map((u) => ({ ...u, totalInvested: totals.get(String(u._id)) || 0 }))
+
+  // Investor filter: 'true' = has invested at least once, 'false' = never invested.
+  const investor = req.query.investor
+  if (investor === 'true') result = result.filter((u) => u.totalInvested > 0)
+  else if (investor === 'false') result = result.filter((u) => u.totalInvested === 0)
+
+  // Sort: by lifetime invested (either direction), else newest-first (default).
+  const sort = req.query.sort
+  if (sort === 'invested') result.sort((a, b) => a.totalInvested - b.totalInvested)
+  else if (sort === '-invested') result.sort((a, b) => b.totalInvested - a.totalInvested)
+  else result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+
+  res.json(result)
 })
 
 // GET /api/admin/users/:id — full profile + wallet + money history for one user.
