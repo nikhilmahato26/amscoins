@@ -18,6 +18,9 @@ import {
   adminInvestments,
   approveInvestment,
   rejectInvestment,
+  approveReturn,
+  rejectReturn,
+  type RejectReturnBody,
   adminWithdrawals,
   completeWithdrawal,
   rejectWithdrawal,
@@ -98,6 +101,10 @@ export const useApproveInvestment = () =>
   useAdminMutation((id: string) => approveInvestment(id), [['admin', 'investments'], ['admin', 'stats']])
 export const useRejectInvestment = () =>
   useAdminMutation((id: string, note?: string) => rejectInvestment(id, note), [['admin', 'investments'], ['admin', 'stats']])
+export const useApproveReturn = () =>
+  useAdminMutation((id: string) => approveReturn(id), [['admin', 'investments'], ['admin', 'stats']])
+export const useRejectReturn = () =>
+  useAdminMutation((id: string, body: RejectReturnBody) => rejectReturn(id, body), [['admin', 'investments'], ['admin', 'stats']])
 export const useCompleteWithdrawal = () =>
   useAdminMutation((id: string, note?: string) => completeWithdrawal(id, note), [['admin', 'withdrawals'], ['admin', 'stats']])
 export const useRejectWithdrawal = () =>

@@ -16,8 +16,10 @@ export interface PopulatedRef {
   email: string
 }
 
-export type AdminInvestment = Omit<Investment, 'planKey'> & {
+export type AdminInvestment = Omit<Investment, 'planKey' | 'status'> & {
   planKey: Tier
+  status: 'pending' | 'active' | 'matured' | 'returned' | 'rejected'
+  creditedAmount?: number // paise — set when returned with partial/custom amount
   user: PopulatedRef
 }
 
@@ -59,6 +61,14 @@ export const approveInvestment = (id: string) =>
   apiFetch<Investment>(`/admin/investments/${id}/approve`, { method: 'POST' })
 export const rejectInvestment = (id: string, note?: string) =>
   apiFetch<Investment>(`/admin/investments/${id}/reject`, { method: 'POST', body: { note } })
+export const approveReturn = (id: string) =>
+  apiFetch<AdminInvestment>(`/admin/investments/${id}/return/approve`, { method: 'POST' })
+export interface RejectReturnBody {
+  reason: string
+  amount: number // paise
+}
+export const rejectReturn = (id: string, body: RejectReturnBody) =>
+  apiFetch<AdminInvestment>(`/admin/investments/${id}/return/reject`, { method: 'POST', body })
 
 export const adminWithdrawals = (status = 'pending') =>
   apiFetch<AdminWithdrawal[]>(`/admin/withdrawals?status=${status}`)

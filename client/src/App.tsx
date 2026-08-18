@@ -79,6 +79,9 @@ const AdminDashboard = lazy(() =>
 const AdminDeposits = lazy(() =>
   import('./pages/admin/AdminDeposits').then((m) => ({ default: m.AdminDeposits }))
 )
+const AdminInvestments = lazy(() =>
+  import('./pages/admin/AdminInvestments').then((m) => ({ default: m.AdminInvestments }))
+)
 const AdminWithdrawals = lazy(() =>
   import('./pages/admin/AdminWithdrawals').then((m) => ({ default: m.AdminWithdrawals }))
 )
@@ -268,6 +271,7 @@ export default function App() {
         >
           <Route index element={<AdminDashboard />} />
           <Route path="deposits" element={<AdminDeposits />} />
+          <Route path="investments" element={<AdminInvestments />} />
           <Route path="withdrawals" element={<AdminWithdrawals />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="users/:id" element={<AdminUserDetail />} />
