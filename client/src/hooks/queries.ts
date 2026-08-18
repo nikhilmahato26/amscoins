@@ -3,7 +3,7 @@ import { getPlans } from '@/services/api/plans'
 import { getWallet } from '@/services/api/wallet'
 import { getReferral } from '@/services/api/referral'
 import { getDashboard } from '@/services/api/dashboard'
-import { getInvestments } from '@/services/api/investments'
+import { getInvestment, getInvestments } from '@/services/api/investments'
 import { getWithdrawals, createWithdrawal, type WithdrawalInput } from '@/services/api/withdrawals'
 import { getLeaderboard, type LeaderboardPeriod } from '@/services/api/leaderboard'
 import {
@@ -40,6 +40,15 @@ export const useWallet = () => useQuery({ queryKey: ['wallet'], queryFn: getWall
 export const useReferral = () => useQuery({ queryKey: ['referral'], queryFn: getReferral })
 export const useDashboard = () => useQuery({ queryKey: ['dashboard'], queryFn: getDashboard })
 export const useInvestments = () => useQuery({ queryKey: ['investments'], queryFn: getInvestments })
+export function useInvestment(id: string) {
+  return useQuery({
+    queryKey: ['investment', id],
+    queryFn: () => getInvestment(id),
+    refetchInterval: (query) =>
+      query.state.data?.status === 'pending' ? 30_000 : false,
+    enabled: !!id,
+  })
+}
 export const useWithdrawals = () => useQuery({ queryKey: ['withdrawals'], queryFn: getWithdrawals })
 export const useCreateWithdrawal = () => {
   const qc = useQueryClient()

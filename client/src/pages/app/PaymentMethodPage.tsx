@@ -13,7 +13,7 @@ import {
   ShieldCheck,
   Wallet,
 } from 'lucide-react'
-import { Link, useLocation, useSearchParams } from 'react-router'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 
 import { AppShell } from '@/components/app/AppShell'
 import { TelegramIcon, TetherIcon, WhatsAppIcon } from '@/components/app/icons'
@@ -33,7 +33,6 @@ import { createInvestment } from '@/services/api/investments'
 import type { Investment } from '@/services/api/investments'
 import type { PublicSettings } from '@/services/api/settings'
 import type { Tier } from '@/types'
-import { InrQrScreen } from './InrQrScreen'
 
 interface LocationState {
   planKey: Tier
@@ -62,6 +61,7 @@ type ChooserMethod = PaymentMethodId | 'inr-qr'
 
 export function PaymentMethodPage() {
   const location = useLocation()
+  const navigate = useNavigate()
   const [params] = useSearchParams()
   const state = location.state as LocationState | null
 
@@ -94,16 +94,6 @@ export function PaymentMethodPage() {
     if (!inrQrAvailable) setMode('USDT')
   }, [inrQrAvailable])
 
-  /*
-   * The investment record is created once, on the first method the user picks,
-   * and then reused. Switching between payment methods is a change of mind about
-   * *how* to pay, not a second deposit — creating another pending record would
-   * leave the admin two rows to reconcile for one payment.
-   */
-  const [investment, setInvestment] = useState<Investment | null>(null)
-  const [supportLink, setSupportLink] = useState<string>('')
-  const [whatsappSupport, setWhatsappSupport] = useState<string>('')
-  const [method, setMethod] = useState<ChooserMethod | null>(null)
   const [pending, setPending] = useState<ChooserMethod | null>(null)
   const [error, setError] = useState<string | null>(null)
   // Which USDT chain the user tapped in the chooser, so the pay screen opens on
@@ -115,25 +105,19 @@ export function PaymentMethodPage() {
       if (!planKey || !hasSelection || pending) return
       setError(null)
 
-      if (investment) {
-        setMethod(next)
-        return
-      }
-
       setPending(next)
       try {
         const result = await createInvestment({ planKey, amount: amountPaise })
-        setInvestment(result.investment)
-        setSupportLink(result.telegramLink)
-        setWhatsappSupport(result.whatsappLink)
-        setMethod(next)
+        navigate(`/app/invest/confirm/${result.investment._id}`, {
+          state: { whatsappLink: result.whatsappLink, telegramLink: result.telegramLink },
+        })
       } catch (err) {
         setError(err instanceof ApiError ? err.message : 'Something went wrong. Please try again.')
       } finally {
         setPending(null)
       }
     },
-    [amountPaise, hasSelection, investment, pending, planKey]
+    [amountPaise, hasSelection, navigate, pending, planKey]
   )
 
   const handleSelectUsdt = useCallback(
@@ -143,36 +127,6 @@ export function PaymentMethodPage() {
     },
     [handleSelect]
   )
-
-  /* ── Pay screen: one method, with its own instructions ── */
-  if (method && investment && settings) {
-    return (
-      <AppShell backTo="/app" contentClassName="px-5">
-        {method === 'inr-qr' ? (
-          <InrQrScreen
-            settings={settings}
-            investment={investment}
-            planName={planName}
-            amountPaise={amountPaise || investment.amount}
-            telegramFallback={supportLink}
-            whatsappFallback={whatsappSupport}
-          />
-        ) : (
-          <PayScreen
-            method={method}
-            settings={settings}
-            investment={investment}
-            planName={planName}
-            amountPaise={amountPaise || investment.amount}
-            telegramFallback={supportLink}
-            whatsappFallback={whatsappSupport}
-            preferredNetwork={usdtNetwork}
-            onBack={() => setMethod(null)}
-          />
-        )}
-      </AppShell>
-    )
-  }
 
   // Every method shape is derived from settings now, so hold the chooser until
   // it lands rather than rendering a chooser with no configured methods.

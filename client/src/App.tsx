@@ -49,6 +49,9 @@ const InvestSummaryPage = lazy(() =>
 const SilverTierPage = lazy(() =>
   import('./pages/app/SilverTierPage').then((m) => ({ default: m.SilverTierPage }))
 )
+const DepositConfirmationPage = lazy(() =>
+  import('./pages/app/DepositConfirmationPage').then((m) => ({ default: m.DepositConfirmationPage }))
+)
 const AccountPage = lazy(() =>
   import('./pages/app/AccountPage').then((m) => ({ default: m.AccountPage }))
 )
@@ -175,6 +178,15 @@ export default function App() {
           element={
             <RequireAuth role="user">
               <PackageDetailPage />
+            </RequireAuth>
+          }
+        />
+
+        <Route
+          path="/app/invest/confirm/:id"
+          element={
+            <RequireAuth role="user">
+              <DepositConfirmationPage />
             </RequireAuth>
           }
         />
