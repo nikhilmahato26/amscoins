@@ -31,7 +31,9 @@ module.exports = {
   // Getter so the flag is read at call time — lets it be toggled at runtime
   // (and in tests) without a module reload, while still going through config.
   get WALLET_AUTO_CREDIT_ON_MATURITY() {
-    return ['true', '1', 'on', 'yes'].includes((process.env.WALLET_AUTO_CREDIT_ON_MATURITY ?? '').toLowerCase())
+    const val = (process.env.WALLET_AUTO_CREDIT_ON_MATURITY ?? '').toLowerCase()
+    if (!val) return true
+    return ['true', '1', 'on', 'yes'].includes(val)
   },
   LOGO_URL: process.env.LOGO_URL || null,
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || null,
