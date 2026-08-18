@@ -188,7 +188,7 @@ function ConversionChart({ data }: { data: ConversionData }) {
                   <Cell key={entry.name} fill={PIE_COLORS[entry.name.toLowerCase()] ?? MUTED} stroke="none" />
                 ))}
               </Pie>
-              <Tooltip formatter={(v: number, name: string) => [v, name]} />
+              <Tooltip formatter={(v, name) => [v, name]} />
               <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
             </PieChart>
           </ResponsiveContainer>

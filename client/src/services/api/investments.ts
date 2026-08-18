@@ -25,6 +25,11 @@ export interface CreateInvestmentInput {
 export const createInvestment = (input: CreateInvestmentInput) =>
   apiFetch<{ investment: Investment; telegramLink: string; whatsappLink: string }>('/investments', { method: 'POST', body: input })
 
+// Called when the user taps "I've paid" on the pay screen — sends the deposit
+// confirmation email and returns the support links for the confirmation page.
+export const notifyPayment = (id: string) =>
+  apiFetch<{ investment: Investment; telegramLink: string; whatsappLink: string }>(`/investments/${id}/notify`, { method: 'POST' })
+
 export const getInvestments = () => apiFetch<Investment[]>('/investments')
 
 export const getInvestment = (id: string) => apiFetch<Investment>(`/investments/${id}`)

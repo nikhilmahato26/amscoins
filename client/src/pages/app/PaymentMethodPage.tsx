@@ -4,6 +4,7 @@ import {
   AlertCircle,
   ArrowLeft,
   Check,
+  CheckCircle2,
   ChevronRight,
   Copy,
   ExternalLink,
@@ -11,7 +12,6 @@ import {
   Info,
   Loader2,
   ShieldCheck,
-  Wallet,
 } from 'lucide-react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 
@@ -20,17 +20,17 @@ import { TelegramIcon, TetherIcon, WhatsAppIcon } from '@/components/app/icons'
 import {
   deriveTelegram,
   deriveUsdtWallets,
-  deriveWhatsapp,
   isMethodConfigured,
   whatsappUrl,
 } from '@/config/payment'
-import type { PaymentMethodId, UsdtNetwork, UsdtWallet } from '@/config/payment'
+import type { PaymentMethodId, UsdtNetwork } from '@/config/payment'
 import { usePlans, useSettings } from '@/hooks/queries'
 import { ApiError } from '@/lib/api'
 import { inr } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import { createInvestment } from '@/services/api/investments'
+import { createInvestment, notifyPayment } from '@/services/api/investments'
 import type { Investment } from '@/services/api/investments'
+
 import type { PublicSettings } from '@/services/api/settings'
 import type { Tier } from '@/types'
 
@@ -47,12 +47,6 @@ export const container = {
 export const fadeUp = {
   hidden: { opacity: 0, y: 16 },
   visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 90, damping: 18 } },
-}
-
-const METHOD_LABEL: Record<PaymentMethodId, string> = {
-  usdt: 'USDT (Crypto)',
-  whatsapp: 'WhatsApp',
-  telegram: 'Telegram',
 }
 
 // `'inr-qr'` is a pseudo-method: it reuses the single createInvestment call but
@@ -95,38 +89,74 @@ export function PaymentMethodPage() {
   }, [inrQrAvailable])
 
   const [pending, setPending] = useState<ChooserMethod | null>(null)
+  // Which USDT chain is mid-request, so only the tapped tile shows its spinner.
+  const [pendingNetwork, setPendingNetwork] = useState<UsdtNetwork | undefined>()
   const [error, setError] = useState<string | null>(null)
-  // Which USDT chain the user tapped in the chooser, so the pay screen opens on
-  // that network's wallet instead of always defaulting to the first one.
-  const [usdtNetwork, setUsdtNetwork] = useState<UsdtNetwork | undefined>()
+  // Once the investment record exists, we move to an in-page pay screen (QR /
+  // wallet / chat details) instead of jumping straight to the confirmation
+  // page. The deposit is only "submitted" — email sent, confirm page shown —
+  // once the user taps "I've paid".
+  const [payStep, setPayStep] = useState<{
+    investment: Investment
+    method: ChooserMethod
+    network?: UsdtNetwork
+    telegramLink: string
+    whatsappLink: string
+  } | null>(null)
+  const [confirming, setConfirming] = useState(false)
 
   const handleSelect = useCallback(
-    async (next: ChooserMethod) => {
+    async (next: ChooserMethod, network?: UsdtNetwork) => {
       if (!planKey || !hasSelection || pending) return
       setError(null)
 
       setPending(next)
+      setPendingNetwork(next === 'usdt' ? network : undefined)
       try {
         const result = await createInvestment({ planKey, amount: amountPaise })
-        navigate(`/app/invest/confirm/${result.investment._id}`, {
-          state: { whatsappLink: result.whatsappLink, telegramLink: result.telegramLink },
+        setPayStep({
+          investment: result.investment,
+          method: next,
+          network: next === 'usdt' ? network : undefined,
+          telegramLink: result.telegramLink,
+          whatsappLink: result.whatsappLink,
         })
       } catch (err) {
         setError(err instanceof ApiError ? err.message : 'Something went wrong. Please try again.')
       } finally {
         setPending(null)
+        setPendingNetwork(undefined)
       }
     },
-    [amountPaise, hasSelection, navigate, pending, planKey]
+    [amountPaise, hasSelection, pending, planKey]
   )
 
   const handleSelectUsdt = useCallback(
     (network: UsdtNetwork) => {
-      setUsdtNetwork(network)
-      void handleSelect('usdt')
+      void handleSelect('usdt', network)
     },
     [handleSelect]
   )
+
+  // "I've paid" — mark the deposit as submitted (fires the email server-side),
+  // then move to the confirmation page. Even if the notify call fails, the
+  // deposit record already exists, so we still forward to the confirm page.
+  const handlePaid = useCallback(async () => {
+    if (!payStep || confirming) return
+    setConfirming(true)
+    try {
+      const res = await notifyPayment(payStep.investment._id)
+      navigate(`/app/invest/confirm/${payStep.investment._id}`, {
+        state: { whatsappLink: res.whatsappLink, telegramLink: res.telegramLink },
+      })
+    } catch {
+      navigate(`/app/invest/confirm/${payStep.investment._id}`, {
+        state: { whatsappLink: payStep.whatsappLink, telegramLink: payStep.telegramLink },
+      })
+    } finally {
+      setConfirming(false)
+    }
+  }, [confirming, navigate, payStep])
 
   // Every method shape is derived from settings now, so hold the chooser until
   // it lands rather than rendering a chooser with no configured methods.
@@ -138,6 +168,21 @@ export function PaymentMethodPage() {
           <span className="sr-only">Loading payment options…</span>
         </div>
       </AppShell>
+    )
+  }
+
+  /* ── Pay screen (shown after the deposit record is created) ── */
+  if (payStep) {
+    return (
+      <PayStep
+        payStep={payStep}
+        planName={planName}
+        amountPaise={amountPaise}
+        settings={settings}
+        confirming={confirming}
+        onBack={() => setPayStep(null)}
+        onPaid={handlePaid}
+      />
     )
   }
 
@@ -310,7 +355,7 @@ export function PaymentMethodPage() {
                 network="TRC20"
                 subtitle="Tron network"
                 settings={settings}
-                pending={Boolean(pending) && usdtNetwork === 'TRC20'}
+                pending={Boolean(pending) && pendingNetwork === 'TRC20'}
                 disabled={!hasSelection || Boolean(pending)}
                 onSelect={handleSelectUsdt}
               />
@@ -318,7 +363,7 @@ export function PaymentMethodPage() {
                 network="BEP20"
                 subtitle="BNB Smart Chain"
                 settings={settings}
-                pending={Boolean(pending) && usdtNetwork === 'BEP20'}
+                pending={Boolean(pending) && pendingNetwork === 'BEP20'}
                 disabled={!hasSelection || Boolean(pending)}
                 onSelect={handleSelectUsdt}
               />
@@ -390,6 +435,209 @@ export function PaymentMethodPage() {
             </p>
           </div>
         </motion.section>
+      </motion.div>
+    </AppShell>
+  )
+}
+
+/* ── Pay screen ── */
+function PayStep({
+  payStep,
+  planName,
+  amountPaise,
+  settings,
+  confirming,
+  onBack,
+  onPaid,
+}: {
+  payStep: {
+    investment: Investment
+    method: ChooserMethod
+    network?: UsdtNetwork
+    telegramLink: string
+    whatsappLink: string
+  }
+  planName: string
+  amountPaise: number
+  settings: PublicSettings
+  confirming: boolean
+  onBack: () => void
+  onPaid: () => void
+}) {
+  const { investment, method, network } = payStep
+  const { copied, copy } = useCopy()
+
+  // For USDT, resolve the wallet for the tapped chain (fall back to the first
+  // configured wallet so the screen is never empty).
+  const wallets = deriveUsdtWallets(settings)
+  const wallet = wallets.find((w) => w.network === network) ?? wallets[0]
+
+  const telegram = deriveTelegram(settings)
+  const chatMessage = `Hi, I've paid for my ASM Coins deposit. Reference: ${investment.referenceCode} (${inr(amountPaise)}).`
+  const whatsapp = whatsappUrl(settings, chatMessage)
+
+  return (
+    <AppShell backTo="/app" contentClassName="px-5">
+      <motion.div variants={container} initial="hidden" animate="visible" className="flex flex-col gap-5">
+        {/* ── Header + back ── */}
+        <motion.div variants={fadeUp} className="flex flex-col gap-3">
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex w-fit items-center gap-1.5 text-[13px] font-bold text-asm-muted transition-colors hover:text-asm-navy"
+          >
+            <ArrowLeft className="size-4" aria-hidden />
+            Change method
+          </button>
+          <div className="flex flex-col items-center gap-1 text-center">
+            <span className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-asm-blue">
+              Complete payment
+            </span>
+            <h1 className="text-[24px] font-extrabold uppercase leading-tight tracking-[-0.01em] text-asm-navy">
+              {method === 'usdt' ? 'Pay with USDT' : method === 'inr-qr' ? 'Pay via UPI' : 'Complete on chat'}
+            </h1>
+          </div>
+        </motion.div>
+
+        {/* ── Summary ── */}
+        <motion.div variants={fadeUp}>
+          <PackageSummary planName={planName} amountPaise={amountPaise} />
+        </motion.div>
+
+        {/* ── Reference code ── */}
+        <motion.div
+          variants={fadeUp}
+          className="flex items-center justify-between gap-3 rounded-2xl border border-asm-line bg-white p-4 shadow-[0_4px_20px_-8px_rgba(16,42,92,0.12)]"
+        >
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-asm-muted">
+              Reference code
+            </span>
+            <span className="truncate text-[16px] font-extrabold tabular-nums text-asm-navy">
+              {investment.referenceCode}
+            </span>
+          </div>
+          <CopyButton
+            label="Copy reference code"
+            copied={copied === 'ref'}
+            onCopy={() => copy('ref', investment.referenceCode)}
+          />
+        </motion.div>
+
+        {/* ── Method-specific body ── */}
+        {method === 'inr-qr' && (
+          <motion.section
+            variants={fadeUp}
+            className="flex flex-col gap-4 rounded-2xl border border-asm-line bg-white p-4 shadow-[0_4px_20px_-8px_rgba(16,42,92,0.12)]"
+          >
+            {settings.inrQrUrl && <QrCode src={settings.inrQrUrl} alt="UPI QR code" />}
+            <Steps
+              items={[
+                `Scan the QR with any UPI app and pay exactly ${inr(amountPaise)}.`,
+                `Add your reference code ${investment.referenceCode} in the payment note.`,
+                'Take a screenshot of the successful payment.',
+                'Tap "I’ve paid" below, then share the screenshot for faster approval.',
+              ]}
+            />
+          </motion.section>
+        )}
+
+        {method === 'usdt' && wallet && (
+          <motion.section
+            variants={fadeUp}
+            className="flex flex-col gap-4 rounded-2xl border border-asm-line bg-white p-4 shadow-[0_4px_20px_-8px_rgba(16,42,92,0.12)]"
+          >
+            <div className="flex items-center gap-2">
+              <TetherIcon className="size-5 text-asm-greenInk" />
+              <span className="text-[14px] font-extrabold text-asm-navy">{wallet.chain}</span>
+            </div>
+            {wallet.qr && <QrCode src={wallet.qr} alt={`${wallet.chain} wallet QR`} />}
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-asm-line bg-asm-tint p-3">
+              <div className="flex min-w-0 flex-col gap-0.5">
+                <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-asm-muted">
+                  Wallet address
+                </span>
+                <span className="break-all text-[12px] font-semibold text-asm-navy">
+                  {wallet.address}
+                </span>
+              </div>
+              <CopyButton
+                label="Copy wallet address"
+                copied={copied === 'addr'}
+                onCopy={() => copy('addr', wallet.address)}
+              />
+            </div>
+            <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
+              <AlertCircle className="mt-0.5 size-4 shrink-0 text-amber-600" aria-hidden />
+              <p className="text-[12px] leading-relaxed text-amber-800">
+                Send USDT only on the <strong>{wallet.network}</strong> network. Funds sent on any
+                other chain cannot be recovered.
+              </p>
+            </div>
+          </motion.section>
+        )}
+
+        {(method === 'whatsapp' || method === 'telegram') && (
+          <motion.section
+            variants={fadeUp}
+            className="flex flex-col gap-4 rounded-2xl border border-asm-line bg-white p-4 shadow-[0_4px_20px_-8px_rgba(16,42,92,0.12)]"
+          >
+            <p className="text-[13px] leading-relaxed text-asm-body">
+              Message us on {method === 'whatsapp' ? 'WhatsApp' : 'Telegram'} with your reference code{' '}
+              <strong>{investment.referenceCode}</strong> to complete this deposit. Our team will
+              share the payment details and confirm your plan.
+            </p>
+            {method === 'whatsapp' && whatsapp && (
+              <a
+                href={whatsapp}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(
+                  'flex h-14 w-full items-center justify-center gap-2 rounded-2xl',
+                  'bg-[#1FA855] text-base font-bold text-white',
+                  'shadow-[0_4px_20px_-4px_rgba(31,168,85,0.5)] transition-opacity hover:opacity-90',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1FA855] focus-visible:ring-offset-2'
+                )}
+              >
+                <WhatsAppIcon className="size-5" />
+                Open WhatsApp
+                <ExternalLink className="size-4 opacity-70" aria-hidden />
+              </a>
+            )}
+            {method === 'telegram' && telegram.url && (
+              <TelegramCta href={telegram.url} label="Open Telegram" />
+            )}
+          </motion.section>
+        )}
+
+        {/* ── I've paid ── */}
+        <motion.button
+          variants={fadeUp}
+          type="button"
+          onClick={onPaid}
+          disabled={confirming}
+          className={cn(
+            'flex h-14 w-full items-center justify-center gap-2 rounded-2xl',
+            'bg-asm-green text-base font-bold text-white',
+            'shadow-[0_4px_20px_-4px_rgba(16,150,84,0.5)] transition-opacity hover:opacity-90',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-green focus-visible:ring-offset-2',
+            'disabled:pointer-events-none disabled:opacity-45'
+          )}
+        >
+          {confirming ? (
+            <Loader2 className="size-5 animate-spin" aria-hidden />
+          ) : (
+            <>
+              <CheckCircle2 className="size-5" aria-hidden />
+              I&rsquo;ve paid
+            </>
+          )}
+        </motion.button>
+
+        <motion.p variants={fadeUp} className="text-center text-[12px] leading-relaxed text-asm-muted">
+          Only tap this after you&rsquo;ve completed the payment. We&rsquo;ll email your deposit
+          summary and take you to the confirmation screen to share your screenshot.
+        </motion.p>
       </motion.div>
     </AppShell>
   )
@@ -534,383 +782,6 @@ export function PackageSummary({ planName, amountPaise }: { planName: string; am
   )
 }
 
-/* ── Pay screen ───────────────────────────────────────────────────
- * Shown after the investment record exists, so every screen can quote a
- * reference code the admin can match the incoming payment against.
- */
-function PayScreen({
-  method,
-  settings,
-  investment,
-  planName,
-  amountPaise,
-  telegramFallback,
-  whatsappFallback,
-  preferredNetwork,
-  onBack,
-}: {
-  method: PaymentMethodId
-  settings: PublicSettings
-  investment: Investment
-  planName: string
-  amountPaise: number
-  /** Server-configured support link, used when the client env has no username. */
-  telegramFallback: string
-  /** Server-configured WhatsApp support link, used when no number is set. */
-  whatsappFallback: string
-  /** USDT chain the user tapped in the chooser, so the pay screen opens on it. */
-  preferredNetwork?: UsdtNetwork
-  onBack: () => void
-}) {
-  const { copied, copy } = useCopy()
-  const telegramHref = deriveTelegram(settings).url || telegramFallback
-
-  const message = [
-    `ASM Coins deposit — ${METHOD_LABEL[method]}`,
-    `Plan: ${planName}`,
-    `Amount: ${inr(amountPaise)}`,
-    `Reference: ${investment.referenceCode}`,
-  ].join('\n')
-
-  // Prefer the configured number (prefills the deposit message); fall back to
-  // the support WhatsApp link so the button mirrors the Telegram one.
-  const whatsappHref = whatsappUrl(settings, message) || whatsappFallback
-
-  return (
-    <motion.div variants={container} initial="hidden" animate="visible" className="flex flex-col gap-5">
-      {/* Header */}
-      <motion.div variants={fadeUp} className="flex flex-col gap-3">
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex w-fit items-center gap-1.5 rounded-lg py-1 pr-2 text-[12px] font-bold text-asm-muted transition-colors hover:text-asm-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue"
-        >
-          <ArrowLeft className="size-4" aria-hidden />
-          Change payment method
-        </button>
-        <div className="flex flex-col items-center gap-1 text-center">
-          <span className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-asm-blue">
-            Step 3
-          </span>
-          <h1 className="text-[26px] font-extrabold uppercase leading-tight tracking-[-0.01em] text-asm-navy">
-            Pay with {METHOD_LABEL[method]}
-          </h1>
-        </div>
-      </motion.div>
-
-      {/* Reference code — the one thing the user must not lose */}
-      <motion.section
-        variants={fadeUp}
-        aria-label="Investment reference"
-        className="flex flex-col gap-2 rounded-2xl border-2 border-asm-blue/20 bg-asm-blue-tint p-5"
-      >
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex flex-col gap-1">
-            <span className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-asm-muted">
-              Reference code
-            </span>
-            <span
-              className="font-mono text-[26px] font-black leading-none tracking-[0.06em] text-asm-blue"
-              aria-label={`Reference code: ${investment.referenceCode}`}
-            >
-              {investment.referenceCode}
-            </span>
-          </div>
-          <CopyButton
-            label="Copy reference code"
-            copied={copied === 'ref'}
-            onCopy={() => copy('ref', investment.referenceCode)}
-          />
-        </div>
-        <p className="text-[11px] leading-relaxed text-asm-body">
-          Include this code with your payment — it is how we match the transfer to your account.
-        </p>
-      </motion.section>
-
-      {/* Amount reminder */}
-      <motion.div variants={fadeUp}>
-        <PackageSummary planName={planName} amountPaise={amountPaise} />
-      </motion.div>
-
-      {/* Method-specific body */}
-      {method === 'usdt' && (
-        <UsdtInstructions
-          settings={settings}
-          preferredNetwork={preferredNetwork}
-          copied={copied}
-          onCopy={copy}
-        />
-      )}
-      {method === 'whatsapp' && (
-        <ChatInstructions settings={settings} channel="whatsapp" message={message} />
-      )}
-      {method === 'telegram' && (
-        <ChatInstructions
-          settings={settings}
-          channel="telegram"
-          message={message}
-          copied={copied === 'msg'}
-          onCopy={() => copy('msg', message)}
-        />
-      )}
-
-      {/* Crypto → proof of payment goes to WhatsApp or Telegram */}
-      {method === 'usdt' && (
-        <motion.section
-          variants={fadeUp}
-          className="flex flex-col gap-3 rounded-2xl border-2 border-[#0088CC]/25 bg-[#E5F5FC] p-4"
-        >
-          <div className="flex items-start gap-3">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white">
-              <TelegramIcon className="size-5 text-[#0088CC]" />
-            </span>
-            <div className="flex flex-col gap-1">
-              <h3 className="text-[13px] font-extrabold leading-tight text-asm-navy">
-                Now send the screenshot
-              </h3>
-              <p className="text-[12px] leading-relaxed text-asm-body">
-                After you transfer, send a screenshot of the transaction on WhatsApp or Telegram
-                along with your reference code. Your deposit stays pending until an admin verifies it.
-              </p>
-            </div>
-          </div>
-          {whatsappHref && (
-            <a
-              href={whatsappHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={cn(
-                'flex h-14 w-full items-center justify-center gap-2 rounded-2xl',
-                'bg-[#1FA855] text-base font-bold text-white',
-                'shadow-[0_4px_20px_-4px_rgba(31,168,85,0.5)] transition-opacity hover:opacity-90',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1FA855] focus-visible:ring-offset-2'
-              )}
-            >
-              <WhatsAppIcon className="size-5" />
-              Send screenshot on WhatsApp
-              <ExternalLink className="size-4 opacity-70" aria-hidden />
-            </a>
-          )}
-          <TelegramCta href={telegramHref} label="Send screenshot on Telegram" />
-        </motion.section>
-      )}
-
-      {/* Status */}
-      <motion.section
-        variants={fadeUp}
-        className="flex items-start gap-3 rounded-2xl border border-asm-line bg-white p-4"
-      >
-        <Info className="mt-0.5 size-4 shrink-0 text-asm-blue" aria-hidden />
-        <p className="text-[12px] leading-relaxed text-asm-body">
-          <span className="font-bold text-asm-navy">Status: </span>
-          <span className="font-bold uppercase tracking-[0.06em] text-amber-700">Pending</span>. Your
-          plan activates only once an admin confirms the payment — you can track it from{' '}
-          <Link to="/app/dashboard" className="font-bold text-asm-blue underline">
-            your dashboard
-          </Link>
-          .
-        </p>
-      </motion.section>
-    </motion.div>
-  )
-}
-
-/* ── USDT wallet transfer (TRC20 / BEP20) ── */
-function UsdtInstructions({
-  settings,
-  preferredNetwork,
-  copied,
-  onCopy,
-}: {
-  settings: PublicSettings
-  preferredNetwork?: UsdtNetwork
-  copied: string | null
-  onCopy: (key: string, value: string) => void
-}) {
-  const wallets = deriveUsdtWallets(settings)
-  // Open on the chain the user picked in the chooser; fall back to the first
-  // configured wallet when it isn't available.
-  const [active, setActive] = useState<UsdtWallet | undefined>(
-    () => wallets.find((w) => w.network === preferredNetwork) ?? wallets[0]
-  )
-  /* Each chain has its own QR file, so a missing one is tracked per network. */
-  const [hasQr, setHasQr] = useState(true)
-
-  if (!active) return <UnavailableNotice method="USDT" />
-
-  return (
-    <motion.section
-      variants={fadeUp}
-      aria-label="USDT transfer details"
-      className="flex flex-col gap-4 rounded-2xl border border-asm-line bg-white p-4 shadow-[0_4px_20px_-8px_rgba(16,42,92,0.12)]"
-    >
-      {/* Network picker — only when more than one chain is configured */}
-      {wallets.length > 1 && (
-        <div role="tablist" aria-label="USDT network" className="flex gap-2 rounded-xl bg-asm-tint p-1">
-          {wallets.map((wallet) => (
-            <button
-              key={wallet.network}
-              type="button"
-              role="tab"
-              aria-selected={wallet.network === active.network}
-              onClick={() => {
-                setActive(wallet)
-                setHasQr(true)
-              }}
-              className={cn(
-                'flex-1 rounded-lg px-3 py-2 text-[12px] font-bold transition-colors',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue',
-                wallet.network === active.network
-                  ? 'bg-white text-asm-navy shadow-[0_2px_8px_-3px_rgba(16,42,92,0.2)]'
-                  : 'text-asm-muted hover:text-asm-navy'
-              )}
-            >
-              {wallet.network}
-            </button>
-          ))}
-        </div>
-      )}
-
-      <QrCode
-        key={active.network}
-        src={active.qr}
-        alt={`USDT ${active.network} deposit QR code`}
-        onMissing={() => setHasQr(false)}
-      />
-
-      <AddressField
-        label={`USDT · ${active.chain}`}
-        value={active.address}
-        copied={copied === `addr-${active.network}`}
-        onCopy={() => onCopy(`addr-${active.network}`, active.address)}
-      />
-
-      <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
-        <AlertCircle className="mt-0.5 size-4 shrink-0 text-amber-600" aria-hidden />
-        <p className="text-[11px] leading-relaxed text-amber-800">
-          Send <span className="font-bold">USDT on {active.network} only</span>. Funds sent on any
-          other network cannot be recovered.
-        </p>
-      </div>
-
-      <Steps
-        items={[
-          `Open your wallet and choose USDT on ${active.network}.`,
-          hasQr
-            ? 'Scan the QR code above, or paste the address into the recipient field.'
-            : 'Paste the address above into the recipient field.',
-          'Send the USDT equivalent of your investment amount.',
-          'Screenshot the completed transaction.',
-        ]}
-      />
-    </motion.section>
-  )
-}
-
-/* ── WhatsApp / Telegram chat handoff (INR) ── */
-function ChatInstructions({
-  settings,
-  channel,
-  message,
-  copied,
-  onCopy,
-}: {
-  settings: PublicSettings
-  channel: 'whatsapp' | 'telegram'
-  message: string
-  copied?: boolean
-  onCopy?: () => void
-}) {
-  const isWhatsApp = channel === 'whatsapp'
-  const telegram = deriveTelegram(settings)
-  const whatsapp = deriveWhatsapp(settings)
-  const href = isWhatsApp ? whatsappUrl(settings, message) : telegram.url
-  const handle = isWhatsApp ? whatsapp.display : telegram.display
-
-  if (!href) return <UnavailableNotice method={isWhatsApp ? 'WhatsApp' : 'Telegram'} />
-
-  return (
-    <motion.section
-      variants={fadeUp}
-      aria-label={`${isWhatsApp ? 'WhatsApp' : 'Telegram'} payment details`}
-      className="flex flex-col gap-4 rounded-2xl border border-asm-line bg-white p-4 shadow-[0_4px_20px_-8px_rgba(16,42,92,0.12)]"
-    >
-      <div className="flex items-center justify-between rounded-xl bg-asm-tint px-3 py-2.5">
-        <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-asm-muted">
-          {isWhatsApp ? 'WhatsApp' : 'Telegram'}
-        </span>
-        <span className="text-[13px] font-bold text-asm-navy">{handle}</span>
-      </div>
-
-      <Steps
-        items={
-          isWhatsApp
-            ? [
-                'Tap the button below — your reference code is filled in for you.',
-                'Our team sends you the UPI / bank details for the amount above.',
-                'Pay in INR and send the payment screenshot in the same chat.',
-              ]
-            : [
-                'Copy the payment details below, then open the chat.',
-                'Our team sends you the UPI / bank details for the amount above.',
-                'Pay in INR and send the payment screenshot in the same chat.',
-              ]
-        }
-      />
-
-      {/*
-       * Telegram has no supported way to prefill the body of a chat with a
-       * person (only bots take `?start=`), so that path copies the details to
-       * the clipboard instead of silently dropping them.
-       */}
-      {!isWhatsApp && onCopy && (
-        <button
-          type="button"
-          onClick={onCopy}
-          className={cn(
-            'flex h-12 w-full items-center justify-center gap-2 rounded-xl',
-            'border border-asm-line bg-white text-[14px] font-bold text-asm-navy',
-            'transition-colors hover:bg-asm-tint',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-2'
-          )}
-        >
-          {copied ? (
-            <>
-              <Check className="size-4 text-asm-greenInk" aria-hidden />
-              Details copied
-            </>
-          ) : (
-            <>
-              <Copy className="size-4" aria-hidden />
-              Copy payment details
-            </>
-          )}
-        </button>
-      )}
-
-      {isWhatsApp ? (
-        <a
-          href={href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={cn(
-            'flex h-14 w-full items-center justify-center gap-2 rounded-2xl',
-            'bg-[#1FA855] text-base font-bold text-white',
-            'shadow-[0_4px_20px_-4px_rgba(31,168,85,0.5)] transition-opacity hover:opacity-90',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1FA855] focus-visible:ring-offset-2'
-          )}
-        >
-          <WhatsAppIcon className="size-5" />
-          Chat on WhatsApp
-          <ExternalLink className="size-4 opacity-70" aria-hidden />
-        </a>
-      ) : (
-        <TelegramCta href={href} label="Chat on Telegram" />
-      )}
-    </motion.section>
-  )
-}
-
 /* ── Shared bits ── */
 
 export function TelegramCta({ href, label }: { href: string; label: string }) {
@@ -931,30 +802,6 @@ export function TelegramCta({ href, label }: { href: string; label: string }) {
       {label}
       <ExternalLink className="size-4 opacity-70" aria-hidden />
     </a>
-  )
-}
-
-function AddressField({
-  label,
-  value,
-  copied,
-  onCopy,
-}: {
-  label: string
-  value: string
-  copied: boolean
-  onCopy: () => void
-}) {
-  return (
-    <div className="flex flex-col gap-2 rounded-xl border border-asm-line bg-asm-tint p-3">
-      <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-asm-muted">{label}</span>
-      <div className="flex items-center gap-2">
-        <code className="min-w-0 flex-1 break-all font-mono text-[12px] font-semibold leading-relaxed text-asm-navy">
-          {value}
-        </code>
-        <CopyButton label={`Copy ${label}`} copied={copied} onCopy={onCopy} />
-      </div>
-    </div>
   )
 }
 
@@ -1031,24 +878,6 @@ export function Steps({ items }: { items: string[] }) {
     </ol>
   )
 }
-
-function UnavailableNotice({ method }: { method: string }) {
-  return (
-    <motion.section
-      variants={fadeUp}
-      role="alert"
-      className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4"
-    >
-      <Wallet className="mt-0.5 size-4 shrink-0 text-amber-600" aria-hidden />
-      <p className="text-[12px] leading-relaxed text-amber-800">
-        {method} is not configured yet. Pick another payment method, or contact support with your
-        reference code.
-        <ChevronRight className="ml-0.5 inline size-3" aria-hidden />
-      </p>
-    </motion.section>
-  )
-}
-
 /** Copy-to-clipboard with a 2s "copied" acknowledgement, keyed per field. */
 export function useCopy() {
   const [copied, setCopied] = useState<string | null>(null)

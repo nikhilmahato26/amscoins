@@ -25,6 +25,43 @@ async function uniqueRef() {
   throw new ApiError(500, 'Could not generate reference code')
 }
 
+/**
+ * Build the WhatsApp and Telegram support links a user taps to send their
+ * payment screenshot. Both channels are offered for every payment method
+ * (INR and USDT alike), so the confirmation screen can always show both.
+ *
+ * Links are derived from the admin-configured Settings singleton
+ * (`whatsappNumber` / `telegramUsername`), falling back to the env-level
+ * links when a channel isn't configured there. The WhatsApp URL is prefilled
+ * with the reference code; Telegram person-chats can't be prefilled.
+ */
+async function buildSupportLinks(investment) {
+  let whatsappLink = ''
+  let telegramLink = ''
+
+  try {
+    const settings = await Settings.getSingleton()
+
+    const number = String(settings.whatsappNumber || '').replace(/\D/g, '')
+    if (number) {
+      const message = `ASM Coins deposit — Reference: ${investment.referenceCode}`
+      whatsappLink = `https://wa.me/${number}?text=${encodeURIComponent(message)}`
+    }
+
+    const username = String(settings.telegramUsername || '').replace(/^@/, '')
+    if (username) telegramLink = `https://t.me/${username}`
+  } catch (err) {
+    logger.warn('Failed to read Settings for support links; falling back to env', {
+      reason: err.message,
+    })
+  }
+
+  return {
+    whatsappLink: whatsappLink || env.WHATSAPP_LINK,
+    telegramLink: telegramLink || env.TELEGRAM_LINK,
+  }
+}
+
 async function createInvestment(user, { planKey, amount, referralCode }) {
   const plan = await Plan.findOne({ key: planKey, active: true })
   if (!plan) {
@@ -75,11 +112,32 @@ async function createInvestment(user, { planKey, amount, referralCode }) {
 
   await cacheDel('cache:admin:stats', `cache:dashboard:${user._id}`)
 
-  email.depositSubmitted(user, investment, plan.name).catch(() => {}) // fire-and-forget
+  // NOTE: the "deposit submitted" email is intentionally NOT sent here. The
+  // record is created up-front so the pay screen can quote a reference code,
+  // but the user has not paid yet. The email fires from notifyPaymentSubmitted
+  // once they tap "I've paid" on the pay screen.
 
   await queue.scheduleAutoReject(investment)
 
-  return { investment, telegramLink: env.TELEGRAM_LINK, whatsappLink: env.WHATSAPP_LINK }
+  const { whatsappLink, telegramLink } = await buildSupportLinks(investment)
+  return { investment, telegramLink, whatsappLink }
+}
+
+/**
+ * Called when the user confirms they have paid (tapped "I've paid" on the pay
+ * screen). This is the point the deposit is actually submitted for review, so
+ * the confirmation email fires here rather than at record creation. Idempotent
+ * and safe to call once per pending investment.
+ */
+async function notifyPaymentSubmitted(user, investmentId) {
+  const investment = await Investment.findOne({ _id: investmentId, user: user._id })
+  if (!investment) throw new ApiError(404, 'Investment not found')
+
+  const plan = await Plan.findOne({ key: investment.planKey })
+  email.depositSubmitted(user, investment, plan?.name ?? investment.planKey).catch(() => {}) // fire-and-forget
+
+  const { whatsappLink, telegramLink } = await buildSupportLinks(investment)
+  return { investment, telegramLink, whatsappLink }
 }
 
 async function approveInvestment(investmentId, adminId) {
@@ -296,4 +354,4 @@ async function runMature(investmentId) {
   return await Investment.findById(investmentId)
 }
 
-module.exports = { createInvestment, approveInvestment, rejectInvestment, approveReturn, rejectReturn, runAutoReject, runMature }
+module.exports = { createInvestment, notifyPaymentSubmitted, approveInvestment, rejectInvestment, approveReturn, rejectReturn, runAutoReject, runMature }
