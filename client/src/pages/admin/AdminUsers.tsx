@@ -344,7 +344,7 @@ export function AdminUsers() {
                 onClick={() => setAmountSort((s) => s === '-invested' ? 'invested' : '-invested')}
                 title="Sort by invested amount"
               >
-                Total Invested {amountSort === 'invested' ? '↑' : amountSort === '-invested' ? '↓' : ''}
+                Active Investments {amountSort === 'invested' ? '↑' : amountSort === '-invested' ? '↓' : ''}
               </th>
               <th scope="col" className="px-3 py-2.5 text-left">Status</th>
               <th scope="col" className="px-3 py-2.5 text-left">Joined</th>
@@ -395,8 +395,12 @@ export function AdminUsers() {
                   <td className="px-3 py-2.5 text-right font-mono tabular-nums text-asm-body">
                     {user.referralCount}
                   </td>
-                  <td className="px-3 py-2.5 text-right font-mono tabular-nums text-asm-navy">
-                    {user.totalInvested > 0 ? inr(user.totalInvested) : <span className="text-asm-muted">—</span>}
+                  <td className="px-3 py-2.5 text-right font-mono tabular-nums">
+                    {user.activeInvested > 0 ? (
+                      <span className="font-bold text-asm-blue">{inr(user.activeInvested)}</span>
+                    ) : (
+                      <span className="text-asm-muted">—</span>
+                    )}
                   </td>
                   <td className="px-3 py-2.5">
                     <StatusChip status={user.status} />

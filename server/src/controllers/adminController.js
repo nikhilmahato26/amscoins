@@ -157,22 +157,34 @@ const listUsers = asyncHandler(async (req, res) => {
 
   const users = await User.find(filter).select('-passwordHash').lean()
 
-  // Lifetime total invested per user — approved deposits only.
-  // Includes active/matured/returned plus rejected-return cases (startAt is set
-  // only by approveInvestment, so a rejected doc with startAt was once approved).
-  const agg = await Investment.aggregate([
-    {
-      $match: {
-        $or: [
-          { status: { $in: ['active', 'matured', 'returned'] } },
-          { status: 'rejected', startAt: { $exists: true } },
-        ],
+  // Run both aggregations in parallel:
+  // 1. Lifetime total — all approved investments (active/matured/returned + rejected-return)
+  // 2. Currently active — only investments still running right now
+  const [agg, activeAgg] = await Promise.all([
+    Investment.aggregate([
+      {
+        $match: {
+          $or: [
+            { status: { $in: ['active', 'matured', 'returned'] } },
+            { status: 'rejected', startAt: { $exists: true } },
+          ],
+        },
       },
-    },
-    { $group: { _id: '$user', total: { $sum: '$amount' } } },
+      { $group: { _id: '$user', total: { $sum: '$amount' } } },
+    ]),
+    Investment.aggregate([
+      { $match: { status: 'active' } },
+      { $group: { _id: '$user', total: { $sum: '$amount' }, count: { $sum: 1 } } },
+    ]),
   ])
   const totals = new Map(agg.map((a) => [String(a._id), a.total]))
-  let result = users.map((u) => ({ ...u, totalInvested: totals.get(String(u._id)) || 0 }))
+  const actives = new Map(activeAgg.map((a) => [String(a._id), { amount: a.total, count: a.count }]))
+  let result = users.map((u) => ({
+    ...u,
+    totalInvested: totals.get(String(u._id)) || 0,
+    activeInvested: actives.get(String(u._id))?.amount || 0,
+    activeCount: actives.get(String(u._id))?.count || 0,
+  }))
 
   // Investor filter: 'true' = has invested at least once, 'false' = never invested.
   const investor = req.query.investor

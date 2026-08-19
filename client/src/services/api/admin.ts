@@ -35,6 +35,8 @@ export interface AdminUser {
   tier: Tier
   referralCount: number
   totalInvested: number
+  activeInvested: number
+  activeCount: number
   createdAt: string
 }
 
