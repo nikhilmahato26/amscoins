@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { Search, Users } from 'lucide-react'
 import {
   useAdminUsers,
@@ -163,7 +163,7 @@ function AdjustDialog({ user, onConfirm, onCancel, isPending }: AdjustDialogProp
 function SkeletonRow() {
   return (
     <tr className="animate-pulse border-b border-asm-line">
-      {Array.from({ length: 7 }).map((_, i) => (
+      {Array.from({ length: 8 }).map((_, i) => (
         <td key={i} className="px-3 py-3">
           <span className="block h-3.5 rounded bg-asm-tint" />
         </td>
@@ -212,7 +212,8 @@ export function AdminUsers() {
   const [input, setInput] = useState('')
   const [q, setQ] = useState('')
   type InvestorFilter = 'all' | 'investor' | 'non-investor'
-  const [investorFilter, setInvestorFilter] = useState<InvestorFilter>('all')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const investorFilter = (searchParams.get('investor') ?? 'all') as InvestorFilter
   const [amountSort, setAmountSort] = useState<'invested' | '-invested' | undefined>(undefined)
   const { data, isLoading, isError } = useAdminUsers({
     q,
@@ -297,7 +298,7 @@ export function AdminUsers() {
           <button
             key={f}
             type="button"
-            onClick={() => setInvestorFilter(f)}
+            onClick={() => setSearchParams(f === 'all' ? {} : { investor: f }, { replace: true })}
             className={cn(
               'rounded-full px-3 py-1 text-[11px] font-semibold capitalize transition-colors',
               investorFilter === f
@@ -344,10 +345,11 @@ export function AdminUsers() {
                 onClick={() => setAmountSort((s) => s === '-invested' ? 'invested' : '-invested')}
                 title="Sort by invested amount"
               >
-                Total Invested {amountSort === 'invested' ? '↑' : amountSort === '-invested' ? '↓' : ''}
+                Active Investments {amountSort === 'invested' ? '↑' : amountSort === '-invested' ? '↓' : ''}
               </th>
               <th scope="col" className="px-3 py-2.5 text-left">Status</th>
               <th scope="col" className="px-3 py-2.5 text-left">Joined</th>
+              <th scope="col" className="px-3 py-2.5 text-left">Account Created At</th>
               <th scope="col" className="px-3 py-2.5 text-right">Actions</th>
             </tr>
           </thead>
@@ -357,7 +359,7 @@ export function AdminUsers() {
             ) : isError ? (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={8}
                   className="px-4 py-10 text-center text-[13px] text-asm-red"
                   role="alert"
                 >
@@ -366,7 +368,7 @@ export function AdminUsers() {
               </tr>
             ) : !data || data.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-16 text-center">
+                <td colSpan={8} className="px-4 py-16 text-center">
                   <span className="mx-auto flex size-10 items-center justify-center rounded-full bg-asm-tint">
                     <Users className="size-5 text-asm-muted" strokeWidth={1.5} aria-hidden />
                   </span>
@@ -395,8 +397,12 @@ export function AdminUsers() {
                   <td className="px-3 py-2.5 text-right font-mono tabular-nums text-asm-body">
                     {user.referralCount}
                   </td>
-                  <td className="px-3 py-2.5 text-right font-mono tabular-nums text-asm-navy">
-                    {user.totalInvested > 0 ? inr(user.totalInvested) : <span className="text-asm-muted">—</span>}
+                  <td className="px-3 py-2.5 text-right font-mono tabular-nums">
+                    {user.activeInvested > 0 ? (
+                      <span className="font-bold text-asm-blue">{inr(user.activeInvested)}</span>
+                    ) : (
+                      <span className="text-asm-muted">—</span>
+                    )}
                   </td>
                   <td className="px-3 py-2.5">
                     <StatusChip status={user.status} />
@@ -406,6 +412,13 @@ export function AdminUsers() {
                       day: '2-digit',
                       month: 'short',
                       year: 'numeric',
+                    })}
+                  </td>
+                  <td className="px-3 py-2.5 text-[12px] text-asm-muted">
+                    {new Date(user.createdAt).toLocaleTimeString('en-IN', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: true,
                     })}
                   </td>
                   <td className="px-3 py-2.5">

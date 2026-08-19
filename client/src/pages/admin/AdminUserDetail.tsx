@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   ArrowDownLeft,
@@ -94,6 +94,7 @@ const DIR_META: Record<Transaction['direction'], { Icon: typeof ArrowDownLeft; s
 
 export function AdminUserDetail() {
   const { id = '' } = useParams()
+  const navigate = useNavigate()
   const qc = useQueryClient()
   const { data, isLoading, isError } = useAdminUserDetail(id)
   const freeze = useFreezeUser()
@@ -124,6 +125,13 @@ export function AdminUserDetail() {
   const { user, balance, investments, transactions } = data
   const payoutMethods = user.payoutMethods
 
+  const activeAmt   = investments.filter(i => i.status === 'active').reduce((s, i) => s + i.amount, 0)
+  const pendingAmt  = investments.filter(i => i.status === 'pending').reduce((s, i) => s + i.amount, 0)
+  const returnedAmt = investments.filter(i => i.status === 'returned').reduce((s, i) => s + i.amount, 0)
+  const totalAmt    = investments
+    .filter(i => ['active','matured','returned'].includes(i.status) || (i.status === 'rejected' && i.startAt))
+    .reduce((s, i) => s + i.amount, 0)
+
   function toggleFreeze() {
     const m = user.status === 'active' ? freeze : unfreeze
     m.mutate([user._id], {
@@ -142,9 +150,9 @@ export function AdminUserDetail() {
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
-      <Link to="/admin/users" className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-asm-blue hover:text-asm-blue-dark">
+      <button type="button" onClick={() => navigate(-1)} className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-asm-blue hover:text-asm-blue-dark">
         <ArrowLeft className="size-4" aria-hidden /> Back to users
-      </Link>
+      </button>
 
       <p role="status" aria-live="polite" className="sr-only">{msg}</p>
       {msg && (
@@ -198,10 +206,20 @@ export function AdminUserDetail() {
           </div>
         </div>
 
-        {/* Balance */}
-        <div className="mt-5 flex items-center gap-3 rounded-xl border border-asm-line bg-asm-tint/50 px-4 py-3">
-          <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-asm-muted">Wallet balance</span>
-          <span className="font-mono text-[18px] font-bold tabular-nums text-asm-navy">{inr(balance)}</span>
+        {/* Stats grid */}
+        <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-5">
+          {([
+            { label: 'Wallet balance', value: balance, color: 'text-asm-navy', bg: 'bg-asm-tint/60' },
+            { label: 'Active',         value: activeAmt,   color: 'text-asm-blue',     bg: 'bg-asm-blue-tint' },
+            { label: 'Pending',        value: pendingAmt,  color: 'text-amber-700',    bg: 'bg-amber-50' },
+            { label: 'Returned',       value: returnedAmt, color: 'text-asm-greenInk', bg: 'bg-green-50' },
+            { label: 'Total invested', value: totalAmt,    color: 'text-asm-navy',     bg: 'bg-asm-tint/60' },
+          ] as const).map(({ label, value, color, bg }) => (
+            <div key={label} className={cn('flex flex-col gap-0.5 rounded-xl border border-asm-line px-3 py-2.5', bg)}>
+              <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-asm-muted">{label}</span>
+              <span className={cn('font-mono text-[15px] font-bold tabular-nums', color)}>{inr(value)}</span>
+            </div>
+          ))}
         </div>
       </div>
 
