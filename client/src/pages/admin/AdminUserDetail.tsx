@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 
 import { useAdminUserDetail, useFreezeUser, useUnfreezeUser, useAdjustWallet } from '@/hooks/queries'
+import { InvestmentCountdown } from '@/components/admin/InvestmentCountdown'
 import type { Transaction } from '@/types'
 import { inr } from '@/lib/format'
 import { cn } from '@/lib/utils'
@@ -120,7 +121,7 @@ export function AdminUserDetail() {
     )
   }
 
-  const { user, balance, transactions } = data
+  const { user, balance, investments, transactions } = data
   const payoutMethods = user.payoutMethods
 
   function toggleFreeze() {
@@ -222,6 +223,51 @@ export function AdminUserDetail() {
                       {m.type === 'bank' ? `${m.accountName} · A/C ${m.accountNumber}` : m.upiId}
                     </p>
                     <p className="text-[11px] text-asm-muted">{m.type === 'bank' ? m.ifsc : 'UPI'}{m.isDefault ? ' · Default' : ''}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
+
+      {/* Investments */}
+      <section>
+        <h2 className="mb-2 text-[13px] font-bold text-asm-navy">Investments</h2>
+        <div className="rounded-xl border border-asm-line bg-white">
+          {investments.length === 0 ? (
+            <p className="px-4 py-6 text-center text-[12px] text-asm-muted">No investments yet.</p>
+          ) : (
+            <ul className="divide-y divide-asm-line">
+              {investments.map((inv) => (
+                <li key={inv._id} className="flex items-start justify-between gap-3 px-4 py-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className={cn(
+                        'rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide',
+                        inv.status === 'active' ? 'bg-asm-blue-tint text-asm-blue' :
+                        inv.status === 'pending' ? 'bg-amber-50 text-amber-700' :
+                        inv.status === 'matured' ? 'bg-orange-50 text-orange-700' :
+                        inv.status === 'returned' ? 'bg-green-50 text-asm-greenInk' :
+                        'bg-red-50 text-asm-red',
+                      )}>
+                        {inv.status}
+                      </span>
+                      <span className="rounded-md bg-asm-tint px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-asm-body">
+                        {inv.planKey}
+                      </span>
+                    </div>
+                    <p className="mt-1 font-mono text-[11px] text-asm-muted">{inv.referenceCode}</p>
+                    <p className="text-[11px] text-asm-muted">{fmtDate(inv.createdAt)}</p>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-0.5">
+                    <span className="font-mono text-[13px] font-bold tabular-nums text-asm-navy">{inr(inv.amount)}</span>
+                    <span className="text-[11px] text-asm-muted">→ {inr(inv.expectedReturn)}</span>
+                    {inv.status === 'active' && inv.maturesAt && (
+                      <span className="font-mono text-[11px] tabular-nums text-asm-blue">
+                        <InvestmentCountdown maturesAt={inv.maturesAt} />
+                      </span>
+                    )}
                   </div>
                 </li>
               ))}
