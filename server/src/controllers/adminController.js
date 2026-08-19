@@ -157,9 +157,20 @@ const listUsers = asyncHandler(async (req, res) => {
 
   const users = await User.find(filter).select('-passwordHash').lean()
 
-  // Lifetime total invested per user — sum of ALL their investment amounts,
-  // regardless of individual status (pending/active/matured/returned/rejected).
-  const agg = await Investment.aggregate([{ $group: { _id: '$user', total: { $sum: '$amount' } } }])
+  // Lifetime total invested per user — approved deposits only.
+  // Includes active/matured/returned plus rejected-return cases (startAt is set
+  // only by approveInvestment, so a rejected doc with startAt was once approved).
+  const agg = await Investment.aggregate([
+    {
+      $match: {
+        $or: [
+          { status: { $in: ['active', 'matured', 'returned'] } },
+          { status: 'rejected', startAt: { $exists: true } },
+        ],
+      },
+    },
+    { $group: { _id: '$user', total: { $sum: '$amount' } } },
+  ])
   const totals = new Map(agg.map((a) => [String(a._id), a.total]))
   let result = users.map((u) => ({ ...u, totalInvested: totals.get(String(u._id)) || 0 }))
 
