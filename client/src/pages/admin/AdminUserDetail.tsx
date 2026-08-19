@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   ArrowDownLeft,
@@ -94,6 +94,7 @@ const DIR_META: Record<Transaction['direction'], { Icon: typeof ArrowDownLeft; s
 
 export function AdminUserDetail() {
   const { id = '' } = useParams()
+  const navigate = useNavigate()
   const qc = useQueryClient()
   const { data, isLoading, isError } = useAdminUserDetail(id)
   const freeze = useFreezeUser()
@@ -149,9 +150,9 @@ export function AdminUserDetail() {
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
-      <Link to="/admin/users" className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-asm-blue hover:text-asm-blue-dark">
+      <button type="button" onClick={() => navigate(-1)} className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-asm-blue hover:text-asm-blue-dark">
         <ArrowLeft className="size-4" aria-hidden /> Back to users
-      </Link>
+      </button>
 
       <p role="status" aria-live="polite" className="sr-only">{msg}</p>
       {msg && (

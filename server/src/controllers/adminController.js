@@ -186,10 +186,10 @@ const listUsers = asyncHandler(async (req, res) => {
     activeCount: actives.get(String(u._id))?.count || 0,
   }))
 
-  // Investor filter: 'true' = has invested at least once, 'false' = never invested.
+  // Investor filter: 'true' = has an active investment right now, 'false' = none active.
   const investor = req.query.investor
-  if (investor === 'true') result = result.filter((u) => u.totalInvested > 0)
-  else if (investor === 'false') result = result.filter((u) => u.totalInvested === 0)
+  if (investor === 'true') result = result.filter((u) => u.activeInvested > 0)
+  else if (investor === 'false') result = result.filter((u) => u.activeInvested === 0)
 
   // Sort: by lifetime invested (either direction), else newest-first (default).
   const sort = req.query.sort
