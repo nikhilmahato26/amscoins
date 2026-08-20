@@ -18,7 +18,13 @@ if (!DISABLED) {
   // ioredis instance or ioredis options — a bare `{ url }` is NOT valid
   // ioredis config). Exported as `queueConnection` so the worker reuses it.
   queueConnection = new IORedis(env.REDIS_URL, { maxRetriesPerRequest: null })
+  // ioredis and BullMQ objects are EventEmitters: an 'error' event with NO
+  // listener is re-thrown by Node as an uncaughtException, which crashes the
+  // whole API (server.js exits on uncaughtException). A transient Redis blip
+  // must never take the process down — log and let it reconnect.
+  queueConnection.on('error', (err) => logger.warn('Queue Redis connection error', { error: err.message }))
   investmentQueue = new Queue(QUEUE_NAME, { connection: queueConnection, prefix: PREFIX })
+  investmentQueue.on('error', (err) => logger.warn('Investment queue error', { error: err.message }))
   logger.info('Investment job queue initialized')
 }
 
@@ -53,12 +59,19 @@ async function cancelAutoReject(id) {
   if (job) await job.remove()
 }
 
+async function cancelMature(id) {
+  if (!investmentQueue) return
+  const job = await investmentQueue.getJob(matureJobId(id))
+  if (job) await job.remove()
+}
+
 module.exports = {
   investmentQueue,
   queueConnection,
   scheduleAutoReject,
   scheduleMature,
   cancelAutoReject,
+  cancelMature,
   QUEUE_NAME,
   PREFIX,
   autoRejectJobId,

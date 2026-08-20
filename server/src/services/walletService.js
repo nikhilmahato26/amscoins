@@ -28,7 +28,7 @@ async function credit(userId, amount, meta, session) {
   )
 
   await Transaction.create(
-    [{ user: userId, type: meta.type, direction: 'credit', amount, note: meta.note || '', actor: meta.actor || 'system', ref: meta.ref }],
+    [{ user: userId, type: meta.type, direction: 'credit', amount, note: meta.note || '', actor: meta.actor || 'system', ref: meta.ref, status: meta.status || 'settled' }],
     { session }
   )
 
@@ -63,7 +63,7 @@ async function debit(userId, amount, meta, session) {
   }
 
   await Transaction.create(
-    [{ user: userId, type: meta.type, direction: 'debit', amount, note: meta.note || '', actor: meta.actor || 'system', ref: meta.ref }],
+    [{ user: userId, type: meta.type, direction: 'debit', amount, note: meta.note || '', actor: meta.actor || 'system', ref: meta.ref, status: meta.status || 'settled' }],
     { session }
   )
 

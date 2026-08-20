@@ -38,8 +38,9 @@ test('users list carries lifetime totalInvested and supports investor filter + s
   const investor = await makeUser('investor')
   const nonInvestor = await makeUser('newbie')
   // Two investments across different statuses — both count toward lifetime total.
+  // Rejected counts only when startAt is set (was approved, then return-rejected).
   await Investment.create(invDoc(investor, 200000, 'active'))
-  await Investment.create(invDoc(investor, 100000, 'rejected'))
+  await Investment.create({ ...invDoc(investor, 100000, 'rejected'), startAt: new Date() })
 
   const all = await request(app).get('/api/admin/users').set('Authorization', `Bearer ${aToken}`)
   const byName = Object.fromEntries(all.body.map((u) => [u.name, u.totalInvested]))

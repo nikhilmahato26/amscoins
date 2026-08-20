@@ -22,6 +22,12 @@ const settingsSchema = new Schema(
     cycleDurationHours: { type: Number, default: 24, min: 1 },
     autoRejectHours: { type: Number, default: 8, min: 1 },
 
+    // Admin on/off switches for the two automations (both default on, so
+    // behaviour is unchanged until an admin flips them). Gating happens in the
+    // service handlers so already-scheduled jobs also respect a flip.
+    autoRejectEnabled: { type: Boolean, default: true },
+    autoPayEnabled: { type: Boolean, default: true },
+
     inrQrUrl: { type: String, default: '' },
 
     usdtTrc20Address: { type: String, default: '' },
@@ -51,6 +57,8 @@ settingsSchema.methods.toPublic = function toPublic() {
     inrThresholdPaise: this.inrThresholdPaise,
     cycleDurationHours: this.cycleDurationHours,
     autoRejectHours: this.autoRejectHours,
+    autoRejectEnabled: this.autoRejectEnabled,
+    autoPayEnabled: this.autoPayEnabled,
     inrQrUrl: this.inrQrUrl,
     usdtTrc20Address: this.usdtTrc20Address,
     usdtBep20Address: this.usdtBep20Address,

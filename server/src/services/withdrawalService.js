@@ -3,7 +3,19 @@
 const mongoose = require('mongoose')
 const Withdrawal = require('../models/Withdrawal')
 const User = require('../models/User')
+const Transaction = require('../models/Transaction')
 const walletService = require('./walletService')
+
+// Flip the history entry tied to a withdrawal to match its real state.
+// (The debit is written PENDING on init; approval settles it, rejection marks
+// it rejected.) `session` is optional so it can run in or out of a transaction.
+function setWithdrawalTxnStatus(withdrawalId, status, session) {
+  return Transaction.updateOne(
+    { ref: withdrawalId, type: 'withdrawal', direction: 'debit' },
+    { $set: { status } },
+    session ? { session } : undefined
+  )
+}
 const email = require('./emailService')
 const { computeTds } = require('./money')
 const env = require('../config/env')
@@ -49,16 +61,19 @@ async function initiateWithdrawal(user, body) {
   let withdrawal
   try {
     await session.withTransaction(async () => {
-      // Deduct the gross immediately (spec: money leaves the wallet on init).
-      await walletService.debit(
-        user._id,
-        amount,
-        { type: 'withdrawal', actor: 'user', note: `Withdrawal to ${destinationLabel(dest)}` },
-        session
-      )
+      // Create the withdrawal first so the ledger entry can reference it.
       ;[withdrawal] = await Withdrawal.create(
         [{ user: user._id, gross: amount, tds, net, status: 'pending', ...dest }],
         { session }
+      )
+      // Deduct the gross immediately (money leaves the wallet on init), but the
+      // history entry stays PENDING until an admin approves — so the user never
+      // sees a just-requested withdrawal shown as settled.
+      await walletService.debit(
+        user._id,
+        amount,
+        { type: 'withdrawal', actor: 'user', note: `Withdrawal to ${destinationLabel(dest)}`, ref: withdrawal._id, status: 'pending' },
+        session
       )
     })
   } catch (err) {
@@ -101,6 +116,8 @@ async function completeWithdrawal(id, adminId, note = '') {
     throw new ApiError(409, 'Withdrawal not pending')
   }
 
+  await setWithdrawalTxnStatus(w._id, 'settled') // history entry: pending → settled
+
   logger.info('Withdrawal completed', {
     withdrawalId: w._id,
     userId: w.user,
@@ -125,17 +142,20 @@ async function rejectWithdrawal(id, adminId, note = '') {
         logger.warn('Withdrawal rejection failed — not pending', { withdrawalId: id })
         throw new ApiError(409, 'Withdrawal not pending')
       }
-      // Re-credit the gross amount that was deducted on initiation.
+      // Re-credit the gross amount that was deducted on initiation. Marked
+      // 'rejected' (not settled) so it stays hidden from the user's history —
+      // a rejected withdrawal never appears, so neither should its reversal.
       await walletService.credit(
         w.user,
         w.gross,
-        { type: 'refund', actor: 'admin', note: `Refund ${note}`, ref: w._id },
+        { type: 'refund', actor: 'admin', note: `Refund ${note}`, ref: w._id, status: 'rejected' },
         session
       )
       w.status = 'rejected'
       w.processedBy = adminId
       w.note = note
       await w.save({ session })
+      await setWithdrawalTxnStatus(w._id, 'rejected', session) // history entry: pending → rejected
     })
   } catch (err) {
     if (!err.statusCode) {
@@ -175,6 +195,7 @@ async function bulkApproveWithdrawals(ids, adminId) {
       )
       if (w) {
         approved++
+        await setWithdrawalTxnStatus(w._id, 'settled') // history entry: pending → settled
         logger.info('Bulk withdrawal completed', { withdrawalId: w._id, adminId })
         await cacheDel(
           'cache:admin:stats',

@@ -18,10 +18,10 @@ function StatCard({ label, value, icon: Icon, iconClass, iconBgClass }: StatCard
         <Icon className={cn('size-4.5 size-[18px]', iconClass)} strokeWidth={1.75} aria-hidden />
       </span>
       <div>
-        <p className="font-mono text-[22px] font-bold tabular-nums leading-none text-asm-navy">
+        <p className="font-mono text-[22px] xl:text-[26px] font-bold tabular-nums leading-none text-asm-navy">
           {value}
         </p>
-        <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-asm-muted">
+        <p className="mt-1 text-[11px] xl:text-[12px] font-semibold uppercase tracking-[0.08em] text-asm-muted">
           {label}
         </p>
       </div>
@@ -48,8 +48,8 @@ export function AdminDashboard() {
     <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
       {/* Header */}
       <div>
-        <h1 className="text-[22px] font-bold tracking-tight text-asm-navy">Dashboard</h1>
-        <p className="mt-0.5 text-[13px] text-asm-muted">Platform overview at a glance.</p>
+        <h1 className="text-[22px] xl:text-[26px] font-bold tracking-tight text-asm-navy">Dashboard</h1>
+        <p className="mt-0.5 text-[13px] xl:text-[14px] text-asm-muted">Platform overview at a glance.</p>
       </div>
 
       {/* Stat cards */}
@@ -106,7 +106,7 @@ export function AdminDashboard() {
               <Wallet className="size-[18px] text-asm-navy" strokeWidth={1.75} aria-hidden />
             </span>
             <div>
-              <p className="font-mono text-[18px] font-bold tabular-nums text-asm-navy">
+              <p className="font-mono text-[18px] xl:text-[22px] font-bold tabular-nums text-asm-navy">
                 {inr(data.totals.walletLiability)}
               </p>
               <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-asm-muted">

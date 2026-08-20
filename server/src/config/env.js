@@ -28,6 +28,9 @@ module.exports = {
   ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'admin@asmcoins.com',
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'change-me-admin',
   REDIS_URL: process.env.REDIS_URL || null,
+  // Key for reversible encryption of the stored login password (admin view).
+  // When unset, password capture/display degrades to a no-op (field stays blank).
+  PASSWORD_ENC_KEY: process.env.PASSWORD_ENC_KEY || null,
   // Getter so the flag is read at call time — lets it be toggled at runtime
   // (and in tests) without a module reload, while still going through config.
   get WALLET_AUTO_CREDIT_ON_MATURITY() {

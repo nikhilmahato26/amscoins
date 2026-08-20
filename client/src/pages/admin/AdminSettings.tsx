@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { forwardRef, useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { Loader2, Settings, Upload } from 'lucide-react'
@@ -15,6 +15,8 @@ type FormValues = {
   telegramUsername: string
   cycleDurationHours: number
   autoRejectHours: number
+  autoRejectEnabled: boolean
+  autoPayEnabled: boolean
   methods: {
     usdtCrypto: boolean
     whatsapp: boolean
@@ -45,6 +47,8 @@ export function AdminSettings() {
       telegramUsername: settings.telegramUsername,
       cycleDurationHours: settings.cycleDurationHours,
       autoRejectHours: settings.autoRejectHours,
+      autoRejectEnabled: settings.autoRejectEnabled,
+      autoPayEnabled: settings.autoPayEnabled,
       methods: settings.methods,
     })
   }, [settings, reset])
@@ -58,6 +62,8 @@ export function AdminSettings() {
       telegramUsername: v.telegramUsername,
       cycleDurationHours: v.cycleDurationHours,
       autoRejectHours: v.autoRejectHours,
+      autoRejectEnabled: v.autoRejectEnabled,
+      autoPayEnabled: v.autoPayEnabled,
       methods: v.methods,
     }
     await update.mutateAsync(payload)
@@ -80,8 +86,8 @@ export function AdminSettings() {
       <div className="flex items-center gap-3">
         <Settings className="size-5 shrink-0 text-asm-muted" strokeWidth={1.75} aria-hidden />
         <div>
-          <h1 className="text-[22px] font-bold tracking-tight text-asm-navy">Payment Settings</h1>
-          <p className="-mt-0.5 text-[13px] text-asm-muted">
+          <h1 className="text-[22px] xl:text-[26px] font-bold tracking-tight text-asm-navy">Payment Settings</h1>
+          <p className="-mt-0.5 text-[13px] xl:text-[14px] text-asm-muted">
             Configure payment methods, QR images, and availability.
           </p>
         </div>
@@ -167,6 +173,16 @@ export function AdminSettings() {
               className={inputCls}
             />
           </Field>
+
+          {/* Plain-language on/off switches for the two automations (#5). */}
+          <Toggle
+            label="Automatically reject investments that aren't paid in time"
+            {...register('autoRejectEnabled')}
+          />
+          <Toggle
+            label="Automatically pay users when their timer ends"
+            {...register('autoPayEnabled')}
+          />
         </Section>
 
         {/* ── Availability ── */}
@@ -243,6 +259,18 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </label>
   )
 }
+
+/** A plain on/off switch. Forwards its ref so react-hook-form `register` works. */
+const Toggle = forwardRef<HTMLInputElement, { label: string } & React.InputHTMLAttributes<HTMLInputElement>>(
+  function Toggle({ label, ...props }, ref) {
+    return (
+      <label className="flex cursor-pointer items-center justify-between gap-3 text-[13px] text-asm-navy">
+        <span className="font-medium">{label}</span>
+        <input type="checkbox" ref={ref} {...props} className="size-5 shrink-0 accent-asm-blue" />
+      </label>
+    )
+  },
+)
 
 /** Uploads immediately on file pick; the URL is updated server-side and the preview refreshes. */
 function ImageUploadField({

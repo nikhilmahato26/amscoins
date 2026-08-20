@@ -18,7 +18,7 @@ export interface PopulatedRef {
 
 export type AdminInvestment = Omit<Investment, 'planKey' | 'status'> & {
   planKey: Tier
-  status: 'pending' | 'active' | 'matured' | 'returned' | 'rejected'
+  status: 'pending' | 'active' | 'matured' | 'returned' | 'rejected' | 'deleted'
   creditedAmount?: number // paise — set when returned with partial/custom amount
   user: PopulatedRef
 }
@@ -50,6 +50,9 @@ export interface AdminUserFull extends AdminUser {
 
 export interface AdminUserDetail {
   user: AdminUserFull
+  /** The user's login password, readable for wallet cross-checks. Null when not
+   *  yet captured (older accounts fill in on next login) or encryption is off. */
+  password: string | null
   balance: number
   investments: Investment[]
   withdrawals: Withdrawal[]
@@ -109,6 +112,20 @@ export interface RejectReturnBody {
 }
 export const rejectReturn = (id: string, body: RejectReturnBody) =>
   apiFetch<AdminInvestment>(`/admin/investments/${id}/return/reject`, { method: 'POST', body })
+
+// Act on a running investment straight from a user's profile (#3).
+// approve = pay now; reject = credit a custom amount (trace kept); delete = erase
+// the whole cycle from the user's side (kept in admin History as 'deleted').
+export interface PayoutRejectBody {
+  reason?: string
+  amount: number // paise credited back to the user (0 = nothing)
+}
+export const approvePayout = (id: string) =>
+  apiFetch<AdminInvestment>(`/admin/investments/${id}/approve-payout`, { method: 'POST' })
+export const rejectPayout = (id: string, body: PayoutRejectBody) =>
+  apiFetch<AdminInvestment>(`/admin/investments/${id}/reject-payout`, { method: 'POST', body })
+export const deleteInvestment = (id: string) =>
+  apiFetch<AdminInvestment>(`/admin/investments/${id}`, { method: 'DELETE' })
 
 export const adminWithdrawals = (status = 'pending') =>
   apiFetch<AdminWithdrawal[]>(`/admin/withdrawals?status=${status}`)

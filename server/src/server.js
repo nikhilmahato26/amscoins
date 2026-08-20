@@ -17,6 +17,10 @@ process.on('unhandledRejection', (reason) => {
 })
 
 process.on('uncaughtException', (err) => {
+  // Log synchronously to stderr FIRST: winston's file transport is async, so a
+  // bare logger.error() right before process.exit() loses the stack to the exit
+  // race (which is why past crashes showed no reason). Then best-effort winston.
+  process.stderr.write(`\n[FATAL] Uncaught Exception — shutting down\n${err && err.stack ? err.stack : String(err)}\n`)
   logger.error('Uncaught Exception — shutting down', { stack: err.stack })
   process.exit(1)
 })

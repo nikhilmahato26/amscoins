@@ -13,6 +13,8 @@ export interface PublicSettings {
   telegramUsername: string
   cycleDurationHours: number
   autoRejectHours: number
+  autoRejectEnabled: boolean
+  autoPayEnabled: boolean
   methods: {
     usdtCrypto: boolean
     whatsapp: boolean

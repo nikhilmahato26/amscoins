@@ -13,10 +13,16 @@ const { MongoMemoryReplSet } = require('mongodb-memory-server')
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'e2e-secret'
 process.env.ADMIN_EMAIL = 'admin@e2e.test'
 process.env.ADMIN_PASSWORD = 'admin123'
+// Enable the readable-password feature (#4) so the admin user view can show it.
+process.env.PASSWORD_ENC_KEY = process.env.PASSWORD_ENC_KEY || 'e2e-password-key'
 // Run as a test env: skips rate limiters (see rateLimits `skipInTest`) so the
 // suite's many registrations don't trip the 5-per-15min register throttle, and
 // routes email to nodemailer's jsonTransport instead of sending real mail.
-process.env.NODE_ENV = process.env.NODE_ENV || 'test'
+// Force test mode (not `|| 'test'`): the hermetic e2e server must ALWAYS skip
+// rate limiters and route email to jsonTransport, regardless of any ambient
+// NODE_ENV. Inheriting a non-test value silently enables Redis-backed throttling
+// and trips the suite's many registrations with 429s.
+process.env.NODE_ENV = 'test'
 
 ;(async () => {
   // A single-node replica set so transactions are available (same as Jest suite)
@@ -32,6 +38,14 @@ process.env.NODE_ENV = process.env.NODE_ENV || 'test'
   await connectDb(process.env.MONGO_URI)
   await seedPlans()
   await seedAdmin()
+
+  // Seed contact settings so the large-deposit WhatsApp/Telegram handoff methods
+  // are actually usable (isMethodConfigured needs a number/username set).
+  const Settings = require('./src/models/Settings')
+  const settings = await Settings.getSingleton()
+  settings.whatsappNumber = '919999999999'
+  settings.telegramUsername = 'asmcoins_support'
+  await settings.save()
 
   app.listen(4000, () => {
     console.log('E2E server on :4000 (in-memory MongoDB — never Atlas)')

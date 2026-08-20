@@ -35,6 +35,9 @@ async function startInvestmentWorker() {
   // Dedicated connection for the worker (BullMQ requires maxRetriesPerRequest:null
   // and its own connection separate from the Queue producer).
   const connection = new IORedis(env.REDIS_URL, { maxRetriesPerRequest: null })
+  // ioredis/BullMQ EventEmitters re-throw an 'error' event that has no listener
+  // as an uncaughtException — which crashes the whole API. Always attach one.
+  connection.on('error', (err) => logger.warn('Worker Redis connection error', { error: err.message }))
 
   worker = new Worker(
     QUEUE_NAME,
@@ -49,9 +52,11 @@ async function startInvestmentWorker() {
   worker.on('failed', (job, err) =>
     logger.error('Job failed', { name: job?.name, id: job?.id, error: err.message })
   )
+  worker.on('error', (err) => logger.warn('Worker error', { error: err.message }))
 
   // Repeatable safety-net sweep every 5 minutes (catches missed/restart cases).
   const sweepQueue = new Queue(QUEUE_NAME, { connection, prefix: PREFIX })
+  sweepQueue.on('error', (err) => logger.warn('Sweep queue error', { error: err.message }))
   await sweepQueue.add(
     'sweep',
     {},

@@ -35,7 +35,7 @@ function Brand() {
 
 function navLinkClass({ isActive }: { isActive: boolean }) {
   return cn(
-    'flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-colors',
+    'flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] 2xl:text-[14px] font-medium transition-colors',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1',
     isActive ? 'bg-asm-blue-tint text-asm-blue' : 'text-asm-body hover:bg-asm-tint hover:text-asm-navy',
   )
@@ -76,7 +76,7 @@ export function AdminLayout() {
   return (
     <div className="theme-light-home min-h-screen bg-asm-tint font-sans text-asm-navy">
       {/* ── Desktop sidebar (hidden on mobile) ── */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-asm-line bg-white lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 2xl:w-72 flex-col border-r border-asm-line bg-white lg:flex">
         <div className="flex h-14 shrink-0 items-center gap-2.5 border-b border-asm-line px-5">
           <Brand />
         </div>
@@ -93,7 +93,7 @@ export function AdminLayout() {
             type="button"
             onClick={handleLogout}
             className={cn(
-              'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-asm-body transition-colors',
+              'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] 2xl:text-[14px] font-medium text-asm-body transition-colors',
               'hover:bg-red-50 hover:text-asm-red',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1',
             )}
@@ -184,8 +184,10 @@ export function AdminLayout() {
       </AnimatePresence>
 
       {/* ── Main content ── */}
-      <main className="flex min-h-screen flex-col lg:ml-60">
-        <Outlet />
+      <main className="flex min-h-screen flex-col lg:ml-60 2xl:ml-72">
+        <div className="mx-auto w-full max-w-[1440px]">
+          <Outlet />
+        </div>
       </main>
     </div>
   )

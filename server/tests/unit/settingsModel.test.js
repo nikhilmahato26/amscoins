@@ -33,6 +33,7 @@ describe('Settings model', () => {
         'telegramUsername', 'usdtBep20Address', 'usdtBep20QrUrl',
         'usdtTrc20Address', 'usdtTrc20QrUrl', 'whatsappNumber',
         'cycleDurationHours', 'autoRejectHours',
+        'autoRejectEnabled', 'autoPayEnabled',
       ].sort()
     )
     expect(pub.methods).toEqual({

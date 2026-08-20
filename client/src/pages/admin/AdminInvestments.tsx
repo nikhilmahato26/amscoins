@@ -10,7 +10,11 @@ import {
   useRejectInvestment,
   useApproveReturn,
   useRejectReturn,
+  useApprovePayout,
+  useRejectPayout,
+  useDeleteInvestment,
   useInvestmentStats,
+  useSettings,
 } from '@/hooks/queries'
 import type { AdminInvestment, AdminInvestmentParams } from '@/services/api/admin'
 import { SearchInput } from '@/components/admin/SearchInput'
@@ -59,6 +63,7 @@ const STATUS_STYLES: Record<InvStatus, string> = {
   matured: 'bg-purple-50 text-purple-700',
   returned: 'bg-green-50 text-asm-green',
   rejected: 'bg-red-50 text-asm-red',
+  deleted: 'bg-zinc-200 text-zinc-600 line-through',
 }
 
 function StatusBadge({ status }: { status: InvStatus }) {
@@ -467,6 +472,13 @@ interface TabDataProps {
 function InvestmentTab({ data, isLoading, isError }: TabDataProps) {
   const approveMutation = useApproveInvestment()
   const rejectMutation = useRejectInvestment()
+  const { data: settings } = useSettings()
+
+  // Only surface the auto-reject deadline column while the automation is ON —
+  // when it's off, pending investments never time out, so there's nothing to show.
+  const autoRejectOn = !!settings?.autoRejectEnabled
+  const autoRejectHours = settings?.autoRejectHours ?? 0
+  const cols = autoRejectOn ? 8 : 7
 
   const [approvingId, setApprovingId] = useState<string | null>(null)
   const [rejectingId, setRejectingId] = useState<string | null>(null)
@@ -526,20 +538,21 @@ function InvestmentTab({ data, isLoading, isError }: TabDataProps) {
               <th scope="col" className="px-3 py-2.5 text-left">Reference</th>
               <th scope="col" className="px-3 py-2.5 text-left">Date</th>
               <th scope="col" className="px-3 py-2.5 text-left">Status</th>
+              {autoRejectOn && <th scope="col" className="px-3 py-2.5 text-left">Auto reject</th>}
               <th scope="col" className="px-3 py-2.5 text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
-              Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} cols={7} />)
+              Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} cols={cols} />)
             ) : isError ? (
               <tr>
-                <td colSpan={7} className="px-4 py-10 text-center text-[13px] text-asm-red" role="alert">
+                <td colSpan={cols} className="px-4 py-10 text-center text-[13px] text-asm-red" role="alert">
                   Failed to load investments. Please refresh.
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
-              <EmptyRow colSpan={7} q={q} label="pending or active" />
+              <EmptyRow colSpan={cols} q={q} label="pending" />
             ) : (
               filtered.map((inv, idx) => (
                 <tr
@@ -577,6 +590,20 @@ function InvestmentTab({ data, isLoading, isError }: TabDataProps) {
                       <StatusBadge status={inv.status} />
                     )}
                   </td>
+                  {autoRejectOn && (
+                    <td className="px-3 py-2.5">
+                      {inv.status === 'pending' ? (
+                        <span className="font-mono text-[11px] tabular-nums text-amber-700" data-testid="auto-reject-countdown">
+                          <InvestmentCountdown
+                            maturesAt={new Date(new Date(inv.createdAt).getTime() + autoRejectHours * 3600 * 1000).toISOString()}
+                            expiredLabel="due"
+                          />
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-asm-muted">—</span>
+                      )}
+                    </td>
+                  )}
                   <td className="px-3 py-2.5">
                     {inv.status === 'pending' ? (
                       <div className="flex justify-end gap-2">
@@ -643,6 +670,11 @@ function InvestmentTab({ data, isLoading, isError }: TabDataProps) {
 function ReturnTab({ data, isLoading, isError }: TabDataProps) {
   const approveMutation = useApproveReturn()
   const rejectMutation = useRejectReturn()
+  // For still-running (active) rows: pay out now / reject with a custom amount /
+  // delete the whole cycle (#3 endpoints, which accept active as well as matured).
+  const approvePayoutMutation = useApprovePayout()
+  const rejectPayoutMutation = useRejectPayout()
+  const deleteMutation = useDeleteInvestment()
 
   const [approvingId, setApprovingId] = useState<string | null>(null)
   const [rejectingId, setRejectingId] = useState<string | null>(null)
@@ -663,7 +695,10 @@ function ReturnTab({ data, isLoading, isError }: TabDataProps) {
     )
   })
 
-  const isMutating = approveMutation.isPending || rejectMutation.isPending
+  const isMutating =
+    approveMutation.isPending || rejectMutation.isPending ||
+    approvePayoutMutation.isPending || rejectPayoutMutation.isPending ||
+    deleteMutation.isPending
 
   function handleApprove() {
     if (!approvingId) return
@@ -673,12 +708,40 @@ function ReturnTab({ data, isLoading, isError }: TabDataProps) {
     })
   }
 
-  function handleReject(reason: string, amountPaise: number) {
-    if (!rejectingId) return
-    rejectMutation.mutate([rejectingId, { reason, amount: amountPaise }], {
-      onSuccess: () => { setStatusMsg('Return rejected.'); setRejectingId(null) },
-      onError: () => { setStatusMsg('Failed to reject return.'); setRejectingId(null) },
+  // Active rows: pay out now (deposit + profit), with a quick confirm since it
+  // skips the matured-return dialog.
+  function handlePayNow(inv: AdminInvestment) {
+    if (!window.confirm(`Pay ${inv.user.name} ${inr(inv.amount + inv.expectedReturn)} now (deposit + profit)?`)) return
+    approvePayoutMutation.mutate([inv._id], {
+      onSuccess: () => setStatusMsg(`Paid ${inr(inv.amount + inv.expectedReturn)} to ${inv.user.name}.`),
+      onError: () => setStatusMsg('Failed to pay out.'),
     })
+  }
+
+  // Delete erases the whole cycle from the user's side (a 'deleted' row stays in
+  // History). Irreversible, so require a confirm.
+  function handleDelete(inv: AdminInvestment) {
+    if (!window.confirm(`Delete this investment completely? It disappears from ${inv.user.name}'s history and totals. This cannot be undone.`)) return
+    deleteMutation.mutate([inv._id], {
+      onSuccess: () => setStatusMsg('Investment deleted.'),
+      onError: () => setStatusMsg('Failed to delete.'),
+    })
+  }
+
+  // Reject dialog is shared by active + matured rows: active credits a custom
+  // amount via the payout endpoint, matured via the return endpoint. Both keep
+  // the trace and end the investment as 'rejected'.
+  function handleReject(reason: string, amountPaise: number) {
+    if (!rejectingInv) return
+    const opts = {
+      onSuccess: () => { setStatusMsg('Investment rejected.'); setRejectingId(null) },
+      onError: () => { setStatusMsg('Failed to reject.'); setRejectingId(null) },
+    }
+    if (rejectingInv.status === 'active') {
+      rejectPayoutMutation.mutate([rejectingInv._id, { reason, amount: amountPaise }], opts)
+    } else {
+      rejectMutation.mutate([rejectingInv._id, { reason, amount: amountPaise }], opts)
+    }
   }
 
   return (
@@ -716,7 +779,7 @@ function ReturnTab({ data, isLoading, isError }: TabDataProps) {
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
-              <EmptyRow colSpan={8} q={q} label="matured" />
+              <EmptyRow colSpan={8} q={q} label="active or matured" />
             ) : (
               filtered.map((inv, idx) => (
                 <tr
@@ -745,7 +808,14 @@ function ReturnTab({ data, isLoading, isError }: TabDataProps) {
                     <IdChip label={formatInvestId(inv.referenceCode)} />
                   </td>
                   <td className="px-3 py-2.5">
-                    {inv.maturesAt ? (
+                    {inv.status === 'active' && inv.maturesAt ? (
+                      <div className="flex flex-col gap-0.5">
+                        <StatusBadge status="active" />
+                        <span className="font-mono text-[11px] tabular-nums text-asm-muted" data-testid="countdown">
+                          <InvestmentCountdown maturesAt={inv.maturesAt} />
+                        </span>
+                      </div>
+                    ) : inv.maturesAt ? (
                       <>
                         <p className="text-[12px] text-asm-body">{fmt(inv.maturesAt)}</p>
                         <p className="font-mono text-[10px] text-asm-muted">{fmtTime(inv.maturesAt)}</p>
@@ -756,8 +826,8 @@ function ReturnTab({ data, isLoading, isError }: TabDataProps) {
                     <div className="flex justify-end gap-2">
                       <button
                         type="button"
-                        data-testid="approve-return"
-                        onClick={() => setApprovingId(inv._id)}
+                        data-testid={inv.status === 'active' ? 'approve-payout' : 'approve-return'}
+                        onClick={() => (inv.status === 'active' ? handlePayNow(inv) : setApprovingId(inv._id))}
                         disabled={isMutating}
                         className={cn(
                           'inline-flex min-h-[36px] items-center rounded-md bg-asm-green px-3 py-1.5 text-[11px] font-semibold text-white',
@@ -769,7 +839,7 @@ function ReturnTab({ data, isLoading, isError }: TabDataProps) {
                       </button>
                       <button
                         type="button"
-                        data-testid="reject-return"
+                        data-testid={inv.status === 'active' ? 'reject-payout' : 'reject-return'}
                         onClick={() => setRejectingId(inv._id)}
                         disabled={isMutating}
                         className={cn(
@@ -779,6 +849,19 @@ function ReturnTab({ data, isLoading, isError }: TabDataProps) {
                         )}
                       >
                         Reject
+                      </button>
+                      <button
+                        type="button"
+                        data-testid="delete-investment"
+                        onClick={() => handleDelete(inv)}
+                        disabled={isMutating}
+                        className={cn(
+                          'inline-flex min-h-[36px] items-center rounded-md border border-zinc-300 bg-zinc-100 px-3 py-1.5 text-[11px] font-semibold text-zinc-700',
+                          'hover:bg-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-1',
+                          'disabled:cursor-not-allowed disabled:opacity-40',
+                        )}
+                      >
+                        Delete
                       </button>
                     </div>
                   </td>
@@ -913,10 +996,13 @@ export function AdminInvestments() {
     navigate({ search: filtersToSearch(params) }, { replace: true })
   }
 
+  // Pipeline: Investments (pending, awaiting approval) → Returns (approved &
+  // running, plus matured awaiting payout) → History (returned/rejected). An
+  // investment leaves the Investments tab the moment it's approved (active).
   const activeStatus =
-    activeTab === 'investments' ? 'pending,active' :
-    activeTab === 'returns' ? 'matured' :
-    'returned,rejected'
+    activeTab === 'investments' ? 'pending' :
+    activeTab === 'returns' ? 'active,matured' :
+    'returned,rejected,deleted'
 
   const { data, isLoading, isError } = useAdminInvestments({
     ...filterParams,
@@ -926,8 +1012,8 @@ export function AdminInvestments() {
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
       <div>
-        <h1 className="text-[22px] font-bold tracking-tight text-asm-navy">Investments</h1>
-        <p className="mt-0.5 text-[13px] text-asm-muted">
+        <h1 className="text-[22px] xl:text-[26px] font-bold tracking-tight text-asm-navy">Investments</h1>
+        <p className="mt-0.5 text-[13px] xl:text-[14px] text-asm-muted">
           Review pending investments, process matured returns, and view history.
         </p>
       </div>

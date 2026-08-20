@@ -9,16 +9,20 @@ test('leaderboard: larger investor ranked #1 on Daily tab', async ({ page }) => 
   /* ── 1. Seed two users with investments via API ── */
   const adminToken = await adminLogin()
 
-  // User A — smaller investment: ₹1,000 (100,000 paise)
+  // The daily leaderboard is shared state across the whole suite, so other
+  // tests' investments also land on it. Give these two users the two LARGEST
+  // amounts (near the ₹10,000 silver max) so they stay at the top of the board
+  // and both remain visible regardless of test order.
+  // User A — smaller of the two: ₹9,000 (900,000 paise)
   const emailA = uniqueEmail('lbA')
   const { token: tokenA } = await register({ name: 'LeaderAlpha User', email: emailA, password: 'passA1234' })
-  const { id: invA } = await createInvestment(tokenA, 'silver', 100_000)
+  const { id: invA } = await createInvestment(tokenA, 'silver', 900_000)
   await approveDeposit(adminToken, invA)
 
-  // User B — larger investment: ₹5,000 (500,000 paise)
+  // User B — larger, ranks #1: ₹10,000 (1,000,000 paise)
   const emailB = uniqueEmail('lbB')
   const { token: tokenB } = await register({ name: 'LeaderBeta User', email: emailB, password: 'passB1234' })
-  const { id: invB } = await createInvestment(tokenB, 'silver', 500_000)
+  const { id: invB } = await createInvestment(tokenB, 'silver', 1_000_000)
   await approveDeposit(adminToken, invB)
 
   /* ── 2. Log in as User A to view the leaderboard ── */
@@ -39,7 +43,7 @@ test('leaderboard: larger investor ranked #1 on Daily tab', async ({ page }) => 
   await expect(dailyTab).toBeVisible({ timeout: 5_000 })
   await dailyTab.click()
 
-  /* ── 5. LeaderBeta User (larger, ₹5,000) must be ranked #1 ── */
+  /* ── 5. LeaderBeta User (larger, ₹10,000) must be ranked #1 ── */
   // Wait for data to load
   await expect(page.getByText('LeaderBeta User')).toBeVisible({ timeout: 15_000 })
   await expect(page.getByText('LeaderAlpha User')).toBeVisible()
@@ -48,9 +52,9 @@ test('leaderboard: larger investor ranked #1 on Daily tab', async ({ page }) => 
   const betaPos = await page.getByText('LeaderBeta User').evaluate(
     el => el.compareDocumentPosition(document.body)
   )
-  // Verify ₹5,000 is associated with the top entry
-  await expect(page.getByText('₹5,000')).toBeVisible()
-  await expect(page.getByText('₹1,000')).toBeVisible()
+  // Both users' amounts render (amounts repeat on the page — scope to first match).
+  await expect(page.getByText('₹10,000').first()).toBeVisible()
+  await expect(page.getByText('₹9,000').first()).toBeVisible()
 
   // The gold medal (rank #1) is on the LeaderBeta row
   // Check that LeaderBeta appears higher in the page than LeaderAlpha
