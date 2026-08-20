@@ -18,11 +18,12 @@ const notify = asyncHandler(async (req, res) => {
 })
 
 const mine = asyncHandler(async (req, res) =>
-  res.json(await Investment.find({ user: req.user._id }).sort('-createdAt'))
+  // Deleted cycles are erased from the user's side — never surface them.
+  res.json(await Investment.find({ user: req.user._id, status: { $ne: 'deleted' } }).sort('-createdAt'))
 )
 
 const getOne = asyncHandler(async (req, res) => {
-  const investment = await Investment.findOne({ _id: req.params.id, user: req.user._id })
+  const investment = await Investment.findOne({ _id: req.params.id, user: req.user._id, status: { $ne: 'deleted' } })
   if (!investment) return res.status(404).json({ message: 'Investment not found' })
   res.json(investment)
 })

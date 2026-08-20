@@ -10,7 +10,10 @@ const investmentSchema = new Schema(
     referenceCode: { type: String, required: true, unique: true },
     referralCodeUsed: { type: String, default: null },
     isFirstDeposit: { type: Boolean, default: false },
-    status: { type: String, enum: ['pending', 'active', 'matured', 'returned', 'rejected'], default: 'pending' },
+    // 'deleted' = admin erased the whole cycle: the user sees no trace (its
+    // wallet transactions removed and any credit reversed), but the row is kept
+    // so the admin History can distinguish deleted / rejected / approved.
+    status: { type: String, enum: ['pending', 'active', 'matured', 'returned', 'rejected', 'deleted'], default: 'pending' },
     startAt: { type: Date },
     maturesAt: { type: Date },
     approvedBy: { type: Schema.Types.ObjectId, ref: 'User' },
@@ -23,6 +26,8 @@ const investmentSchema = new Schema(
     returnRejectionReason: { type: String, default: '' },
     rejectionReason: { type: String, default: '' },
     autoRejected: { type: Boolean, default: false },
+    deletedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    deletedAt: { type: Date },
   },
   { timestamps: true }
 )

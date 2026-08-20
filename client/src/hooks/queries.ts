@@ -20,7 +20,11 @@ import {
   rejectInvestment,
   approveReturn,
   rejectReturn,
+  approvePayout,
+  rejectPayout,
+  deleteInvestment,
   type RejectReturnBody,
+  type PayoutRejectBody,
   type AdminInvestmentParams,
   type AdminUsersParams,
   adminWithdrawals,
@@ -126,6 +130,13 @@ export const useApproveReturn = () =>
   useAdminMutation((id: string) => approveReturn(id), [['admin', 'investments'], ['admin', 'stats']])
 export const useRejectReturn = () =>
   useAdminMutation((id: string, body: RejectReturnBody) => rejectReturn(id, body), [['admin', 'investments'], ['admin', 'stats']])
+// #3 — act on a running investment from the user's profile.
+export const useApprovePayout = () =>
+  useAdminMutation((id: string) => approvePayout(id), [['admin', 'user'], ['admin', 'users'], ['admin', 'investments'], ['admin', 'stats']])
+export const useRejectPayout = () =>
+  useAdminMutation((id: string, body: PayoutRejectBody) => rejectPayout(id, body), [['admin', 'user'], ['admin', 'users'], ['admin', 'investments'], ['admin', 'stats']])
+export const useDeleteInvestment = () =>
+  useAdminMutation((id: string) => deleteInvestment(id), [['admin', 'user'], ['admin', 'users'], ['admin', 'investments'], ['admin', 'stats']])
 export const useCompleteWithdrawal = () =>
   useAdminMutation((id: string, note?: string) => completeWithdrawal(id, note), [['admin', 'withdrawals'], ['admin', 'stats']])
 export const useRejectWithdrawal = () =>

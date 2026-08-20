@@ -9,6 +9,7 @@ const invSvc = require('../services/investmentService')
 const wdSvc = require('../services/withdrawalService')
 const supportSvc = require('../services/supportService')
 const walletService = require('../services/walletService')
+const secretBox = require('../lib/secretBox')
 const { cacheGet, cacheSet, cacheDel } = require('../config/redis')
 
 // Escape a user-supplied string for safe use inside a RegExp.
@@ -122,6 +123,19 @@ const rejectReturn = asyncHandler(async (req, res) => {
   res.json(await invSvc.rejectReturn(req.params.id, req.user._id, { reason, amount }))
 })
 
+const approvePayout = asyncHandler(async (req, res) =>
+  res.json(await invSvc.approvePayout(req.params.id, req.user._id))
+)
+
+const rejectPayout = asyncHandler(async (req, res) => {
+  const { reason, amount } = req.body
+  res.json(await invSvc.rejectPayout(req.params.id, req.user._id, { reason, amount }))
+})
+
+const deleteInvestment = asyncHandler(async (req, res) =>
+  res.json(await invSvc.deleteInvestment(req.params.id, req.user._id))
+)
+
 const listWithdrawals = asyncHandler(async (req, res) => {
   const q = req.query.status
     ? { status: { $in: String(req.query.status).split(',') } }
@@ -191,18 +205,27 @@ const listUsers = asyncHandler(async (req, res) => {
   if (investor === 'true') result = result.filter((u) => u.activeInvested > 0)
   else if (investor === 'false') result = result.filter((u) => u.activeInvested === 0)
 
-  // Sort: by lifetime invested (either direction), else newest-first (default).
+  // Sort: by lifetime invested (either direction), else investors-first (default:
+  // users with a live active investment float to the top, biggest first, then
+  // newest signups among the rest).
   const sort = req.query.sort
   if (sort === 'invested') result.sort((a, b) => a.totalInvested - b.totalInvested)
   else if (sort === '-invested') result.sort((a, b) => b.totalInvested - a.totalInvested)
-  else result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+  else {
+    result.sort((a, b) => {
+      if (b.activeInvested !== a.activeInvested) return b.activeInvested - a.activeInvested
+      return new Date(b.createdAt) - new Date(a.createdAt)
+    })
+  }
 
   res.json(result)
 })
 
 // GET /api/admin/users/:id — full profile + wallet + money history for one user.
 const getUserDetail = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.params.id).select('-passwordHash')
+  // +passwordEnc so we can decrypt the readable password for this admin-only
+  // view. The ciphertext itself is stripped from the response below.
+  const user = await User.findById(req.params.id).select('-passwordHash +passwordEnc')
   if (!user) throw new ApiError(404, 'User not found')
 
   const [wallet, investments, withdrawals, transactions] = await Promise.all([
@@ -212,8 +235,13 @@ const getUserDetail = asyncHandler(async (req, res) => {
     Transaction.find({ user: user._id }).sort('-createdAt').limit(100),
   ])
 
+  const password = secretBox.open(user.passwordEnc) // null when not captured/unconfigured
+  const userObj = user.toObject()
+  delete userObj.passwordEnc // never leak ciphertext
+
   res.json({
-    user,
+    user: userObj,
+    password,
     balance: wallet ? wallet.balance : 0,
     investments,
     withdrawals,
@@ -280,6 +308,9 @@ module.exports = {
   rejectInvestment,
   approveReturn,
   rejectReturn,
+  approvePayout,
+  rejectPayout,
+  deleteInvestment,
   listWithdrawals,
   completeWithdrawal,
   rejectWithdrawal,

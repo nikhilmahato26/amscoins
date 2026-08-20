@@ -213,7 +213,8 @@ export function AdminUsers() {
   const [q, setQ] = useState('')
   type InvestorFilter = 'all' | 'investor' | 'non-investor'
   const [searchParams, setSearchParams] = useSearchParams()
-  const investorFilter = (searchParams.get('investor') ?? 'all') as InvestorFilter
+  // Default view is Investors-first (spec #6): with no explicit param, show investors.
+  const investorFilter = (searchParams.get('investor') ?? 'investor') as InvestorFilter
   const [amountSort, setAmountSort] = useState<'invested' | '-invested' | undefined>(undefined)
   const { data, isLoading, isError } = useAdminUsers({
     q,
@@ -294,11 +295,11 @@ export function AdminUsers() {
 
       {/* Investor filter */}
       <div className="flex items-center gap-2">
-        {(['all', 'investor', 'non-investor'] as const).map((f) => (
+        {(['investor', 'non-investor', 'all'] as const).map((f) => (
           <button
             key={f}
             type="button"
-            onClick={() => setSearchParams(f === 'all' ? {} : { investor: f }, { replace: true })}
+            onClick={() => setSearchParams(f === 'investor' ? {} : { investor: f }, { replace: true })}
             className={cn(
               'rounded-full px-3 py-1 text-[11px] font-semibold capitalize transition-colors',
               investorFilter === f

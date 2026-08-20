@@ -37,12 +37,12 @@ test.describe('Investment flow', () => {
     await page.getByRole('button', { name: /invest in the silver package/i }).click()
 
     /* ── 5. Select amount on PackageDetailPage ── */
-    // PackageDetailPage shows preset amount cards (Entry ₹1,000 already selected by default).
-    // Click "Continue to Payment" button directly — ₹1,000 is the default selected amount.
     await expect(page).toHaveURL(/\/app\/invest/, { timeout: 10_000 })
     // Wait for the preset amount cards to load
     await expect(page.getByText(/select investment/i)).toBeVisible({ timeout: 10_000 })
-    // The "Entry" preset (₹1,000) is pre-selected — just continue
+    // Pick the ₹5,000 "Growth" preset — a LARGE deposit (above the ₹2,000
+    // threshold) so the payment page offers the WhatsApp/Telegram handoff.
+    await page.getByRole('button', { name: /growth/i }).click()
     await page.getByRole('button', { name: /continue to payment/i }).click()
 
     /* ── 6. Should reach summary page ── */
@@ -57,8 +57,9 @@ test.describe('Investment flow', () => {
     await page.getByRole('button', { name: /telegram/i }).click()
 
     /* ── 9. Assert reference code (ASM-…) + Telegram link appear ── */
-    await expect(page.getByText(/ASM-/)).toBeVisible({ timeout: 15_000 })
-    await expect(page.getByRole('link', { name: /telegram/i })).toBeVisible({ timeout: 10_000 })
+    // The reference code is shown in more than one spot on the pay screen.
+    await expect(page.getByText(/ASM-/).first()).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByRole('link', { name: /telegram/i }).first()).toBeVisible({ timeout: 10_000 })
   })
 
   test('admin-approve deposit → dashboard shows investment data', async ({ page }) => {

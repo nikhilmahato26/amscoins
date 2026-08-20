@@ -67,8 +67,7 @@ test('full lifecycle: deposit -> approve -> referral tier unlock -> withdraw', a
   expect((await User.findById(R.user.id)).referralCount).toBe(1)
 
   await Investment.updateOne({ _id: inv.body.investment._id }, { $set: { maturesAt: new Date(Date.now() - 1000) } })
-  await invSvc.runMature(inv.body.investment._id) // active -> matured (manual mode)
-  await invSvc.approveReturn(inv.body.investment._id, R.user.id) // matured -> returned, credit 250000
+  await invSvc.runMature(inv.body.investment._id) // active -> matured -> auto-credited (WALLET_AUTO_CREDIT_ON_MATURITY defaults true)
   const wallet = await request(app).get('/api/wallet').set(bearer(U.token))
   expect(wallet.body.balance).toBe(250000)
 

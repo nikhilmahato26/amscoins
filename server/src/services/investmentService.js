@@ -4,6 +4,8 @@ const mongoose = require('mongoose')
 const Plan = require('../models/Plan')
 const Investment = require('../models/Investment')
 const User = require('../models/User')
+const Transaction = require('../models/Transaction')
+const Wallet = require('../models/Wallet')
 const env = require('../config/env')
 const walletService = require('./walletService')
 const { creditReferralIfFirst } = require('./referralService')
@@ -323,8 +325,168 @@ async function rejectReturn(investmentId, adminId, { reason, amount }) {
   }
 }
 
+/**
+ * Admin acts on a RUNNING (or timer-ended) investment straight from the user's
+ * profile — distinct from the pending-stage approve/reject and the matured-stage
+ * return endpoints, which only apply at those specific states.
+ *
+ * approvePayout: pay the user their payout now (deposit + profit) and finish it.
+ * Mirrors the maturity credit path, but accepts 'active' as well as 'matured'.
+ * Idempotent via the status guard inside the transaction.
+ */
+async function approvePayout(investmentId, adminId) {
+  const session = await mongoose.startSession()
+  try {
+    let updated
+    await session.withTransaction(async () => {
+      const inv = await Investment.findById(investmentId).session(session)
+      if (!inv) throw new ApiError(404, 'Investment not found')
+      if (inv.status !== 'active' && inv.status !== 'matured') {
+        throw new ApiError(409, 'Investment is not running')
+      }
+
+      let credited = 0
+      if (!inv.walletCredited) {
+        await walletService.credit(
+          inv.user, inv.amount,
+          { type: 'deposit', actor: adminId ? 'admin' : 'system', note: `Principal ${inv.referenceCode}`, ref: inv._id },
+          session
+        )
+        credited += inv.amount
+      }
+      if (inv.expectedReturn > 0) {
+        await walletService.credit(
+          inv.user, inv.expectedReturn,
+          { type: 'return', actor: adminId ? 'admin' : 'system', note: `Return ${inv.referenceCode}`, ref: inv._id },
+          session
+        )
+        credited += inv.expectedReturn
+      }
+
+      inv.status = 'returned'
+      inv.walletCredited = true
+      inv.creditedAmount = credited
+      inv.maturedAt = inv.maturedAt || new Date()
+      inv.returnDecidedBy = adminId
+      inv.returnDecidedAt = new Date()
+      await inv.save({ session })
+      updated = inv
+    })
+
+    if (updated) {
+      await queue.cancelMature(updated._id) // drop the pending auto-pay job (runMature no-ops anyway)
+      await cacheDel('cache:admin:stats', `cache:dashboard:${updated.user}`, `cache:wallet:${updated.user}`)
+      logger.info('Payout approved from user view', { investmentId, adminId, creditedAmount: updated.creditedAmount })
+    }
+    return updated
+  } finally {
+    session.endSession()
+  }
+}
+
+/**
+ * rejectPayout: cancel a running (or timer-ended) investment. The admin chooses
+ * a custom amount to credit back to the user (0 = nothing). The credit is a
+ * normal settled transaction, so it DOES show in the user's history — the
+ * cycle's trace is kept. Mirrors rejectReturn but accepts 'active' too.
+ */
+async function rejectPayout(investmentId, adminId, { reason = '', amount = 0 } = {}) {
+  const session = await mongoose.startSession()
+  try {
+    let updated
+    await session.withTransaction(async () => {
+      const inv = await Investment.findById(investmentId).session(session)
+      if (!inv) throw new ApiError(404, 'Investment not found')
+      if (inv.status !== 'active' && inv.status !== 'matured') {
+        throw new ApiError(409, 'Investment is not running')
+      }
+      const max = inv.amount + inv.expectedReturn
+      if (amount < 0 || amount > max) throw new ApiError(400, 'Amount out of range')
+
+      if (amount > 0 && !inv.walletCredited) {
+        await walletService.credit(
+          inv.user, amount,
+          { type: 'return', actor: adminId ? 'admin' : 'system', note: `Reject payout ${inv.referenceCode}${reason ? ': ' + reason : ''}`, ref: inv._id },
+          session
+        )
+        inv.walletCredited = true
+        inv.creditedAmount = amount
+      }
+      inv.status = 'rejected'
+      inv.returnRejectionReason = reason
+      inv.returnDecidedBy = adminId
+      inv.returnDecidedAt = new Date()
+      await inv.save({ session })
+      updated = inv
+    })
+
+    if (updated) {
+      await queue.cancelMature(updated._id)
+      await cacheDel('cache:admin:stats', `cache:dashboard:${updated.user}`, `cache:wallet:${updated.user}`)
+      logger.info('Payout rejected with custom amount', { investmentId, adminId, amount: updated.creditedAmount })
+    }
+    return updated
+  } finally {
+    session.endSession()
+  }
+}
+
+/**
+ * deleteInvestment: erase a whole investment cycle from the user's side. Every
+ * wallet transaction tied to it is removed and its net balance effect reversed,
+ * so the user sees no trace and their total-invested drops. The row itself is
+ * soft-deleted (status 'deleted') so the admin History can still distinguish
+ * deleted vs rejected vs approved. Idempotent via the status guard.
+ */
+async function deleteInvestment(investmentId, adminId) {
+  const session = await mongoose.startSession()
+  try {
+    let updated
+    await session.withTransaction(async () => {
+      const inv = await Investment.findById(investmentId).session(session)
+      if (!inv) throw new ApiError(404, 'Investment not found')
+      if (inv.status === 'deleted') throw new ApiError(409, 'Investment already deleted')
+
+      // Pull every wallet transaction tied to this investment and reverse their
+      // net effect on the balance — as if the cycle never happened.
+      const txns = await Transaction.find({ ref: inv._id }).session(session)
+      const net = txns.reduce((s, t) => s + (t.direction === 'credit' ? t.amount : -t.amount), 0)
+      if (net !== 0) {
+        await Wallet.updateOne({ user: inv.user }, { $inc: { balance: -net } }, { session })
+      }
+      if (txns.length) await Transaction.deleteMany({ ref: inv._id }, { session })
+
+      inv.status = 'deleted'
+      inv.walletCredited = false
+      inv.creditedAmount = 0
+      inv.deletedBy = adminId
+      inv.deletedAt = new Date()
+      await inv.save({ session })
+      updated = inv
+    })
+
+    if (updated) {
+      await queue.cancelAutoReject(updated._id)
+      await queue.cancelMature(updated._id)
+      await cacheDel(
+        'cache:admin:stats',
+        `cache:dashboard:${updated.user}`,
+        `cache:wallet:${updated.user}`,
+        'cache:leaderboard:daily',
+        'cache:leaderboard:weekly',
+        'cache:leaderboard:monthly'
+      )
+      logger.info('Investment deleted (cycle erased)', { investmentId, adminId })
+    }
+    return updated
+  } finally {
+    session.endSession()
+  }
+}
+
 async function runAutoReject(investmentId) {
   const settings = await Settings.getSingleton()
+  if (!settings.autoRejectEnabled) return null // admin switched auto-reject off — no-op
   const hours = settings.autoRejectHours
   const inv = await Investment.findOneAndUpdate(
     { _id: investmentId, status: 'pending' },
@@ -347,11 +509,15 @@ async function runMature(investmentId) {
   await cacheDel('cache:admin:stats', `cache:dashboard:${inv.user}`)
   logger.info('Investment matured', { investmentId })
 
-  if (env.WALLET_AUTO_CREDIT_ON_MATURITY) {
+  // Auto-pay requires BOTH the deploy-level master flag AND the admin toggle
+  // (both default on). Either one off leaves the investment waiting for a
+  // manual payout decision.
+  const settings = await Settings.getSingleton()
+  if (env.WALLET_AUTO_CREDIT_ON_MATURITY && settings.autoPayEnabled) {
     // Reuse the return-approve credit path with a system actor (adminId = null).
     await approveReturn(inv._id, null)
   }
   return await Investment.findById(investmentId)
 }
 
-module.exports = { createInvestment, notifyPaymentSubmitted, approveInvestment, rejectInvestment, approveReturn, rejectReturn, runAutoReject, runMature }
+module.exports = { createInvestment, notifyPaymentSubmitted, approveInvestment, rejectInvestment, approveReturn, rejectReturn, approvePayout, rejectPayout, deleteInvestment, runAutoReject, runMature }

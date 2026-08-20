@@ -86,6 +86,8 @@ const updateSettingsSchema = z
     inrThresholdPaise: z.number().int().min(0).optional(),
     cycleDurationHours: z.number().int().min(1).optional(),
     autoRejectHours: z.number().int().min(1).optional(),
+    autoRejectEnabled: z.boolean().optional(),
+    autoPayEnabled: z.boolean().optional(),
     usdtTrc20Address: z.string().trim().optional(),
     usdtBep20Address: z.string().trim().optional(),
     whatsappNumber: z
@@ -114,6 +116,13 @@ const returnRejectSchema = z.object({
   amount: z.number().int().min(0),
 })
 
+// Rejecting a running investment (active/matured) from the payout controls:
+// reason is optional (a plain cancel needs none), amount is the custom credit.
+const payoutRejectSchema = z.object({
+  reason: z.string().optional().default(''),
+  amount: z.number().int().min(0),
+})
+
 const bulkApproveSchema = z.object({
   ids: z.array(z.string().min(1)).min(1, 'At least one ID required'),
 })
@@ -123,6 +132,7 @@ module.exports = {
   loginSchema,
   createInvestmentSchema,
   returnRejectSchema,
+  payoutRejectSchema,
   createWithdrawalSchema,
   payoutMethodSchema,
   updateProfileSchema,

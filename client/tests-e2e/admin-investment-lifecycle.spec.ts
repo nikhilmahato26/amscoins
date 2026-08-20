@@ -161,7 +161,9 @@ test('admin investments: active investment shows countdown', async ({ page }) =>
   await page.goto('/admin/investments')
   await expect(page.getByRole('heading', { name: 'Investments' })).toBeVisible({ timeout: 10_000 })
 
-  // The active row should appear in the Investments tab
+  // Approved (active) investments live under the Returns tab now (Investment →
+  // Return → History), so switch there to find the active row + countdown.
+  await page.getByRole('tab', { name: 'Returns' }).click()
   const row = page.locator('tr').filter({ hasText: referenceCode })
   await expect(row).toBeVisible({ timeout: 15_000 })
 

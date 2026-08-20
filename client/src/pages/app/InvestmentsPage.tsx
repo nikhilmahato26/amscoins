@@ -56,6 +56,9 @@ const STATUS_CONFIG: Record<
   matured:  { label: 'Matured',        icon: AlertCircle,   cls: 'bg-asm-blue-tint text-asm-blue border-asm-blue/20', iconCls: 'text-asm-blue'   },
   returned: { label: 'Returned',       icon: CheckCircle2,  cls: 'bg-asm-green-tint text-asm-greenInk border-[#1FA855]/25', iconCls: 'text-asm-greenInk' },
   rejected: { label: 'Rejected',       icon: XCircle,       cls: 'bg-red-50 text-red-700 border-red-200',             iconCls: 'text-red-500'    },
+  // Deleted cycles are filtered out server-side and never reach the user — this
+  // entry exists only to satisfy the status map's exhaustiveness.
+  deleted:  { label: 'Removed',        icon: XCircle,       cls: 'bg-zinc-100 text-zinc-500 border-zinc-200',         iconCls: 'text-zinc-400'   },
 }
 
 function StatusPill({ status }: { status: Investment['status'] }) {
