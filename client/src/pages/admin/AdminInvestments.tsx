@@ -1012,8 +1012,8 @@ export function AdminInvestments() {
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
       <div>
-        <h1 className="text-[22px] font-bold tracking-tight text-asm-navy">Investments</h1>
-        <p className="mt-0.5 text-[13px] text-asm-muted">
+        <h1 className="text-[22px] xl:text-[26px] font-bold tracking-tight text-asm-navy">Investments</h1>
+        <p className="mt-0.5 text-[13px] xl:text-[14px] text-asm-muted">
           Review pending investments, process matured returns, and view history.
         </p>
       </div>

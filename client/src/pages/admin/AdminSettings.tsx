@@ -86,8 +86,8 @@ export function AdminSettings() {
       <div className="flex items-center gap-3">
         <Settings className="size-5 shrink-0 text-asm-muted" strokeWidth={1.75} aria-hidden />
         <div>
-          <h1 className="text-[22px] font-bold tracking-tight text-asm-navy">Payment Settings</h1>
-          <p className="-mt-0.5 text-[13px] text-asm-muted">
+          <h1 className="text-[22px] xl:text-[26px] font-bold tracking-tight text-asm-navy">Payment Settings</h1>
+          <p className="-mt-0.5 text-[13px] xl:text-[14px] text-asm-muted">
             Configure payment methods, QR images, and availability.
           </p>
         </div>

@@ -211,8 +211,8 @@ export function AdminDeposits() {
     <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
       {/* Header */}
       <div>
-        <h1 className="text-[22px] font-bold tracking-tight text-asm-navy">Deposits</h1>
-        <p className="mt-0.5 text-[13px] text-asm-muted">Pending deposit requests awaiting review.</p>
+        <h1 className="text-[22px] xl:text-[26px] font-bold tracking-tight text-asm-navy">Deposits</h1>
+        <p className="mt-0.5 text-[13px] xl:text-[14px] text-asm-muted">Pending deposit requests awaiting review.</p>
       </div>
 
       <SearchInput value={q} onChange={setQ} placeholder="Search by name, email, reference or plan" />

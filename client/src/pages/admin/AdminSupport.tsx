@@ -104,8 +104,8 @@ export function AdminSupport() {
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
       <div>
-        <h1 className="text-[22px] font-bold tracking-tight text-asm-navy">Support</h1>
-        <p className="mt-0.5 text-[13px] text-asm-muted">Incoming user queries.</p>
+        <h1 className="text-[22px] xl:text-[26px] font-bold tracking-tight text-asm-navy">Support</h1>
+        <p className="mt-0.5 text-[13px] xl:text-[14px] text-asm-muted">Incoming user queries.</p>
       </div>
 
       <SearchInput value={q} onChange={setQ} placeholder="Search by ref, subject, message or user" />
