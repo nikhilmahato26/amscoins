@@ -5,6 +5,7 @@ import { LayoutDashboard, ArrowUpFromLine, TrendingUp, Users, LifeBuoy, LogOut, 
 import { useAuth } from '@/auth/AuthContext'
 import { authService } from '@/services/authService'
 import { NotificationBell } from '@/components/admin/NotificationBell'
+import { AsmMark } from '@/components/home/AsmLogo'
 import { cn } from '@/lib/utils'
 
 const NAV_ITEMS = [
@@ -20,12 +21,7 @@ const NAV_ITEMS = [
 function Brand() {
   return (
     <span className="flex items-center gap-2.5">
-      <span
-        className="flex size-7 items-center justify-center rounded-lg bg-asm-blue text-[11px] font-extrabold tracking-tight text-white"
-        aria-hidden
-      >
-        A
-      </span>
+      <AsmMark className="size-7" aria-hidden />
       <span className="text-[13px] font-bold tracking-tight text-asm-navy">
         ASM <span className="font-normal text-asm-muted">Admin</span>
       </span>
@@ -77,8 +73,9 @@ export function AdminLayout() {
     <div className="theme-light-home min-h-screen bg-asm-tint font-sans text-asm-navy">
       {/* ── Desktop sidebar (hidden on mobile) ── */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 2xl:w-72 flex-col border-r border-asm-line bg-white lg:flex">
-        <div className="flex h-14 shrink-0 items-center gap-2.5 border-b border-asm-line px-5">
+        <div className="flex h-14 shrink-0 items-center justify-between gap-2.5 border-b border-asm-line px-5">
           <Brand />
+          <NotificationBell align="start" />
         </div>
         <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-3" aria-label="Admin navigation">
           {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
