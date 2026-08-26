@@ -25,6 +25,17 @@ export interface CreateInvestmentInput {
 export const createInvestment = (input: CreateInvestmentInput) =>
   apiFetch<{ investment: Investment; telegramLink: string; whatsappLink: string }>('/investments', { method: 'POST', body: input })
 
+// Deposit gate — the server is the source of truth for whether a user may start
+// a new deposit. `pending`: a deposit is awaiting admin approval. `cooldown`: a
+// deposit was approved and the user must wait until `cooldownUntil` before the
+// next one. `open`: free to deposit. Mirrors getDepositGate in investmentService.
+export type DepositGate =
+  | { status: 'open' }
+  | { status: 'pending'; pendingInvestmentId: string; since: string }
+  | { status: 'cooldown'; cooldownUntil: string }
+
+export const getDepositGate = () => apiFetch<DepositGate>('/investments/deposit-gate')
+
 // Called when the user taps "I've paid" on the pay screen — sends the deposit
 // confirmation email and returns the support links for the confirmation page.
 export const notifyPayment = (id: string) =>

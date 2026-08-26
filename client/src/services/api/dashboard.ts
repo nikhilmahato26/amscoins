@@ -6,6 +6,8 @@ export interface Dashboard {
   tier: Tier
   referralCount: number
   totals: { invested: number; expectedReturn: number; activeCount: number }
+  todayInvested: number // paise — approved investments from the last 2 days
+  allTimeInvested: number // paise — all-time approved investments
   activeInvestments: {
     id: string
     planKey: Tier

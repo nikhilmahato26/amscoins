@@ -7,7 +7,7 @@ export interface AdminStats {
   users: number
   pendingDeposits: number
   pendingWithdrawals: number
-  totals: { invested: number; walletLiability: number }
+  totals: { invested: number; walletLiability: number; todayInvested: number }
 }
 
 export interface PopulatedRef {
@@ -143,6 +143,22 @@ export interface BulkApproveResult {
 export const bulkApproveWithdrawals = (ids: string[]) =>
   apiFetch<BulkApproveResult>('/admin/withdrawals/bulk-approve', { method: 'POST', body: { ids } })
 
+export interface BulkApproveInvestmentsResult {
+  approved: number
+  failed: number
+}
+
+export interface BulkRejectInvestmentsResult {
+  rejected: number
+  failed: number
+}
+
+export const bulkApproveInvestments = (ids: string[]) =>
+  apiFetch<BulkApproveInvestmentsResult>('/admin/investments/bulk-approve', { method: 'POST', body: { ids } })
+
+export const bulkRejectInvestments = (ids: string[], note?: string) =>
+  apiFetch<BulkRejectInvestmentsResult>('/admin/investments/bulk-reject', { method: 'POST', body: { ids, note } })
+
 export const adminUsers = (params: AdminUsersParams | string = '') => {
   if (typeof params === 'string') {
     return apiFetch<AdminUser[]>(`/admin/users${params ? `?q=${encodeURIComponent(params)}` : ''}`)
@@ -169,7 +185,7 @@ export interface InvestmentStats {
   revenueThisMonth: number
 }
 
-export const getInvestmentStats = () => apiFetch<InvestmentStats>('/admin/investment-stats')
+export const getInvestmentStats = () => apiFetch<InvestmentStats>('/admin/investments/stats')
 
 export type ReportType = 'monthly' | 'conversion' | 'roi' | 'performance'
 
