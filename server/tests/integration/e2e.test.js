@@ -80,10 +80,10 @@ test('full lifecycle: deposit -> approve -> referral tier unlock -> withdraw', a
   const complete = await request(app).post(`/api/admin/withdrawals/${wd.body._id}/complete`).set(bearer(adminToken))
   expect(complete.body.status).toBe('completed')
 
-  // 8. Grow R to 11 members total (already 1 -> add 10 more) to unlock gold.
-  for (let i = 0; i < 10; i++) await addReferralMember(R.user.referralCode, adminToken)
+  // 8. Grow R to 21 members total (already 1 -> add 20 more) to unlock gold.
+  for (let i = 0; i < 20; i++) await addReferralMember(R.user.referralCode, adminToken)
   const rFresh = await User.findById(R.user.id)
-  expect(rFresh.referralCount).toBe(11)
+  expect(rFresh.referralCount).toBe(21)
   expect(rFresh.tier).toBe('gold')
 
   // 9. R now sees gold unlocked.

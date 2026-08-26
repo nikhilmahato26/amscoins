@@ -37,14 +37,36 @@ test('wallet summary returns balance 0 for new user', async () => {
   expect(res.body.balance).toBe(0)
 })
 
-test('referral overview returns own code and next tier target 11', async () => {
+test('referral overview returns own code and next tier target 21', async () => {
   const token = await registerToken()
   const res = await request(app).get('/api/referral').set('Authorization', `Bearer ${token}`)
   expect(res.status).toBe(200)
   expect(res.body.referralCode).toHaveLength(6)
   expect(res.body.count).toBe(0)
   expect(res.body.nextTier).toBe('gold')
-  expect(res.body.nextTierAt).toBe(11)
+  expect(res.body.nextTierAt).toBe(21)
+})
+
+test('deposit-gate is open for a new user, pending after a deposit, and blocks a 2nd deposit (409)', async () => {
+  const token = await registerToken()
+
+  // Open before any deposit.
+  const open = await request(app).get('/api/investments/deposit-gate').set('Authorization', `Bearer ${token}`)
+  expect(open.status).toBe(200)
+  expect(open.body.status).toBe('open')
+
+  // First deposit succeeds.
+  const first = await request(app).post('/api/investments').set('Authorization', `Bearer ${token}`).send({ planKey: 'silver', amount: 200000 })
+  expect(first.status).toBe(201)
+
+  // Gate now reports pending, and a second deposit is refused with 409.
+  const gated = await request(app).get('/api/investments/deposit-gate').set('Authorization', `Bearer ${token}`)
+  expect(gated.body.status).toBe('pending')
+  expect(gated.body.pendingInvestmentId).toBe(first.body.investment._id)
+
+  const second = await request(app).post('/api/investments').set('Authorization', `Bearer ${token}`).send({ planKey: 'silver', amount: 200000 })
+  expect(second.status).toBe(409)
+  expect(second.body.error).toMatch(/awaiting approval/i)
 })
 
 test("returns 404 when fetching another user's investment by id", async () => {
