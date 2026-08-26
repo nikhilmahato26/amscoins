@@ -16,15 +16,27 @@ async function runSweep() {
   const settings = await Settings.getSingleton()
   const now = Date.now()
 
+  // Auto-deposit runs BEFORE auto-reject: if a pending deposit is past both
+  // windows, advancing it (approve) should win over rejecting it. The atomic
+  // status guards make the second pass a no-op for anything already handled.
+  let autoDeposited = 0
+  if (settings.autoDepositEnabled) {
+    const depCutoff = new Date(now - settings.autoDepositHours * 3600e3)
+    const dueDeposit = await Investment.find({ status: 'pending', paymentNotified: { $ne: false }, createdAt: { $lt: depCutoff } }).select('_id')
+    for (const p of dueDeposit) {
+      if (await svc.runAutoDeposit(p._id)) autoDeposited++
+    }
+  }
+
   const cutoff = new Date(now - settings.autoRejectHours * 3600e3)
-  const stalePending = await Investment.find({ status: 'pending', createdAt: { $lt: cutoff } }).select('_id')
+  const stalePending = await Investment.find({ status: 'pending', paymentNotified: { $ne: false }, createdAt: { $lt: cutoff } }).select('_id')
   for (const p of stalePending) await svc.runAutoReject(p._id)
 
   const due = await Investment.find({ status: 'active', maturesAt: { $lte: new Date(now) } }).select('_id')
   for (const d of due) await svc.runMature(d._id)
 
-  if (stalePending.length || due.length) {
-    logger.info('Sweep processed investments', { autoRejected: stalePending.length, matured: due.length })
+  if (autoDeposited || stalePending.length || due.length) {
+    logger.info('Sweep processed investments', { autoDeposited, autoRejected: stalePending.length, matured: due.length })
   }
 }
 
@@ -43,6 +55,7 @@ async function startInvestmentWorker() {
     QUEUE_NAME,
     async (job) => {
       if (job.name === 'auto-reject') return svc.runAutoReject(job.data.investmentId)
+      if (job.name === 'auto-deposit') return svc.runAutoDeposit(job.data.investmentId)
       if (job.name === 'mature') return svc.runMature(job.data.investmentId)
       if (job.name === 'sweep') return runSweep()
     },
