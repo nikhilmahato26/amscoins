@@ -74,21 +74,21 @@ function StatusPill({ status }: { status: Investment['status'] }) {
 /* ── Skeleton ── */
 function Skeleton() {
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-asm-line bg-white p-4 animate-pulse">
+    <div className="flex flex-col gap-3 rounded-2xl border border-asm-line bg-white p-4">
       <div className="flex items-center gap-3">
-        <span className="size-11 shrink-0 rounded-xl bg-asm-tint" />
+        <span className="skeleton size-11 shrink-0 rounded-xl" />
         <div className="flex flex-1 flex-col gap-1.5">
-          <span className="h-3.5 w-28 rounded bg-asm-tint" />
-          <span className="h-3 w-20 rounded bg-asm-tint" />
+          <span className="skeleton h-3.5 w-28" />
+          <span className="skeleton h-3 w-20" />
         </div>
-        <span className="h-5 w-16 rounded-full bg-asm-tint" />
+        <span className="skeleton h-5 w-16 rounded-full" />
       </div>
       <div className="h-px bg-asm-line" />
       <div className="grid grid-cols-3 gap-2">
         {[1, 2, 3].map((i) => (
           <div key={i} className="flex flex-col gap-1">
-            <span className="h-2.5 w-12 rounded bg-asm-tint" />
-            <span className="h-3.5 w-16 rounded bg-asm-tint" />
+            <span className="skeleton h-2.5 w-12" />
+            <span className="skeleton h-3.5 w-16" />
           </div>
         ))}
       </div>
@@ -109,7 +109,7 @@ function InvestmentCard({ inv }: { inv: Investment }) {
   return (
     <motion.div
       variants={fadeUp}
-      className="flex flex-col gap-3 rounded-2xl border border-asm-line bg-white p-4 shadow-[0_2px_12px_-4px_rgba(16,42,92,0.08)]"
+      className="elevate flex flex-col gap-3 rounded-2xl border border-asm-line bg-white p-4 shadow-card"
     >
       {/* Header row */}
       <div className="flex items-center gap-3">
@@ -255,7 +255,7 @@ export function InvestmentsPage() {
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1',
                   activeTab === id
                     ? 'bg-asm-blue text-white shadow-[0_2px_8px_-2px_rgba(11,79,216,0.4)]'
-                    : 'bg-white border border-asm-line text-asm-muted hover:text-asm-navy',
+                    : 'bg-white border border-asm-muted/30 text-asm-body hover:border-asm-blue/50 hover:text-asm-navy',
                 )}
               >
                 {label}
