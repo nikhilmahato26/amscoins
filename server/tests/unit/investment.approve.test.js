@@ -58,6 +58,12 @@ test('second deposit does not re-credit referrer', async () => {
   const admin = await makeUser({ role: 'admin' })
   const first = await createInvestment(u, { planKey: 'silver', amount: 200000 })
   await approveInvestment(first.investment._id, admin._id)
+  // The deposit cooldown blocks a same-user re-deposit for 6h after approval —
+  // fast-forward past it (backdate startAt) so we can exercise the second deposit.
+  await Investment.collection.updateOne(
+    { _id: first.investment._id },
+    { $set: { startAt: new Date(Date.now() - 7 * 3600e3) } },
+  )
   const reloaded = await User.findById(u._id)
   const second = await createInvestment(reloaded, { planKey: 'silver', amount: 200000 })
   await approveInvestment(second.investment._id, admin._id)
