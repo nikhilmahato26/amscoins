@@ -88,6 +88,84 @@ describe('auto-reject timing (sweep cutoff = autoRejectHours)', () => {
   })
 })
 
+describe('auto-deposit timing (sweep cutoff = autoDepositHours)', () => {
+  // Isolate the auto-deposit window: enable auto-deposit and turn auto-reject
+  // OFF so only the auto-deposit cutoff governs these pending rows.
+  beforeEach(async () => {
+    const s = await Settings.getSingleton()
+    s.autoDepositEnabled = true
+    s.autoRejectEnabled = false
+    await s.save()
+  })
+
+  test('does NOT auto-approve an investment still inside the window', async () => {
+    const s = await Settings.getSingleton(); s.autoDepositHours = 24; await s.save()
+    const inv = await pending()
+    // 23h59m old — 1 minute short of the 24h cutoff.
+    await backdateCreatedAt(inv._id, 24 * H - 60000)
+
+    await runSweep()
+
+    expect((await Investment.findById(inv._id)).status).toBe('pending')
+  })
+
+  test('DOES advance an investment to the next step (active) just past the window', async () => {
+    const s = await Settings.getSingleton(); s.autoDepositHours = 24; await s.save()
+    const inv = await pending()
+    // 24h01m old — 1 minute past the cutoff.
+    await backdateCreatedAt(inv._id, 24 * H + 60000)
+
+    await runSweep()
+
+    const fresh = await Investment.findById(inv._id)
+    expect(fresh.status).toBe('active')
+    expect(fresh.autoApproved).toBe(true)
+    expect(fresh.startAt).toBeInstanceOf(Date)
+    expect(fresh.maturesAt).toBeInstanceOf(Date) // maturity timer started
+  })
+
+  test('honors a changed autoDepositHours setting (dynamic window)', async () => {
+    const s = await Settings.getSingleton(); s.autoDepositHours = 3; await s.save()
+    const insideCutoff = await pending()
+    await backdateCreatedAt(insideCutoff._id, 3 * H - 60000) // 2h59m — safe
+    const pastCutoff = await pending()
+    await backdateCreatedAt(pastCutoff._id, 3 * H + 60000) // 3h01m — due
+
+    await runSweep()
+
+    expect((await Investment.findById(insideCutoff._id)).status).toBe('pending')
+    expect((await Investment.findById(pastCutoff._id)).status).toBe('active')
+  })
+
+  test('OFF (default): a stale pending investment is NOT auto-approved', async () => {
+    const s = await Settings.getSingleton()
+    s.autoDepositEnabled = false; s.autoRejectEnabled = false; s.autoDepositHours = 3
+    await s.save()
+    const inv = await pending()
+    await backdateCreatedAt(inv._id, 10 * H) // well past — but the switch is off
+
+    await runSweep()
+
+    expect((await Investment.findById(inv._id)).status).toBe('pending')
+  })
+
+  test('precedence: past BOTH windows, auto-deposit (approve) wins over auto-reject', async () => {
+    const s = await Settings.getSingleton()
+    s.autoDepositEnabled = true; s.autoDepositHours = 4
+    s.autoRejectEnabled = true; s.autoRejectHours = 8
+    await s.save()
+    const inv = await pending()
+    await backdateCreatedAt(inv._id, 9 * H) // past both the 4h and 8h cutoffs
+
+    await runSweep()
+
+    const fresh = await Investment.findById(inv._id)
+    expect(fresh.status).toBe('active') // advanced, not rejected
+    expect(fresh.autoApproved).toBe(true)
+    expect(fresh.autoRejected).toBe(false)
+  })
+})
+
 describe('auto-return timing (sweep cutoff = maturesAt)', () => {
   test('does NOT mature an investment before maturesAt', async () => {
     const prev = process.env.WALLET_AUTO_CREDIT_ON_MATURITY
@@ -161,6 +239,15 @@ describe('scheduling delay math (config/queue helpers, no-op in test env)', () =
     expect(delay).toBe(0)
   })
 
+  test('auto-deposit delay = createdAt + autoDepositHours - now', () => {
+    const autoDepositHours = 24
+    const createdAt = new Date(Date.now() - 2 * H) // 2h ago
+    const delay = Math.max(0, new Date(createdAt).getTime() + autoDepositHours * H - Date.now())
+    // ~22h remain in the window (allow 1s of test execution slack).
+    expect(delay).toBeGreaterThan(22 * H - 1000)
+    expect(delay).toBeLessThanOrEqual(22 * H)
+  })
+
   test('mature delay = maturesAt - now (clamped at 0)', () => {
     const future = new Date(Date.now() + 3 * H)
     const past = new Date(Date.now() - 3 * H)
@@ -177,6 +264,27 @@ describe('handler idempotency (safe to re-fire)', () => {
     const second = await svc.runAutoReject(inv._id)
     expect(second).toBeNull() // no-op the second time
     expect((await Investment.findById(inv._id)).status).toBe('rejected')
+  })
+
+  test('runAutoDeposit twice yields a single active state (no double-approve)', async () => {
+    const s = await Settings.getSingleton(); s.autoDepositEnabled = true; await s.save()
+    const inv = await pending()
+    const first = await svc.runAutoDeposit(inv._id)
+    expect(first.status).toBe('active')
+    const second = await svc.runAutoDeposit(inv._id)
+    expect(second).toBeNull() // 409 already-processed is swallowed → no-op
+    expect((await Investment.findById(inv._id)).status).toBe('active')
+  })
+
+  test('auto-deposit then auto-reject on the same row: reject no-ops (already active)', async () => {
+    const s = await Settings.getSingleton()
+    s.autoDepositEnabled = true; s.autoRejectEnabled = true
+    await s.save()
+    const inv = await pending()
+    await svc.runAutoDeposit(inv._id) // -> active
+    const rej = await svc.runAutoReject(inv._id) // must NOT reject an active row
+    expect(rej).toBeNull()
+    expect((await Investment.findById(inv._id)).status).toBe('active')
   })
 
   test('runMature twice does not double-credit', async () => {
