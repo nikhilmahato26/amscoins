@@ -241,7 +241,7 @@ export function LandingFooter() {
               <span className="text-sm font-extrabold uppercase leading-none tracking-[0.06em] text-asm-navy">
                 ASM Coins
               </span>
-              <span className="pt-1 text-[8px] font-semibold uppercase leading-none tracking-[0.28em] text-asm-muted">
+              <span className="pt-1 text-[10px] font-semibold uppercase leading-none tracking-[0.28em] text-asm-muted">
                 Invest · Grow · Prosper
               </span>
             </span>

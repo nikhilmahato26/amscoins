@@ -150,7 +150,7 @@ module.exports = {
         },
       },
       fontFamily: {
-        display: ['Fraunces', 'serif'],
+        display: ['Satoshi', 'system-ui', 'sans-serif'],
         sans: ['Instrument Sans', 'sans-serif'],
         mono: ['IBM Plex Mono', 'monospace'],
         // Type system used by the Figma app screens.

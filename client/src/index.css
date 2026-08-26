@@ -1,3 +1,6 @@
+/* Satoshi display font via Fontshare CDN */
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@700,800,900&display=swap');
+
 /* Google Fonts loaded asynchronously via index.html preload tags */
 
 @tailwind base;
