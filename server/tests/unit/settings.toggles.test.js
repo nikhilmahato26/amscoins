@@ -41,6 +41,26 @@ describe('auto-reject switch', () => {
   })
 })
 
+describe('auto-deposit switch', () => {
+  test('OFF (default): a stale pending investment is NOT auto-approved', async () => {
+    // autoDepositEnabled defaults false — the handler must no-op.
+    const inv = await invDoc()
+    const out = await svc.runAutoDeposit(inv._id)
+    expect(out).toBeNull()
+    expect((await Investment.findById(inv._id)).status).toBe('pending')
+  })
+
+  test('ON: auto-deposit advances the deposit to the next step (approve)', async () => {
+    const s = await Settings.getSingleton(); s.autoDepositEnabled = true; await s.save()
+    const inv = await invDoc()
+    const out = await svc.runAutoDeposit(inv._id)
+    expect(out.status).toBe('active')
+    expect(out.autoApproved).toBe(true)
+    expect(out.startAt).toBeInstanceOf(Date)
+    expect(out.maturesAt).toBeInstanceOf(Date)
+  })
+})
+
 describe('auto-pay switch', () => {
   const prev = process.env.WALLET_AUTO_CREDIT_ON_MATURITY
   beforeEach(() => { process.env.WALLET_AUTO_CREDIT_ON_MATURITY = 'true' }) // master flag on
