@@ -26,6 +26,10 @@ const investmentSchema = new Schema(
     returnRejectionReason: { type: String, default: '' },
     rejectionReason: { type: String, default: '' },
     autoRejected: { type: Boolean, default: false },
+    autoApproved: { type: Boolean, default: false }, // approved by the auto-deposit timeout, not an admin
+    // Set to true when the user taps "I've paid". Before this, the record is a
+    // draft: invisible to admin, not blocking the deposit gate, no timers running.
+    paymentNotified: { type: Boolean, default: false },
     deletedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     deletedAt: { type: Date },
   },
