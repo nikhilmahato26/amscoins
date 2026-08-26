@@ -64,6 +64,43 @@ async function buildSupportLinks(investment) {
   }
 }
 
+/**
+ * Deposit gate for a user. Decides whether they may start a new deposit:
+ *   - 'pending'  — they have a deposit still awaiting approval (always blocks).
+ *   - 'cooldown' — their last APPROVED deposit was < depositCooldownHours ago.
+ *   - 'open'     — they may deposit now.
+ *
+ * The cooldown is anchored on `startAt`, which is set ONLY when a deposit is
+ * approved (never on rejection/auto-reject) — so a rejected deposit lets the
+ * user retry immediately, while an approval starts the wait. Read-only; used
+ * both to enforce (createInvestment) and to render the UI (GET /deposit-gate).
+ */
+async function getDepositGate(userId) {
+  const pending = await Investment.findOne({ user: userId, status: 'pending', paymentNotified: { $ne: false } })
+    .select('_id createdAt')
+    .lean()
+  if (pending) {
+    return { status: 'pending', pendingInvestmentId: String(pending._id), since: pending.createdAt }
+  }
+
+  const settings = await Settings.getSingleton()
+  const cooldownMs = settings.depositCooldownHours * 3600e3
+  if (cooldownMs > 0) {
+    const lastApproved = await Investment.findOne({ user: userId, startAt: { $ne: null } })
+      .sort({ startAt: -1 })
+      .select('startAt')
+      .lean()
+    if (lastApproved && lastApproved.startAt) {
+      const cooldownUntil = new Date(new Date(lastApproved.startAt).getTime() + cooldownMs)
+      if (cooldownUntil > new Date()) {
+        return { status: 'cooldown', cooldownUntil: cooldownUntil.toISOString() }
+      }
+    }
+  }
+
+  return { status: 'open' }
+}
+
 async function createInvestment(user, { planKey, amount, referralCode }) {
   const plan = await Plan.findOne({ key: planKey, active: true })
   if (!plan) {
@@ -91,6 +128,23 @@ async function createInvestment(user, { planKey, amount, referralCode }) {
     throw new ApiError(400, 'Amount outside plan limits')
   }
 
+  // Per-user deposit gate: one deposit at a time, plus a post-approval cooldown.
+  // Only notified (paymentNotified: true) investments block the gate — unnotified
+  // drafts are transient and cleaned up below before the new record is created.
+  const gate = await getDepositGate(user._id)
+  if (gate.status === 'pending') {
+    logger.warn('Investment creation blocked — deposit already pending', { userId: user._id })
+    throw new ApiError(409, 'You already have a deposit awaiting approval')
+  }
+  if (gate.status === 'cooldown') {
+    logger.warn('Investment creation blocked — deposit cooldown active', { userId: user._id, until: gate.cooldownUntil })
+    throw new ApiError(429, 'Please wait for the deposit cooldown to finish before depositing again')
+  }
+
+  // Delete any unnotified draft the user left hanging (e.g. backed out of pay
+  // screen to change method). The new record replaces it.
+  await Investment.deleteMany({ user: user._id, status: 'pending', paymentNotified: false })
+
   const isFirstDeposit = !user.firstDepositCredited
   const investment = await Investment.create({
     user: user._id,
@@ -114,12 +168,9 @@ async function createInvestment(user, { planKey, amount, referralCode }) {
 
   await cacheDel('cache:admin:stats', `cache:dashboard:${user._id}`)
 
-  // NOTE: the "deposit submitted" email is intentionally NOT sent here. The
-  // record is created up-front so the pay screen can quote a reference code,
-  // but the user has not paid yet. The email fires from notifyPaymentSubmitted
-  // once they tap "I've paid" on the pay screen.
-
-  await queue.scheduleAutoReject(investment)
+  // The investment record is a draft at this point (paymentNotified: false).
+  // The deposit is not submitted for review yet — email, timers, and the gate
+  // lock all fire in notifyPaymentSubmitted once the user taps "I've paid".
 
   const { whatsappLink, telegramLink } = await buildSupportLinks(investment)
   return { investment, telegramLink, whatsappLink }
@@ -135,6 +186,16 @@ async function notifyPaymentSubmitted(user, investmentId) {
   const investment = await Investment.findOne({ _id: investmentId, user: user._id })
   if (!investment) throw new ApiError(404, 'Investment not found')
 
+  // Mark as submitted — this is the moment the deposit enters the admin queue.
+  // Idempotent: calling again on an already-notified investment is harmless.
+  if (!investment.paymentNotified) {
+    investment.paymentNotified = true
+    await investment.save()
+    // Start auto-reject and auto-deposit timers now that the deposit is live.
+    await queue.scheduleAutoReject(investment)
+    await queue.scheduleAutoDeposit(investment)
+  }
+
   const plan = await Plan.findOne({ key: investment.planKey })
   email.depositSubmitted(user, investment, plan?.name ?? investment.planKey).catch(() => {}) // fire-and-forget
 
@@ -142,7 +203,7 @@ async function notifyPaymentSubmitted(user, investmentId) {
   return { investment, telegramLink, whatsappLink }
 }
 
-async function approveInvestment(investmentId, adminId) {
+async function approveInvestment(investmentId, adminId, { auto = false } = {}) {
   const session = await mongoose.startSession()
   try {
     let result
@@ -162,8 +223,11 @@ async function approveInvestment(investmentId, adminId) {
       inv.status = 'active'
       inv.startAt = now
       inv.maturesAt = new Date(now.getTime() + settings.cycleDurationHours * 3600 * 1000)
+      // auto = the auto-deposit timeout approved this (adminId is null); flag it
+      // so admin History can distinguish an automated approval from a manual one.
       inv.approvedBy = adminId
       inv.approvedAt = now
+      inv.autoApproved = auto
       await inv.save({ session })
 
       // NOTE: principal is intentionally NOT credited here. Funds stay locked
@@ -200,6 +264,7 @@ async function approveInvestment(investmentId, adminId) {
       )
       if (result.user) email.depositApproved(result.user, result.inv).catch(() => {}) // fire-and-forget
       await queue.cancelAutoReject(result.inv._id)
+      await queue.cancelAutoDeposit(result.inv._id)
       await queue.scheduleMature(result.inv)
     }
 
@@ -232,6 +297,11 @@ async function rejectInvestment(investmentId, adminId, note = '') {
   }
 
   logger.info('Investment rejected', { investmentId: inv._id, adminId, note })
+
+  // Stop a pending auto-deposit from later auto-approving what an admin just
+  // rejected. (The atomic status guard would no-op it anyway, but cancelling
+  // keeps the queue clean.)
+  await queue.cancelAutoDeposit(inv._id)
 
   await cacheDel('cache:admin:stats', `cache:dashboard:${inv.user}`)
 
@@ -467,6 +537,7 @@ async function deleteInvestment(investmentId, adminId) {
 
     if (updated) {
       await queue.cancelAutoReject(updated._id)
+      await queue.cancelAutoDeposit(updated._id)
       await queue.cancelMature(updated._id)
       await cacheDel(
         'cache:admin:stats',
@@ -499,6 +570,31 @@ async function runAutoReject(investmentId) {
   return inv
 }
 
+/**
+ * Auto-deposit: the mirror of runAutoReject. When a deposit has been pending
+ * past the admin-configured window, advance it to the next step by APPROVING
+ * it (pending -> active) as the system (adminId = null), instead of rejecting.
+ *
+ * Reuses approveInvestment so the exact same money path runs — maturity timer,
+ * referral credit, cache busting and job (un)scheduling all stay correct. The
+ * status guard inside approveInvestment makes this idempotent: a deposit already
+ * approved or rejected/auto-rejected first yields a 409, which we swallow.
+ */
+async function runAutoDeposit(investmentId) {
+  const settings = await Settings.getSingleton()
+  if (!settings.autoDepositEnabled) return null // admin switched auto-deposit off — no-op
+  try {
+    const inv = await approveInvestment(investmentId, null, { auto: true })
+    logger.info('Investment auto-deposited (approval timeout)', { investmentId, hours: settings.autoDepositHours })
+    return inv
+  } catch (err) {
+    // 409 = already processed (approved/rejected/deleted first), 404 = gone.
+    // Both are idempotent no-ops for the sweep / delayed job.
+    if (err.statusCode === 409 || err.statusCode === 404) return null
+    throw err
+  }
+}
+
 async function runMature(investmentId) {
   const inv = await Investment.findOneAndUpdate(
     { _id: investmentId, status: 'active' },
@@ -520,4 +616,36 @@ async function runMature(investmentId) {
   return await Investment.findById(investmentId)
 }
 
-module.exports = { createInvestment, notifyPaymentSubmitted, approveInvestment, rejectInvestment, approveReturn, rejectReturn, approvePayout, rejectPayout, deleteInvestment, runAutoReject, runMature }
+async function bulkApproveInvestments(ids, adminId) {
+  let approved = 0
+  let failed = 0
+  for (const id of ids) {
+    try {
+      await approveInvestment(id, adminId)
+      approved++
+    } catch (err) {
+      failed++
+      logger.warn('Bulk approve: single item failed', { id, error: err.message })
+    }
+  }
+  logger.info('Bulk approve complete', { approved, failed, adminId })
+  return { approved, failed }
+}
+
+async function bulkRejectInvestments(ids, adminId, note = '') {
+  let rejected = 0
+  let failed = 0
+  for (const id of ids) {
+    try {
+      await rejectInvestment(id, adminId, note)
+      rejected++
+    } catch (err) {
+      failed++
+      logger.warn('Bulk reject: single item failed', { id, error: err.message })
+    }
+  }
+  logger.info('Bulk reject complete', { rejected, failed, adminId })
+  return { rejected, failed }
+}
+
+module.exports = { getDepositGate, createInvestment, notifyPaymentSubmitted, approveInvestment, rejectInvestment, approveReturn, rejectReturn, approvePayout, rejectPayout, deleteInvestment, runAutoReject, runAutoDeposit, runMature, bulkApproveInvestments, bulkRejectInvestments }
