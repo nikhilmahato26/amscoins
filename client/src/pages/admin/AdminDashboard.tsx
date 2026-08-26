@@ -1,4 +1,4 @@
-import { Users, ArrowDownToLine, ArrowUpFromLine, TrendingUp, Wallet } from 'lucide-react'
+import { Users, ArrowDownToLine, ArrowUpFromLine, TrendingUp, Wallet, CalendarDays } from 'lucide-react'
 import { useAdminStats } from '@/hooks/queries'
 import { inr } from '@/lib/format'
 import { cn } from '@/lib/utils'
@@ -55,8 +55,8 @@ export function AdminDashboard() {
       {/* Stat cards */}
       <section aria-label="Platform statistics" aria-live="polite">
         {isLoading ? (
-          <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, i) => (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
+            {Array.from({ length: 5 }).map((_, i) => (
               <SkeletonCard key={i} />
             ))}
           </div>
@@ -65,7 +65,7 @@ export function AdminDashboard() {
             Failed to load statistics. Please refresh.
           </p>
         ) : (
-          <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
             <StatCard
               label="Total users"
               value={data.users.toLocaleString('en-IN')}
@@ -93,6 +93,13 @@ export function AdminDashboard() {
               icon={TrendingUp}
               iconClass="text-asm-green"
               iconBgClass="bg-green-50"
+            />
+            <StatCard
+              label="Today invested"
+              value={inr(data.totals.todayInvested)}
+              icon={CalendarDays}
+              iconClass="text-sky-600"
+              iconBgClass="bg-sky-50"
             />
           </div>
         )}
