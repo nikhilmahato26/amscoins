@@ -522,7 +522,7 @@ export function AccountPage() {
                 return (
                   <>
                     {groups.map((group) => (
-                      <div key={group.dateLabel}>
+                      <div key={group.dateLabel} className="relative">
                         <div className="sticky top-0 bg-asm-tint/80 px-5 py-1.5 backdrop-blur-sm">
                           <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-asm-muted">
                             {group.dateLabel}
