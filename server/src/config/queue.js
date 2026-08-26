@@ -29,6 +29,7 @@ if (!DISABLED) {
 }
 
 const autoRejectJobId = (id) => `auto-reject-${id}`
+const autoDepositJobId = (id) => `auto-deposit-${id}`
 const matureJobId = (id) => `mature-${id}`
 
 async function scheduleAutoReject(inv) {
@@ -40,6 +41,22 @@ async function scheduleAutoReject(inv) {
     'auto-reject',
     { investmentId: String(inv._id) },
     { delay, jobId: autoRejectJobId(inv._id), removeOnComplete: true, removeOnFail: 100 }
+  )
+}
+
+// Mirror of scheduleAutoReject. The job is always scheduled (so a runtime flip
+// of autoDepositEnabled is honoured at fire-time by the service handler); the
+// atomic status guard makes it a no-op if the deposit was already approved or
+// rejected/auto-rejected first.
+async function scheduleAutoDeposit(inv) {
+  if (!investmentQueue) return
+  const Settings = require('../models/Settings')
+  const settings = await Settings.getSingleton()
+  const delay = Math.max(0, new Date(inv.createdAt).getTime() + settings.autoDepositHours * 3600e3 - Date.now())
+  await investmentQueue.add(
+    'auto-deposit',
+    { investmentId: String(inv._id) },
+    { delay, jobId: autoDepositJobId(inv._id), removeOnComplete: true, removeOnFail: 100 }
   )
 }
 
@@ -59,6 +76,12 @@ async function cancelAutoReject(id) {
   if (job) await job.remove()
 }
 
+async function cancelAutoDeposit(id) {
+  if (!investmentQueue) return
+  const job = await investmentQueue.getJob(autoDepositJobId(id))
+  if (job) await job.remove()
+}
+
 async function cancelMature(id) {
   if (!investmentQueue) return
   const job = await investmentQueue.getJob(matureJobId(id))
@@ -69,11 +92,14 @@ module.exports = {
   investmentQueue,
   queueConnection,
   scheduleAutoReject,
+  scheduleAutoDeposit,
   scheduleMature,
   cancelAutoReject,
+  cancelAutoDeposit,
   cancelMature,
   QUEUE_NAME,
   PREFIX,
   autoRejectJobId,
+  autoDepositJobId,
   matureJobId,
 }
