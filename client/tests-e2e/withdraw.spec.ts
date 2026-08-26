@@ -64,3 +64,70 @@ test('withdraw: seed balance, submit UI form, see breakdown + pending in list', 
   await expect(page.getByText(/past withdrawals/i)).toBeVisible({ timeout: 10_000 })
   await expect(page.getByText('Pending')).toBeVisible({ timeout: 10_000 })
 })
+
+test('withdraw: UPI toggle hidden when amount exceeds ₹5,000', async ({ page }) => {
+  const email = uniqueEmail('upi-limit')
+  const { user } = await register({ name: 'UPI Limit User', email, password: 'testpass1' })
+  const adminToken = await adminLogin()
+  await adminAdjustWallet(adminToken, user.id, 2_000_000, 'credit')
+
+  // Login via UI
+  await page.goto('/login')
+  await page.getByPlaceholder('you@example.com').fill(email)
+  await page.getByPlaceholder('Your password').fill('testpass1')
+  await page.getByRole('button', { name: /sign in/i }).click()
+  await expect(page).toHaveURL(/\/app/, { timeout: 15_000 })
+
+  await page.goto('/app/withdraw')
+  await expect(page.getByText(/withdrawable balance/i)).toBeVisible({ timeout: 10_000 })
+
+  // Enter ₹3,000 — UPI toggle should be visible
+  const amountInput = page.getByLabel(/amount to withdraw in rupees/i)
+  await amountInput.fill('3000')
+  const upiToggle = page.getByRole('button', { name: /upi id/i })
+  await expect(upiToggle).toBeVisible()
+
+  // Enter ₹6,000 — UPI toggle should be hidden entirely (not rendered)
+  await amountInput.fill('6000')
+  await expect(upiToggle).not.toBeVisible()
+
+  // Info message about UPI limit should appear
+  await expect(page.getByText(/upi is unavailable/i)).toBeVisible()
+
+  // Only Bank account option should be visible
+  await expect(page.getByRole('button', { name: /bank account/i })).toBeVisible()
+})
+
+test('withdraw: silver user sees 5% TDS and the refer-more-for-lower-TDS hint', async ({ page }) => {
+  // A freshly-registered user is silver with 0 referrals → TDS 5%, and should
+  // be shown how many more referrals unlock Gold (3% TDS) and Diamond (0% TDS).
+  const email = uniqueEmail('tds-hint')
+  const { user } = await register({ name: 'TDS Hint User', email, password: 'testpass1' })
+  const adminToken = await adminLogin()
+  await adminAdjustWallet(adminToken, user.id, 1_000_000, 'credit', 'e2e seed balance')
+
+  await page.goto('/login')
+  await page.getByPlaceholder('you@example.com').fill(email)
+  await page.getByPlaceholder('Your password').fill('testpass1')
+  await page.getByRole('button', { name: /sign in/i }).click()
+  await expect(page).toHaveURL(/\/app/, { timeout: 15_000 })
+
+  await page.goto('/app/withdraw')
+  await expect(page.getByText(/withdrawable balance/i)).toBeVisible({ timeout: 10_000 })
+
+  // Silver TDS rate is 5%, shown in the summary.
+  await expect(page.getByText('TDS (5%)')).toBeVisible()
+
+  // ₹1,000 at 5% TDS → net ₹950.
+  await page.getByLabel(/amount to withdraw in rupees/i).fill('1000')
+  await expect(page.getByText('₹950')).toBeVisible()
+
+  // Upgrade incentive card + one line per higher tier.
+  await expect(page.getByText(/pay less tds/i)).toBeVisible()
+  await expect(
+    page.getByText(/Refer 21 more to unlock Gold: TDS drops to 3% and returns rise to 30%/i).first()
+  ).toBeVisible()
+  await expect(
+    page.getByText(/Refer 52 more to unlock Diamond: TDS drops to 0% and returns rise to 40%/i).first()
+  ).toBeVisible()
+})
