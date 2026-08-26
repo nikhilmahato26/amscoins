@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { Loader2, Settings, Upload } from 'lucide-react'
@@ -15,7 +15,11 @@ type FormValues = {
   telegramUsername: string
   cycleDurationHours: number
   autoRejectHours: number
+  autoDepositHours: number
+  depositCooldownHours: number
+  withdrawalCooldownHours: number
   autoRejectEnabled: boolean
+  autoDepositEnabled: boolean
   autoPayEnabled: boolean
   methods: {
     usdtCrypto: boolean
@@ -47,7 +51,11 @@ export function AdminSettings() {
       telegramUsername: settings.telegramUsername,
       cycleDurationHours: settings.cycleDurationHours,
       autoRejectHours: settings.autoRejectHours,
+      autoDepositHours: settings.autoDepositHours,
+      depositCooldownHours: settings.depositCooldownHours,
+      withdrawalCooldownHours: settings.withdrawalCooldownHours,
       autoRejectEnabled: settings.autoRejectEnabled,
+      autoDepositEnabled: settings.autoDepositEnabled,
       autoPayEnabled: settings.autoPayEnabled,
       methods: settings.methods,
     })
@@ -62,7 +70,11 @@ export function AdminSettings() {
       telegramUsername: v.telegramUsername,
       cycleDurationHours: v.cycleDurationHours,
       autoRejectHours: v.autoRejectHours,
+      autoDepositHours: v.autoDepositHours,
+      depositCooldownHours: v.depositCooldownHours,
+      withdrawalCooldownHours: v.withdrawalCooldownHours,
       autoRejectEnabled: v.autoRejectEnabled,
+      autoDepositEnabled: v.autoDepositEnabled,
       autoPayEnabled: v.autoPayEnabled,
       methods: v.methods,
     }
@@ -147,42 +159,70 @@ export function AdminSettings() {
 
         {/* ── Investment cycle ── */}
         <Section title="Investment cycle">
-          <Field label="Cycle duration (hours) — length of one investment term">
+          <Field label="Deposit cooldown (hours) — after a deposit is approved, the user must wait this long before starting another (0 = no cooldown; a pending deposit always blocks)">
             <input
               type="number"
-              min={1}
+              min={0}
               step={1}
-              {...register('cycleDurationHours', {
+              {...register('depositCooldownHours', {
                 valueAsNumber: true,
                 required: true,
-                validate: (v) => (Number.isInteger(v) && v >= 1) || 'Enter a whole number of hours (min 1)',
-              })}
-              className={inputCls}
-            />
-          </Field>
-          <Field label="Auto-reject window (hours) — pending investments rejected after this period">
-            <input
-              type="number"
-              min={1}
-              step={1}
-              {...register('autoRejectHours', {
-                valueAsNumber: true,
-                required: true,
-                validate: (v) => (Number.isInteger(v) && v >= 1) || 'Enter a whole number of hours (min 1)',
+                validate: (v) => (Number.isInteger(v) && v >= 0) || 'Enter a whole number of hours (min 0)',
               })}
               className={inputCls}
             />
           </Field>
 
-          {/* Plain-language on/off switches for the two automations (#5). */}
-          <Toggle
-            label="Automatically reject investments that aren't paid in time"
-            {...register('autoRejectEnabled')}
-          />
-          <Toggle
-            label="Automatically pay users when their timer ends"
-            {...register('autoPayEnabled')}
-          />
+          {/* Each automation paired with its timer so they're easy to read as a unit. */}
+          <div className="flex flex-col gap-3">
+            <AutomationPair
+              label="Auto reject investments"
+              timerLabel="Reject window (hours)"
+              toggleProps={register('autoRejectEnabled')}
+              timerProps={register('autoRejectHours', {
+                valueAsNumber: true,
+                required: true,
+                validate: (v) => (Number.isInteger(v) && v >= 1) || 'Enter a whole number of hours (min 1)',
+              })}
+            />
+            <AutomationPair
+              label="Auto approve investments"
+              timerLabel="Approve window (hours)"
+              toggleProps={register('autoDepositEnabled')}
+              timerProps={register('autoDepositHours', {
+                valueAsNumber: true,
+                required: true,
+                validate: (v) => (Number.isInteger(v) && v >= 1) || 'Enter a whole number of hours (min 1)',
+              })}
+            />
+            <AutomationPair
+              label="Auto return profit + investment"
+              timerLabel="Cycle duration (hours)"
+              toggleProps={register('autoPayEnabled')}
+              timerProps={register('cycleDurationHours', {
+                valueAsNumber: true,
+                required: true,
+                validate: (v) => (Number.isInteger(v) && v >= 1) || 'Enter a whole number of hours (min 1)',
+              })}
+            />
+          </div>
+        </Section>
+
+        {/* ── Withdrawals ── */}
+        <Section title="Withdrawals">
+          <Field label="Withdrawal cooldown (hours) — a user must wait this long after starting a withdrawal before starting another (0 = no limit)">
+            <input
+              type="number"
+              min={0}
+              step={1}
+              {...register('withdrawalCooldownHours', {
+                valueAsNumber: true,
+                required: true,
+                validate: (v) => (Number.isInteger(v) && v >= 0) || 'Enter a whole number of hours (0 or more)',
+              })}
+              className={inputCls}
+            />
+          </Field>
         </Section>
 
         {/* ── Availability ── */}
@@ -260,17 +300,37 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-/** A plain on/off switch. Forwards its ref so react-hook-form `register` works. */
-const Toggle = forwardRef<HTMLInputElement, { label: string } & React.InputHTMLAttributes<HTMLInputElement>>(
-  function Toggle({ label, ...props }, ref) {
-    return (
-      <label className="flex cursor-pointer items-center justify-between gap-3 text-[13px] text-asm-navy">
-        <span className="font-medium">{label}</span>
-        <input type="checkbox" ref={ref} {...props} className="size-5 shrink-0 accent-asm-blue" />
+/** Groups an automation toggle with its timer input so they read as one unit. */
+function AutomationPair({
+  label,
+  timerLabel,
+  toggleProps,
+  timerProps,
+}: {
+  label: string
+  timerLabel: string
+  toggleProps: React.InputHTMLAttributes<HTMLInputElement>
+  timerProps: React.InputHTMLAttributes<HTMLInputElement>
+}) {
+  return (
+    <div className="flex flex-col gap-3 rounded-xl border border-asm-line bg-asm-tint px-4 py-3.5">
+      <label className="flex cursor-pointer items-center justify-between gap-3">
+        <span className="text-[13px] font-semibold text-asm-navy">{label}</span>
+        <input type="checkbox" {...toggleProps} className="size-5 shrink-0 accent-asm-blue" />
       </label>
-    )
-  },
-)
+      <label className="flex flex-col gap-1.5">
+        <span className="text-[11px] font-semibold text-asm-muted">{timerLabel}</span>
+        <input
+          type="number"
+          min={1}
+          step={1}
+          {...timerProps}
+          className={inputCls}
+        />
+      </label>
+    </div>
+  )
+}
 
 /** Uploads immediately on file pick; the URL is updated server-side and the preview refreshes. */
 function ImageUploadField({
