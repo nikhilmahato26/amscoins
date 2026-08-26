@@ -76,7 +76,6 @@ function relDate(iso: string): string {
   const days = Math.floor(diff / 86_400_000)
   if (days === 0) return 'Today'
   if (days === 1) return 'Yesterday'
-  if (days < 7) return `${days} days ago`
   return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
 }
 
