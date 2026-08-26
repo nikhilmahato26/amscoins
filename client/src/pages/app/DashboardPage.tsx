@@ -126,12 +126,8 @@ function StatPill({ label, value, index }: StatPillProps) {
 function SkeletonHero() {
   return (
     <div
-      className="animate-pulse rounded-2xl px-5 py-6"
-      style={{
-        background: 'linear-gradient(135deg, #102A5C 0%, #1A4FCC 60%, #0B4FD8 100%)',
-        '--i': 0,
-        animationDelay: 'calc(var(--i) * 120ms)',
-      } as React.CSSProperties}
+      className="rounded-2xl px-5 py-6"
+      style={{ background: 'linear-gradient(135deg, #102A5C 0%, #1A4FCC 60%, #0B4FD8 100%)' }}
     >
       <span className="mb-2 block h-3 w-28 rounded bg-white/15" />
       <span className="block h-10 w-44 rounded-lg bg-white/10" />
@@ -143,14 +139,11 @@ function SkeletonHero() {
 function SkeletonStatPill({ index }: { index: number }) {
   return (
     <div
-      className="flex flex-col items-center gap-2 rounded-2xl border border-asm-line bg-white p-3 animate-pulse"
-      style={{
-        '--i': index,
-        animationDelay: 'calc(var(--i) * 120ms)',
-      } as React.CSSProperties}
+      className="flex flex-col items-center gap-2 rounded-2xl border border-asm-line bg-white p-3"
+      style={{ opacity: 1 - index * 0.08 }}
     >
-      <span className="h-5 w-12 rounded bg-asm-tint" />
-      <span className="h-3 w-10 rounded bg-asm-tint" />
+      <span className="skeleton h-5 w-12" />
+      <span className="skeleton h-3 w-10" />
     </div>
   )
 }
@@ -158,20 +151,17 @@ function SkeletonStatPill({ index }: { index: number }) {
 function SkeletonInvestment({ index }: { index: number }) {
   return (
     <div
-      className="flex items-center gap-3 rounded-2xl border border-asm-line bg-white px-4 py-3.5 animate-pulse"
-      style={{
-        '--i': index,
-        animationDelay: 'calc(var(--i) * 120ms)',
-      } as React.CSSProperties}
+      className="flex items-center gap-3 rounded-2xl border border-asm-line bg-white px-4 py-3.5"
+      style={{ opacity: 1 - index * 0.12 }}
     >
-      <span className="size-11 shrink-0 rounded-xl bg-asm-tint" />
+      <span className="skeleton size-11 shrink-0 rounded-xl" />
       <div className="flex flex-1 flex-col gap-1.5">
-        <span className="h-3.5 w-24 rounded bg-asm-tint" />
-        <span className="h-3 w-32 rounded bg-asm-tint" />
+        <span className="skeleton h-3.5 w-24" />
+        <span className="skeleton h-3 w-32" />
       </div>
       <div className="flex flex-col items-end gap-1.5">
-        <span className="h-4 w-16 rounded bg-asm-tint" />
-        <span className="h-3 w-12 rounded bg-asm-tint" />
+        <span className="skeleton h-4 w-16" />
+        <span className="skeleton h-3 w-12" />
       </div>
     </div>
   )
@@ -264,7 +254,7 @@ export function DashboardPage() {
                   Wallet Balance
                 </span>
                 {isLoading ? (
-                  <span className="mt-1 h-9 w-40 animate-pulse rounded-lg bg-white/10" />
+                  <span className="mt-1 h-9 w-40 rounded-lg bg-white/10" />
                 ) : (
                   <span className="font-mono text-[36px] font-extrabold tabular-nums leading-none" style={{ color: card.valueColor }}>
                     {displayBalance !== null ? inr(displayBalance) : '—'}
@@ -379,7 +369,7 @@ export function DashboardPage() {
                 return (
                   <div
                     key={inv.id}
-                    className="flex items-center gap-3 rounded-2xl border border-asm-line bg-white px-4 py-3.5 shadow-[0_1px_6px_-2px_rgba(16,42,92,0.07)]"
+                    className="elevate flex items-center gap-3 rounded-2xl border border-asm-line bg-white px-4 py-3.5 shadow-card"
                   >
                     <TierBadge tier={planTier} size={44} className="shrink-0" />
 
