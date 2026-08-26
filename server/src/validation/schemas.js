@@ -86,7 +86,11 @@ const updateSettingsSchema = z
     inrThresholdPaise: z.number().int().min(0).optional(),
     cycleDurationHours: z.number().int().min(1).optional(),
     autoRejectHours: z.number().int().min(1).optional(),
+    autoDepositHours: z.number().int().min(1).optional(),
+    depositCooldownHours: z.number().int().min(0).optional(),
+    withdrawalCooldownHours: z.number().int().min(0).optional(),
     autoRejectEnabled: z.boolean().optional(),
+    autoDepositEnabled: z.boolean().optional(),
     autoPayEnabled: z.boolean().optional(),
     usdtTrc20Address: z.string().trim().optional(),
     usdtBep20Address: z.string().trim().optional(),
@@ -127,6 +131,11 @@ const bulkApproveSchema = z.object({
   ids: z.array(z.string().min(1)).min(1, 'At least one ID required'),
 })
 
+const bulkRejectInvestmentsSchema = z.object({
+  ids: z.array(z.string().min(1)).min(1, 'At least one ID required'),
+  note: z.string().max(500).optional(),
+})
+
 module.exports = {
   registerSchema,
   loginSchema,
@@ -144,4 +153,5 @@ module.exports = {
   verifyOtpSchema,
   resetPasswordSchema,
   bulkApproveSchema,
+  bulkRejectInvestmentsSchema,
 }
