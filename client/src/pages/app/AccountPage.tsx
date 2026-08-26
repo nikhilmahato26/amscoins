@@ -106,15 +106,15 @@ const DEFAULT_BANNER = 'linear-gradient(135deg, #0B4FD8 0%, #0A6BC0 45%, #15803D
 /* ── Skeleton ── */
 function SkeletonRow() {
   return (
-    <li className="flex items-center gap-3 px-5 py-4 animate-pulse">
-      <span className="size-9 shrink-0 rounded-full bg-asm-tint" />
+    <li className="flex items-center gap-3 px-5 py-4">
+      <span className="skeleton size-9 shrink-0 rounded-full" />
       <div className="flex flex-1 flex-col gap-1.5">
-        <span className="h-3 w-2/3 rounded bg-asm-tint" />
-        <span className="h-2.5 w-1/3 rounded bg-asm-tint" />
+        <span className="skeleton h-3 w-2/3" />
+        <span className="skeleton h-2.5 w-1/3" />
       </div>
       <div className="flex flex-col items-end gap-1.5">
-        <span className="h-3.5 w-16 rounded bg-asm-tint" />
-        <span className="h-2.5 w-10 rounded bg-asm-tint" />
+        <span className="skeleton h-3.5 w-16" />
+        <span className="skeleton h-2.5 w-10" />
       </div>
     </li>
   )
