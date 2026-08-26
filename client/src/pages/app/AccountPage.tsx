@@ -147,6 +147,7 @@ export function AccountPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [copied, setCopied]       = useState(false)
+  const [visibleCount, setVisibleCount] = useState(10)
 
   async function handleSignOut() {
     await authService.logout()
@@ -506,31 +507,66 @@ export function AccountPage() {
                 <p className="text-[12px] text-asm-body">Your investment activity will appear here.</p>
               </div>
             ) : (
-              <ul className="divide-y divide-asm-line">
-                {transactions.slice(0, 10).map((tx) => {
-                  const meta = DIR_META[tx.direction]
-                  const { Icon } = meta
-                  return (
-                    <li key={tx._id} className="flex items-center gap-3 px-5 py-4">
-                      <span className={cn('flex size-9 shrink-0 items-center justify-center rounded-full', meta.bg)} aria-hidden>
-                        <Icon className={cn('size-4', meta.color)} strokeWidth={2.2} aria-hidden />
-                      </span>
-                      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                        <span className="truncate text-[13px] font-semibold text-asm-navy">{tx.note || tx.type}</span>
-                        <span className="text-[11px] text-asm-muted">{relDate(tx.createdAt)}</span>
+              (() => {
+                const visible = transactions.slice(0, visibleCount)
+                // Group by date label
+                const groups: { dateLabel: string; items: typeof visible }[] = []
+                for (const tx of visible) {
+                  const label = relDate(tx.createdAt)
+                  const last = groups[groups.length - 1]
+                  if (last && last.dateLabel === label) {
+                    last.items.push(tx)
+                  } else {
+                    groups.push({ dateLabel: label, items: [tx] })
+                  }
+                }
+                return (
+                  <>
+                    {groups.map((group) => (
+                      <div key={group.dateLabel}>
+                        <div className="sticky top-0 bg-asm-tint/80 px-5 py-1.5 backdrop-blur-sm">
+                          <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-asm-muted">
+                            {group.dateLabel}
+                          </span>
+                        </div>
+                        <ul>
+                          {group.items.map((tx) => {
+                            const meta = DIR_META[tx.direction]
+                            const { Icon } = meta
+                            return (
+                              <li key={tx._id} className="flex items-center gap-3 border-t border-asm-line px-5 py-4 first:border-t-0">
+                                <span className={cn('flex size-8 shrink-0 items-center justify-center rounded-full', meta.bg)} aria-hidden>
+                                  <Icon className={cn('size-4', meta.color)} strokeWidth={2.2} aria-hidden />
+                                </span>
+                                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                                  <span className="truncate text-[13px] font-semibold text-asm-navy">{tx.note || tx.type}</span>
+                                </div>
+                                <div className="flex shrink-0 flex-col items-end gap-1">
+                                  <span className={cn('font-mono text-[15px] font-bold tabular-nums', meta.color)}>
+                                    {meta.sign}{inr(tx.amount)}
+                                  </span>
+                                  <span className={cn('rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide', STATUS_PILL[tx.status])}>
+                                    {tx.status}
+                                  </span>
+                                </div>
+                              </li>
+                            )
+                          })}
+                        </ul>
                       </div>
-                      <div className="flex shrink-0 flex-col items-end gap-1">
-                        <span className={cn('font-mono text-[14px] font-bold tabular-nums', meta.color)}>
-                          {meta.sign}{inr(tx.amount)}
-                        </span>
-                        <span className={cn('rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide', STATUS_PILL[tx.status])}>
-                          {tx.status}
-                        </span>
-                      </div>
-                    </li>
-                  )
-                })}
-              </ul>
+                    ))}
+                    {transactions.length > visibleCount && (
+                      <button
+                        type="button"
+                        onClick={() => setVisibleCount((c) => c + 10)}
+                        className="flex w-full items-center justify-center border-t border-asm-line py-4 text-[12px] font-semibold text-asm-blue transition-colors hover:bg-asm-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-inset"
+                      >
+                        Load more
+                      </button>
+                    )}
+                  </>
+                )
+              })()
             )}
           </div>
         </motion.section>
@@ -702,7 +738,7 @@ export function AccountPage() {
                 onClick={() => { setPType('upi'); setPError(null) }}
                 className={cn(
                   'flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-[12px] font-semibold transition-colors',
-                  pType === 'upi' ? 'border-asm-blue bg-asm-blue-tint text-asm-blue' : 'border-asm-line bg-white text-asm-muted hover:text-asm-navy'
+                  pType === 'upi' ? 'border-asm-blue bg-asm-blue-tint text-asm-blue' : 'border-asm-muted/30 bg-asm-tint text-asm-body hover:border-asm-blue/50 hover:bg-asm-blue-tint hover:text-asm-navy'
                 )}
               >
                 <AtSign className="size-4" aria-hidden /> UPI ID
@@ -712,7 +748,7 @@ export function AccountPage() {
                 onClick={() => { setPType('bank'); setPError(null) }}
                 className={cn(
                   'flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-[12px] font-semibold transition-colors',
-                  pType === 'bank' ? 'border-asm-blue bg-asm-blue-tint text-asm-blue' : 'border-asm-line bg-white text-asm-muted hover:text-asm-navy'
+                  pType === 'bank' ? 'border-asm-blue bg-asm-blue-tint text-asm-blue' : 'border-asm-muted/30 bg-asm-tint text-asm-body hover:border-asm-blue/50 hover:bg-asm-blue-tint hover:text-asm-navy'
                 )}
               >
                 <Landmark className="size-4" aria-hidden /> Bank account
