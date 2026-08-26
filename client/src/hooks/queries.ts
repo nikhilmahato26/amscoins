@@ -3,7 +3,7 @@ import { getPlans } from '@/services/api/plans'
 import { getWallet } from '@/services/api/wallet'
 import { getReferral } from '@/services/api/referral'
 import { getDashboard } from '@/services/api/dashboard'
-import { getInvestment, getInvestments } from '@/services/api/investments'
+import { getInvestment, getInvestments, getDepositGate } from '@/services/api/investments'
 import { getWithdrawals, createWithdrawal, type WithdrawalInput } from '@/services/api/withdrawals'
 import { getLeaderboard, type LeaderboardPeriod } from '@/services/api/leaderboard'
 import {
@@ -32,6 +32,8 @@ import {
   rejectWithdrawal,
   retryWithdrawal,
   bulkApproveWithdrawals,
+  bulkApproveInvestments,
+  bulkRejectInvestments,
   adminUsers,
   adminUserDetail,
   freezeUser,
@@ -55,6 +57,15 @@ export function useInvestment(id: string) {
     enabled: !!id,
   })
 }
+// Poll the deposit gate while it is blocking, so the page unlocks on its own
+// once the admin approves (pending → cooldown) or the cooldown elapses.
+export const useDepositGate = () =>
+  useQuery({
+    queryKey: ['deposit-gate'],
+    queryFn: getDepositGate,
+    refetchInterval: (query) =>
+      query.state.data && query.state.data.status !== 'open' ? 15_000 : false,
+  })
 export const useWithdrawals = () => useQuery({ queryKey: ['withdrawals'], queryFn: getWithdrawals })
 export const useCreateWithdrawal = () => {
   const qc = useQueryClient()
@@ -164,6 +175,28 @@ export function useBulkApproveWithdrawals() {
     mutationFn: (ids: string[]) => bulkApproveWithdrawals(ids),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['admin', 'withdrawals'] })
+      void qc.invalidateQueries({ queryKey: ['admin', 'stats'] })
+    },
+  })
+}
+
+export function useBulkApproveInvestments() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (ids: string[]) => bulkApproveInvestments(ids),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['admin', 'investments'] })
+      void qc.invalidateQueries({ queryKey: ['admin', 'stats'] })
+    },
+  })
+}
+
+export function useBulkRejectInvestments() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ ids, note }: { ids: string[]; note?: string }) => bulkRejectInvestments(ids, note),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['admin', 'investments'] })
       void qc.invalidateQueries({ queryKey: ['admin', 'stats'] })
     },
   })
