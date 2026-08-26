@@ -6,8 +6,10 @@ import {
   Check,
   CheckCircle2,
   ChevronRight,
+  Clock,
   Copy,
   ExternalLink,
+  Hourglass,
   IndianRupee,
   Info,
   Loader2,
@@ -16,6 +18,7 @@ import {
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 
 import { AppShell } from '@/components/app/AppShell'
+import { InvestmentCountdown } from '@/components/admin/InvestmentCountdown'
 import { TelegramIcon, TetherIcon, WhatsAppIcon } from '@/components/app/icons'
 import {
   deriveTelegram,
@@ -24,12 +27,12 @@ import {
   whatsappUrl,
 } from '@/config/payment'
 import type { PaymentMethodId, UsdtNetwork } from '@/config/payment'
-import { usePlans, useSettings } from '@/hooks/queries'
+import { useDepositGate, usePlans, useSettings } from '@/hooks/queries'
 import { ApiError } from '@/lib/api'
 import { inr } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { createInvestment, notifyPayment } from '@/services/api/investments'
-import type { Investment } from '@/services/api/investments'
+import type { DepositGate, Investment } from '@/services/api/investments'
 
 import type { PublicSettings } from '@/services/api/settings'
 import type { Tier } from '@/types'
@@ -71,6 +74,11 @@ export function PaymentMethodPage() {
   const planName = plan?.name ?? planKey ?? '—'
 
   const { data: settings } = useSettings()
+  // Whether the user may start a new deposit. Server is source of truth; this
+  // read-only gate lets us block the chooser and show a pending/cooldown notice
+  // (the POST is still refused server-side with 409/429 as a backstop).
+  const { data: gate } = useDepositGate()
+  const gateBlocked = gate ? gate.status !== 'open' : false
   // Below the INR threshold, small deposits get a currency toggle (INR QR vs
   // USDT wallets); above it, the full four-option chooser stands.
   // When inrQr is disabled by the admin, the INR tab is hidden and mode
@@ -107,7 +115,7 @@ export function PaymentMethodPage() {
 
   const handleSelect = useCallback(
     async (next: ChooserMethod, network?: UsdtNetwork) => {
-      if (!planKey || !hasSelection || pending) return
+      if (!planKey || !hasSelection || pending || gateBlocked) return
       setError(null)
 
       setPending(next)
@@ -128,7 +136,7 @@ export function PaymentMethodPage() {
         setPendingNetwork(undefined)
       }
     },
-    [amountPaise, hasSelection, pending, planKey]
+    [amountPaise, hasSelection, pending, planKey, gateBlocked]
   )
 
   const handleSelectUsdt = useCallback(
@@ -183,6 +191,55 @@ export function PaymentMethodPage() {
         onBack={() => setPayStep(null)}
         onPaid={handlePaid}
       />
+    )
+  }
+
+  /* ── Deposit gate: a pending or cooling-down deposit blocks a new one ── */
+  if (gateBlocked && gate && gate.status !== 'open') {
+    return (
+      <AppShell backTo="/app" contentClassName="px-5">
+        <motion.div variants={container} initial="hidden" animate="visible" className="flex flex-col gap-5">
+          <motion.div variants={fadeUp} className="flex flex-col items-center gap-1 text-center">
+            <span className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-asm-blue">
+              Step 2
+            </span>
+            <h1 className="text-[26px] font-extrabold uppercase leading-tight tracking-[-0.01em] text-asm-navy">
+              Invest &amp; Pay
+            </h1>
+          </motion.div>
+
+          {hasSelection && (
+            <motion.div variants={fadeUp}>
+              <PackageSummary planName={planName} amountPaise={amountPaise} />
+            </motion.div>
+          )}
+
+          <motion.div variants={fadeUp}>
+            <DepositGateNotice gate={gate} />
+          </motion.div>
+
+          <motion.div variants={fadeUp} className="flex flex-col gap-3">
+            <Link
+              to="/app/investments"
+              className={cn(
+                'flex h-14 w-full items-center justify-center gap-2 rounded-2xl',
+                'bg-asm-blue text-base font-bold text-white',
+                'shadow-[0_4px_20px_-4px_rgba(11,79,216,0.5)] transition-opacity hover:opacity-90',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-2'
+              )}
+            >
+              View my investments
+              <ChevronRight className="size-4 opacity-80" aria-hidden />
+            </Link>
+            <Link
+              to="/app"
+              className="flex h-12 w-full items-center justify-center rounded-2xl border border-asm-line bg-white text-[14px] font-bold text-asm-navy transition-colors hover:bg-asm-tint"
+            >
+              Back to dashboard
+            </Link>
+          </motion.div>
+        </motion.div>
+      </AppShell>
     )
   }
 
@@ -256,7 +313,7 @@ export function PaymentMethodPage() {
             variants={fadeUp}
             role="tablist"
             aria-label="Deposit currency"
-            className="flex gap-2 rounded-xl bg-asm-tint p-1"
+            className="flex gap-1.5 rounded-xl border border-asm-line bg-asm-tint p-1"
           >
             {(['INR', 'USDT'] as const).map((m) => (
               <button
@@ -266,11 +323,11 @@ export function PaymentMethodPage() {
                 aria-selected={mode === m}
                 onClick={() => setMode(m)}
                 className={cn(
-                  'flex-1 rounded-lg px-3 py-2 text-[12px] font-bold transition-colors',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue',
+                  'min-h-[40px] flex-1 rounded-lg px-3 py-2 text-[13px] font-bold transition-colors',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1',
                   mode === m
-                    ? 'bg-white text-asm-navy shadow-[0_2px_8px_-3px_rgba(16,42,92,0.2)]'
-                    : 'text-asm-muted hover:text-asm-navy'
+                    ? 'bg-asm-blue text-white shadow-[0_4px_12px_-4px_rgba(11,79,216,0.5)]'
+                    : 'text-asm-body hover:bg-white hover:text-asm-navy'
                 )}
               >
                 {m === 'INR' ? 'Pay in INR' : 'Pay in USDT'}
@@ -440,6 +497,72 @@ export function PaymentMethodPage() {
   )
 }
 
+/* ── Deposit gate notice ── */
+/**
+ * Shown in place of the payment chooser when the user cannot start a new
+ * deposit. `pending`: a deposit is awaiting admin approval. `cooldown`: a
+ * deposit was approved and the user must wait until `cooldownUntil`. The gate
+ * query polls, so this view replaces itself once the block clears.
+ */
+function DepositGateNotice({ gate }: { gate: Exclude<DepositGate, { status: 'open' }> }) {
+  if (gate.status === 'pending') {
+    return (
+      <section
+        data-testid="deposit-gate-pending"
+        className="flex flex-col gap-4 rounded-2xl border border-amber-200 bg-amber-50 p-5"
+      >
+        <div className="flex items-start gap-3">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-amber-100">
+            <Hourglass className="size-5 text-amber-600" aria-hidden />
+          </span>
+          <div className="flex min-w-0 flex-col gap-1">
+            <h2 className="text-[15px] font-extrabold leading-tight text-amber-900">
+              Your deposit is pending approval
+            </h2>
+            <p className="text-[12px] leading-relaxed text-amber-800">
+              You already have a deposit awaiting admin review. You can start a new one once it&rsquo;s
+              approved and the short cooldown has passed. No need to pay again — we&rsquo;ll email you
+              when it&rsquo;s confirmed.
+            </p>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  return (
+    <section
+      data-testid="deposit-gate-cooldown"
+      className="flex flex-col gap-4 rounded-2xl border border-asm-blue/20 bg-asm-blue-tint p-5"
+    >
+      <div className="flex items-start gap-3">
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white/80">
+          <Clock className="size-5 text-asm-blue" aria-hidden />
+        </span>
+        <div className="flex min-w-0 flex-col gap-1">
+          <h2 className="text-[15px] font-extrabold leading-tight text-asm-navy">
+            Please wait before your next deposit
+          </h2>
+          <p className="text-[12px] leading-relaxed text-asm-body">
+            Your last deposit was approved. You can invest again once the cooldown finishes.
+          </p>
+        </div>
+      </div>
+      <div className="flex flex-col items-center gap-1 rounded-xl border border-asm-blue/15 bg-white px-4 py-3">
+        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-asm-muted">
+          Available in
+        </span>
+        <span
+          data-testid="deposit-cooldown-countdown"
+          className="font-mono text-[26px] font-extrabold tabular-nums text-asm-blue"
+        >
+          <InvestmentCountdown maturesAt={gate.cooldownUntil} expiredLabel="Ready now" />
+        </span>
+      </div>
+    </section>
+  )
+}
+
 /* ── Pay screen ── */
 function PayStep({
   payStep,
@@ -466,6 +589,7 @@ function PayStep({
 }) {
   const { investment, method, network } = payStep
   const { copied, copy } = useCopy()
+  const { rate: usdtRateInr, live: rateIsLive } = useLiveUsdtRate(settings.usdtRateInr || 96)
 
   // For USDT, resolve the wallet for the tapped chain (fall back to the first
   // configured wallet so the screen is never empty).
@@ -551,6 +675,21 @@ function PayStep({
               <TetherIcon className="size-5 text-asm-greenInk" />
               <span className="text-[14px] font-extrabold text-asm-navy">{wallet.chain}</span>
             </div>
+
+            {/* USDT amount at live rate */}
+            <div className="flex flex-col items-center gap-1 rounded-xl border border-asm-greenInk/20 bg-asm-green-tint px-4 py-4">
+              <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-asm-muted">
+                Amount to send
+              </span>
+              <span className="font-mono text-[28px] font-extrabold tabular-nums text-asm-greenInk">
+                {((amountPaise / 100) / usdtRateInr).toFixed(2)} USDT
+              </span>
+              <span className="text-[11px] text-asm-muted">
+                ≈ {inr(amountPaise)} · at ₹{usdtRateInr.toFixed(2)}/USDT
+                {rateIsLive && <span className="ml-1 text-asm-greenInk">(live)</span>}
+              </span>
+            </div>
+
             {wallet.qr && <QrCode src={wallet.qr} alt={`${wallet.chain} wallet QR`} />}
             <div className="flex items-center justify-between gap-3 rounded-xl border border-asm-line bg-asm-tint p-3">
               <div className="flex min-w-0 flex-col gap-0.5">
@@ -878,6 +1017,32 @@ export function Steps({ items }: { items: string[] }) {
     </ol>
   )
 }
+/** Fetches the live USD→INR rate from open.er-api.com (free, no key).
+ *  Falls back to the admin-configured rate if the request fails. */
+export function useLiveUsdtRate(fallback: number): { rate: number; live: boolean } {
+  const [state, setState] = useState<{ rate: number; live: boolean }>({ rate: fallback, live: false })
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('https://open.er-api.com/v6/latest/USD')
+      .then((r) => r.json())
+      .then((data: unknown) => {
+        if (cancelled) return
+        const inr = (data as Record<string, Record<string, number>>)?.rates?.INR
+        if (typeof inr === 'number' && inr > 0) setState({ rate: inr, live: true })
+      })
+      .catch(() => {/* keep fallback */})
+    return () => { cancelled = true }
+  }, [])
+
+  // Update if the admin-set fallback changes (settings load later).
+  useEffect(() => {
+    setState((prev) => prev.live ? prev : { rate: fallback, live: false })
+  }, [fallback])
+
+  return state
+}
+
 /** Copy-to-clipboard with a 2s "copied" acknowledgement, keyed per field. */
 export function useCopy() {
   const [copied, setCopied] = useState<string | null>(null)
