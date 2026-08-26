@@ -3,6 +3,7 @@
 const mongoose = require('mongoose')
 const Withdrawal = require('../models/Withdrawal')
 const User = require('../models/User')
+const Settings = require('../models/Settings')
 const Transaction = require('../models/Transaction')
 const walletService = require('./walletService')
 
@@ -18,11 +19,11 @@ function setWithdrawalTxnStatus(withdrawalId, status, session) {
 }
 const email = require('./emailService')
 const { computeTds } = require('./money')
-const env = require('../config/env')
 const { ApiError } = require('../middleware/errorHandler')
 const logger = require('../lib/logger').child({ service: 'withdrawal' })
 const { cacheDel } = require('../config/redis')
 const { withdrawalLimitFor } = require('../config/limits')
+const { tdsPctForTier } = require('./tierService')
 
 // Resolve the payout destination from the request body: a saved payout method,
 // inline bank details, or an inline UPI id (in that order of precedence).
@@ -49,14 +50,50 @@ function destinationLabel(dest) {
     : dest.upiId
 }
 
+// Human-friendly "Xh Ym" (or "Ym"/"Xs") for a millisecond span.
+function formatRemaining(ms) {
+  const totalMin = Math.ceil(ms / 60000)
+  if (totalMin <= 0) return '0m'
+  const h = Math.floor(totalMin / 60)
+  const m = totalMin % 60
+  if (h > 0) return m > 0 ? `${h}h ${m}m` : `${h}h`
+  return `${m}m`
+}
+
+// Enforce the admin-configurable withdrawal cooldown. Anchor = the user's most
+// recent withdrawal (ANY status), so a rejected/failed one still consumes the
+// window. Returns silently when disabled (0) or no prior withdrawal exists.
+async function assertWithdrawalCooldown(userId) {
+  const settings = await Settings.getSingleton()
+  const cooldownHours = settings.withdrawalCooldownHours
+  if (!cooldownHours || cooldownHours <= 0) return
+
+  const last = await Withdrawal.findOne({ user: userId })
+    .sort({ createdAt: -1 })
+    .select('createdAt')
+    .lean()
+  if (!last) return
+
+  const nextAllowed = new Date(last.createdAt).getTime() + cooldownHours * 3600e3
+  const remaining = nextAllowed - Date.now()
+  if (remaining > 0) {
+    throw new ApiError(
+      429,
+      `You can withdraw again in ${formatRemaining(remaining)}. Withdrawals are limited to one every ${cooldownHours} hours.`
+    )
+  }
+}
+
 async function initiateWithdrawal(user, body) {
   const { amount } = body
   const limit = withdrawalLimitFor(user.tier)
   if (amount > limit) {
     throw new ApiError(400, 'Amount exceeds your withdrawal limit')
   }
+  await assertWithdrawalCooldown(user._id)
   const dest = resolveDestination(user, body)
-  const { tds, net } = computeTds(amount, env.TDS_PCT)
+  // TDS rate depends on the user's tier (silver 5% / gold 3% / diamond 0%).
+  const { tds, net } = computeTds(amount, tdsPctForTier(user.tier))
   const session = await mongoose.startSession()
   let withdrawal
   try {
