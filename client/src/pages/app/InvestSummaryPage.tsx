@@ -112,7 +112,7 @@ export function InvestSummaryPage() {
                   <span className="text-[11px] font-semibold uppercase leading-4 tracking-[0.1em] text-asm-muted">
                     Returns
                   </span>
-                  <span className="pt-1 text-xl font-extrabold leading-7 text-asm-green">{plan.returnPct}%</span>
+                  <span className="pt-1 text-xl font-extrabold leading-7 text-asm-greenInk">{plan.returnPct}%</span>
                 </div>
                 <div className="flex flex-col rounded-xl bg-asm-tint px-4 py-3">
                   <span className="text-[11px] font-semibold uppercase leading-4 tracking-[0.1em] text-asm-muted">
@@ -142,7 +142,7 @@ export function InvestSummaryPage() {
                 <span className="text-[11px] font-semibold uppercase leading-4 tracking-[0.1em] text-asm-muted">
                   Expected Return
                 </span>
-                <span className="text-xl font-extrabold leading-7 text-asm-green">+{inr(expectedReturn)}</span>
+                <span className="text-xl font-extrabold leading-7 text-asm-greenInk">+{inr(expectedReturn)}</span>
               </div>
             </section>
 
