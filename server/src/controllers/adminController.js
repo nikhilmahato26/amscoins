@@ -59,6 +59,13 @@ const listInvestments = asyncHandler(async (req, res) => {
     filter.$or = [{ referenceCode: invRx }, { user: { $in: users.map((u) => u._id) } }]
   }
 
+  // Exclude unnotified draft investments from the pending admin view — they
+  // aren't submitted for review yet (user hasn't tapped "I've paid").
+  if (filter.status) {
+    const statuses = filter.status.$in ?? [filter.status]
+    if (statuses.includes('pending')) filter.paymentNotified = { $ne: false }
+  }
+
   const sortBy = INVESTMENT_SORTS[sort] || '-createdAt'
   res.json(await Investment.find(filter).sort(sortBy).populate('user', 'name email publicId tier'))
 })
@@ -71,7 +78,7 @@ const getInvestmentStats = asyncHandler(async (_req, res) => {
 
   const [pendingApprovals, returnsAwaiting, aboutToComplete, capitalAgg, decided, revenueAgg] =
     await Promise.all([
-      Investment.countDocuments({ status: 'pending' }),
+      Investment.countDocuments({ status: 'pending', paymentNotified: { $ne: false } }),
       Investment.countDocuments({ status: 'matured' }),
       Investment.countDocuments({ status: 'active', maturesAt: { $gt: now, $lte: soon } }),
       Investment.aggregate([
@@ -135,6 +142,16 @@ const rejectPayout = asyncHandler(async (req, res) => {
 const deleteInvestment = asyncHandler(async (req, res) =>
   res.json(await invSvc.deleteInvestment(req.params.id, req.user._id))
 )
+
+const bulkApproveInvestments = asyncHandler(async (req, res) => {
+  const { ids } = req.body
+  res.json(await invSvc.bulkApproveInvestments(ids, req.user._id))
+})
+
+const bulkRejectInvestments = asyncHandler(async (req, res) => {
+  const { ids, note } = req.body
+  res.json(await invSvc.bulkRejectInvestments(ids, req.user._id, note))
+})
 
 const listWithdrawals = asyncHandler(async (req, res) => {
   const q = req.query.status
@@ -283,18 +300,33 @@ const getStats = asyncHandler(async (_req, res) => {
     }
   }
 
-  const [users, pendingDeposits, pendingWithdrawals, invAgg, walAgg] = await Promise.all([
+  const todayStart = new Date()
+  todayStart.setUTCHours(0, 0, 0, 0)
+
+  const approvedStatuses = ['active', 'matured', 'returned']
+
+  const [users, pendingDeposits, pendingWithdrawals, invAgg, walAgg, todayAgg] = await Promise.all([
     User.countDocuments(),
-    Investment.countDocuments({ status: 'pending' }),
+    Investment.countDocuments({ status: 'pending', paymentNotified: { $ne: false } }),
     Withdrawal.countDocuments({ status: 'pending' }),
-    Investment.aggregate([{ $match: { status: 'active' } }, { $group: { _id: null, s: { $sum: '$amount' } } }]),
+    // All-time total: every investment that was ever approved (active + matured + returned)
+    Investment.aggregate([{ $match: { status: { $in: approvedStatuses } } }, { $group: { _id: null, s: { $sum: '$amount' } } }]),
     Wallet.aggregate([{ $group: { _id: null, s: { $sum: '$balance' } } }]),
+    // Today's approved investments only — keeps it comparable to total
+    Investment.aggregate([
+      { $match: { createdAt: { $gte: todayStart }, status: { $in: approvedStatuses } } },
+      { $group: { _id: null, s: { $sum: '$amount' } } },
+    ]),
   ])
   const result = {
     users,
     pendingDeposits,
     pendingWithdrawals,
-    totals: { invested: invAgg[0]?.s || 0, walletLiability: walAgg[0]?.s || 0 },
+    totals: {
+      invested: invAgg[0]?.s || 0,
+      walletLiability: walAgg[0]?.s || 0,
+      todayInvested: todayAgg[0]?.s || 0,
+    },
   }
 
   await cacheSet(cacheKey, JSON.stringify(result), 30)
@@ -311,6 +343,8 @@ module.exports = {
   approvePayout,
   rejectPayout,
   deleteInvestment,
+  bulkApproveInvestments,
+  bulkRejectInvestments,
   listWithdrawals,
   completeWithdrawal,
   rejectWithdrawal,
