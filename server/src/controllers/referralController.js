@@ -5,8 +5,8 @@ const env = require('../config/env')
 const overview = asyncHandler(async (req, res) => {
   const u = req.user
   const referrals = await User.find({ referredBy: u._id }).select('name createdAt firstDepositCredited')
-  const nextTier = u.referralCount < 11 ? 'gold' : u.referralCount < 21 ? 'diamond' : null
-  const nextTierAt = u.referralCount < 11 ? 11 : u.referralCount < 21 ? 21 : null
+  const nextTier = u.referralCount < 21 ? 'gold' : u.referralCount < 52 ? 'diamond' : null
+  const nextTierAt = u.referralCount < 21 ? 21 : u.referralCount < 52 ? 52 : null
   res.json({
     referralCode: u.referralCode,
     link: `${env.FRONTEND_URL}/?ref=${u.referralCode}`,
