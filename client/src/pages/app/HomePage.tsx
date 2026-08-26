@@ -10,6 +10,7 @@ import { TierBadge, type Tier } from '@/components/app/TierBadge'
 import { useDashboard, useWallet } from '@/hooks/queries'
 import { useAuth } from '@/auth/AuthContext'
 import { inr } from '@/lib/format'
+import { ordinal } from '@/lib/tiers'
 import { cn } from '@/lib/utils'
 
 /* ── Framer Motion variants ─────────────────────────────────────── */
@@ -64,6 +65,8 @@ export function HomePage() {
   const displayBalance = walletBalance ?? dash?.balance ?? null
   const totalInvested  = dash?.totals.invested ?? null
   const activeCount    = dash?.totals.activeCount ?? null
+  const allTimeInvested = dash?.allTimeInvested ?? null
+  const todayInvested  = dash?.todayInvested ?? null
   const activeInvests  = dash?.activeInvestments ?? []
   const isLoadingDash  = dashQuery.isLoading
 
@@ -178,10 +181,10 @@ export function HomePage() {
               {isLoadingDash ? (
                 <>
                   {[0, 1, 2].map((i) => (
-                    <div key={i} className="flex flex-col items-center gap-2 rounded-2xl border border-asm-line bg-white py-4 animate-pulse">
-                      <span className="size-9 rounded-xl bg-asm-tint" />
-                      <span className="h-4 w-14 rounded bg-asm-tint" />
-                      <span className="h-2.5 w-10 rounded bg-asm-tint" />
+                    <div key={i} className="flex flex-col items-center gap-2 rounded-2xl border border-asm-line bg-white py-4">
+                      <span className="skeleton size-9 rounded-xl" />
+                      <span className="skeleton h-4 w-14" />
+                      <span className="skeleton h-2.5 w-10" />
                     </div>
                   ))}
                 </>
@@ -219,6 +222,45 @@ export function HomePage() {
                 </>
               )}
             </div>
+
+            {/* All-time + today invested row */}
+            <div className="mt-2.5 grid grid-cols-2 gap-2.5">
+              {isLoadingDash ? (
+                <>
+                  <div className="flex flex-col items-center gap-2 rounded-2xl border border-asm-line bg-white py-4">
+                    <span className="skeleton h-4 w-16" />
+                    <span className="skeleton h-2.5 w-12" />
+                  </div>
+                  <div className="flex flex-col items-center gap-2 rounded-2xl border border-asm-line bg-white py-4">
+                    <span className="skeleton h-4 w-16" />
+                    <span className="skeleton h-2.5 w-12" />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex flex-col items-center gap-2 rounded-2xl border border-asm-line bg-white py-4 shadow-[0_1px_6px_-2px_rgba(16,42,92,0.07)]">
+                    <span className="flex size-9 items-center justify-center rounded-xl bg-asm-blue-tint">
+                      <TrendingUp className="size-4 text-asm-blue" strokeWidth={2} aria-hidden />
+                    </span>
+                    <span className="font-mono text-[14px] font-bold tabular-nums text-asm-navy">
+                      {allTimeInvested !== null ? inr(allTimeInvested) : '—'}
+                    </span>
+                    <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-asm-muted">All-time Invested</span>
+                  </div>
+
+                  <div className="flex flex-col items-center gap-2 rounded-2xl border border-asm-line bg-white py-4 shadow-[0_1px_6px_-2px_rgba(16,42,92,0.07)]">
+                    <span className="flex size-9 items-center justify-center rounded-xl bg-asm-green-tint">
+                      <Lock className="size-4 text-asm-greenInk" strokeWidth={2} aria-hidden />
+                    </span>
+                    <span className="font-mono text-[14px] font-bold tabular-nums text-asm-navy">
+                      {todayInvested !== null ? inr(todayInvested) : '—'}
+                    </span>
+                    <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-asm-muted">Today's Invested</span>
+                  </div>
+                </>
+              )}
+            </div>
+
           </motion.section>
         )}
 
@@ -247,7 +289,7 @@ export function HomePage() {
                 return (
                   <div
                     key={inv.id}
-                    className="flex items-center gap-3 rounded-2xl border border-asm-line bg-white px-4 py-3 shadow-[0_1px_6px_-2px_rgba(16,42,92,0.07)]"
+                    className="elevate flex items-center gap-3 rounded-2xl border border-asm-line bg-white px-4 py-3 shadow-card"
                   >
                     <TierBadge tier={planTier} size={40} className="shrink-0" />
                     <div className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -380,12 +422,7 @@ function PlanCard({
   unlocked: boolean
 }) {
   const s = PLAN_STYLE[tier]
-  const unlockOrdinalText =
-    requiredReferrals === 11
-      ? 'Unlocks on 11th Referral'
-      : requiredReferrals === 21
-      ? 'Unlocks on 21st Referral'
-      : `Unlocks on ${requiredReferrals}th Referral`
+  const unlockOrdinalText = `Unlocks on ${ordinal(requiredReferrals)} Referral`
 
   return (
     <motion.article
