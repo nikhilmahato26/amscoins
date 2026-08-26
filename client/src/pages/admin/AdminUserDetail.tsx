@@ -263,7 +263,7 @@ export function AdminUserDetail() {
 
       <p role="status" aria-live="polite" className="sr-only">{msg}</p>
       {msg && (
-        <p className={cn('rounded-lg px-4 py-3 text-[13px] font-medium', msg.includes('failed') ? 'bg-red-50 text-asm-red' : 'bg-green-50 text-asm-green')}>
+        <p className={cn('rounded-lg px-4 py-3 text-[13px] font-medium', msg.includes('failed') ? 'bg-red-50 text-asm-red' : 'bg-green-50 text-asm-greenInk')}>
           {msg}
         </p>
       )}
@@ -286,7 +286,7 @@ export function AdminUserDetail() {
               <div className="mt-1.5 flex flex-wrap items-center gap-2">
                 {user.publicId && <CopyId value={user.publicId} />}
                 <span className="rounded-md bg-asm-tint px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-asm-body">{user.tier}</span>
-                <span className={cn('rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide', user.status === 'active' ? 'bg-green-50 text-asm-green' : 'bg-red-50 text-asm-red')}>
+                <span className={cn('rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide', user.status === 'active' ? 'bg-green-50 text-asm-greenInk' : 'bg-red-50 text-asm-red')}>
                   {user.status}
                 </span>
               </div>
