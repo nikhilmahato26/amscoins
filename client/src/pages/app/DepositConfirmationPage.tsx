@@ -1,9 +1,11 @@
 import { useParams, useLocation, Link } from 'react-router'
-import { CheckCircle2, ArrowRight, Clock, ExternalLink } from 'lucide-react'
+import { ArrowRight, Clock, ExternalLink, CheckCircle2 } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { useInvestment } from '@/hooks/queries'
 import { inr } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { AppShell } from '@/components/app/AppShell'
+import { SuccessBurst } from '@/components/app/SuccessBurst'
 import { WhatsAppIcon, TelegramIcon } from '@/components/app/icons'
 
 const TIER_LABEL: Record<string, string> = {
@@ -11,16 +13,16 @@ const TIER_LABEL: Record<string, string> = {
 }
 
 function StatusPill({ status }: { status: string }) {
-  const map: Record<string, { label: string; cls: string }> = {
-    pending:   { label: 'Awaiting Approval', cls: 'bg-asm-tint text-asm-muted' },
-    active:    { label: 'Active',            cls: 'bg-asm-tint text-asm-green' },
-    completed: { label: 'Completed',         cls: 'bg-asm-tint text-asm-green' },
-    rejected:  { label: 'Rejected',          cls: 'bg-asm-tint text-asm-red' },
+  const map: Record<string, { label: string; cls: string; icon: typeof Clock }> = {
+    pending:   { label: 'Awaiting Approval', cls: 'bg-amber-50 text-amber-700 border-amber-200',              icon: Clock        },
+    active:    { label: 'Active',            cls: 'bg-asm-green-tint text-asm-greenInk border-[#1FA855]/25', icon: CheckCircle2 },
+    completed: { label: 'Completed',         cls: 'bg-asm-green-tint text-asm-greenInk border-[#1FA855]/25', icon: CheckCircle2 },
+    rejected:  { label: 'Rejected',          cls: 'bg-red-50 text-red-700 border-red-200',                   icon: Clock        },
   }
-  const { label, cls } = map[status] ?? { label: status, cls: 'bg-asm-tint text-asm-body' }
+  const { label, cls, icon: Icon } = map[status] ?? { label: status, cls: 'bg-asm-tint text-asm-body border-asm-line', icon: Clock }
   return (
-    <span className={cn('inline-flex items-center gap-1.5 rounded-full border border-asm-line px-2.5 py-1 text-[11px] font-semibold', cls)}>
-      <Clock className="size-3" />
+    <span className={cn('inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-[0.06em]', cls)}>
+      <Icon className="size-3" strokeWidth={2.5} aria-hidden />
       {label}
     </span>
   )
@@ -37,7 +39,7 @@ export function DepositConfirmationPage() {
     return (
       <AppShell backTo="/app" contentClassName="px-5">
         <div className="flex min-h-[60vh] items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-asm-blue border-t-transparent" role="status" aria-label="Loading" />
+          <div className="h-8 w-8 animate-spin rounded-full border-[3px] border-asm-blue border-t-transparent" role="status" aria-label="Loading" />
         </div>
       </AppShell>
     )
@@ -67,18 +69,32 @@ export function DepositConfirmationPage() {
     <AppShell backTo="/app" contentClassName="px-5">
       <div className="mx-auto max-w-lg py-6 sm:py-10">
         {/* Success header */}
-        <div className="text-center">
-          <CheckCircle2 className="mx-auto size-14 text-asm-green" strokeWidth={1.5} />
-          <h1 className="mt-4 text-[22px] font-extrabold tracking-tight text-asm-navy">
+        <motion.div
+          className="text-center"
+          initial="hidden"
+          animate="visible"
+          variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.09 } } }}
+        >
+          <SuccessBurst className="size-16" />
+          <motion.h1
+            variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 200, damping: 22 } } }}
+            className="mt-4 text-[22px] font-extrabold tracking-tight text-asm-navy"
+          >
             Deposit Submitted!
-          </h1>
-          <p className="mt-1.5 text-[13px] text-asm-muted">
+          </motion.h1>
+          <motion.p
+            variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 200, damping: 22 } } }}
+            className="mt-1.5 text-[13px] text-asm-muted"
+          >
             Your investment request is pending admin approval.
-          </p>
-          <div className="mt-3 flex justify-center">
+          </motion.p>
+          <motion.div
+            variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}
+            className="mt-3 flex justify-center"
+          >
             <StatusPill status={investment.status} />
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* Reference code */}
         <div className="mt-6 rounded-2xl border-2 border-asm-blue/20 bg-asm-blue-tint px-4 py-5 text-center">
