@@ -1,6 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import { Search, Users } from 'lucide-react'
 import {
   useAdminUsers,
   useFreezeUser,
@@ -8,11 +7,18 @@ import {
   useAdjustWallet,
 } from '@/hooks/queries'
 import type { AdminUser, AdminUsersParams } from '@/services/api/admin'
+import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
+import { SearchInput } from '@/components/admin/SearchInput'
+import { StatusBanner } from '@/components/admin/StatusBanner'
+import { AdminButton } from '@/components/admin/AdminButton'
+import { DataTable, EmptyState, type Column } from '@/components/admin/DataTable'
+import { Pagination } from '@/components/admin/Pagination'
+import { useClientTable } from '@/hooks/useClientTable'
 import { inr } from '@/lib/format'
 import { formatUserId } from '@/lib/ids'
 import { cn } from '@/lib/utils'
 
-/* ── Adjust wallet dialog ── */
+/* ── Adjust wallet dialog (specialised form: direction + amount + note) ── */
 interface AdjustDialogProps {
   user: AdminUser
   onConfirm: (amount: number, direction: 'credit' | 'debit', note: string) => void
@@ -31,7 +37,6 @@ function AdjustDialog({ user, onConfirm, onCancel, isPending }: AdjustDialogProp
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!isValid) return
-    // Convert rupees to paise
     onConfirm(Math.round(amountRupees * 100), direction, note)
   }
 
@@ -40,22 +45,19 @@ function AdjustDialog({ user, onConfirm, onCancel, isPending }: AdjustDialogProp
       role="dialog"
       aria-modal="true"
       aria-labelledby="adjust-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/30 p-4 backdrop-blur-sm"
     >
-      <div className="w-full max-w-sm rounded-2xl border border-asm-line bg-white p-6 shadow-xl">
+      <div className="my-auto flex max-h-[calc(100vh-2rem)] w-full max-w-sm flex-col overflow-y-auto rounded-2xl border border-asm-line bg-white p-6 shadow-xl">
         <h2 id="adjust-title" className="text-[15px] font-bold text-asm-navy">
           Adjust wallet — {user.name}
         </h2>
 
         <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-4">
-          {/* Direction */}
           <fieldset>
-            <legend className="text-[11px] font-semibold uppercase tracking-[0.08em] text-asm-muted">
-              Direction
-            </legend>
+            <legend className="text-[11px] font-semibold uppercase tracking-[0.08em] text-asm-muted">Direction</legend>
             <div className="mt-1.5 flex gap-2">
               {(['credit', 'debit'] as const).map((dir) => (
-                <label key={dir} className="flex flex-1 items-center gap-2 cursor-pointer">
+                <label key={dir} className="flex flex-1 cursor-pointer items-center gap-2">
                   <input
                     type="radio"
                     name="direction"
@@ -67,11 +69,7 @@ function AdjustDialog({ user, onConfirm, onCancel, isPending }: AdjustDialogProp
                   <span
                     className={cn(
                       'text-[13px] font-medium capitalize',
-                      direction === dir
-                        ? dir === 'credit'
-                          ? 'text-asm-green'
-                          : 'text-asm-red'
-                        : 'text-asm-body',
+                      direction === dir ? (dir === 'credit' ? 'text-asm-greenInk' : 'text-asm-red') : 'text-asm-body',
                     )}
                   >
                     {dir}
@@ -81,11 +79,8 @@ function AdjustDialog({ user, onConfirm, onCancel, isPending }: AdjustDialogProp
             </div>
           </fieldset>
 
-          {/* Amount */}
           <label className="block">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-asm-muted">
-              Amount (₹)
-            </span>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-asm-muted">Amount (₹)</span>
             <input
               type="number"
               min="0.01"
@@ -100,21 +95,14 @@ function AdjustDialog({ user, onConfirm, onCancel, isPending }: AdjustDialogProp
                 'focus:border-asm-blue focus:outline-none focus:ring-2 focus:ring-asm-blue focus:ring-offset-1',
               )}
             />
-            {amountStr && !isValid && (
-              <p className="mt-1 text-[11px] text-asm-red">Enter a valid positive amount.</p>
-            )}
+            {amountStr && !isValid && <p className="mt-1 text-[11px] text-asm-red">Enter a valid positive amount.</p>}
             {amountStr && isValid && (
-              <p className="mt-1 text-[11px] text-asm-muted">
-                = {inr(Math.round(amountRupees * 100))}
-              </p>
+              <p className="mt-1 text-[11px] text-asm-muted">= {inr(Math.round(amountRupees * 100))}</p>
             )}
           </label>
 
-          {/* Note */}
           <label className="block">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-asm-muted">
-              Note (optional)
-            </span>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-asm-muted">Note (optional)</span>
             <input
               type="text"
               value={note}
@@ -129,46 +117,16 @@ function AdjustDialog({ user, onConfirm, onCancel, isPending }: AdjustDialogProp
           </label>
 
           <div className="flex justify-end gap-2.5 pt-1">
-            <button
-              type="button"
-              onClick={onCancel}
-              disabled={isPending}
-              className={cn(
-                'rounded-lg border border-asm-line px-3.5 py-2 text-[12px] font-semibold text-asm-body',
-                'hover:bg-asm-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1',
-                'disabled:cursor-not-allowed disabled:opacity-50',
-              )}
-            >
+            <AdminButton variant="outline" size="sm" onClick={onCancel} disabled={isPending}>
               Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isPending || !isValid}
-              className={cn(
-                'rounded-lg bg-asm-blue px-3.5 py-2 text-[12px] font-semibold text-white',
-                'hover:bg-asm-blue-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1',
-                'disabled:cursor-not-allowed disabled:opacity-50',
-              )}
-            >
+            </AdminButton>
+            <AdminButton type="submit" size="sm" disabled={isPending || !isValid}>
               {isPending ? 'Adjusting…' : 'Apply'}
-            </button>
+            </AdminButton>
           </div>
         </form>
       </div>
     </div>
-  )
-}
-
-/* ── Table skeleton ── */
-function SkeletonRow() {
-  return (
-    <tr className="animate-pulse border-b border-asm-line">
-      {Array.from({ length: 8 }).map((_, i) => (
-        <td key={i} className="px-3 py-3">
-          <span className="block h-3.5 rounded bg-asm-tint" />
-        </td>
-      ))}
-    </tr>
   )
 }
 
@@ -192,30 +150,32 @@ function StatusChip({ status }: { status: AdminUser['status'] }) {
     <span
       className={cn(
         'inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide',
-        status === 'active' ? 'bg-green-50 text-asm-green' : 'bg-red-50 text-asm-red',
+        status === 'active' ? 'bg-green-50 text-asm-greenInk' : 'bg-red-50 text-asm-red',
       )}
     >
-      <span
-        className={cn(
-          'size-1.5 rounded-full',
-          status === 'active' ? 'bg-asm-green' : 'bg-asm-red',
-        )}
-        aria-hidden
-      />
+      <span className={cn('size-1.5 rounded-full', status === 'active' ? 'bg-asm-greenInk' : 'bg-asm-red')} aria-hidden />
       {status}
     </span>
   )
 }
 
+type InvestorFilter = 'all' | 'investor' | 'non-investor'
+
 /* ── Main page ── */
 export function AdminUsers() {
   const [input, setInput] = useState('')
   const [q, setQ] = useState('')
-  type InvestorFilter = 'all' | 'investor' | 'non-investor'
   const [searchParams, setSearchParams] = useSearchParams()
-  // Default view is Investors-first (spec #6): with no explicit param, show investors.
+  // Default view is Investors-first: with no explicit param, show investors.
   const investorFilter = (searchParams.get('investor') ?? 'investor') as InvestorFilter
   const [amountSort, setAmountSort] = useState<'invested' | '-invested' | undefined>(undefined)
+
+  /* Debounce the search box into the server query so it feels real-time. */
+  useEffect(() => {
+    const id = setTimeout(() => setQ(input.trim()), 300)
+    return () => clearTimeout(id)
+  }, [input])
+
   const { data, isLoading, isError } = useAdminUsers({
     q,
     investor: investorFilter === 'investor' ? 'true' : investorFilter === 'non-investor' ? 'false' : undefined,
@@ -227,6 +187,9 @@ export function AdminUsers() {
 
   const [adjustingUser, setAdjustingUser] = useState<AdminUser | null>(null)
   const [statusMsg, setStatusMsg] = useState('')
+
+  const rows = data ?? []
+  const table = useClientTable({ rows })
 
   function handleToggleFreeze(user: AdminUser) {
     if (user.status === 'active') {
@@ -242,56 +205,99 @@ export function AdminUsers() {
     }
   }
 
-  function handleAdjustConfirm(
-    amount: number,
-    direction: 'credit' | 'debit',
-    note: string,
-  ) {
+  function handleAdjustConfirm(amount: number, direction: 'credit' | 'debit', note: string) {
     if (!adjustingUser) return
     adjustMutation.mutate([adjustingUser._id, { amount, direction, note: note || undefined }], {
-      onSuccess: () => {
-        setStatusMsg(`Wallet adjusted for ${adjustingUser.name}.`)
-        setAdjustingUser(null)
-      },
-      onError: () => {
-        setStatusMsg('Failed to adjust wallet.')
-        setAdjustingUser(null)
-      },
+      onSuccess: () => { setStatusMsg(`Wallet adjusted for ${adjustingUser.name}.`); setAdjustingUser(null) },
+      onError: () => { setStatusMsg('Failed to adjust wallet.'); setAdjustingUser(null) },
     })
   }
 
-  const isMutating = freezeMutation.isPending || unfreezeMutation.isPending
+  const isMutating = freezeMutation.isPending || unfreezeMutation.isPending || adjustMutation.isPending
+
+  const columns: Column<AdminUser>[] = [
+    {
+      key: 'user',
+      header: 'User',
+      render: (user) => (
+        <>
+          <p className="font-medium text-asm-navy">{user.name}</p>
+          <p className="text-[11px] text-asm-muted">{user.email}</p>
+          {user.publicId && <p className="font-mono text-[10px] text-asm-blue">{formatUserId(user.publicId)}</p>}
+        </>
+      ),
+    },
+    { key: 'tier', header: 'Tier', render: (user) => <TierChip tier={user.tier} /> },
+    { key: 'referrals', header: 'Referrals', align: 'right', className: 'font-mono tabular-nums text-asm-body', render: (user) => user.referralCount },
+    {
+      key: 'invested',
+      align: 'right',
+      className: 'font-mono tabular-nums',
+      header: (
+        <button
+          type="button"
+          onClick={() => setAmountSort((s) => (s === '-invested' ? 'invested' : '-invested'))}
+          className="ml-auto flex select-none items-center gap-1 uppercase tracking-[0.07em] hover:text-asm-blue"
+          title="Sort by invested amount"
+        >
+          Active Investments {amountSort === 'invested' ? '↑' : amountSort === '-invested' ? '↓' : ''}
+        </button>
+      ),
+      render: (user) =>
+        user.activeInvested > 0 ? (
+          <span className="font-bold text-asm-blue">{inr(user.activeInvested)}</span>
+        ) : (
+          <span className="text-asm-muted">—</span>
+        ),
+    },
+    { key: 'status', header: 'Status', render: (user) => <StatusChip status={user.status} /> },
+    {
+      key: 'joined',
+      header: 'Joined',
+      className: 'text-[12px] text-asm-body',
+      render: (user) =>
+        new Date(user.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+    },
+    {
+      key: 'created',
+      header: 'Account Created At',
+      className: 'text-[12px] text-asm-muted',
+      render: (user) =>
+        new Date(user.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }),
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      align: 'right',
+      render: (user) => (
+        <div className="flex justify-end gap-2">
+          <Link
+            to={`/admin/users/${user._id}`}
+            className="inline-flex min-h-[40px] items-center rounded-md border border-asm-line px-3 py-1.5 text-[11px] font-semibold text-asm-blue hover:bg-asm-blue-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1"
+          >
+            View
+          </Link>
+          <AdminButton
+            size="sm"
+            variant={user.status === 'active' ? 'outline' : 'primary'}
+            onClick={() => handleToggleFreeze(user)}
+            disabled={isMutating}
+          >
+            {user.status === 'active' ? <span className="text-asm-red">Freeze</span> : 'Unfreeze'}
+          </AdminButton>
+          <AdminButton size="sm" variant="outline" onClick={() => setAdjustingUser(user)} disabled={isMutating}>
+            Adjust wallet
+          </AdminButton>
+        </div>
+      ),
+    },
+  ]
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-[22px] xl:text-[26px] font-bold tracking-tight text-asm-navy">Users</h1>
-        <p className="mt-0.5 text-[13px] xl:text-[14px] text-asm-muted">All registered platform members.</p>
-      </div>
+      <AdminPageHeader title="Users" subtitle="All registered platform members." />
 
-      {/* Search */}
-      <form onSubmit={(e) => { e.preventDefault(); setQ(input.trim()) }} className="flex items-center gap-2">
-        <div className="relative max-w-sm flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-asm-muted" aria-hidden />
-          <input
-            type="search"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Search by User ID, name or email"
-            aria-label="Search users"
-            className="w-full rounded-lg border border-asm-line bg-white py-2 pl-9 pr-3 text-[13px] text-asm-navy placeholder:text-asm-muted focus:border-asm-blue focus:outline-none focus:ring-2 focus:ring-asm-blue"
-          />
-        </div>
-        <button type="submit" className="rounded-lg bg-asm-blue px-3.5 py-2 text-[12px] font-semibold text-white hover:bg-asm-blue-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue">
-          Search
-        </button>
-        {q && (
-          <button type="button" onClick={() => { setInput(''); setQ('') }} className="text-[12px] font-semibold text-asm-muted hover:text-asm-navy">
-            Clear
-          </button>
-        )}
-      </form>
+      <SearchInput value={input} onChange={setInput} placeholder="Search by User ID, name or email" />
 
       {/* Investor filter */}
       <div className="flex items-center gap-2">
@@ -313,160 +319,28 @@ export function AdminUsers() {
         ))}
       </div>
 
-      {/* Status announcer */}
-      <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">
-        {statusMsg}
-      </p>
+      <StatusBanner message={statusMsg} />
 
-      {/* Status banner */}
-      {statusMsg && (
-        <p
-          className={cn(
-            'rounded-lg px-4 py-3 text-[13px] font-medium',
-            statusMsg.includes('Failed')
-              ? 'bg-red-50 text-asm-red'
-              : 'bg-green-50 text-asm-green',
-          )}
-        >
-          {statusMsg}
-        </p>
-      )}
+      <DataTable
+        columns={columns}
+        rows={table.pageRows}
+        getRowKey={(user) => user._id}
+        isLoading={isLoading}
+        isError={isError}
+        errorMessage="Failed to load users. Please refresh."
+        minWidth={900}
+        empty={<EmptyState title={q ? 'No matching users' : 'No users found'} />}
+      />
 
-      {/* Table */}
-      <div className="overflow-x-auto rounded-xl border border-asm-line bg-white shadow-[0_1px_4px_-1px_rgba(16,42,92,0.06)]">
-        <table className="w-full min-w-[900px] border-collapse text-[13px]">
-          <thead>
-            <tr className="border-b border-asm-line bg-asm-tint text-[11px] font-bold uppercase tracking-[0.07em] text-asm-muted">
-              <th scope="col" className="px-3 py-2.5 text-left">User</th>
-              <th scope="col" className="px-3 py-2.5 text-left">Tier</th>
-              <th scope="col" className="px-3 py-2.5 text-right">Referrals</th>
-              <th
-                scope="col"
-                className="px-3 py-2.5 text-right cursor-pointer hover:text-asm-blue select-none"
-                onClick={() => setAmountSort((s) => s === '-invested' ? 'invested' : '-invested')}
-                title="Sort by invested amount"
-              >
-                Active Investments {amountSort === 'invested' ? '↑' : amountSort === '-invested' ? '↓' : ''}
-              </th>
-              <th scope="col" className="px-3 py-2.5 text-left">Status</th>
-              <th scope="col" className="px-3 py-2.5 text-left">Joined</th>
-              <th scope="col" className="px-3 py-2.5 text-left">Account Created At</th>
-              <th scope="col" className="px-3 py-2.5 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
-            ) : isError ? (
-              <tr>
-                <td
-                  colSpan={8}
-                  className="px-4 py-10 text-center text-[13px] text-asm-red"
-                  role="alert"
-                >
-                  Failed to load users. Please refresh.
-                </td>
-              </tr>
-            ) : !data || data.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="px-4 py-16 text-center">
-                  <span className="mx-auto flex size-10 items-center justify-center rounded-full bg-asm-tint">
-                    <Users className="size-5 text-asm-muted" strokeWidth={1.5} aria-hidden />
-                  </span>
-                  <p className="mt-3 text-[13px] font-semibold text-asm-navy">No users found</p>
-                </td>
-              </tr>
-            ) : (
-              data.map((user, idx) => (
-                <tr
-                  key={user._id}
-                  className={cn(
-                    'border-b border-asm-line last:border-0',
-                    idx % 2 === 0 ? 'bg-white' : 'bg-asm-tint/40',
-                  )}
-                >
-                  <td className="px-3 py-2.5">
-                    <p className="font-medium text-asm-navy">{user.name}</p>
-                    <p className="text-[11px] text-asm-muted">{user.email}</p>
-                    {user.publicId && (
-                      <p className="font-mono text-[10px] text-asm-blue">{formatUserId(user.publicId)}</p>
-                    )}
-                  </td>
-                  <td className="px-3 py-2.5">
-                    <TierChip tier={user.tier} />
-                  </td>
-                  <td className="px-3 py-2.5 text-right font-mono tabular-nums text-asm-body">
-                    {user.referralCount}
-                  </td>
-                  <td className="px-3 py-2.5 text-right font-mono tabular-nums">
-                    {user.activeInvested > 0 ? (
-                      <span className="font-bold text-asm-blue">{inr(user.activeInvested)}</span>
-                    ) : (
-                      <span className="text-asm-muted">—</span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2.5">
-                    <StatusChip status={user.status} />
-                  </td>
-                  <td className="px-3 py-2.5 text-[12px] text-asm-body">
-                    {new Date(user.createdAt).toLocaleDateString('en-IN', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric',
-                    })}
-                  </td>
-                  <td className="px-3 py-2.5 text-[12px] text-asm-muted">
-                    {new Date(user.createdAt).toLocaleTimeString('en-IN', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      hour12: true,
-                    })}
-                  </td>
-                  <td className="px-3 py-2.5">
-                    <div className="flex justify-end gap-2">
-                      <Link
-                        to={`/admin/users/${user._id}`}
-                        className="inline-flex min-h-[40px] items-center rounded-md border border-asm-line px-3 py-1.5 text-[11px] font-semibold text-asm-blue hover:bg-asm-blue-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1"
-                      >
-                        View
-                      </Link>
-                      <button
-                        type="button"
-                        onClick={() => handleToggleFreeze(user)}
-                        disabled={isMutating || adjustMutation.isPending}
-                        className={cn(
-                          'rounded-md inline-flex min-h-[40px] items-center px-3 py-1.5 text-[11px] font-semibold',
-                          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1',
-                          'disabled:cursor-not-allowed disabled:opacity-40',
-                          user.status === 'active'
-                            ? 'border border-asm-line text-asm-red hover:bg-red-50 focus-visible:ring-asm-red'
-                            : 'bg-asm-blue text-white hover:bg-asm-blue-dark focus-visible:ring-asm-blue',
-                        )}
-                      >
-                        {user.status === 'active' ? 'Freeze' : 'Unfreeze'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setAdjustingUser(user)}
-                        disabled={isMutating || adjustMutation.isPending}
-                        className={cn(
-                          'rounded-md border border-asm-line inline-flex min-h-[40px] items-center px-3 py-1.5 text-[11px] font-semibold text-asm-body',
-                          'hover:bg-asm-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1',
-                          'disabled:cursor-not-allowed disabled:opacity-40',
-                        )}
-                      >
-                        Adjust wallet
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      <Pagination
+        page={table.page}
+        pageCount={table.pageCount}
+        total={table.total}
+        pageSize={table.pageSize}
+        onPageChange={table.setPage}
+        onPageSizeChange={table.setPageSize}
+      />
 
-      {/* Adjust wallet dialog */}
       {adjustingUser && (
         <AdjustDialog
           user={adjustingUser}
