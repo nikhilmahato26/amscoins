@@ -1,13 +1,16 @@
 import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   AlertCircle,
   ArrowRight,
+  ArrowUpRight,
   AtSign,
   Building2,
   Check,
+  ChevronDown,
   ChevronRight,
   Clock,
+  Gift,
   IndianRupee,
   Info,
   Landmark,
@@ -21,14 +24,16 @@ import type { LucideIcon } from 'lucide-react'
 
 import { AppShell } from '@/components/app/AppShell'
 import { useAuth } from '@/auth/AuthContext'
-import { useWallet, useWithdrawals, useCreateWithdrawal } from '@/hooks/queries'
+import { useWallet, useWithdrawals, useCreateWithdrawal, useSettings } from '@/hooks/queries'
 import { inr } from '@/lib/format'
 import { ApiError } from '@/lib/api'
 import { cn } from '@/lib/utils'
+import { tdsPctForTier, upgradeHints } from '@/lib/tiers'
 import type { Withdrawal } from '@/services/api/withdrawals'
 
 /* ── Constants (in rupees for UI display; converted to paise on submit) ── */
 const MIN_WITHDRAWAL_RS = 500
+const UPI_MAX_RS = 5_000
 const MAX_WITHDRAWAL_BY_TIER: Record<'silver' | 'gold' | 'diamond', number> = {
   silver: 30_000,
   gold: 50_000,
@@ -48,6 +53,17 @@ const fadeUp = {
 /* ── Helpers ── */
 const rupeesCompact = (value: number) =>
   new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(value)
+
+/* Human-friendly ticking countdown, e.g. "11h 59m 58s", "59m 58s", "58s". */
+function formatCountdown(ms: number): string {
+  const total = Math.max(0, Math.ceil(ms / 1000))
+  const h = Math.floor(total / 3600)
+  const m = Math.floor((total % 3600) / 60)
+  const s = total % 60
+  if (h > 0) return `${h}h ${m}m ${s}s`
+  if (m > 0) return `${m}m ${s}s`
+  return `${s}s`
+}
 
 function statusLabel(status: Withdrawal['status']): { label: string; cls: string } {
   switch (status) {
@@ -83,9 +99,53 @@ export function WithdrawPage() {
   const balanceRs    = balancePaise / 100
   const maxWithdrawalRs = MAX_WITHDRAWAL_BY_TIER[user?.tier ?? 'silver']
 
+  /* TDS rate is tier-based (silver 5% / gold 3% / diamond 0%). */
+  const tdsPct = tdsPctForTier(user?.tier)
+  const tdsFraction = tdsPct / 100
+  /* Higher tiers the user can still unlock, with the TDS/return they'd get. */
+  const upgrades = user ? upgradeHints(user.tier, user.referralCount) : []
+
+  /* ── Withdrawal cooldown (admin-configurable rate-limit) ──
+     Server is the source of truth (429). Here we mirror it: the anchor is the
+     user's most recent withdrawal (ANY status) + `withdrawalCooldownHours`. */
+  const { data: settings } = useSettings()
+  const cooldownHours = settings?.withdrawalCooldownHours ?? 0
+  const lastWithdrawalTs =
+    withdrawalsData && withdrawalsData.length
+      ? Math.max(...withdrawalsData.map((w) => new Date(w.createdAt).getTime()))
+      : 0
+  const nextAllowedTs = cooldownHours > 0 && lastWithdrawalTs ? lastWithdrawalTs + cooldownHours * 3600e3 : 0
+
+  const [nowTs, setNowTs] = useState(() => Date.now())
+  const inCooldown = nextAllowedTs > nowTs
+  const cooldownRemainingMs = inCooldown ? nextAllowedTs - nowTs : 0
+
+  /* Tick every second only while the countdown is visible. */
+  useEffect(() => {
+    if (!inCooldown) return
+    const id = window.setInterval(() => setNowTs(Date.now()), 1000)
+    return () => window.clearInterval(id)
+  }, [inCooldown])
+
   const parsedRs  = Number.parseFloat(amount)
   const validRs   = Number.isFinite(parsedRs) && parsedRs > 0 ? parsedRs : 0
   const validPaise = Math.round(validRs * 100)
+  const upiDisabled = validRs > UPI_MAX_RS
+
+  /* Auto-switch away from UPI when disabled */
+  useEffect(() => {
+    if (upiDisabled && newType === 'upi') setNewType('bank')
+  }, [upiDisabled, newType])
+
+  useEffect(() => {
+    if (!upiDisabled || destMode !== 'saved') return
+    const selected = payoutMethods.find((m) => m.id === selectedMethodId)
+    if (selected?.type === 'upi') {
+      const bankMethod = payoutMethods.find((m) => m.type === 'bank')
+      if (bankMethod) setSelectedMethodId(bankMethod.id)
+      else setDestMode('new')
+    }
+  }, [upiDisabled, destMode, selectedMethodId, payoutMethods])
 
   /* Client-side validation */
   function validate(): string | null {
@@ -107,6 +167,10 @@ export function WithdrawPage() {
 
   function handleSubmit() {
     setFieldError(null)
+    if (inCooldown) {
+      setFieldError(`Please wait ${formatCountdown(cooldownRemainingMs)} before your next withdrawal.`)
+      return
+    }
     const err = validate()
     if (err) { setFieldError(err); return }
     if (destMode === 'saved') {
@@ -148,7 +212,7 @@ export function WithdrawPage() {
             <p className="text-[11px] font-bold uppercase tracking-[1px] text-asm-muted">Breakdown</p>
             <div className="mt-4 flex flex-col gap-3">
               <BreakdownRow label="Gross amount" value={inr(w.gross)} />
-              <BreakdownRow label="TDS (5%)" value={`− ${inr(w.tds)}`} valueClass="text-red-600" />
+              <BreakdownRow label={`TDS (${tdsPct}%)`} value={`− ${inr(w.tds)}`} valueClass="text-red-600" />
               <span className="block h-px w-full bg-asm-line" />
               <BreakdownRow label="Net payout" value={inr(w.net)} valueClass="text-asm-greenInk text-base font-extrabold" />
             </div>
@@ -169,7 +233,7 @@ export function WithdrawPage() {
   return (
     <AppShell backTo="/app" width="wide">
       <motion.div
-        className="flex flex-col gap-5 lg:mx-auto lg:max-w-[560px]"
+        className="flex flex-col gap-5 pb-28 lg:mx-auto lg:max-w-[560px]"
         variants={container}
         initial="hidden"
         animate="visible"
@@ -234,7 +298,10 @@ export function WithdrawPage() {
 
           {payoutMethods.length > 0 && (
             <div className="flex flex-col gap-2">
-              {payoutMethods.map((m) => {
+              {payoutMethods
+                // Hide UPI saved methods entirely when UPI is unavailable for this amount
+                .filter((m) => !(upiDisabled && m.type === 'upi'))
+                .map((m) => {
                 const active = destMode === 'saved' && selectedMethodId === m.id
                 return (
                   <button
@@ -267,7 +334,7 @@ export function WithdrawPage() {
                 onClick={() => { setDestMode('new'); setFieldError(null) }}
                 className={cn(
                   'flex items-center gap-2 rounded-xl border border-dashed px-4 py-3 text-[13px] font-semibold transition-colors',
-                  destMode === 'new' ? 'border-asm-blue bg-asm-blue-tint/50 text-asm-blue' : 'border-asm-line text-asm-muted hover:text-asm-navy'
+                  destMode === 'new' ? 'border-asm-blue bg-asm-blue-tint/50 text-asm-blue' : 'border-asm-muted/40 bg-asm-tint text-asm-body hover:text-asm-navy'
                 )}
               >
                 <Plus className="size-4" aria-hidden /> Use a new account
@@ -277,10 +344,22 @@ export function WithdrawPage() {
 
           {destMode === 'new' && (
             <div className="flex flex-col gap-3 rounded-xl border border-asm-line bg-white p-4">
-              <div className="grid grid-cols-2 gap-2">
-                <TypeToggle active={newType === 'upi'}  onClick={() => { setNewType('upi');  setFieldError(null) }} Icon={AtSign}   label="UPI ID" />
+              <div className={cn('gap-2', upiDisabled ? 'flex' : 'grid grid-cols-2')}>
+                {/* UPI toggle is hidden (not rendered) when amount exceeds UPI limit */}
+                {!upiDisabled && (
+                  <TypeToggle active={newType === 'upi'} onClick={() => { setNewType('upi'); setFieldError(null) }} Icon={AtSign} label="UPI ID" />
+                )}
                 <TypeToggle active={newType === 'bank'} onClick={() => { setNewType('bank'); setFieldError(null) }} Icon={Landmark} label="Bank account" />
               </div>
+
+              {upiDisabled && (
+                <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3.5">
+                  <Info className="mt-0.5 size-4 shrink-0 text-amber-600" aria-hidden />
+                  <p className="text-[12px] leading-relaxed text-amber-800">
+                    UPI not available for amounts above ₹{rupeesCompact(UPI_MAX_RS)}. Please use bank transfer.
+                  </p>
+                </div>
+              )}
 
               {newType === 'upi' ? (
                 <FormField
@@ -336,24 +415,48 @@ export function WithdrawPage() {
           </h2>
           <div className="mt-3 flex items-center justify-between">
             <span className="flex items-center gap-2 text-[13px] text-asm-body">
-              TDS (5%)
+              TDS ({tdsPct}%)
               <Info className="size-3.5 text-asm-muted" aria-hidden />
             </span>
             <span className="font-mono text-[13px] font-bold tabular-nums text-red-600">
-              {validRs > 0 ? `− ${inr(Math.round(validPaise * 0.05))}` : '−'}
+              {validRs > 0 ? (tdsPct > 0 ? `− ${inr(Math.round(validPaise * tdsFraction))}` : '₹0') : '−'}
             </span>
           </div>
           <span className="my-3 block h-px w-full bg-asm-line" />
           <div className="flex items-center justify-between">
             <span className="text-[14px] font-bold text-asm-navy">You will get</span>
             <span className="font-mono text-lg font-bold tabular-nums text-asm-greenInk">
-              {validRs > 0 ? inr(Math.round(validPaise * 0.95)) : '₹0'}
+              {validRs > 0 ? inr(Math.round(validPaise * (1 - tdsFraction))) : '₹0'}
             </span>
           </div>
           <p className="mt-2 text-[11px] text-asm-muted">
             Actual amounts are confirmed in the withdrawal receipt.
           </p>
         </section>
+
+        {/* ── Lower-TDS incentive: refer more to unlock a better tier ── */}
+        {upgrades.length > 0 && (
+          <section className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+            <h2 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[1px] text-amber-700">
+              <Gift className="size-3.5" aria-hidden />
+              Pay less TDS
+            </h2>
+            <ul className="mt-3 flex flex-col gap-2.5">
+              {upgrades.map(({ tier, label, remaining, tdsPct: nextTds, returnPct }) => (
+                <li key={tier} className="flex items-start gap-2.5 text-[12px] leading-snug text-amber-900">
+                  <ArrowUpRight className="mt-0.5 size-3.5 shrink-0 text-amber-600" aria-hidden />
+                  <span>
+                    Refer{' '}
+                    <span className="font-bold">{remaining} more</span>{' '}
+                    to unlock <span className="font-bold">{label}</span>: TDS drops to{' '}
+                    <span className="font-bold">{nextTds}%</span> and returns rise to{' '}
+                    <span className="font-bold">{returnPct}%</span>.
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {/* ── Inline error ── */}
         {(fieldError || mutation.isError) && (
@@ -369,39 +472,35 @@ export function WithdrawPage() {
           </div>
         )}
 
-        {/* ── Action ── */}
-        <div className="flex flex-col gap-5 pt-1">
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={mutation.isPending}
-            className={cn(
-              'flex h-14 w-full items-center justify-center gap-3 rounded-2xl',
-              'bg-asm-greenInk shadow-[0_8px_24px_-8px_rgba(21,128,61,0.5)]',
-              'text-base font-bold uppercase leading-6 tracking-[0.04em] text-white',
-              'transition-colors hover:bg-green-800 active:scale-[0.99]',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-greenInk focus-visible:ring-offset-2',
-              'disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none'
-            )}
+        {/* ── Cooldown notice (live countdown) ── */}
+        {inCooldown && (
+          <div
+            className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3.5"
+            role="status"
+            aria-live="polite"
           >
-            {mutation.isPending ? (
-              <>
-                <Loader2 className="size-4 animate-spin" aria-hidden />
-                Submitting…
-              </>
-            ) : (
-              <>
-                Submit Withdrawal Request
-                <ArrowRight className="size-4" aria-hidden />
-              </>
-            )}
-          </button>
+            <Clock className="mt-0.5 size-4 shrink-0 text-amber-600" aria-hidden />
+            <p className="text-[12px] leading-relaxed text-amber-800">
+              You can withdraw again in{' '}
+              <span className="font-bold tabular-nums text-amber-900">{formatCountdown(cooldownRemainingMs)}</span>.
+              Withdrawals are limited to one every <span className="font-bold">{cooldownHours} hours</span>.
+            </p>
+          </div>
+        )}
 
-          <section className="rounded-2xl border border-asm-line bg-white p-5 shadow-[0_2px_12px_-4px_rgba(16,42,92,0.06)]">
-            <h2 className="text-[11px] font-bold uppercase tracking-[1px] text-amber-600">
-              Key Points
-            </h2>
-            <ul className="mt-3 flex flex-col gap-3">
+        {/* ── Key Points disclosure ── */}
+        <div className="flex flex-col gap-3 pt-1">
+          <details className="group rounded-2xl border border-asm-line bg-white shadow-[0_2px_12px_-4px_rgba(16,42,92,0.06)]">
+            <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4">
+              <span className="text-[11px] font-bold uppercase tracking-[1px] text-amber-600">
+                Important withdrawal rules
+              </span>
+              <ChevronDown
+                className="size-4 shrink-0 text-asm-muted transition-transform group-open:rotate-180"
+                aria-hidden
+              />
+            </summary>
+            <ul className="flex flex-col gap-3 px-5 pb-5">
               <KeyPoint>
                 Every withdrawal is <Strong>reviewed by our team</Strong> before processing.
                 This protects your funds.
@@ -417,7 +516,7 @@ export function WithdrawPage() {
                 Need help? Tap <Strong>?</Strong> or email <Strong>support@asmcoins.com</Strong>.
               </KeyPoint>
             </ul>
-          </section>
+          </details>
         </div>
 
         {/* ── Past withdrawals ── */}
@@ -475,6 +574,44 @@ export function WithdrawPage() {
         </motion.section>
 
       </motion.div>
+
+      {/* ── Sticky submit bar ── */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-10 border-t border-asm-line bg-white/95 px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 backdrop-blur-sm"
+        aria-live="polite"
+      >
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={mutation.isPending || inCooldown}
+          className={cn(
+            'flex h-14 w-full items-center justify-center gap-3 rounded-2xl',
+            'bg-asm-greenInk shadow-[0_8px_24px_-8px_rgba(21,128,61,0.5)]',
+            'text-base font-bold uppercase leading-6 tracking-[0.04em] text-white',
+            'transition-colors hover:bg-green-800 active:scale-[0.99]',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-greenInk focus-visible:ring-offset-2',
+            'disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none',
+            'lg:mx-auto lg:max-w-[560px]'
+          )}
+        >
+          {mutation.isPending ? (
+            <>
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+              Submitting…
+            </>
+          ) : inCooldown ? (
+            <>
+              <Clock className="size-4" aria-hidden />
+              <span className="tabular-nums">Available in {formatCountdown(cooldownRemainingMs)}</span>
+            </>
+          ) : (
+            <>
+              Submit Withdrawal Request
+              <ArrowRight className="size-4" aria-hidden />
+            </>
+          )}
+        </button>
+      </div>
     </AppShell>
   )
 }
@@ -512,7 +649,7 @@ function FormField({
         <input
           placeholder={placeholder}
           className={cn(
-            'min-w-0 flex-1 bg-transparent text-[13px] text-asm-navy outline-none placeholder:text-asm-muted/55',
+            'min-w-0 flex-1 bg-transparent text-[13px] text-asm-navy outline-none placeholder:text-asm-muted',
             className
           )}
           {...props}
@@ -528,19 +665,24 @@ function TypeToggle({
   onClick,
   Icon,
   label,
+  disabled,
 }: {
   active: boolean
   onClick: () => void
   Icon: LucideIcon
   label: string
+  disabled?: boolean
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       className={cn(
         'flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-[12px] font-semibold transition-colors',
-        active ? 'border-asm-blue bg-asm-blue-tint text-asm-blue' : 'border-asm-line bg-white text-asm-muted hover:text-asm-navy'
+        disabled
+          ? 'cursor-not-allowed border-asm-line bg-asm-tint text-asm-muted/70'
+          : active ? 'border-asm-blue bg-asm-blue-tint text-asm-blue' : 'border-asm-line bg-white text-asm-muted hover:text-asm-navy'
       )}
     >
       <Icon className="size-4" aria-hidden />
