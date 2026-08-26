@@ -11,6 +11,15 @@ export interface PublicSettings {
   usdtBep20QrUrl: string
   whatsappNumber: string
   telegramUsername: string
+  usdtRateInr: number // INR value of 1 USDT — admin-configurable
+  cycleDurationHours: number
+  autoRejectHours: number
+  autoDepositHours: number
+  depositCooldownHours: number
+  withdrawalCooldownHours: number // hours a user must wait between withdrawals (0 = off)
+  autoRejectEnabled: boolean
+  autoDepositEnabled: boolean
+  autoPayEnabled: boolean
   methods: {
     usdtCrypto: boolean
     whatsapp: boolean

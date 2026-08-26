@@ -84,6 +84,14 @@ const resetPasswordSchema = z.object({ resetToken: z.string().min(10), password:
 const updateSettingsSchema = z
   .object({
     inrThresholdPaise: z.number().int().min(0).optional(),
+    cycleDurationHours: z.number().int().min(1).optional(),
+    autoRejectHours: z.number().int().min(1).optional(),
+    autoDepositHours: z.number().int().min(1).optional(),
+    depositCooldownHours: z.number().int().min(0).optional(),
+    withdrawalCooldownHours: z.number().int().min(0).optional(),
+    autoRejectEnabled: z.boolean().optional(),
+    autoDepositEnabled: z.boolean().optional(),
+    autoPayEnabled: z.boolean().optional(),
     usdtTrc20Address: z.string().trim().optional(),
     usdtBep20Address: z.string().trim().optional(),
     whatsappNumber: z
@@ -107,10 +115,33 @@ const updateSettingsSchema = z
     message: 'Provide at least one field to update',
   })
 
+const returnRejectSchema = z.object({
+  reason: z.string().min(1),
+  amount: z.number().int().min(0),
+})
+
+// Rejecting a running investment (active/matured) from the payout controls:
+// reason is optional (a plain cancel needs none), amount is the custom credit.
+const payoutRejectSchema = z.object({
+  reason: z.string().optional().default(''),
+  amount: z.number().int().min(0),
+})
+
+const bulkApproveSchema = z.object({
+  ids: z.array(z.string().min(1)).min(1, 'At least one ID required'),
+})
+
+const bulkRejectInvestmentsSchema = z.object({
+  ids: z.array(z.string().min(1)).min(1, 'At least one ID required'),
+  note: z.string().max(500).optional(),
+})
+
 module.exports = {
   registerSchema,
   loginSchema,
   createInvestmentSchema,
+  returnRejectSchema,
+  payoutRejectSchema,
   createWithdrawalSchema,
   payoutMethodSchema,
   updateProfileSchema,
@@ -121,4 +152,6 @@ module.exports = {
   forgotPasswordSchema,
   verifyOtpSchema,
   resetPasswordSchema,
+  bulkApproveSchema,
+  bulkRejectInvestmentsSchema,
 }

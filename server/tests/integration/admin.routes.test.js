@@ -33,7 +33,7 @@ test('non-admin is blocked from admin routes with 403', async () => {
   expect(res.status).toBe(403)
 })
 
-test('admin approves a deposit; wallet credited and referrer incremented', async () => {
+test('admin approves a deposit; funds stay locked and referrer incremented', async () => {
   const referrer = await registerToken()
   const { token: userToken } = await registerToken(referrer.user.referralCode)
   await request(app).post('/api/investments').set('Authorization', `Bearer ${userToken}`).send({ planKey: 'silver', amount: 200000 })
@@ -46,7 +46,10 @@ test('admin approves a deposit; wallet credited and referrer incremented', async
   expect(approve.status).toBe(200)
 
   const investorId = pending.body[0].user._id
-  expect((await Wallet.findOne({ user: investorId })).balance).toBe(200000)
+  // Lock-till-maturity: principal is NOT credited at approval (wallet stays ₹0).
+  const w = await Wallet.findOne({ user: investorId })
+  expect(w == null || w.balance === 0).toBe(true)
+  // Referral reward still fires at approval (unrelated to the investor's lock).
   expect((await User.findById(referrer.user.id)).referralCount).toBe(1)
 })
 

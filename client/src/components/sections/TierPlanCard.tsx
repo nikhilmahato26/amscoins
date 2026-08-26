@@ -74,7 +74,7 @@ export function TierPlanCard({
         </div>
         <div className="flex items-start justify-between">
           <span className="text-sm leading-5 text-asm-body">Total ROI</span>
-          <span className="text-sm font-bold leading-5 text-asm-green">{roi}</span>
+          <span className="text-sm font-bold leading-5 text-asm-greenInk">{roi}</span>
         </div>
       </div>
 

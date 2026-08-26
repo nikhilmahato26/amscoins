@@ -22,6 +22,29 @@ test.describe('Referral link', () => {
     await expect(page.getByText(/referral code applied/i)).toBeVisible()
   })
 
+  test('referral page shows link above code and has a share button', async ({ page }) => {
+    const email = uniqueEmail('refpage')
+    await register({ name: 'Ref Page User', email, password: 'testpass1' })
+
+    await page.goto('/login')
+    await page.getByPlaceholder('you@example.com').fill(email)
+    await page.getByPlaceholder('Your password').fill('testpass1')
+    await page.getByRole('button', { name: /sign in/i }).click()
+    await expect(page).toHaveURL(/\/app/, { timeout: 15_000 })
+
+    await page.goto('/app/referral')
+    await expect(page.getByText(/tier progression/i)).toBeVisible({ timeout: 10_000 })
+
+    // Link label and code label both visible
+    const linkLabel = page.getByText('Your referral link')
+    const codeLabel = page.getByText('Your referral code')
+    await expect(linkLabel).toBeVisible()
+    await expect(codeLabel).toBeVisible()
+
+    // Share button is present
+    await expect(page.getByLabel(/share referral link/i)).toBeVisible()
+  })
+
   test('full journey: a real code carried through the link records the referral', async ({ page }) => {
     // Arrange: a referrer exists; capture the code the app would put in their link.
     const referrer = await register({
@@ -51,5 +74,30 @@ test.describe('Referral link', () => {
     // registration-time signal we care about is membership in `referrals`.
     const overview = await referralOverview(referrer.token)
     expect(overview.referrals.map((r) => r.name)).toContain('Referred Ravi')
+  })
+
+  test('referral page shows the new tier thresholds (gold@21, diamond@52)', async ({ page }) => {
+    const email = uniqueEmail('refthresh')
+    await register({ name: 'Threshold User', email, password: 'testpass1' })
+
+    await page.goto('/login')
+    await page.getByPlaceholder('you@example.com').fill(email)
+    await page.getByPlaceholder('Your password').fill('testpass1')
+    await page.getByRole('button', { name: /sign in/i }).click()
+    await expect(page).toHaveURL(/\/app/, { timeout: 15_000 })
+
+    await page.goto('/app/referral')
+    await expect(page.getByText(/tier progression/i)).toBeVisible({ timeout: 10_000 })
+
+    // Level Requirements cards reflect the new unlock counts.
+    await expect(page.getByText(/unlock with 21 referrals/i)).toBeVisible()
+    await expect(page.getByText(/unlock with 52 referrals/i)).toBeVisible()
+
+    // Tier stepper member ranges (en-dash matched loosely with `.`).
+    await expect(page.getByText(/21.51 members/).first()).toBeVisible()
+    await expect(page.getByText(/52\+ members/).first()).toBeVisible()
+
+    // A fresh user (0 referrals) is progressing toward Gold at 21.
+    await expect(page.getByText('0/21').first()).toBeVisible()
   })
 })

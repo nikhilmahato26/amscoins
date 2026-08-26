@@ -26,12 +26,12 @@ async function withTxn(fn) {
   }
 }
 
-test('first deposit increments referrer count and upgrades to gold at 11', async () => {
-  const ref = await makeUser({ referralCount: 10, tier: 'silver' })
+test('first deposit increments referrer count and upgrades to gold at 21', async () => {
+  const ref = await makeUser({ referralCount: 20, tier: 'silver' })
   const u = await makeUser({ referredBy: ref._id })
   await withTxn((s) => creditReferralIfFirst(u, s))
   const fresh = await User.findById(ref._id)
-  expect(fresh.referralCount).toBe(11)
+  expect(fresh.referralCount).toBe(21)
   expect(fresh.tier).toBe('gold')
   expect((await User.findById(u._id)).firstDepositCredited).toBe(true)
 })
@@ -53,8 +53,8 @@ test('user with no referrer still flips flag', async () => {
   expect((await User.findById(u._id)).firstDepositCredited).toBe(true)
 })
 
-test('upgrades to diamond at 21', async () => {
-  const ref = await makeUser({ referralCount: 20, tier: 'gold' })
+test('upgrades to diamond at 52', async () => {
+  const ref = await makeUser({ referralCount: 51, tier: 'gold' })
   const u = await makeUser({ referredBy: ref._id })
   await withTxn((s) => creditReferralIfFirst(u, s))
   expect((await User.findById(ref._id)).tier).toBe('diamond')

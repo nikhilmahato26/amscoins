@@ -76,7 +76,6 @@ function relDate(iso: string): string {
   const days = Math.floor(diff / 86_400_000)
   if (days === 0) return 'Today'
   if (days === 1) return 'Yesterday'
-  if (days < 7) return `${days} days ago`
   return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
 }
 
@@ -94,28 +93,28 @@ const STATUS_PILL: Record<Transaction['status'], string> = {
   rejected: 'bg-red-50 text-asm-red',
 }
 
-/* ── Tier-specific header gradients ── */
-// Tier-specific header gradients for the identity card. All are dark enough
-// to keep the white status pill and avatar ring legible.
+/* ── Tier-specific membership-card gradients ── */
+// Each ramp stays dark enough for white body/secondary text to clear AA over
+// its top-left origin (135deg → stop 0 is where the name and email sit).
 const TIER_BANNER: Record<'silver' | 'gold' | 'diamond', string> = {
-  silver: 'linear-gradient(135deg, #6B7280 0%, #9CA3AF 45%, #4B5563 100%)',
-  gold: 'linear-gradient(135deg, #B45309 0%, #F59E0B 50%, #92400E 100%)',
-  diamond: 'linear-gradient(135deg, #0EA5E9 0%, #38BDF8 45%, #1E3A8A 100%)',
+  silver:  'linear-gradient(135deg, #475569 0%, #64748B 55%, #334155 100%)',
+  gold:    'linear-gradient(135deg, #92400E 0%, #C2740A 55%, #7C2D12 100%)',
+  diamond: 'linear-gradient(135deg, #1E3A8A 0%, #2563EB 50%, #1E3A8A 100%)',
 }
-const DEFAULT_BANNER = 'linear-gradient(135deg, #0B4FD8 0%, #15803D 100%)'
+const DEFAULT_BANNER = 'linear-gradient(135deg, #0B4FD8 0%, #0A6BC0 45%, #15803D 100%)'
 
 /* ── Skeleton ── */
 function SkeletonRow() {
   return (
-    <li className="flex items-center gap-3 px-5 py-4 animate-pulse">
-      <span className="size-9 shrink-0 rounded-full bg-asm-tint" />
+    <li className="flex items-center gap-3 px-5 py-4">
+      <span className="skeleton size-9 shrink-0 rounded-full" />
       <div className="flex flex-1 flex-col gap-1.5">
-        <span className="h-3 w-2/3 rounded bg-asm-tint" />
-        <span className="h-2.5 w-1/3 rounded bg-asm-tint" />
+        <span className="skeleton h-3 w-2/3" />
+        <span className="skeleton h-2.5 w-1/3" />
       </div>
       <div className="flex flex-col items-end gap-1.5">
-        <span className="h-3.5 w-16 rounded bg-asm-tint" />
-        <span className="h-2.5 w-10 rounded bg-asm-tint" />
+        <span className="skeleton h-3.5 w-16" />
+        <span className="skeleton h-2.5 w-10" />
       </div>
     </li>
   )
@@ -147,6 +146,7 @@ export function AccountPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [copied, setCopied]       = useState(false)
+  const [visibleCount, setVisibleCount] = useState(10)
 
   async function handleSignOut() {
     await authService.logout()
@@ -291,129 +291,138 @@ export function AccountPage() {
         animate="visible"
       >
 
-        {/* ── Identity card ── */}
+        {/* ── Membership / identity card ── */}
         <motion.section
           variants={fadeUp}
-          className="relative overflow-hidden rounded-2xl border border-asm-line bg-white shadow-[0_4px_20px_-6px_rgba(16,42,92,0.12)]"
+          className="relative isolate overflow-hidden rounded-2xl text-white shadow-[0_16px_40px_-14px_rgba(11,42,92,0.55)]"
+          style={{ background: tier ? TIER_BANNER[tier] : DEFAULT_BANNER }}
         >
-          {/* Gradient header strip */}
-          <div
-            aria-hidden
-            className="h-[72px] w-full"
-            style={{ background: tier ? TIER_BANNER[tier] : DEFAULT_BANNER }}
-          />
+          {/* Decorative geometry — soft glows, concentric rings, top sheen, scrim */}
+          <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div className="absolute -right-20 -top-24 size-64 rounded-full bg-white/12 blur-2xl" />
+            <div className="absolute -bottom-28 -left-16 size-64 rounded-full bg-black/20 blur-3xl" />
+            <svg className="absolute -right-8 -top-10 h-44 w-44 text-white/[0.09]" viewBox="0 0 176 176" fill="none">
+              <circle cx="132" cy="44" r="30" stroke="currentColor" strokeWidth="1.5" />
+              <circle cx="132" cy="44" r="50" stroke="currentColor" strokeWidth="1.5" />
+              <circle cx="132" cy="44" r="70" stroke="currentColor" strokeWidth="1.5" />
+            </svg>
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/45 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-br from-black/20 via-transparent to-black/25" />
+          </div>
 
-          {/* Status pill — sits on the gradient, reads in white */}
-          <span
-            className={cn(
-              'absolute right-4 top-3 z-10 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide backdrop-blur',
-              status === 'active' ? 'bg-white/15 text-white ring-1 ring-white/30' : 'bg-amber-100 text-amber-800'
-            )}
-          >
-            <span className={cn('size-1.5 rounded-full', status === 'active' ? 'bg-white' : 'bg-amber-500')} aria-hidden />
-            {status === 'active' ? 'Active' : 'Frozen'}
-          </span>
+          {/* Top bar — brand wordmark + account status */}
+          <div className="relative flex items-center justify-between px-5 pt-4">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="flex size-5 items-center justify-center rounded-md bg-white/20 ring-1 ring-white/30">
+                <TrendingUp className="size-3" strokeWidth={2.6} aria-hidden />
+              </span>
+              <span className="text-[12px] font-extrabold tracking-tight">ASM Coins</span>
+            </span>
+            <span
+              className={cn(
+                'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide backdrop-blur',
+                status === 'active' ? 'bg-white/15 text-white ring-1 ring-white/30' : 'bg-amber-100 text-amber-800'
+              )}
+            >
+              <span className={cn('size-1.5 rounded-full', status === 'active' ? 'bg-white' : 'bg-amber-500')} aria-hidden />
+              {status === 'active' ? 'Active' : 'Frozen'}
+            </span>
+          </div>
 
-          <div className="px-5 pb-5">
-            {/* Avatar + edit — overlapping the gradient, baseline-aligned */}
-            <div className="-mt-9 mb-3 flex items-end justify-between">
-              {/* Avatar with photo upload */}
-              <div className="relative">
-                {avatar ? (
-                  <img
-                    src={avatar}
-                    alt=""
-                    decoding="async"
-                    className="size-[64px] shrink-0 rounded-2xl border-4 border-white object-cover shadow-[0_4px_12px_-2px_rgba(11,79,216,0.4)]"
-                  />
-                ) : (
-                  <span
-                    className="flex size-[64px] shrink-0 items-center justify-center rounded-2xl border-4 border-white bg-asm-blue font-jakarta text-[22px] font-extrabold tracking-tight text-white shadow-[0_4px_12px_-2px_rgba(11,79,216,0.4)]"
-                    aria-hidden
-                  >
-                    {initials(name)}
-                  </span>
-                )}
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
-                  aria-label="Change profile photo"
-                  className="absolute -bottom-1 -right-1 flex size-7 items-center justify-center rounded-full border-2 border-white bg-asm-blue text-white shadow-sm transition-colors hover:bg-asm-blue-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue disabled:opacity-60"
-                >
-                  {uploading ? (
-                    <span className="size-3 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden />
-                  ) : (
-                    <Camera className="size-3.5" strokeWidth={2.2} aria-hidden />
-                  )}
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleAvatarChange}
+          {/* Identity — avatar, name, edit */}
+          <div className="relative flex items-center gap-4 px-5 pt-4">
+            <div className="relative shrink-0">
+              {avatar ? (
+                <img
+                  src={avatar}
+                  alt=""
+                  decoding="async"
+                  className="size-[68px] rounded-2xl object-cover ring-[3px] ring-white/80 shadow-[0_6px_16px_-4px_rgba(0,0,0,0.5)]"
                 />
-              </div>
-
-              {/* Edit profile — aligned to the avatar baseline */}
+              ) : (
+                <span
+                  className="flex size-[68px] items-center justify-center rounded-2xl bg-white/15 font-jakarta text-[24px] font-extrabold tracking-tight text-white ring-[3px] ring-white/80 backdrop-blur shadow-[0_6px_16px_-4px_rgba(0,0,0,0.5)]"
+                  aria-hidden
+                >
+                  {initials(name)}
+                </span>
+              )}
               <button
                 type="button"
-                onClick={openEdit}
-                className="mb-1 inline-flex items-center gap-1.5 rounded-full border border-asm-line bg-white px-3.5 py-2 text-[12px] font-semibold text-asm-navy shadow-sm transition-colors hover:bg-asm-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                aria-label="Change profile photo"
+                className="absolute -bottom-1.5 -right-1.5 flex size-7 items-center justify-center rounded-full bg-white text-asm-blue ring-2 ring-white shadow-[0_2px_6px_-1px_rgba(0,0,0,0.4)] transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:opacity-60"
               >
-                <Pencil className="size-3.5" strokeWidth={2.2} aria-hidden />
-                Edit profile
+                {uploading ? (
+                  <span className="size-3 animate-spin rounded-full border-2 border-asm-blue/30 border-t-asm-blue" aria-hidden />
+                ) : (
+                  <Camera className="size-3.5" strokeWidth={2.2} aria-hidden />
+                )}
               </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarChange}
+              />
             </div>
 
-            <p className="text-[18px] font-extrabold leading-tight tracking-tight text-asm-navy">{name}</p>
-            <p className="mt-0.5 text-[13px] text-asm-body">{email}</p>
-            {since && <p className="mt-1 text-[11px] text-asm-muted">{since}</p>}
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[19px] font-extrabold leading-tight tracking-tight">{name}</p>
+              {email && <p className="mt-0.5 truncate text-[13px] text-white/75">{email}</p>}
+              {since && <p className="mt-1 text-[11px] text-white/70">{since}</p>}
+            </div>
 
-            {/* User ID with copy button */}
+            <button
+              type="button"
+              onClick={openEdit}
+              aria-label="Edit profile"
+              className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-full bg-white/15 px-3 py-2 text-[12px] font-semibold text-white ring-1 ring-white/25 backdrop-blur transition-colors hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            >
+              <Pencil className="size-3.5" strokeWidth={2.2} aria-hidden />
+              Edit
+            </button>
+          </div>
+
+          {formError && !editOpen && (
+            <p role="alert" className="relative mx-5 mt-3 inline-flex rounded-lg bg-white/90 px-2.5 py-1 text-[11px] font-medium text-asm-red">{formError}</p>
+          )}
+
+          {/* Meta chips — ID, tier, referral (glass on gradient) */}
+          <div className="relative mt-4 flex flex-wrap items-center gap-2 border-t border-white/15 px-5 pb-5 pt-4">
             {publicId && (
-              <div className="mt-2 inline-flex items-center gap-2 rounded-lg bg-asm-tint px-2.5 py-1.5">
-                <span className="text-[10px] font-bold uppercase tracking-wide text-asm-muted">User ID</span>
-                <span className="font-mono text-[12px] font-semibold text-asm-navy">{publicId}</span>
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/12 px-2.5 py-1 ring-1 ring-white/20 backdrop-blur">
+                <span className="text-[9px] font-bold uppercase tracking-wide text-white/70">ID</span>
+                <span className="font-mono text-[12px] font-semibold text-white">{publicId}</span>
                 <button
                   type="button"
                   onClick={handleCopyId}
                   aria-label="Copy User ID"
-                  className="ml-0.5 inline-flex items-center justify-center rounded-md p-1 text-asm-muted transition-colors hover:bg-white hover:text-asm-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue"
+                  className="-mr-0.5 inline-flex items-center justify-center rounded-md p-0.5 text-white/70 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                 >
                   {copied ? (
-                    <Check className="size-3.5 text-asm-greenInk" strokeWidth={2.5} aria-hidden />
+                    <Check className="size-3.5" strokeWidth={2.5} aria-hidden />
                   ) : (
                     <Copy className="size-3.5" strokeWidth={2} aria-hidden />
                   )}
                 </button>
-              </div>
+              </span>
             )}
 
-            {formError && !editOpen && (
-              <p role="alert" className="mt-2 text-[11px] font-medium text-asm-red">{formError}</p>
+            {tier && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white ring-1 ring-white/25 backdrop-blur">
+                <span className="size-1.5 rounded-full bg-white" aria-hidden />
+                {tier}
+              </span>
             )}
 
-            {/* Tier + referral row */}
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              {tier && (
-                <span className={cn(
-                  'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide',
-                  tier === 'silver'  ? 'bg-[#CED5E1] text-[#4B5563]'           :
-                  tier === 'gold'    ? 'bg-amber-50 text-[#F37400]'             :
-                                       'bg-asm-blue-tint text-asm-blue'
-                )}>
-                  {tier}
-                </span>
-              )}
-              <span className="text-[11px] text-asm-muted">
-                Referral: <span className="font-mono font-semibold text-asm-navy">{referralCode}</span>
-              </span>
-              <span className="text-[11px] text-asm-muted">
-                {referralCount} {referralCount === 1 ? 'referral' : 'referrals'}
-              </span>
-            </div>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 ring-1 ring-white/20 backdrop-blur">
+              <span className="text-[9px] font-bold uppercase tracking-wide text-white/70">Referral</span>
+              <span className="font-mono text-[12px] font-semibold text-white">{referralCode}</span>
+              <span className="text-[11px] text-white/70">· {referralCount}</span>
+            </span>
           </div>
         </motion.section>
 
@@ -497,31 +506,66 @@ export function AccountPage() {
                 <p className="text-[12px] text-asm-body">Your investment activity will appear here.</p>
               </div>
             ) : (
-              <ul className="divide-y divide-asm-line">
-                {transactions.slice(0, 10).map((tx) => {
-                  const meta = DIR_META[tx.direction]
-                  const { Icon } = meta
-                  return (
-                    <li key={tx._id} className="flex items-center gap-3 px-5 py-4">
-                      <span className={cn('flex size-9 shrink-0 items-center justify-center rounded-full', meta.bg)} aria-hidden>
-                        <Icon className={cn('size-4', meta.color)} strokeWidth={2.2} aria-hidden />
-                      </span>
-                      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                        <span className="truncate text-[13px] font-semibold text-asm-navy">{tx.note || tx.type}</span>
-                        <span className="text-[11px] text-asm-muted">{relDate(tx.createdAt)}</span>
+              (() => {
+                const visible = transactions.slice(0, visibleCount)
+                // Group by date label
+                const groups: { dateLabel: string; items: typeof visible }[] = []
+                for (const tx of visible) {
+                  const label = relDate(tx.createdAt)
+                  const last = groups[groups.length - 1]
+                  if (last && last.dateLabel === label) {
+                    last.items.push(tx)
+                  } else {
+                    groups.push({ dateLabel: label, items: [tx] })
+                  }
+                }
+                return (
+                  <>
+                    {groups.map((group) => (
+                      <div key={group.dateLabel} className="relative">
+                        <div className="sticky top-0 bg-asm-tint/80 px-5 py-1.5 backdrop-blur-sm">
+                          <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-asm-muted">
+                            {group.dateLabel}
+                          </span>
+                        </div>
+                        <ul>
+                          {group.items.map((tx) => {
+                            const meta = DIR_META[tx.direction]
+                            const { Icon } = meta
+                            return (
+                              <li key={tx._id} className="flex items-center gap-3 border-t border-asm-line px-5 py-4 first:border-t-0">
+                                <span className={cn('flex size-8 shrink-0 items-center justify-center rounded-full', meta.bg)} aria-hidden>
+                                  <Icon className={cn('size-4', meta.color)} strokeWidth={2.2} aria-hidden />
+                                </span>
+                                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                                  <span className="truncate text-[13px] font-semibold text-asm-navy">{tx.note || tx.type}</span>
+                                </div>
+                                <div className="flex shrink-0 flex-col items-end gap-1">
+                                  <span className={cn('font-mono text-[15px] font-bold tabular-nums', meta.color)}>
+                                    {meta.sign}{inr(tx.amount)}
+                                  </span>
+                                  <span className={cn('rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide', STATUS_PILL[tx.status])}>
+                                    {tx.status}
+                                  </span>
+                                </div>
+                              </li>
+                            )
+                          })}
+                        </ul>
                       </div>
-                      <div className="flex shrink-0 flex-col items-end gap-1">
-                        <span className={cn('font-mono text-[14px] font-bold tabular-nums', meta.color)}>
-                          {meta.sign}{inr(tx.amount)}
-                        </span>
-                        <span className={cn('rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide', STATUS_PILL[tx.status])}>
-                          {tx.status}
-                        </span>
-                      </div>
-                    </li>
-                  )
-                })}
-              </ul>
+                    ))}
+                    {transactions.length > visibleCount && (
+                      <button
+                        type="button"
+                        onClick={() => setVisibleCount((c) => c + 10)}
+                        className="flex w-full items-center justify-center border-t border-asm-line py-4 text-[12px] font-semibold text-asm-blue transition-colors hover:bg-asm-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-inset"
+                      >
+                        Load more
+                      </button>
+                    )}
+                  </>
+                )
+              })()
             )}
           </div>
         </motion.section>
@@ -693,7 +737,7 @@ export function AccountPage() {
                 onClick={() => { setPType('upi'); setPError(null) }}
                 className={cn(
                   'flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-[12px] font-semibold transition-colors',
-                  pType === 'upi' ? 'border-asm-blue bg-asm-blue-tint text-asm-blue' : 'border-asm-line bg-white text-asm-muted hover:text-asm-navy'
+                  pType === 'upi' ? 'border-asm-blue bg-asm-blue-tint text-asm-blue' : 'border-asm-muted/30 bg-asm-tint text-asm-body hover:border-asm-blue/50 hover:bg-asm-blue-tint hover:text-asm-navy'
                 )}
               >
                 <AtSign className="size-4" aria-hidden /> UPI ID
@@ -703,7 +747,7 @@ export function AccountPage() {
                 onClick={() => { setPType('bank'); setPError(null) }}
                 className={cn(
                   'flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-[12px] font-semibold transition-colors',
-                  pType === 'bank' ? 'border-asm-blue bg-asm-blue-tint text-asm-blue' : 'border-asm-line bg-white text-asm-muted hover:text-asm-navy'
+                  pType === 'bank' ? 'border-asm-blue bg-asm-blue-tint text-asm-blue' : 'border-asm-muted/30 bg-asm-tint text-asm-body hover:border-asm-blue/50 hover:bg-asm-blue-tint hover:text-asm-navy'
                 )}
               >
                 <Landmark className="size-4" aria-hidden /> Bank account

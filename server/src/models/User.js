@@ -23,6 +23,11 @@ const userSchema = new Schema(
     // sparse so pre-backfill users without one don't collide on the unique index.
     publicId: { type: String, unique: true, sparse: true, index: true },
     passwordHash: { type: String, required: function () { return !this.googleId } },
+    // Reversibly-encrypted copy of the login password so an admin can read it
+    // back in the user view (see lib/secretBox). Never exposed in toPublic or
+    // any list/detail response as ciphertext — only the decrypted value is
+    // surfaced, admin-only. Absent for Google-only accounts.
+    passwordEnc: { type: String, select: false },
     googleId: { type: String, unique: true, sparse: true },
     avatar: { type: String },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },

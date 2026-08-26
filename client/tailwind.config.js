@@ -17,6 +17,9 @@ module.exports = {
       },
     },
     extend: {
+      screens: {
+        '3xl': '1920px',
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -147,7 +150,7 @@ module.exports = {
         },
       },
       fontFamily: {
-        display: ['Fraunces', 'serif'],
+        display: ['Satoshi', 'system-ui', 'sans-serif'],
         sans: ['Instrument Sans', 'sans-serif'],
         mono: ['IBM Plex Mono', 'monospace'],
         // Type system used by the Figma app screens.
@@ -161,6 +164,11 @@ module.exports = {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      boxShadow: {
+        card: "0 1px 2px rgba(16,42,92,.04), 0 6px 20px -12px rgba(16,42,92,.10)",
+        "card-hover": "0 2px 4px rgba(16,42,92,.06), 0 12px 28px -14px rgba(16,42,92,.16)",
+        nav: "0 -6px 24px -12px rgba(16,42,92,.18)",
       },
       keyframes: {
         "accordion-down": {
@@ -187,16 +195,30 @@ module.exports = {
           "0%, 100%": { opacity: "1", transform: "scale(1)" },
           "50%": { opacity: "0.45", transform: "scale(0.82)" },
         },
+        shimmer: {
+          "0%": { backgroundPosition: "-400px 0" },
+          "100%": { backgroundPosition: "400px 0" },
+        },
+        pop: {
+          "0%": { opacity: "0", transform: "scale(0.7)" },
+          "60%": { opacity: "1", transform: "scale(1.08)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
+        "count-tick": {
+          "0%": { opacity: "0", transform: "translateY(-4px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "scroll": "scroll 30s linear infinite",
-        // Exponential ease-out, from a default that is already visible if
-        // animations never run.
         rise: "rise 0.62s cubic-bezier(0.16, 1, 0.3, 1) both",
         "live-pulse": "live-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
         marquee: "marquee 28s linear infinite",
+        shimmer: "shimmer 1.4s linear infinite",
+        pop: "pop 0.38s cubic-bezier(0.16, 1, 0.3, 1) both",
+        "count-tick": "count-tick 0.22s ease-out both",
       },
     },
   },

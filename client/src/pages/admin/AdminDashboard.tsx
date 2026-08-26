@@ -1,4 +1,4 @@
-import { Users, ArrowDownToLine, ArrowUpFromLine, TrendingUp, Wallet } from 'lucide-react'
+import { Users, ArrowDownToLine, ArrowUpFromLine, TrendingUp, Wallet, CalendarDays } from 'lucide-react'
 import { useAdminStats } from '@/hooks/queries'
 import { inr } from '@/lib/format'
 import { cn } from '@/lib/utils'
@@ -18,10 +18,10 @@ function StatCard({ label, value, icon: Icon, iconClass, iconBgClass }: StatCard
         <Icon className={cn('size-4.5 size-[18px]', iconClass)} strokeWidth={1.75} aria-hidden />
       </span>
       <div>
-        <p className="font-mono text-[22px] font-bold tabular-nums leading-none text-asm-navy">
+        <p className="font-mono text-[22px] xl:text-[26px] font-bold tabular-nums leading-none text-asm-navy">
           {value}
         </p>
-        <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-asm-muted">
+        <p className="mt-1 text-[11px] xl:text-[12px] font-semibold uppercase tracking-[0.08em] text-asm-muted">
           {label}
         </p>
       </div>
@@ -48,15 +48,15 @@ export function AdminDashboard() {
     <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
       {/* Header */}
       <div>
-        <h1 className="text-[22px] font-bold tracking-tight text-asm-navy">Dashboard</h1>
-        <p className="mt-0.5 text-[13px] text-asm-muted">Platform overview at a glance.</p>
+        <h1 className="text-[22px] xl:text-[26px] font-bold tracking-tight text-asm-navy">Dashboard</h1>
+        <p className="mt-0.5 text-[13px] xl:text-[14px] text-asm-muted">Platform overview at a glance.</p>
       </div>
 
       {/* Stat cards */}
       <section aria-label="Platform statistics" aria-live="polite">
         {isLoading ? (
-          <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, i) => (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
+            {Array.from({ length: 5 }).map((_, i) => (
               <SkeletonCard key={i} />
             ))}
           </div>
@@ -65,7 +65,7 @@ export function AdminDashboard() {
             Failed to load statistics. Please refresh.
           </p>
         ) : (
-          <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
             <StatCard
               label="Total users"
               value={data.users.toLocaleString('en-IN')}
@@ -94,6 +94,13 @@ export function AdminDashboard() {
               iconClass="text-asm-green"
               iconBgClass="bg-green-50"
             />
+            <StatCard
+              label="Today invested"
+              value={inr(data.totals.todayInvested)}
+              icon={CalendarDays}
+              iconClass="text-sky-600"
+              iconBgClass="bg-sky-50"
+            />
           </div>
         )}
       </section>
@@ -106,7 +113,7 @@ export function AdminDashboard() {
               <Wallet className="size-[18px] text-asm-navy" strokeWidth={1.75} aria-hidden />
             </span>
             <div>
-              <p className="font-mono text-[18px] font-bold tabular-nums text-asm-navy">
+              <p className="font-mono text-[18px] xl:text-[22px] font-bold tabular-nums text-asm-navy">
                 {inr(data.totals.walletLiability)}
               </p>
               <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-asm-muted">

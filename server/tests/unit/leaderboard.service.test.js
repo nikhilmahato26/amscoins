@@ -18,7 +18,7 @@ async function investor(name, amount, when = new Date()) {
 test('ranks by total approved principal desc with names', async () => {
   await investor('Alice', 500000)
   await investor('Bob', 900000)
-  const rows = await topInvestors('yearly')
+  const rows = await topInvestors('weekly')
   expect(rows[0].name).toBe('Bob')
   expect(rows[0].rank).toBe(1)
   expect(rows[0].totalInvested).toBe(900000)

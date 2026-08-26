@@ -6,6 +6,7 @@ import { NavLink, useNavigate } from 'react-router'
 
 import { useAuth } from '@/auth/AuthContext'
 import { AppHeader } from '@/components/app/AppHeader'
+import { BottomNav } from '@/components/app/BottomNav'
 import { GridBackdrop } from '@/components/app/GridBackdrop'
 import { APP_NAV_LINKS } from '@/components/app/navLinks'
 import { SideNav } from '@/components/app/SideNav'
@@ -281,6 +282,9 @@ export function AppShell({
       {/* Mobile drawer */}
       <MobileDrawer open={drawerOpen} onClose={closeDrawer} triggerRef={hamburgerRef} />
 
+      {/* Mobile bottom tab bar */}
+      <BottomNav />
+
       <div className="lg:pl-60">
         <AppHeader
           variant={headerVariant}
@@ -293,8 +297,9 @@ export function AppShell({
 
         <main
           className={cn(
-            /* Full-width on phones (no 375px cap that stranded wide phones); centers only from sm up. */
-            'relative mx-auto w-full px-5 pb-10 pt-[72px] lg:pb-14',
+            /* Full-width on phones; centers only from sm up. */
+            /* pb-24 on mobile leaves clearance above the bottom nav bar (~64px) + breathing room. */
+            'relative mx-auto w-full px-5 pb-24 pt-[72px] lg:pb-14',
             width === 'wide'
               ? 'sm:max-w-[600px] lg:max-w-[860px] xl:max-w-[1120px]'
               : 'sm:max-w-[560px] lg:max-w-[720px]',

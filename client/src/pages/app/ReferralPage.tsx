@@ -6,7 +6,6 @@ import {
   Gift,
   Headphones,
   Loader2,
-  Send,
   Share2,
   ShieldCheck,
   Users,
@@ -29,11 +28,11 @@ const fadeUp = {
   visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 90, damping: 18 } },
 }
 
-/* ── Static display config (correct thresholds: gold=11, diamond=21) ── */
+/* ── Static display config (correct thresholds: gold=21, diamond=52) ── */
 const TIER_STEPS: { tier: Tier; label: string; members: string; tone: string }[] = [
-  { tier: 'silver',  label: 'Silver',  members: '0–10 members',  tone: 'text-asm-muted'  },
-  { tier: 'gold',    label: 'Gold',    members: '11–20 members', tone: 'text-amber-600'  },
-  { tier: 'diamond', label: 'Diamond', members: '21+ members',   tone: 'text-asm-blue'   },
+  { tier: 'silver',  label: 'Silver',  members: '0–20 members',  tone: 'text-asm-muted'  },
+  { tier: 'gold',    label: 'Gold',    members: '21–51 members', tone: 'text-amber-600'  },
+  { tier: 'diamond', label: 'Diamond', members: '52+ members',   tone: 'text-asm-blue'   },
 ]
 
 const UNLOCK_LEVELS: {
@@ -44,21 +43,21 @@ const UNLOCK_LEVELS: {
     requirement: 'Default Tier',
     card: 'border-asm-line bg-white',
     requirementTone: 'text-asm-greenInk',
-    perks: ['Invest up to ₹10,000', '25% Returns in 24h'],
+    perks: ['Invest up to ₹10,000', '25% Returns in 24h', '5% TDS on withdrawal'],
   },
   {
     tier: 'gold',    name: 'Gold',
-    requirement: 'Unlock with 11 referrals',
+    requirement: 'Unlock with 21 referrals',
     card: 'border-amber-200 bg-amber-50',
     requirementTone: 'text-amber-600',
-    perks: ['Invest up to ₹3,00,000', '30% Returns in 24h'],
+    perks: ['Invest up to ₹3,00,000', '30% Returns in 24h', '3% TDS on withdrawal'],
   },
   {
     tier: 'diamond', name: 'Diamond',
-    requirement: 'Unlock with 21 referrals',
+    requirement: 'Unlock with 52 referrals',
     card: 'border-asm-blue/20 bg-asm-blue-tint/40',
     requirementTone: 'text-asm-blue',
-    perks: ['Invest up to ₹5,00,000', '40% Returns in 24h'],
+    perks: ['Invest up to ₹5,00,000', '40% Returns in 24h', '0% TDS on withdrawal'],
   },
 ]
 
@@ -131,50 +130,35 @@ export function ReferralPage() {
             </div>
           </motion.section>
 
-          {/* ── Code + link card ── */}
+          {/* ── Link + code card ── */}
           <motion.section
             variants={fadeUp}
             className="flex flex-col gap-4 rounded-2xl border border-asm-line bg-white p-5 shadow-[0_2px_12px_-4px_rgba(16,42,92,0.08)]"
           >
-            {/* Referral code */}
-            <div className="flex flex-col gap-2">
-              <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-asm-muted">
-                Your referral code
-              </span>
-              <div className="flex items-stretch gap-2">
-                <div className="flex h-14 min-w-0 flex-1 items-center justify-between gap-3 rounded-xl border border-asm-line bg-asm-tint px-4">
-                  <span className="min-w-0 font-mono text-[20px] font-extrabold uppercase tracking-[3px] text-asm-navy">
-                    {data.referralCode}
-                  </span>
-                  <CopyButton value={data.referralCode} label="Copy referral code" />
-                </div>
-                <motion.button
-                  type="button"
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  transition={{ type: 'spring' as const, stiffness: 400, damping: 25 }}
-                  className={cn(
-                    'flex h-14 shrink-0 items-center gap-2 rounded-xl',
-                    'border border-asm-blue/20 bg-asm-blue-tint px-4',
-                    'text-[12px] font-bold uppercase tracking-[0.06em] text-asm-blue',
-                    'transition-colors hover:bg-asm-blue hover:text-white',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue'
-                  )}
-                >
-                  <Share2 className="size-4" aria-hidden />
-                  Share
-                </motion.button>
-              </div>
-            </div>
-
-            {/* Referral link */}
+            {/* Referral link (prominent — larger, above code) */}
             <div className="flex flex-col gap-2">
               <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-asm-muted">
                 Your referral link
               </span>
+              <div className="flex min-h-[64px] items-center justify-between gap-3 rounded-xl border-2 border-asm-blue/30 bg-asm-blue-tint/30 px-4 py-3">
+                <span className="min-w-0 truncate text-[16px] font-bold text-asm-navy">{data.link}</span>
+                <div className="flex shrink-0 gap-1.5">
+                  <CopyButton value={data.link} label="Copy referral link" />
+                  <ShareButton url={data.link} title="Join AMScoins" />
+                </div>
+              </div>
+            </div>
+
+            {/* Referral code (compact — below link) */}
+            <div className="flex flex-col gap-2">
+              <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-asm-muted">
+                Your referral code
+              </span>
               <div className="flex h-11 items-center justify-between gap-3 rounded-xl border border-asm-line bg-asm-tint px-4">
-                <span className="truncate text-[11px] text-asm-muted">{data.link}</span>
-                <CopyButton value={data.link} label="Copy referral link" />
+                <span className="min-w-0 font-mono text-[13px] font-extrabold uppercase tracking-[2px] text-asm-muted">
+                  {data.referralCode}
+                </span>
+                <CopyButton value={data.referralCode} label="Copy referral code" />
               </div>
             </div>
           </motion.section>
@@ -359,26 +343,6 @@ export function ReferralPage() {
             )}
           </motion.section>
 
-          {/* ── Invite CTA ── */}
-          <motion.div variants={fadeUp}>
-            <motion.button
-              type="button"
-              whileHover={{ scale: 1.02, boxShadow: '0 12px 32px -8px rgba(21,128,61,0.45)' }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ type: 'spring' as const, stiffness: 380, damping: 26 }}
-              className={cn(
-                'flex min-h-[56px] w-full items-center justify-center gap-3 rounded-2xl',
-                'bg-asm-greenInk shadow-[0_8px_24px_-8px_rgba(21,128,61,0.5)]',
-                'text-[15px] font-bold uppercase tracking-[0.06em] text-white',
-                'transition-colors hover:bg-green-800',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-greenInk focus-visible:ring-offset-2'
-              )}
-            >
-              <Send className="size-5" aria-hidden />
-              Invite Now
-            </motion.button>
-          </motion.div>
-
           {/* ── Trust badges ── */}
           <motion.div variants={fadeUp} className="grid grid-cols-2 gap-3 pb-2">
             {VALUE_PROPS.map(({ Icon, title, subtitle }) => (
@@ -397,6 +361,53 @@ export function ReferralPage() {
         </motion.div>
       )}
     </AppShell>
+  )
+}
+
+/* ── ShareButton ── */
+function ShareButton({ url, title }: { url: string; title: string }) {
+  const [shared, setShared] = useState(false)
+
+  const handleShare = async () => {
+    const canShare = typeof navigator !== 'undefined' && !!navigator.share
+    if (canShare) {
+      try {
+        await navigator.share({ title, url })
+        setShared(true)
+        window.setTimeout(() => setShared(false), 1600)
+      } catch {
+        // user cancelled — ignore
+      }
+    } else {
+      // Desktop fallback: copy link to clipboard with visual feedback
+      try {
+        await navigator.clipboard.writeText(url)
+        setShared(true)
+        window.setTimeout(() => setShared(false), 1600)
+      } catch { /* clipboard denied */ }
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleShare}
+      aria-label={shared ? 'Link copied!' : 'Share referral link'}
+      title={shared ? 'Copied!' : 'Share or copy link'}
+      className={cn(
+        'flex size-11 shrink-0 items-center justify-center rounded-lg border transition-colors',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue',
+        shared
+          ? 'border-asm-greenInk/30 bg-asm-green-tint text-asm-greenInk'
+          : 'border-asm-line bg-white text-asm-muted hover:bg-asm-tint'
+      )}
+    >
+      {shared
+        ? <Check className="size-3.5" aria-hidden />
+        : <Share2 className="size-3.5" aria-hidden />
+      }
+      <span className="sr-only" role="status" aria-live="polite">{shared ? 'Link shared or copied' : ''}</span>
+    </button>
   )
 }
 

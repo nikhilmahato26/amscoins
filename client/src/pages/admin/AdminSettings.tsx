@@ -13,6 +13,14 @@ type FormValues = {
   usdtBep20Address: string
   whatsappNumber: string
   telegramUsername: string
+  cycleDurationHours: number
+  autoRejectHours: number
+  autoDepositHours: number
+  depositCooldownHours: number
+  withdrawalCooldownHours: number
+  autoRejectEnabled: boolean
+  autoDepositEnabled: boolean
+  autoPayEnabled: boolean
   methods: {
     usdtCrypto: boolean
     whatsapp: boolean
@@ -41,6 +49,14 @@ export function AdminSettings() {
       usdtBep20Address: settings.usdtBep20Address,
       whatsappNumber: settings.whatsappNumber,
       telegramUsername: settings.telegramUsername,
+      cycleDurationHours: settings.cycleDurationHours,
+      autoRejectHours: settings.autoRejectHours,
+      autoDepositHours: settings.autoDepositHours,
+      depositCooldownHours: settings.depositCooldownHours,
+      withdrawalCooldownHours: settings.withdrawalCooldownHours,
+      autoRejectEnabled: settings.autoRejectEnabled,
+      autoDepositEnabled: settings.autoDepositEnabled,
+      autoPayEnabled: settings.autoPayEnabled,
       methods: settings.methods,
     })
   }, [settings, reset])
@@ -52,6 +68,14 @@ export function AdminSettings() {
       usdtBep20Address: v.usdtBep20Address,
       whatsappNumber: v.whatsappNumber,
       telegramUsername: v.telegramUsername,
+      cycleDurationHours: v.cycleDurationHours,
+      autoRejectHours: v.autoRejectHours,
+      autoDepositHours: v.autoDepositHours,
+      depositCooldownHours: v.depositCooldownHours,
+      withdrawalCooldownHours: v.withdrawalCooldownHours,
+      autoRejectEnabled: v.autoRejectEnabled,
+      autoDepositEnabled: v.autoDepositEnabled,
+      autoPayEnabled: v.autoPayEnabled,
       methods: v.methods,
     }
     await update.mutateAsync(payload)
@@ -74,8 +98,8 @@ export function AdminSettings() {
       <div className="flex items-center gap-3">
         <Settings className="size-5 shrink-0 text-asm-muted" strokeWidth={1.75} aria-hidden />
         <div>
-          <h1 className="text-[22px] font-bold tracking-tight text-asm-navy">Payment Settings</h1>
-          <p className="-mt-0.5 text-[13px] text-asm-muted">
+          <h1 className="text-[22px] xl:text-[26px] font-bold tracking-tight text-asm-navy">Payment Settings</h1>
+          <p className="-mt-0.5 text-[13px] xl:text-[14px] text-asm-muted">
             Configure payment methods, QR images, and availability.
           </p>
         </div>
@@ -130,6 +154,74 @@ export function AdminSettings() {
           </Field>
           <Field label="Telegram username">
             <input {...register('telegramUsername')} className={inputCls} />
+          </Field>
+        </Section>
+
+        {/* ── Investment cycle ── */}
+        <Section title="Investment cycle">
+          <Field label="Deposit cooldown (hours) — after a deposit is approved, the user must wait this long before starting another (0 = no cooldown; a pending deposit always blocks)">
+            <input
+              type="number"
+              min={0}
+              step={1}
+              {...register('depositCooldownHours', {
+                valueAsNumber: true,
+                required: true,
+                validate: (v) => (Number.isInteger(v) && v >= 0) || 'Enter a whole number of hours (min 0)',
+              })}
+              className={inputCls}
+            />
+          </Field>
+
+          {/* Each automation paired with its timer so they're easy to read as a unit. */}
+          <div className="flex flex-col gap-3">
+            <AutomationPair
+              label="Auto reject investments"
+              timerLabel="Reject window (hours)"
+              toggleProps={register('autoRejectEnabled')}
+              timerProps={register('autoRejectHours', {
+                valueAsNumber: true,
+                required: true,
+                validate: (v) => (Number.isInteger(v) && v >= 1) || 'Enter a whole number of hours (min 1)',
+              })}
+            />
+            <AutomationPair
+              label="Auto approve investments"
+              timerLabel="Approve window (hours)"
+              toggleProps={register('autoDepositEnabled')}
+              timerProps={register('autoDepositHours', {
+                valueAsNumber: true,
+                required: true,
+                validate: (v) => (Number.isInteger(v) && v >= 1) || 'Enter a whole number of hours (min 1)',
+              })}
+            />
+            <AutomationPair
+              label="Auto return profit + investment"
+              timerLabel="Cycle duration (hours)"
+              toggleProps={register('autoPayEnabled')}
+              timerProps={register('cycleDurationHours', {
+                valueAsNumber: true,
+                required: true,
+                validate: (v) => (Number.isInteger(v) && v >= 1) || 'Enter a whole number of hours (min 1)',
+              })}
+            />
+          </div>
+        </Section>
+
+        {/* ── Withdrawals ── */}
+        <Section title="Withdrawals">
+          <Field label="Withdrawal cooldown (hours) — a user must wait this long after starting a withdrawal before starting another (0 = no limit)">
+            <input
+              type="number"
+              min={0}
+              step={1}
+              {...register('withdrawalCooldownHours', {
+                valueAsNumber: true,
+                required: true,
+                validate: (v) => (Number.isInteger(v) && v >= 0) || 'Enter a whole number of hours (0 or more)',
+              })}
+              className={inputCls}
+            />
           </Field>
         </Section>
 
@@ -205,6 +297,38 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span className="text-[11px] font-semibold text-asm-body">{label}</span>
       {children}
     </label>
+  )
+}
+
+/** Groups an automation toggle with its timer input so they read as one unit. */
+function AutomationPair({
+  label,
+  timerLabel,
+  toggleProps,
+  timerProps,
+}: {
+  label: string
+  timerLabel: string
+  toggleProps: React.InputHTMLAttributes<HTMLInputElement>
+  timerProps: React.InputHTMLAttributes<HTMLInputElement>
+}) {
+  return (
+    <div className="flex flex-col gap-3 rounded-xl border border-asm-line bg-asm-tint px-4 py-3.5">
+      <label className="flex cursor-pointer items-center justify-between gap-3">
+        <span className="text-[13px] font-semibold text-asm-navy">{label}</span>
+        <input type="checkbox" {...toggleProps} className="size-5 shrink-0 accent-asm-blue" />
+      </label>
+      <label className="flex flex-col gap-1.5">
+        <span className="text-[11px] font-semibold text-asm-muted">{timerLabel}</span>
+        <input
+          type="number"
+          min={1}
+          step={1}
+          {...timerProps}
+          className={inputCls}
+        />
+      </label>
+    </div>
   )
 }
 

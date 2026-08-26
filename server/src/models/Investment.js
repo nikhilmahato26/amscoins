@@ -10,11 +10,28 @@ const investmentSchema = new Schema(
     referenceCode: { type: String, required: true, unique: true },
     referralCodeUsed: { type: String, default: null },
     isFirstDeposit: { type: Boolean, default: false },
-    status: { type: String, enum: ['pending', 'active', 'rejected'], default: 'pending' },
+    // 'deleted' = admin erased the whole cycle: the user sees no trace (its
+    // wallet transactions removed and any credit reversed), but the row is kept
+    // so the admin History can distinguish deleted / rejected / approved.
+    status: { type: String, enum: ['pending', 'active', 'matured', 'returned', 'rejected', 'deleted'], default: 'pending' },
     startAt: { type: Date },
     maturesAt: { type: Date },
     approvedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     approvedAt: { type: Date },
+    walletCredited: { type: Boolean, default: false },
+    maturedAt: { type: Date },
+    creditedAmount: { type: Number, default: 0 }, // paise actually paid to wallet
+    returnDecidedBy: { type: Schema.Types.ObjectId, ref: 'User' }, // null = system
+    returnDecidedAt: { type: Date },
+    returnRejectionReason: { type: String, default: '' },
+    rejectionReason: { type: String, default: '' },
+    autoRejected: { type: Boolean, default: false },
+    autoApproved: { type: Boolean, default: false }, // approved by the auto-deposit timeout, not an admin
+    // Set to true when the user taps "I've paid". Before this, the record is a
+    // draft: invisible to admin, not blocking the deposit gate, no timers running.
+    paymentNotified: { type: Boolean, default: false },
+    deletedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    deletedAt: { type: Date },
   },
   { timestamps: true }
 )

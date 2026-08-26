@@ -74,8 +74,8 @@ const PLANS: {
   min: string; max: string; unlockNote: string; accent: 'silver' | 'gold' | 'diamond'
 }[] = [
   { slug: 'silver',  name: 'Silver Plan',  returns: '25%', duration: '24 Hours', min: '₹1,000', max: '₹10,000',   unlockNote: 'Default Tier',              accent: 'silver'  },
-  { slug: 'gold',    name: 'Gold Plan',    returns: '30%', duration: '24 Hours', min: '₹3,000', max: '₹3,00,000',  unlockNote: 'Unlocks with 11 referrals', accent: 'gold'    },
-  { slug: 'diamond', name: 'Diamond Plan', returns: '40%', duration: '24 Hours', min: '₹5,000', max: '₹5,00,000',  unlockNote: 'Unlocks with 21 referrals', accent: 'diamond' },
+  { slug: 'gold',    name: 'Gold Plan',    returns: '30%', duration: '24 Hours', min: '₹3,000', max: '₹3,00,000',  unlockNote: 'Unlocks with 21 referrals', accent: 'gold'    },
+  { slug: 'diamond', name: 'Diamond Plan', returns: '40%', duration: '24 Hours', min: '₹5,000', max: '₹5,00,000',  unlockNote: 'Unlocks with 52 referrals', accent: 'diamond' },
 ]
 
 const HOW_IT_WORKS: { step: string; title: string; body: string }[] = [
@@ -435,11 +435,11 @@ function PlansSection() {
 
                 <dl className="mt-3.5 flex w-full items-start justify-between border-t border-asm-line pt-3">
                   <div className="flex flex-col">
-                    <dt className="text-[8px] font-bold uppercase tracking-[0.1em] text-asm-muted">Min</dt>
+                    <dt className="text-[10px] font-bold uppercase tracking-[0.1em] text-asm-muted">Min</dt>
                     <dd className="text-[12px] font-bold tabular-nums">{min}</dd>
                   </div>
                   <div className="flex flex-col items-end">
-                    <dt className="text-[8px] font-bold uppercase tracking-[0.1em] text-asm-muted">Max</dt>
+                    <dt className="text-[10px] font-bold uppercase tracking-[0.1em] text-asm-muted">Max</dt>
                     <dd className="text-[12px] font-bold tabular-nums">{max}</dd>
                   </div>
                 </dl>

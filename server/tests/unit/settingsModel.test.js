@@ -32,6 +32,10 @@ describe('Settings model', () => {
         'inrQrUrl', 'inrThresholdPaise', 'methods',
         'telegramUsername', 'usdtBep20Address', 'usdtBep20QrUrl',
         'usdtTrc20Address', 'usdtTrc20QrUrl', 'whatsappNumber',
+        'usdtRateInr',
+        'cycleDurationHours', 'autoRejectHours', 'autoDepositHours', 'depositCooldownHours',
+        'withdrawalCooldownHours',
+        'autoRejectEnabled', 'autoDepositEnabled', 'autoPayEnabled',
       ].sort()
     )
     expect(pub.methods).toEqual({

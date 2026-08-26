@@ -1,29 +1,27 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router'
 import { AnimatePresence, motion } from 'framer-motion'
-import { LayoutDashboard, ArrowDownToLine, ArrowUpFromLine, Users, LifeBuoy, LogOut, Menu, Settings, X } from 'lucide-react'
+import { LayoutDashboard, ArrowUpFromLine, TrendingUp, Users, LifeBuoy, LogOut, Menu, Settings, X, BarChart2 } from 'lucide-react'
 import { useAuth } from '@/auth/AuthContext'
 import { authService } from '@/services/authService'
+import { NotificationBell } from '@/components/admin/NotificationBell'
+import { AsmMark } from '@/components/home/AsmLogo'
 import { cn } from '@/lib/utils'
 
 const NAV_ITEMS = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/admin/deposits', label: 'Deposits', icon: ArrowDownToLine, end: false },
+  { to: '/admin/investments', label: 'Investments', icon: TrendingUp, end: false },
   { to: '/admin/withdrawals', label: 'Withdrawals', icon: ArrowUpFromLine, end: false },
   { to: '/admin/users', label: 'Users', icon: Users, end: false },
   { to: '/admin/support', label: 'Support', icon: LifeBuoy, end: false },
+  { to: '/admin/reports', label: 'Reports', icon: BarChart2, end: false },
   { to: '/admin/settings', label: 'Settings', icon: Settings, end: false },
 ] as const
 
 function Brand() {
   return (
     <span className="flex items-center gap-2.5">
-      <span
-        className="flex size-7 items-center justify-center rounded-lg bg-asm-blue text-[11px] font-extrabold tracking-tight text-white"
-        aria-hidden
-      >
-        A
-      </span>
+      <AsmMark className="size-7" aria-hidden />
       <span className="text-[13px] font-bold tracking-tight text-asm-navy">
         ASM <span className="font-normal text-asm-muted">Admin</span>
       </span>
@@ -33,7 +31,7 @@ function Brand() {
 
 function navLinkClass({ isActive }: { isActive: boolean }) {
   return cn(
-    'flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-colors',
+    'flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] 2xl:text-[14px] font-medium transition-colors',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1',
     isActive ? 'bg-asm-blue-tint text-asm-blue' : 'text-asm-body hover:bg-asm-tint hover:text-asm-navy',
   )
@@ -74,9 +72,10 @@ export function AdminLayout() {
   return (
     <div className="theme-light-home min-h-screen bg-asm-tint font-sans text-asm-navy">
       {/* ── Desktop sidebar (hidden on mobile) ── */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-asm-line bg-white lg:flex">
-        <div className="flex h-14 shrink-0 items-center gap-2.5 border-b border-asm-line px-5">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 2xl:w-72 flex-col border-r border-asm-line bg-white lg:flex">
+        <div className="flex h-14 shrink-0 items-center justify-between gap-2.5 border-b border-asm-line px-5">
           <Brand />
+          <NotificationBell align="start" />
         </div>
         <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-3" aria-label="Admin navigation">
           {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
@@ -86,12 +85,12 @@ export function AdminLayout() {
             </NavLink>
           ))}
         </nav>
-        <div className="shrink-0 border-t border-asm-line p-3">
+        <div className="flex flex-col gap-3 border-t border-asm-line p-3">
           <button
             type="button"
             onClick={handleLogout}
             className={cn(
-              'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-asm-body transition-colors',
+              'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] 2xl:text-[14px] font-medium text-asm-body transition-colors',
               'hover:bg-red-50 hover:text-asm-red',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1',
             )}
@@ -105,16 +104,19 @@ export function AdminLayout() {
       {/* ── Mobile top bar with hamburger ── */}
       <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-asm-line bg-white/95 px-4 backdrop-blur-md lg:hidden">
         <Brand />
-        <button
-          ref={hamburgerRef}
-          type="button"
-          onClick={() => setDrawerOpen(true)}
-          aria-label="Open menu"
-          aria-haspopup="dialog"
-          className="flex size-11 items-center justify-center rounded-lg text-asm-body transition-colors hover:text-asm-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue"
-        >
-          <Menu className="size-6" strokeWidth={2} aria-hidden />
-        </button>
+        <div className="flex items-center gap-2">
+          <NotificationBell />
+          <button
+            ref={hamburgerRef}
+            type="button"
+            onClick={() => setDrawerOpen(true)}
+            aria-label="Open menu"
+            aria-haspopup="dialog"
+            className="flex size-11 items-center justify-center rounded-lg text-asm-body transition-colors hover:text-asm-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue"
+          >
+            <Menu className="size-6" strokeWidth={2} aria-hidden />
+          </button>
+        </div>
       </header>
 
       {/* ── Mobile drawer ── */}
@@ -179,8 +181,10 @@ export function AdminLayout() {
       </AnimatePresence>
 
       {/* ── Main content ── */}
-      <main className="flex min-h-screen flex-col lg:ml-60">
-        <Outlet />
+      <main className="flex min-h-screen flex-col lg:ml-60 2xl:ml-72">
+        <div className="mx-auto w-full max-w-[1440px]">
+          <Outlet />
+        </div>
       </main>
     </div>
   )

@@ -8,6 +8,7 @@ import { ReferralBanner } from '@/components/app/ReferralBanner'
 import { TierBadge } from '@/components/app/TierBadge'
 import { usePlans } from '@/hooks/queries'
 import { inr } from '@/lib/format'
+import { ordinal } from '@/lib/tiers'
 import { cn } from '@/lib/utils'
 import type { Tier } from '@/types'
 
@@ -139,11 +140,7 @@ export function PackageDetailPage() {
               {plan.name} Tier Locked
             </span>
             <h2 className="mt-3 text-2xl font-extrabold text-asm-navy">
-              {plan.unlockReferrals === 11
-                ? 'Unlocks on 11th Referral'
-                : plan.unlockReferrals === 21
-                ? 'Unlocks on 21st Referral'
-                : `Unlocks on ${plan.unlockReferrals}th Referral`}
+              {`Unlocks on ${ordinal(plan.unlockReferrals)} Referral`}
             </h2>
             <p className="mx-auto mt-2 max-w-[36ch] text-sm leading-relaxed text-slate-600">
               The {plan.name} package requires {plan.unlockReferrals} successful referrals with their first deposit. Invite friends to unlock {plan.returnPct}% returns.

@@ -128,6 +128,51 @@ export function uniqueEmail(prefix = 'user'): string {
   return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 10000)}@e2e.test`
 }
 
+/** Create a support ticket via API */
+export async function createSupportTicket(
+  userToken: string,
+  subject: string,
+  message: string,
+): Promise<{ ticket: { id: string; publicRef: string } }> {
+  const res = await fetch(`${API}/support`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${userToken}`,
+    },
+    body: JSON.stringify({ subject, message }),
+  })
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`createSupportTicket failed ${res.status}: ${body}`)
+  }
+  return res.json()
+}
+
+/**
+ * Update the admin Settings singleton via API (PUT /settings). Used to toggle
+ * automations (e.g. autoDepositEnabled) for a test, then reset them after.
+ * NOTE: settings are a shared singleton on the hermetic server — a test that
+ * flips a flag must reset it (see admin-auto-deposit.spec.ts afterEach).
+ */
+export async function updateSettings(
+  adminToken: string,
+  patch: Record<string, unknown>,
+): Promise<void> {
+  const res = await fetch(`${API}/settings`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${adminToken}`,
+    },
+    body: JSON.stringify(patch),
+  })
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`updateSettings failed ${res.status}: ${body}`)
+  }
+}
+
 /** Create a withdrawal via API with an inline destination; returns the created withdrawal. */
 export async function createWithdrawal(
   userToken: string,

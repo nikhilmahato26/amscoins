@@ -12,14 +12,17 @@
     "dev": "node --watch src/server.js",
     "test": "NODE_ENV=test jest --runInBand",
     "seed": "node src/seed/seedPlans.js",
+    "migrate:wallet-credited": "node src/scripts/migrateWalletCredited.js",
     "backfill:public-ids": "node src/scripts/backfillPublicIds.js",
-    "e2e:server": "node e2e-server.js"
+    "e2e:server": "node e2e-server.js",
+    "e2e:automation": "node scripts/automation-e2e.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "bullmq": "^6.1.2",
     "cloudinary": "^2.10.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",

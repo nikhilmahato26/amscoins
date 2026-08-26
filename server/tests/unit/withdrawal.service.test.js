@@ -31,6 +31,22 @@ test('initiate debits gross and stores 5% TDS', async () => {
   expect((await Wallet.findOne({ user: u._id })).balance).toBe(100000)
 })
 
+test('TDS follows the user tier: gold 3%, diamond 0%', async () => {
+  const gold = await makeFundedUser(200000)
+  gold.tier = 'gold'
+  await gold.save()
+  const wg = await initiateWithdrawal(gold, { amount: 100000, upiId: 'g@upi' })
+  expect(wg.tds).toBe(3000)
+  expect(wg.net).toBe(97000)
+
+  const diamond = await makeFundedUser(200000)
+  diamond.tier = 'diamond'
+  await diamond.save()
+  const wd = await initiateWithdrawal(diamond, { amount: 100000, upiId: 'd@upi' })
+  expect(wd.tds).toBe(0)
+  expect(wd.net).toBe(100000)
+})
+
 test('initiate over balance throws Insufficient balance', async () => {
   const u = await makeFundedUser(50000)
   await expect(initiateWithdrawal(u, { amount: 100000, upiId: 'x@upi' })).rejects.toThrow('Insufficient balance')

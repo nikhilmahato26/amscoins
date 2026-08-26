@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   ArrowDownLeft,
@@ -8,11 +8,24 @@ import {
   AtSign,
   Copy,
   Check,
+  Eye,
+  EyeOff,
+  KeyRound,
   Landmark,
   Loader2,
 } from 'lucide-react'
 
-import { useAdminUserDetail, useFreezeUser, useUnfreezeUser, useAdjustWallet } from '@/hooks/queries'
+import {
+  useAdminUserDetail,
+  useFreezeUser,
+  useUnfreezeUser,
+  useAdjustWallet,
+  useApprovePayout,
+  useRejectPayout,
+  useDeleteInvestment,
+} from '@/hooks/queries'
+import type { Investment } from '@/services/api/investments'
+import { InvestmentCountdown } from '@/components/admin/InvestmentCountdown'
 import type { Transaction } from '@/types'
 import { inr } from '@/lib/format'
 import { cn } from '@/lib/utils'
@@ -86,6 +99,71 @@ function AdjustDialog({
   )
 }
 
+/* ── Reject-payout dialog: credit a custom amount back, trace is kept ── */
+function RejectPayoutDialog({
+  inv,
+  userName,
+  onConfirm,
+  onCancel,
+  isPending,
+}: {
+  inv: Investment
+  userName: string
+  onConfirm: (amountPaise: number, reason: string) => void
+  onCancel: () => void
+  isPending: boolean
+}) {
+  const maxPaise = inv.amount + inv.expectedReturn
+  const [amountStr, setAmountStr] = useState('')
+  const [reason, setReason] = useState('')
+  const amountRupees = amountStr === '' ? 0 : parseFloat(amountStr)
+  const amountPaise = Math.round(amountRupees * 100)
+  const isValid = !Number.isNaN(amountRupees) && amountPaise >= 0 && amountPaise <= maxPaise
+
+  return (
+    <div role="dialog" aria-modal="true" aria-label="Reject investment" className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-sm rounded-2xl border border-asm-line bg-white p-6 shadow-xl">
+        <h2 className="text-[15px] font-bold text-asm-navy">Reject investment</h2>
+        <p className="mt-2 text-[13px] text-asm-body">
+          Enter the amount to credit back to <strong className="font-semibold text-asm-navy">{userName}</strong> (0 = nothing).
+          This credit shows in their history. Max <strong className="font-semibold text-asm-navy">{inr(maxPaise)}</strong>.
+        </p>
+        <form
+          onSubmit={(e) => { e.preventDefault(); if (isValid) onConfirm(amountPaise, reason) }}
+          className="mt-4 flex flex-col gap-4"
+        >
+          <label className="block">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-asm-muted">Amount to credit (₹)</span>
+            <input
+              type="number" min="0" step="0.01" autoFocus
+              value={amountStr}
+              onChange={(e) => setAmountStr(e.target.value)}
+              placeholder="0.00"
+              className="mt-1.5 w-full rounded-lg border border-asm-line bg-asm-tint px-3 py-2 font-mono text-[13px] text-asm-navy placeholder:text-asm-muted focus:border-asm-blue focus:outline-none focus:ring-2 focus:ring-asm-blue"
+            />
+            {!isValid && amountStr !== '' && <p className="mt-1 text-[11px] text-asm-red">Enter 0 to {inr(maxPaise)}.</p>}
+          </label>
+          <label className="block">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-asm-muted">Reason (optional)</span>
+            <input
+              type="text" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason…"
+              className="mt-1.5 w-full rounded-lg border border-asm-line bg-asm-tint px-3 py-2 text-[13px] text-asm-navy placeholder:text-asm-muted focus:border-asm-blue focus:outline-none focus:ring-2 focus:ring-asm-blue"
+            />
+          </label>
+          <div className="flex justify-end gap-2.5">
+            <button type="button" onClick={onCancel} disabled={isPending} className="rounded-lg border border-asm-line px-3.5 py-2 text-[12px] font-semibold text-asm-body hover:bg-asm-tint disabled:opacity-50">
+              Cancel
+            </button>
+            <button type="submit" disabled={isPending || !isValid} className="rounded-lg bg-asm-red px-3.5 py-2 text-[12px] font-semibold text-white hover:bg-red-700 disabled:opacity-50">
+              {isPending ? 'Rejecting…' : 'Reject'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 const DIR_META: Record<Transaction['direction'], { Icon: typeof ArrowDownLeft; sign: '+' | '−'; color: string; bg: string }> = {
   credit: { Icon: ArrowDownLeft, sign: '+', color: 'text-asm-greenInk', bg: 'bg-asm-green-tint' },
   debit: { Icon: ArrowUpRight, sign: '−', color: 'text-asm-red', bg: 'bg-red-50' },
@@ -93,14 +171,20 @@ const DIR_META: Record<Transaction['direction'], { Icon: typeof ArrowDownLeft; s
 
 export function AdminUserDetail() {
   const { id = '' } = useParams()
+  const navigate = useNavigate()
   const qc = useQueryClient()
   const { data, isLoading, isError } = useAdminUserDetail(id)
   const freeze = useFreezeUser()
   const unfreeze = useUnfreezeUser()
   const adjust = useAdjustWallet()
+  const approvePayout = useApprovePayout()
+  const rejectPayout = useRejectPayout()
+  const deleteInvestment = useDeleteInvestment()
 
   const [dialog, setDialog] = useState<null | 'credit' | 'debit'>(null)
+  const [rejectingInv, setRejectingInv] = useState<Investment | null>(null)
   const [msg, setMsg] = useState('')
+  const [showPw, setShowPw] = useState(false)
 
   const refresh = () => qc.invalidateQueries({ queryKey: ['admin', 'user', id] })
 
@@ -120,8 +204,16 @@ export function AdminUserDetail() {
     )
   }
 
-  const { user, balance, transactions } = data
+  const { user, password, balance, investments, transactions } = data
   const payoutMethods = user.payoutMethods
+  const payoutBusy = approvePayout.isPending || rejectPayout.isPending || deleteInvestment.isPending
+
+  const activeAmt   = investments.filter(i => i.status === 'active').reduce((s, i) => s + i.amount, 0)
+  const pendingAmt  = investments.filter(i => i.status === 'pending').reduce((s, i) => s + i.amount, 0)
+  const returnedAmt = investments.filter(i => i.status === 'returned').reduce((s, i) => s + i.amount, 0)
+  const totalAmt    = investments
+    .filter(i => ['active','matured','returned'].includes(i.status) || (i.status === 'rejected' && i.startAt))
+    .reduce((s, i) => s + i.amount, 0)
 
   function toggleFreeze() {
     const m = user.status === 'active' ? freeze : unfreeze
@@ -139,15 +231,39 @@ export function AdminUserDetail() {
     })
   }
 
+  // #3 — approve pays now; reject credits a custom amount (trace kept); delete
+  // erases the whole cycle from the user's side (kept in admin History).
+  function handleApprovePayout(invId: string, payout: number) {
+    if (!window.confirm(`Pay ${user.name} ${inr(payout)} now (deposit + profit)?`)) return
+    approvePayout.mutate([invId], {
+      onSuccess: () => { setMsg(`Paid ${inr(payout)} to ${user.name}.`); void refresh() },
+      onError: () => setMsg('Payout failed.'),
+    })
+  }
+  function handleRejectPayout(amountPaise: number, reason: string) {
+    if (!rejectingInv) return
+    rejectPayout.mutate([rejectingInv._id, { reason, amount: amountPaise }], {
+      onSuccess: () => { setMsg(amountPaise > 0 ? `Rejected — credited ${inr(amountPaise)} to ${user.name}.` : 'Investment rejected.'); setRejectingInv(null); void refresh() },
+      onError: () => { setMsg('Reject failed.'); setRejectingInv(null) },
+    })
+  }
+  function handleDeleteInvestment(invId: string) {
+    if (!window.confirm(`Delete this investment completely? It disappears from ${user.name}'s history and totals. This cannot be undone.`)) return
+    deleteInvestment.mutate([invId], {
+      onSuccess: () => { setMsg('Investment deleted.'); void refresh() },
+      onError: () => setMsg('Delete failed.'),
+    })
+  }
+
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
-      <Link to="/admin/users" className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-asm-blue hover:text-asm-blue-dark">
+      <button type="button" onClick={() => navigate(-1)} className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-asm-blue hover:text-asm-blue-dark">
         <ArrowLeft className="size-4" aria-hidden /> Back to users
-      </Link>
+      </button>
 
       <p role="status" aria-live="polite" className="sr-only">{msg}</p>
       {msg && (
-        <p className={cn('rounded-lg px-4 py-3 text-[13px] font-medium', msg.includes('failed') ? 'bg-red-50 text-asm-red' : 'bg-green-50 text-asm-green')}>
+        <p className={cn('rounded-lg px-4 py-3 text-[13px] font-medium', msg.includes('failed') ? 'bg-red-50 text-asm-red' : 'bg-green-50 text-asm-greenInk')}>
           {msg}
         </p>
       )}
@@ -170,7 +286,7 @@ export function AdminUserDetail() {
               <div className="mt-1.5 flex flex-wrap items-center gap-2">
                 {user.publicId && <CopyId value={user.publicId} />}
                 <span className="rounded-md bg-asm-tint px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-asm-body">{user.tier}</span>
-                <span className={cn('rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide', user.status === 'active' ? 'bg-green-50 text-asm-green' : 'bg-red-50 text-asm-red')}>
+                <span className={cn('rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide', user.status === 'active' ? 'bg-green-50 text-asm-greenInk' : 'bg-red-50 text-asm-red')}>
                   {user.status}
                 </span>
               </div>
@@ -197,10 +313,43 @@ export function AdminUserDetail() {
           </div>
         </div>
 
-        {/* Balance */}
-        <div className="mt-5 flex items-center gap-3 rounded-xl border border-asm-line bg-asm-tint/50 px-4 py-3">
-          <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-asm-muted">Wallet balance</span>
-          <span className="font-mono text-[18px] font-bold tabular-nums text-asm-navy">{inr(balance)}</span>
+        {/* #4 — the user's password, for cross-checking wallet access. */}
+        <div className="mt-4 flex items-center gap-2 rounded-lg border border-asm-line bg-asm-tint px-3 py-2">
+          <KeyRound className="size-4 shrink-0 text-asm-muted" aria-hidden />
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-asm-muted">Password</span>
+          {password ? (
+            <>
+              <span className="ml-1 min-w-0 flex-1 truncate font-mono text-[13px] text-asm-navy">
+                {showPw ? password : '•'.repeat(Math.min(password.length, 12))}
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowPw((s) => !s)}
+                aria-label={showPw ? 'Hide password' : 'Show password'}
+                className="shrink-0 rounded p-1 text-asm-muted hover:text-asm-navy"
+              >
+                {showPw ? <EyeOff className="size-4" aria-hidden /> : <Eye className="size-4" aria-hidden />}
+              </button>
+            </>
+          ) : (
+            <span className="ml-1 flex-1 text-[12px] text-asm-muted">not captured yet — fills in when the user next logs in</span>
+          )}
+        </div>
+
+        {/* Stats grid */}
+        <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-5">
+          {([
+            { label: 'Wallet balance', value: balance, color: 'text-asm-navy', bg: 'bg-asm-tint/60' },
+            { label: 'Active',         value: activeAmt,   color: 'text-asm-blue',     bg: 'bg-asm-blue-tint' },
+            { label: 'Pending',        value: pendingAmt,  color: 'text-amber-700',    bg: 'bg-amber-50' },
+            { label: 'Returned',       value: returnedAmt, color: 'text-asm-greenInk', bg: 'bg-green-50' },
+            { label: 'Total invested', value: totalAmt,    color: 'text-asm-navy',     bg: 'bg-asm-tint/60' },
+          ] as const).map(({ label, value, color, bg }) => (
+            <div key={label} className={cn('flex flex-col gap-0.5 rounded-xl border border-asm-line px-3 py-2.5', bg)}>
+              <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-asm-muted">{label}</span>
+              <span className={cn('font-mono text-[15px] font-bold tabular-nums', color)}>{inr(value)}</span>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -225,6 +374,90 @@ export function AdminUserDetail() {
                   </div>
                 </li>
               ))}
+            </ul>
+          )}
+        </div>
+      </section>
+
+      {/* Investments */}
+      <section>
+        <h2 className="mb-2 text-[13px] font-bold text-asm-navy">Investments</h2>
+        <div className="rounded-xl border border-asm-line bg-white">
+          {investments.length === 0 ? (
+            <p className="px-4 py-6 text-center text-[12px] text-asm-muted">No investments yet.</p>
+          ) : (
+            <ul className="divide-y divide-asm-line">
+              {investments.map((inv) => {
+                const isRunning = inv.status === 'active' || inv.status === 'matured'
+                return (
+                <li key={inv._id} className="flex flex-col gap-2.5 px-4 py-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className={cn(
+                          'rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide',
+                          inv.status === 'active' ? 'bg-asm-blue-tint text-asm-blue' :
+                          inv.status === 'pending' ? 'bg-amber-50 text-amber-700' :
+                          inv.status === 'matured' ? 'bg-orange-50 text-orange-700' :
+                          inv.status === 'returned' ? 'bg-green-50 text-asm-greenInk' :
+                          inv.status === 'deleted' ? 'bg-zinc-200 text-zinc-600 line-through' :
+                          'bg-red-50 text-asm-red',
+                        )}>
+                          {inv.status}
+                        </span>
+                        <span className="rounded-md bg-asm-tint px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-asm-body">
+                          {inv.planKey}
+                        </span>
+                      </div>
+                      <p className="mt-1 font-mono text-[11px] text-asm-muted">{inv.referenceCode}</p>
+                      <p className="text-[11px] text-asm-muted">{fmtDate(inv.createdAt)}</p>
+                    </div>
+                    <div className="flex shrink-0 flex-col items-end gap-0.5">
+                      <span className="font-mono text-[13px] font-bold tabular-nums text-asm-navy">{inr(inv.amount)}</span>
+                      <span className="text-[11px] text-asm-muted">→ {inr(inv.expectedReturn)}</span>
+                      {inv.status === 'active' && inv.maturesAt && (
+                        <span className="font-mono text-[11px] tabular-nums text-asm-blue">
+                          <InvestmentCountdown maturesAt={inv.maturesAt} />
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* #3 — approve / reject (custom amount) / delete a running investment right here. */}
+                  {isRunning && (
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        data-testid="approve-payout"
+                        disabled={payoutBusy}
+                        onClick={() => handleApprovePayout(inv._id, inv.amount + inv.expectedReturn)}
+                        className="flex-1 rounded-lg bg-asm-greenInk py-2 text-[12px] font-semibold text-white hover:bg-green-800 disabled:opacity-50"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        type="button"
+                        data-testid="reject-payout"
+                        disabled={payoutBusy}
+                        onClick={() => setRejectingInv(inv)}
+                        className="flex-1 rounded-lg border border-asm-line py-2 text-[12px] font-semibold text-asm-red hover:bg-red-50 disabled:opacity-50"
+                      >
+                        Reject
+                      </button>
+                      <button
+                        type="button"
+                        data-testid="delete-investment"
+                        disabled={payoutBusy}
+                        onClick={() => handleDeleteInvestment(inv._id)}
+                        className="flex-1 rounded-lg border border-zinc-300 bg-zinc-100 py-2 text-[12px] font-semibold text-zinc-700 hover:bg-zinc-200 disabled:opacity-50"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </li>
+                )
+              })}
             </ul>
           )}
         </div>
@@ -269,6 +502,16 @@ export function AdminUserDetail() {
           onConfirm={handleAdjust}
           onCancel={() => setDialog(null)}
           isPending={adjust.isPending}
+        />
+      )}
+
+      {rejectingInv && (
+        <RejectPayoutDialog
+          inv={rejectingInv}
+          userName={user.name}
+          onConfirm={handleRejectPayout}
+          onCancel={() => setRejectingInv(null)}
+          isPending={rejectPayout.isPending}
         />
       )}
     </div>

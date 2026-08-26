@@ -3,12 +3,31 @@ import { LifeBuoy, Loader2 } from 'lucide-react'
 
 import { useAdminSupport, useResolveSupport } from '@/hooks/queries'
 import type { AdminSupportTicket } from '@/services/api/support'
+import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { SearchInput } from '@/components/admin/SearchInput'
+import { SortSelect } from '@/components/admin/SortSelect'
+import { StatusBanner } from '@/components/admin/StatusBanner'
+import { AdminButton } from '@/components/admin/AdminButton'
+import { Pagination } from '@/components/admin/Pagination'
+import { useClientTable, type SortOption } from '@/hooks/useClientTable'
 import { cn } from '@/lib/utils'
 
 type StatusFilter = 'open' | 'resolved'
 
-/* ── Resolve dialog ── */
+const SORT_OPTIONS: SortOption<AdminSupportTicket>[] = [
+  { label: 'Newest first', value: '-createdAt', compare: (a, b) => +new Date(b.createdAt) - +new Date(a.createdAt) },
+  { label: 'Oldest first', value: 'createdAt', compare: (a, b) => +new Date(a.createdAt) - +new Date(b.createdAt) },
+]
+
+const QUICK_REPLIES = [
+  'Your issue has been resolved. Please check and confirm.',
+  'We have processed your request. Thank you for your patience.',
+  'This has been escalated to our team. We will update you shortly.',
+  'Your account has been updated as requested.',
+  'Please try again. If the issue persists, raise a new ticket.',
+]
+
+/* ── Resolve dialog (specialised: quick-reply chips + ticket context) ── */
 function ResolveDialog({
   ticket,
   onConfirm,
@@ -26,9 +45,9 @@ function ResolveDialog({
       role="dialog"
       aria-modal="true"
       aria-labelledby="resolve-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/30 p-4 backdrop-blur-sm"
     >
-      <div className="w-full max-w-md rounded-2xl border border-asm-line bg-white p-6 shadow-xl">
+      <div className="my-auto flex max-h-[calc(100vh-2rem)] w-full max-w-md flex-col overflow-y-auto rounded-2xl border border-asm-line bg-white p-6 shadow-xl">
         <h2 id="resolve-title" className="text-[15px] font-bold text-asm-navy">
           Resolve {ticket.publicRef}
         </h2>
@@ -36,9 +55,26 @@ function ResolveDialog({
         <p className="mt-3 max-h-40 overflow-y-auto whitespace-pre-wrap rounded-lg bg-asm-tint px-3 py-2 text-[13px] text-asm-body">
           {ticket.message}
         </p>
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {QUICK_REPLIES.map((reply) => (
+            <button
+              key={reply}
+              type="button"
+              onClick={() => setNote(reply)}
+              className={cn(
+                'rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors',
+                note === reply
+                  ? 'border-asm-blue bg-asm-blue-tint text-asm-blue'
+                  : 'border-asm-line text-asm-body hover:border-asm-blue/40 hover:bg-asm-tint',
+              )}
+            >
+              {reply.length > 50 ? reply.slice(0, 47) + '…' : reply}
+            </button>
+          ))}
+        </div>
         <label className="mt-4 block">
           <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-asm-muted">
-            Response note (optional — emailed to the user's record)
+            Response note <span className="font-normal normal-case tracking-normal">(pick a reply or type your own)</span>
           </span>
           <textarea
             value={note}
@@ -49,22 +85,12 @@ function ResolveDialog({
           />
         </label>
         <div className="mt-4 flex justify-end gap-2.5">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={isPending}
-            className="rounded-lg border border-asm-line px-3.5 py-2 text-[12px] font-semibold text-asm-body hover:bg-asm-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue disabled:opacity-50"
-          >
+          <AdminButton variant="outline" size="sm" onClick={onCancel} disabled={isPending}>
             Cancel
-          </button>
-          <button
-            type="button"
-            onClick={() => onConfirm(note)}
-            disabled={isPending}
-            className="rounded-lg bg-asm-blue px-3.5 py-2 text-[12px] font-semibold text-white hover:bg-asm-blue-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue disabled:opacity-50"
-          >
+          </AdminButton>
+          <AdminButton size="sm" onClick={() => onConfirm(note)} disabled={isPending}>
             {isPending ? 'Resolving…' : 'Mark resolved'}
-          </button>
+          </AdminButton>
         </div>
       </div>
     </div>
@@ -78,19 +104,12 @@ export function AdminSupport() {
 
   const [resolving, setResolving] = useState<AdminSupportTicket | null>(null)
   const [statusMsg, setStatusMsg] = useState('')
-  const [q, setQ] = useState('')
 
-  const tickets = (data ?? []).filter((t) => {
-    if (!q.trim()) return true
-    const s = q.toLowerCase()
-    return (
-      t.publicRef.toLowerCase().includes(s) ||
-      t.subject.toLowerCase().includes(s) ||
-      t.message.toLowerCase().includes(s) ||
-      (t.user?.name ?? '').toLowerCase().includes(s) ||
-      (t.user?.email ?? '').toLowerCase().includes(s) ||
-      (t.user?.publicId ?? '').toLowerCase().includes(s)
-    )
+  const rows = data ?? []
+  const table = useClientTable({
+    rows,
+    searchable: (t) => [t.publicRef, t.subject, t.message, t.user?.name, t.user?.email, t.user?.publicId],
+    sortOptions: SORT_OPTIONS,
   })
 
   function handleResolve(note: string) {
@@ -103,19 +122,14 @@ export function AdminSupport() {
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
-      <div>
-        <h1 className="text-[22px] font-bold tracking-tight text-asm-navy">Support</h1>
-        <p className="mt-0.5 text-[13px] text-asm-muted">Incoming user queries.</p>
+      <AdminPageHeader title="Support" subtitle="Incoming user queries." />
+
+      <div className="flex flex-wrap items-center gap-3">
+        <SearchInput value={table.q} onChange={table.setQ} placeholder="Search by ref, subject, message or user" />
+        <SortSelect value={table.sort} onChange={table.setSort} options={SORT_OPTIONS} />
       </div>
 
-      <SearchInput value={q} onChange={setQ} placeholder="Search by ref, subject, message or user" />
-
-      <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">{statusMsg}</p>
-      {statusMsg && (
-        <p className={cn('rounded-lg px-4 py-3 text-[13px] font-medium', statusMsg.includes('Failed') ? 'bg-red-50 text-asm-red' : 'bg-green-50 text-asm-green')}>
-          {statusMsg}
-        </p>
-      )}
+      <StatusBanner message={statusMsg} />
 
       {/* Status filter */}
       <div className="flex gap-2">
@@ -142,16 +156,18 @@ export function AdminSupport() {
           </div>
         ) : isError ? (
           <p role="alert" className="px-4 py-10 text-center text-[13px] text-asm-red">Failed to load tickets.</p>
-        ) : tickets.length === 0 ? (
+        ) : table.total === 0 ? (
           <div className="flex flex-col items-center gap-2 px-4 py-16 text-center">
             <span className="flex size-10 items-center justify-center rounded-full bg-asm-tint">
               <LifeBuoy className="size-5 text-asm-muted" strokeWidth={1.5} aria-hidden />
             </span>
-            <p className="mt-1 text-[13px] font-semibold text-asm-navy">No {status} tickets</p>
+            <p className="mt-1 text-[13px] font-semibold text-asm-navy">
+              {table.q ? 'No matching tickets' : `No ${status} tickets`}
+            </p>
           </div>
         ) : (
           <ul className="divide-y divide-asm-line">
-            {tickets.map((t) => (
+            {table.pageRows.map((t) => (
               <li key={t.id} className="flex flex-col gap-2 p-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex min-w-0 flex-col gap-1">
                   <div className="flex items-center gap-2">
@@ -166,26 +182,35 @@ export function AdminSupport() {
                     {new Date(t.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                   </p>
                   {t.status === 'resolved' && t.adminNote && (
-                    <p className="mt-1 rounded-lg bg-green-50 px-3 py-2 text-[12px] text-asm-green">
+                    <p className="mt-1 rounded-lg bg-green-50 px-3 py-2 text-[12px] text-asm-greenInk">
                       <span className="font-semibold">Response:</span> {t.adminNote}
                     </p>
                   )}
                 </div>
                 {t.status === 'open' && (
-                  <button
-                    type="button"
+                  <AdminButton
+                    size="sm"
+                    className="shrink-0 self-start"
                     onClick={() => setResolving(t)}
                     disabled={resolveMutation.isPending}
-                    className="shrink-0 self-start rounded-md bg-asm-blue px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-asm-blue-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue disabled:opacity-50"
                   >
                     Resolve
-                  </button>
+                  </AdminButton>
                 )}
               </li>
             ))}
           </ul>
         )}
       </div>
+
+      <Pagination
+        page={table.page}
+        pageCount={table.pageCount}
+        total={table.total}
+        pageSize={table.pageSize}
+        onPageChange={table.setPage}
+        onPageSizeChange={table.setPageSize}
+      />
 
       {resolving && (
         <ResolveDialog
