@@ -44,7 +44,7 @@ function StatusPill({ label, count, colorClass }: StatusPillProps) {
 }
 
 export function AdminDeposits() {
-  const { data, isLoading, isError } = useAdminInvestments('pending')
+  const { data, isLoading, isError } = useAdminInvestments('pending,active,matured,rejected')
   const approveMutation = useApproveInvestment()
   const rejectMutation = useRejectInvestment()
   const bulkApproveMutation = useBulkApproveInvestments()
@@ -60,7 +60,8 @@ export function AdminDeposits() {
   const [bulkRejecting, setBulkRejecting] = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
 
-  const rows = data ?? []
+  const allRows = data ?? []
+  const rows = allRows.filter((d) => d.status === 'pending')
   const table = useClientTable({
     rows,
     searchable: (d) => [d.user.name, d.user.email, d.referenceCode, d.planKey],
@@ -257,8 +258,10 @@ export function AdminDeposits() {
 
   const selCount = selectedIds.size
   const allCount = rows.length
-  // Pipeline counts — derived from already-loaded pending data
-  const pendingCount = rows.length
+  // Pipeline counts — derived from already-loaded data (pending→active→matured, rejected)
+  const pendingCount = allRows.filter((d) => d.status === 'pending').length
+  const approvedCount = allRows.filter((d) => d.status === 'active' || d.status === 'matured').length
+  const rejectedCount = allRows.filter((d) => d.status === 'rejected').length
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
@@ -291,6 +294,8 @@ export function AdminDeposits() {
       {/* Pipeline summary strip */}
       <div className="flex flex-wrap gap-2">
         <StatusPill label="pending" count={pendingCount} colorClass="bg-amber-50 text-amber-800" />
+        <StatusPill label="approved" count={approvedCount} colorClass="bg-asm-green-tint text-asm-greenInk" />
+        <StatusPill label="rejected" count={rejectedCount} colorClass="bg-red-50 text-red-700" />
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
