@@ -58,24 +58,19 @@ function SkeletonRow({ index }: { index: number }) {
     <div
       className={cn(
         'flex items-center gap-3 rounded-2xl border border-asm-line bg-white px-4 py-3.5',
-        'shadow-[0_1px_4px_-1px_rgba(16,42,92,0.06)]',
-        'animate-pulse'
+        'shadow-card'
       )}
-      style={{ animationDelay: `${index * 60}ms` }}
+      style={{ opacity: 1 - index * 0.1 }}
     >
-      {/* Rank */}
       <span className="w-6 shrink-0">
-        <span className="block h-4 w-5 rounded bg-asm-tint" />
+        <span className="skeleton block h-4 w-5" />
       </span>
-      {/* Badge */}
-      <span className="size-9 shrink-0 rounded-full bg-asm-tint" />
-      {/* Name + tier */}
+      <span className="skeleton size-9 shrink-0 rounded-full" />
       <span className="flex flex-1 flex-col gap-1.5">
-        <span className="h-3.5 w-32 rounded bg-asm-tint" />
-        <span className="h-3 w-16 rounded bg-asm-tint" />
+        <span className="skeleton h-3.5 w-32" />
+        <span className="skeleton h-3 w-16" />
       </span>
-      {/* Amount */}
-      <span className="h-4 w-20 rounded bg-asm-tint" />
+      <span className="skeleton h-4 w-20" />
     </div>
   )
 }
@@ -113,9 +108,8 @@ function LeaderboardRow({
     <motion.div variants={fadeUp}>
       <div
         className={cn(
-          'flex items-center gap-3 rounded-2xl border border-asm-line px-4',
-          'shadow-[0_1px_4px_-1px_rgba(16,42,92,0.06)]',
-          'transition-colors',
+          'elevate flex items-center gap-3 rounded-2xl border border-asm-line px-4',
+          'shadow-card',
           isTop3
             ? cn('py-4', medal.bg, medal.ring)
             : 'bg-white py-3.5'
@@ -301,7 +295,7 @@ export function LeaderboardPage() {
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue',
                     isActive
                       ? 'bg-white text-asm-blue shadow-[0_1px_4px_-1px_rgba(16,42,92,0.12)]'
-                      : 'text-asm-muted hover:text-asm-navy'
+                      : 'text-asm-body hover:bg-white hover:text-asm-navy rounded-lg'
                   )}
                 >
                   {label}
