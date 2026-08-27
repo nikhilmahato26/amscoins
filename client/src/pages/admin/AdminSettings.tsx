@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
-import { Loader2, Settings, Upload } from 'lucide-react'
+import { Loader2, Upload } from 'lucide-react'
 
 import { useSettings, useUpdateSettings } from '@/hooks/queries'
 import { uploadSettingsImage, type PublicSettings, type SettingsImageKey, type SettingsUpdate } from '@/services/api/settings'
 import { cn } from '@/lib/utils'
+import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 
 type FormValues = {
   inrThresholdRupees: number
@@ -94,16 +95,10 @@ export function AdminSettings() {
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
-      {/* Page heading */}
-      <div className="flex items-center gap-3">
-        <Settings className="size-5 shrink-0 text-asm-muted" strokeWidth={1.75} aria-hidden />
-        <div>
-          <h1 className="text-[22px] xl:text-[26px] font-bold tracking-tight text-asm-navy">Payment Settings</h1>
-          <p className="-mt-0.5 text-[13px] xl:text-[14px] text-asm-muted">
-            Configure payment methods, QR images, and availability.
-          </p>
-        </div>
-      </div>
+      <AdminPageHeader
+        title="Payment Settings"
+        subtitle="Configure payment methods, QR images, and availability."
+      />
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
         {/* ── INR (UPI) ── */}
@@ -158,23 +153,29 @@ export function AdminSettings() {
         </Section>
 
         {/* ── Investment cycle ── */}
-        <Section title="Investment cycle">
-          <Field label="Deposit cooldown (hours) — after a deposit is approved, the user must wait this long before starting another (0 = no cooldown; a pending deposit always blocks)">
-            <input
-              type="number"
-              min={0}
-              step={1}
-              {...register('depositCooldownHours', {
-                valueAsNumber: true,
-                required: true,
-                validate: (v) => (Number.isInteger(v) && v >= 0) || 'Enter a whole number of hours (min 0)',
-              })}
-              className={inputCls}
-            />
-          </Field>
-
+        <SettingsSection
+          title="Investment Cycle"
+          description="Cooldown periods and automation windows. Automation runs server-side on the configured schedule."
+        >
+          <SettingRow
+            label="Deposit cooldown (hours)"
+            description="After a deposit is approved, the user must wait this long before starting another. 0 = no cooldown; a pending deposit always blocks."
+            control={
+              <input
+                type="number"
+                min={0}
+                step={1}
+                {...register('depositCooldownHours', {
+                  valueAsNumber: true,
+                  required: true,
+                  validate: (v) => (Number.isInteger(v) && v >= 0) || 'Enter a whole number of hours (min 0)',
+                })}
+                className="w-24 rounded-lg border border-asm-line bg-asm-tint px-3 py-1.5 text-[13px] text-asm-navy focus:border-asm-blue focus:outline-none focus:ring-1 focus:ring-asm-blue"
+              />
+            }
+          />
           {/* Each automation paired with its timer so they're easy to read as a unit. */}
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 px-5 py-4">
             <AutomationPair
               label="Auto reject investments"
               timerLabel="Reject window (hours)"
@@ -206,24 +207,31 @@ export function AdminSettings() {
               })}
             />
           </div>
-        </Section>
+        </SettingsSection>
 
         {/* ── Withdrawals ── */}
-        <Section title="Withdrawals">
-          <Field label="Withdrawal cooldown (hours) — a user must wait this long after starting a withdrawal before starting another (0 = no limit)">
-            <input
-              type="number"
-              min={0}
-              step={1}
-              {...register('withdrawalCooldownHours', {
-                valueAsNumber: true,
-                required: true,
-                validate: (v) => (Number.isInteger(v) && v >= 0) || 'Enter a whole number of hours (0 or more)',
-              })}
-              className={inputCls}
-            />
-          </Field>
-        </Section>
+        <SettingsSection
+          title="Withdrawal Cooldown"
+          description="Minimum hours a user must wait between withdrawals."
+        >
+          <SettingRow
+            label="Withdrawal cooldown (hours)"
+            description="A user must wait this long after starting a withdrawal before starting another. 0 = no limit."
+            control={
+              <input
+                type="number"
+                min={0}
+                step={1}
+                {...register('withdrawalCooldownHours', {
+                  valueAsNumber: true,
+                  required: true,
+                  validate: (v) => (Number.isInteger(v) && v >= 0) || 'Enter a whole number of hours (0 or more)',
+                })}
+                className="w-24 rounded-lg border border-asm-line bg-asm-tint px-3 py-1.5 text-[13px] text-asm-navy focus:border-asm-blue focus:outline-none focus:ring-1 focus:ring-asm-blue"
+              />
+            }
+          />
+        </SettingsSection>
 
         {/* ── Availability ── */}
         <Section title="Payment methods available">
@@ -288,6 +296,55 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       </h2>
       {children}
     </section>
+  )
+}
+
+function SettingsSection({
+  title,
+  description,
+  children,
+  destructive = false,
+}: {
+  title: string
+  description?: string
+  children: React.ReactNode
+  destructive?: boolean
+}) {
+  return (
+    <section className="rounded-xl border border-asm-line bg-white shadow-[0_1px_4px_-1px_rgba(16,42,92,0.06)]">
+      <div className={cn(
+        'border-b border-asm-line px-5 py-4',
+        destructive && 'border-l-4 border-l-asm-red'
+      )}>
+        <h2 className={cn('text-[15px] font-bold', destructive ? 'text-asm-red' : 'text-asm-navy')}>
+          {title}
+        </h2>
+        {description && (
+          <p className="mt-0.5 text-[13px] text-asm-muted">{description}</p>
+        )}
+      </div>
+      <div className="divide-y divide-asm-line">{children}</div>
+    </section>
+  )
+}
+
+function SettingRow({
+  label,
+  description,
+  control,
+}: {
+  label: string
+  description?: string
+  control: React.ReactNode
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 px-5 py-4">
+      <div>
+        <div className="text-[14px] font-semibold text-asm-navy">{label}</div>
+        {description && <div className="mt-0.5 text-[12px] text-asm-muted">{description}</div>}
+      </div>
+      <div className="shrink-0">{control}</div>
+    </div>
   )
 }
 

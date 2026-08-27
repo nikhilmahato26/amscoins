@@ -1,7 +1,10 @@
 import { Users, ArrowDownToLine, ArrowUpFromLine, TrendingUp, Wallet, CalendarDays } from 'lucide-react'
-import { useAdminStats } from '@/hooks/queries'
+import { useAdminStats, useAdminActivity } from '@/hooks/queries'
 import { inr } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { PendingActionsStrip } from '@/components/admin/PendingActionsStrip'
+import { ActivityTimeline } from '@/components/admin/ActivityTimeline'
+import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 
 interface StatCardProps {
   label: string
@@ -9,21 +12,33 @@ interface StatCardProps {
   icon: React.ElementType
   iconClass: string
   iconBgClass: string
+  delta?: string
+  deltaPositive?: boolean
 }
 
-function StatCard({ label, value, icon: Icon, iconClass, iconBgClass }: StatCardProps) {
+function StatCard({ label, value, icon: Icon, iconClass, iconBgClass, delta, deltaPositive }: StatCardProps) {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-asm-line bg-white p-5 shadow-[0_1px_4px_-1px_rgba(16,42,92,0.06)]">
-      <span className={cn('flex size-9 items-center justify-center rounded-lg', iconBgClass)}>
-        <Icon className={cn('size-4.5 size-[18px]', iconClass)} strokeWidth={1.75} aria-hidden />
-      </span>
+    <div className="flex flex-col gap-4 rounded-xl border border-asm-line bg-white p-5 shadow-[0_1px_4px_-1px_rgba(16,42,92,0.06)]">
+      <div className="flex items-start justify-between gap-2">
+        <span className={cn('flex size-10 items-center justify-center rounded-xl', iconBgClass)}>
+          <Icon className={cn('size-5', iconClass)} strokeWidth={1.75} aria-hidden />
+        </span>
+        {delta !== undefined && (
+          <span className={cn(
+            'rounded-full px-2 py-0.5 text-[11px] font-semibold',
+            deltaPositive === true  && 'bg-green-50 text-green-700',
+            deltaPositive === false && 'bg-red-50 text-asm-red',
+            deltaPositive === undefined && 'bg-asm-tint text-asm-muted',
+          )}>
+            {delta}
+          </span>
+        )}
+      </div>
       <div>
-        <p className="font-mono text-[22px] xl:text-[26px] font-bold tabular-nums leading-none text-asm-navy">
+        <div className="font-jakarta text-[30px] font-extrabold leading-none tracking-tight text-asm-navy xl:text-[34px]">
           {value}
-        </p>
-        <p className="mt-1 text-[11px] xl:text-[12px] font-semibold uppercase tracking-[0.08em] text-asm-muted">
-          {label}
-        </p>
+        </div>
+        <div className="mt-1 text-[12px] font-semibold text-asm-muted">{label}</div>
       </div>
     </div>
   )
@@ -43,14 +58,11 @@ function SkeletonCard() {
 
 export function AdminDashboard() {
   const { data, isLoading, isError } = useAdminStats()
+  const activityQuery = useAdminActivity()
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-[22px] xl:text-[26px] font-bold tracking-tight text-asm-navy">Dashboard</h1>
-        <p className="mt-0.5 text-[13px] xl:text-[14px] text-asm-muted">Platform overview at a glance.</p>
-      </div>
+      <AdminPageHeader title="Dashboard" subtitle="Platform overview at a glance." />
 
       {/* Stat cards */}
       <section aria-label="Platform statistics" aria-live="polite">
@@ -105,6 +117,14 @@ export function AdminDashboard() {
         )}
       </section>
 
+      {/* Pending actions strip */}
+      {data && !isLoading && (
+        <PendingActionsStrip
+          pendingInvestments={data.pendingDeposits}
+          pendingWithdrawals={data.pendingWithdrawals}
+        />
+      )}
+
       {/* Wallet liability */}
       {data && !isLoading && (
         <section aria-label="Wallet liability">
@@ -123,6 +143,9 @@ export function AdminDashboard() {
           </div>
         </section>
       )}
+
+      {/* Recent activity */}
+      <ActivityTimeline events={activityQuery.data ?? []} />
     </div>
   )
 }

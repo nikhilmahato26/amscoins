@@ -28,6 +28,10 @@ interface DataTableProps<T> {
   minWidth?: number
   /** Called when a row is clicked. Adds cursor-pointer and hover highlight. */
   onRowClick?: (row: T) => void
+  /** Stick the header to the top when the table scrolls. */
+  stickyHeader?: boolean
+  /** Highlight rows on hover (independent of row click). */
+  rowHover?: boolean
 }
 
 const alignClass = { left: 'text-left', right: 'text-right', center: 'text-center' } as const
@@ -60,13 +64,15 @@ export function DataTable<T>({
   empty,
   minWidth = 700,
   onRowClick,
+  stickyHeader = false,
+  rowHover = false,
 }: DataTableProps<T>) {
   const colCount = columns.length
 
   return (
     <div className="overflow-x-auto rounded-xl border border-asm-line bg-white shadow-[0_1px_4px_-1px_rgba(16,42,92,0.06)]">
       <table className="w-full border-collapse text-[13px]" style={{ minWidth }}>
-        <thead>
+        <thead className={cn(stickyHeader && 'sticky top-0 z-10')}>
           <tr className="border-b border-asm-line bg-asm-tint text-[11px] font-bold uppercase tracking-[0.07em] text-asm-muted">
             {columns.map((col) => (
               <th
@@ -106,9 +112,10 @@ export function DataTable<T>({
                 key={getRowKey(row)}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
                 className={cn(
-                  'border-b border-asm-line last:border-0',
+                  'border-b border-asm-line last:border-0 transition-colors',
                   idx % 2 === 0 ? 'bg-white' : 'bg-asm-tint/40',
-                  onRowClick && 'cursor-pointer hover:bg-asm-tint/40',
+                  (onRowClick || rowHover) && 'hover:bg-asm-tint/60',
+                  onRowClick && 'cursor-pointer',
                 )}
               >
                 {columns.map((col) => (

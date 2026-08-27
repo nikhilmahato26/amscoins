@@ -233,3 +233,16 @@ export function useInvestmentStats() {
     refetchInterval: 30_000,
   })
 }
+
+export type ActivityEvent = {
+  id: string
+  type: 'investment_approved' | 'investment_rejected' | 'withdrawal_approved' | 'withdrawal_rejected' | 'user_registered'
+  userName: string
+  amount?: number
+  timestamp: string
+}
+
+export function useAdminActivity() {
+  // Stub — replace with real API call when backend endpoint is ready
+  return { data: [] as ActivityEvent[], isLoading: false }
+}
