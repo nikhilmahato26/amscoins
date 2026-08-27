@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router'
 import { ArrowRight, Award, Lock, TrendingUp, Wallet } from 'lucide-react'
 
@@ -43,6 +44,18 @@ function maturityLabel(maturesAt?: string): string | null {
   if (hours < 24) return `${hours}h ${mins}m remaining`
   const days = Math.floor(hours / 24)
   return `${days}d ${hours % 24}h remaining`
+}
+
+function TimeRemaining({ maturesAt }: { maturesAt: string }) {
+  const [label, setLabel] = useState(() => maturityLabel(maturesAt) ?? '')
+  useEffect(() => {
+    function tick() {
+      setLabel(maturityLabel(maturesAt) ?? '')
+    }
+    const id = setInterval(tick, 60_000)
+    return () => clearInterval(id)
+  }, [maturesAt])
+  return <span className="text-[11px] font-semibold text-asm-blue">{label}</span>
 }
 
 /* ── Data ───────────────────────────────────────────────────────── */
@@ -177,6 +190,24 @@ export function HomePage() {
                 Hey {firstName}, here's your portfolio
               </p>
             )}
+
+            {/* Portfolio hero — the number users came to see */}
+            {!isLoadingDash && (
+              <div className="mb-3 rounded-2xl border border-asm-line bg-white px-5 py-5 shadow-[0_2px_12px_-4px_rgba(16,42,92,0.08)]">
+                <span className="text-[12px] font-bold uppercase tracking-[0.1em] text-asm-muted">Total Portfolio Value</span>
+                <div className="mt-1.5 flex items-end gap-3">
+                  <span className="font-jakarta text-[38px] font-extrabold leading-none tabular-nums text-asm-navy">
+                    {displayBalance !== null ? inr(displayBalance) : '—'}
+                  </span>
+                  {totalInvested !== null && totalInvested > 0 && (
+                    <span className="mb-1 rounded-full bg-asm-green-tint px-2.5 py-0.5 text-[12px] font-bold text-asm-greenInk">
+                      ₹{inr(totalInvested)} active
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-3 gap-2.5">
               {isLoadingDash ? (
                 <>
@@ -284,7 +315,6 @@ export function HomePage() {
             <div className="flex flex-col gap-2.5">
               {activeInvests.slice(0, 3).map((inv) => {
                 const planTier = inv.planKey as Tier
-                const matLabel = maturityLabel(inv.maturesAt)
                 const profit   = inv.expectedReturn - inv.amount
                 return (
                   <div
@@ -294,7 +324,7 @@ export function HomePage() {
                     <TierBadge tier={planTier} size={40} className="shrink-0" />
                     <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                       <span className="text-[13px] font-bold capitalize text-asm-navy">{planTier} Plan</span>
-                      {matLabel && <span className="text-[11px] text-asm-muted">{matLabel}</span>}
+                      {inv.maturesAt && <TimeRemaining maturesAt={inv.maturesAt} />}
                     </div>
                     <div className="flex shrink-0 flex-col items-end">
                       <span className="font-mono text-[14px] font-bold tabular-nums text-asm-greenInk">
