@@ -207,12 +207,7 @@ const TRUST_BAR: { Icon: LucideIcon; title: string; note: string }[] = [
   { Icon: Headphones, title: 'Daily Support', note: 'WhatsApp & email team' },
 ]
 
-const PAY_METHODS = [
-  { label: 'UPI', className: 'bg-white text-asm-navy' },
-  { label: 'Paytm', className: 'bg-[#002970] text-white' },
-  { label: 'PhonePe', className: 'bg-[#5F259F] text-white' },
-  { label: 'G Pay', className: 'bg-white text-asm-body' },
-]
+const PAY_METHODS = ['UPI', 'Paytm', 'PhonePe', 'Google Pay']
 
 export function LandingFooter() {
   return (
@@ -251,19 +246,13 @@ export function LandingFooter() {
             <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-asm-muted">
               We accept
             </span>
-            <ul className="flex flex-wrap gap-2">
-              {PAY_METHODS.map(({ label, className }) => (
-                <li
-                  key={label}
-                  className={cn(
-                    'flex h-7 items-center rounded border border-asm-line px-2 text-[11px] font-bold',
-                    className
-                  )}
-                >
-                  {label}
-                </li>
+            <div className="flex flex-wrap items-center justify-center gap-3 sm:justify-start">
+              {PAY_METHODS.map((m) => (
+                <span key={m} className="rounded-md border border-white/20 px-2.5 py-1 text-[12px] font-semibold text-white/70">
+                  {m}
+                </span>
               ))}
-            </ul>
+            </div>
           </div>
         </div>
 
