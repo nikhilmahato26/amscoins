@@ -16,8 +16,8 @@ export function StickyHeader({
   return (
     <header
       className={cn(
-        'flex w-full items-center justify-between border-b border-white/10',
-        'bg-surface-nav/80 px-5 pb-[17px] pt-4 backdrop-blur-lg',
+        'flex w-full items-center justify-between border-b border-asm-line',
+        'bg-white/95 px-5 pb-[17px] pt-4 backdrop-blur-md',
         className
       )}
     >
@@ -29,10 +29,10 @@ export function StickyHeader({
           <Gem className="size-[18px] text-white" strokeWidth={2} aria-hidden />
         </span>
         <span className="flex flex-col">
-          <span className="text-lg font-bold leading-7 tracking-[-0.45px]">
+          <span className="text-lg font-bold leading-7 tracking-[-0.45px] text-asm-navy">
             ASM <span className="text-ruby">COINS</span>
           </span>
-          <span className="text-[10px] uppercase leading-[10px] tracking-[1px] text-gray-400">
+          <span className="text-[10px] uppercase leading-[10px] tracking-[1px] text-asm-muted">
             Wealth Redefined
           </span>
         </span>
@@ -43,13 +43,13 @@ export function StickyHeader({
           type="button"
           aria-label={unread ? 'Notifications, unread' : 'Notifications'}
           className={cn(
-            'relative flex size-10 items-center justify-center rounded-xl border border-white/10 bg-white/5',
-            'transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ruby'
+            'relative flex size-10 items-center justify-center rounded-xl border border-asm-line bg-asm-tint',
+            'transition-colors hover:bg-asm-blue-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ruby'
           )}
         >
-          <Bell className="h-4 w-3.5" aria-hidden />
+          <Bell className="h-4 w-3.5 text-asm-navy" aria-hidden />
           {unread ? (
-            <span className="absolute right-2.5 top-2.5 size-2 rounded-full border-2 border-surface-nav bg-ruby" />
+            <span className="absolute right-2.5 top-2.5 size-2 rounded-full border-2 border-white bg-ruby" />
           ) : null}
         </button>
 
@@ -57,11 +57,11 @@ export function StickyHeader({
           type="button"
           aria-label="Settings"
           className={cn(
-            'flex size-10 items-center justify-center rounded-xl border border-white/10 bg-white/5',
-            'transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ruby'
+            'flex size-10 items-center justify-center rounded-xl border border-asm-line bg-asm-tint',
+            'transition-colors hover:bg-asm-blue-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ruby'
           )}
         >
-          <Settings className="size-4" aria-hidden />
+          <Settings className="size-4 text-asm-navy" aria-hidden />
         </button>
       </div>
     </header>
