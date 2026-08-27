@@ -140,7 +140,7 @@ export function ReferralPage() {
               <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-asm-muted">
                 Your referral link
               </span>
-              <div className="flex min-h-[64px] items-center justify-between gap-3 rounded-xl border-2 border-asm-blue/30 bg-asm-blue-tint/30 px-4 py-3">
+              <div className="flex min-h-[64px] items-center justify-between gap-3 rounded-xl border border-asm-blue/20 bg-asm-blue-tint px-4 py-3">
                 <span className="min-w-0 truncate text-[16px] font-bold text-asm-navy">{data.link}</span>
                 <div className="flex shrink-0 gap-1.5">
                   <CopyButton value={data.link} label="Copy referral link" />
@@ -153,7 +153,7 @@ export function ReferralPage() {
             <div className="rounded-2xl border border-asm-blue/20 bg-asm-blue-tint p-5">
               <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-asm-blue">Your referral code</span>
               <div className="mt-2 flex items-center justify-between gap-3">
-                <span className="font-mono text-[24px] font-extrabold tracking-[0.08em] text-asm-navy">
+                <span className="font-mono text-[14px] font-bold tracking-[0.1em] text-asm-navy">
                   {data.referralCode}
                 </span>
                 <CopyButton value={data.referralCode} label="Copy referral code" />

@@ -376,7 +376,12 @@ export function DashboardPage() {
                     <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                       <span className="text-[13px] font-bold capitalize text-asm-navy">{planTier} Plan</span>
                       {matLabel && (
-                        <span className="text-[11px] text-asm-muted">{matLabel}</span>
+                        <span className={matLabel === 'Matured'
+                          ? 'text-[11px] font-semibold text-asm-greenInk'
+                          : 'text-[11px] text-asm-muted'
+                        }>
+                          {matLabel}
+                        </span>
                       )}
                       <span className="text-[11px] text-asm-muted">
                         Invested: <span className="font-semibold text-asm-navy">{inr(inv.amount)}</span>

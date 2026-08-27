@@ -49,13 +49,25 @@ function maturityLabel(maturesAt?: string): string | null {
 function TimeRemaining({ maturesAt }: { maturesAt: string }) {
   const [label, setLabel] = useState(() => maturityLabel(maturesAt) ?? '')
   useEffect(() => {
-    function tick() {
-      setLabel(maturityLabel(maturesAt) ?? '')
-    }
-    const id = setInterval(tick, 60_000)
+    // Already matured — no polling needed
+    if (maturityLabel(maturesAt) === 'Matured') return
+    const id = setInterval(() => {
+      const l = maturityLabel(maturesAt) ?? ''
+      setLabel(l)
+      if (l === 'Matured') clearInterval(id) // stop once matured
+    }, 60_000)
     return () => clearInterval(id)
   }, [maturesAt])
-  return <span className="text-[11px] font-semibold text-asm-blue">{label}</span>
+  if (!label) return null
+  const matured = label === 'Matured'
+  return (
+    <span className={matured
+      ? 'text-[11px] font-semibold text-asm-greenInk'
+      : 'text-[11px] font-semibold text-asm-blue'
+    }>
+      {label}
+    </span>
+  )
 }
 
 /* ── Data ───────────────────────────────────────────────────────── */
