@@ -1,8 +1,9 @@
 import { Users, ArrowDownToLine, ArrowUpFromLine, TrendingUp, Wallet, CalendarDays } from 'lucide-react'
-import { useAdminStats } from '@/hooks/queries'
+import { useAdminStats, useAdminActivity } from '@/hooks/queries'
 import { inr } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { PendingActionsStrip } from '@/components/admin/PendingActionsStrip'
+import { ActivityTimeline } from '@/components/admin/ActivityTimeline'
 
 interface StatCardProps {
   label: string
@@ -56,6 +57,7 @@ function SkeletonCard() {
 
 export function AdminDashboard() {
   const { data, isLoading, isError } = useAdminStats()
+  const activityQuery = useAdminActivity()
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
@@ -144,6 +146,9 @@ export function AdminDashboard() {
           </div>
         </section>
       )}
+
+      {/* Recent activity */}
+      <ActivityTimeline events={activityQuery.data ?? []} />
     </div>
   )
 }
