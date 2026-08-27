@@ -77,10 +77,10 @@ const StyledWrapper = styled.div`
     cursor: pointer;
   }
 
-  /* Mobile: 70% of desktop size (22px × 0.7 ≈ 15px) */
+  /* Mobile: 70% × 65% of desktop ≈ 45% of 22px → 10px */
   @media (max-width: 1023px) {
     .theme-switch {
-      --toggle-size: 15px;
+      --toggle-size: 10px;
     }
   }
 
