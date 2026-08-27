@@ -438,3 +438,36 @@ html.dark ::-webkit-scrollbar-thumb:hover { background-color: #48484a; }
 .app-shell-dark nav[aria-label="Primary"] .text-asm-muted {
   color: var(--dk-text-body);
 }
+
+/* ── Gradient stop overrides ────────────────────────────────────────────
+   Tailwind builds gradients through CSS custom properties (--tw-gradient-from,
+   --tw-gradient-via, --tw-gradient-to). Overriding them here turns every
+   "from-asm-blue-tint via-white to-asm-green-tint" gradient dark-aware
+   without touching component JSX.
+   ─────────────────────────────────────────────────────────────────────── */
+.app-shell-dark .from-asm-blue-tint {
+  --tw-gradient-from: #0d1521 var(--tw-gradient-from-position);
+}
+.app-shell-dark .to-asm-green-tint,
+.app-shell-dark .to-asm-green-tint\/60 {
+  --tw-gradient-to: #091812 var(--tw-gradient-to-position);
+}
+.app-shell-dark .via-white {
+  --tw-gradient-via: var(--dk1) var(--tw-gradient-via-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to, rgba(26, 26, 28, 0));
+}
+
+/* ── Amber deep tones — body text in warning/info amber cards ── */
+.app-shell-dark .text-amber-900,
+.app-shell-dark .text-amber-800 { color: var(--dk-amber); }
+
+/* ── Missing background variants ── */
+.app-shell-dark .bg-amber-100          { background-color: rgba(255, 212, 38, 0.16); }
+.app-shell-dark .bg-amber-50\/60       { background-color: rgba(200, 140, 0,  0.14); }
+.app-shell-dark .bg-asm-green-tint\/25 { background-color: rgba(48,  209, 88, 0.11); }
+.app-shell-dark .bg-asm-blue-tint\/40  { background-color: rgba(90,  150, 245, 0.16); }
+.app-shell-dark .bg-asm-blue-tint\/20  { background-color: rgba(90,  150, 245, 0.10); }
+
+/* ── Missing border variants ── */
+.app-shell-dark .border-asm-blue\/15 { border-color: rgba(90, 150, 245, 0.20); }
+.app-shell-dark .border-asm-blue\/20 { border-color: rgba(90, 150, 245, 0.28); }
