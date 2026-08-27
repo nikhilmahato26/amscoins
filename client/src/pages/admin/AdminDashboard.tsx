@@ -9,21 +9,33 @@ interface StatCardProps {
   icon: React.ElementType
   iconClass: string
   iconBgClass: string
+  delta?: string
+  deltaPositive?: boolean
 }
 
-function StatCard({ label, value, icon: Icon, iconClass, iconBgClass }: StatCardProps) {
+function StatCard({ label, value, icon: Icon, iconClass, iconBgClass, delta, deltaPositive }: StatCardProps) {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-asm-line bg-white p-5 shadow-[0_1px_4px_-1px_rgba(16,42,92,0.06)]">
-      <span className={cn('flex size-9 items-center justify-center rounded-lg', iconBgClass)}>
-        <Icon className={cn('size-4.5 size-[18px]', iconClass)} strokeWidth={1.75} aria-hidden />
-      </span>
+    <div className="flex flex-col gap-4 rounded-xl border border-asm-line bg-white p-5 shadow-[0_1px_4px_-1px_rgba(16,42,92,0.06)]">
+      <div className="flex items-start justify-between gap-2">
+        <span className={cn('flex size-10 items-center justify-center rounded-xl', iconBgClass)}>
+          <Icon className={cn('size-5', iconClass)} strokeWidth={1.75} aria-hidden />
+        </span>
+        {delta !== undefined && (
+          <span className={cn(
+            'rounded-full px-2 py-0.5 text-[11px] font-semibold',
+            deltaPositive === true  && 'bg-green-50 text-green-700',
+            deltaPositive === false && 'bg-red-50 text-asm-red',
+            deltaPositive === undefined && 'bg-asm-tint text-asm-muted',
+          )}>
+            {delta}
+          </span>
+        )}
+      </div>
       <div>
-        <p className="font-mono text-[22px] xl:text-[26px] font-bold tabular-nums leading-none text-asm-navy">
+        <div className="font-jakarta text-[30px] font-extrabold leading-none tracking-tight text-asm-navy xl:text-[34px]">
           {value}
-        </p>
-        <p className="mt-1 text-[11px] xl:text-[12px] font-semibold uppercase tracking-[0.08em] text-asm-muted">
-          {label}
-        </p>
+        </div>
+        <div className="mt-1 text-[12px] font-semibold text-asm-muted">{label}</div>
       </div>
     </div>
   )
