@@ -2,6 +2,7 @@ import { Users, ArrowDownToLine, ArrowUpFromLine, TrendingUp, Wallet, CalendarDa
 import { useAdminStats } from '@/hooks/queries'
 import { inr } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { PendingActionsStrip } from '@/components/admin/PendingActionsStrip'
 
 interface StatCardProps {
   label: string
@@ -116,6 +117,14 @@ export function AdminDashboard() {
           </div>
         )}
       </section>
+
+      {/* Pending actions strip */}
+      {data && !isLoading && (
+        <PendingActionsStrip
+          pendingInvestments={data.pendingDeposits}
+          pendingWithdrawals={data.pendingWithdrawals}
+        />
+      )}
 
       {/* Wallet liability */}
       {data && !isLoading && (
