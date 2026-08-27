@@ -57,7 +57,7 @@ export function SkyToggle({ checked, onChange, label = 'Toggle dark mode' }: Sky
 
 const StyledWrapper = styled.div`
   .theme-switch {
-    --toggle-size: 15px;  /* 70% of original 22px */
+    --toggle-size: 8px;
     --container-width: 5.625em;
     --container-height: 2.5em;
     --container-radius: 6.25em;
@@ -77,10 +77,9 @@ const StyledWrapper = styled.div`
     cursor: pointer;
   }
 
-  /* Mobile: further reduced */
   @media (max-width: 1023px) {
     .theme-switch {
-      --toggle-size: 10px;
+      --toggle-size: 5px;
     }
   }
 
