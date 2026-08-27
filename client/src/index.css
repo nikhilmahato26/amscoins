@@ -216,186 +216,50 @@
 
 /* ═════════════════════════════════════════════════════════════════
    DARK MODE — Premium charcoal design system
-   Inspired by Apple's HIG dark palette, Linear, and Raycast.
+   Architecture: ALL surface overrides are scoped to .app-shell-dark
+   which is only added to the AppShell wrapper div when dark mode is
+   active. Admin (/admin/*) and landing (/) use theme-light-home on
+   their own root — they never contain .app-shell-dark, so zero bleed.
 
-   Elevation stack (warm charcoal, not blue-tinted):
-     --dk0  #0d0d0e  body / page          ← near-black charcoal
-     --dk1  #1a1a1c  card surface         ← raised 1 stop
-     --dk2  #252528  elevated card        ← raised 2 stops
-     --dk3  #2f2f32  drawer / modal       ← highest surface
-   Accents tuned for charcoal base (all ≥ 4.5:1 contrast):
-     blue   #5a96f5  — asm-blue lightened (~5:1 on dk0)
-     green  #30d158  — Apple's system green (profit, gain)
-     amber  #ffd426  — Apple's system yellow (warning)
-     red    #ff453a  — Apple's system red (error, rejection)
+   Elevation stack (charcoal, Apple HIG-inspired):
+     --dk0  #0d0d0e  page background
+     --dk1  #1a1a1c  card surface
+     --dk2  #252528  elevated card
+     --dk3  #2f2f32  drawer / modal
    ═════════════════════════════════════════════════════════════════ */
 
+/* ── Global tokens (on html, for pseudo-elements & pre-hydration) ── */
 html.dark {
   color-scheme: dark;
   scrollbar-color: #3a3a3c transparent;
 
-  /* ── Elevation palette ── */
   --dk0:  #0d0d0e;
   --dk1:  #1a1a1c;
   --dk2:  #252528;
   --dk3:  #2f2f32;
-  --dk-glass: rgba(13, 13, 14, 0.86);
-
-  /* ── Border alpha ── */
+  --dk-glass:      rgba(13, 13, 14, 0.86);
   --dk-border:     rgba(255, 255, 255, 0.055);
   --dk-border-med: rgba(255, 255, 255, 0.09);
   --dk-border-hi:  rgba(255, 255, 255, 0.13);
-
-  /* ── Text — Apple HIG charcoal scale ── */
-  --dk-text-hi:    #f2f2f7;   /* primary label */
-  --dk-text-body:  #8e8e93;   /* secondary label */
-  --dk-text-muted: #48484a;   /* tertiary label */
-
-  /* ── Accents ── */
-  --dk-blue:  #5a96f5;
-  --dk-green: #30d158;
-  --dk-amber: #ffd426;
-  --dk-red:   #ff453a;
+  --dk-text-hi:    #f2f2f7;
+  --dk-text-body:  #8e8e93;
+  --dk-text-muted: #48484a;
+  --dk-blue:       #5a96f5;
+  --dk-green:      #30d158;
+  --dk-amber:      #ffd426;
+  --dk-red:        #ff453a;
 }
 
-/* ── Body ── */
 html.dark body {
   background-color: var(--dk0);
   color: var(--dk-text-hi);
 }
 
-/* ── Page background ── */
-html.dark .bg-asm-tint { background-color: var(--dk0); }
-
-/* ── Cards — gradient elevation L1 ─────────────────────────────
-   Diagonal gradient simulates ambient light from top-left.
-   Inner shadow border lifts the card off the background cleanly. */
-html.dark .bg-white {
-  background-color: var(--dk1);
-  background-image: linear-gradient(145deg, #1f1f22 0%, #161618 100%);
-  box-shadow: 0 0 0 1px var(--dk-border),
-              0 4px 16px rgba(0, 0, 0, 0.45),
-              0 1px 3px rgba(0, 0, 0, 0.3);
-}
-
-/* ── Glass surfaces — header, bottom nav, semi-transparent whites ──
-   Catches bg-white/88, bg-white/95, bg-white/80, etc.              */
-html.dark [class*="bg-white/"] {
-  background-color: rgba(13, 13, 14, 0.84) !important;
-  backdrop-filter: blur(24px) saturate(1.8) !important;
-}
-
-/* ── Header drop shadow ── */
-html.dark header {
-  box-shadow:
-    0 1px 0 var(--dk-border) inset,
-    0 8px 32px rgba(0, 0, 0, 0.6) !important;
-}
-
-/* ── Bottom nav — glass charcoal ── */
-html.dark nav[aria-label="Main navigation"] {
-  background-color: rgba(11, 11, 12, 0.90) !important;
-  border-top-color: var(--dk-border) !important;
-  box-shadow: 0 -1px 0 var(--dk-border) !important;
-}
-
-/* ── Side nav — slightly elevated from page ── */
-html.dark nav[aria-label="Primary"] {
-  background-color: #131315 !important;
-  background-image: linear-gradient(180deg, #181819 0%, #111112 100%) !important;
-  border-right-color: var(--dk-border) !important;
-  box-shadow: 2px 0 24px rgba(0, 0, 0, 0.5) !important;
-}
-
-/* ── Mobile drawer — L3 elevation ── */
-html.dark .fixed.flex-col.bg-white {
-  background-color: var(--dk3) !important;
-  background-image: linear-gradient(180deg, #353538 0%, #28282b 100%) !important;
-  box-shadow: 16px 0 60px rgba(0, 0, 0, 0.75) !important;
-}
-
-/* ── Tinted icon containers — desaturated on charcoal ── */
-html.dark .bg-asm-blue-tint  { background-color: rgba(90, 150, 245, 0.12); }
-html.dark .bg-asm-green-tint { background-color: rgba(48, 209, 88, 0.12); }
-html.dark .bg-amber-50       { background-color: rgba(255, 212, 38, 0.10); }
-html.dark .bg-red-50         { background-color: rgba(255, 69, 58, 0.10); }
-html.dark .bg-green-50       { background-color: rgba(48, 209, 88, 0.10); }
-html.dark .bg-violet-50      { background-color: rgba(191, 144, 255, 0.10); }
-html.dark .bg-sky-50         { background-color: rgba(100, 210, 255, 0.10); }
-html.dark .bg-asm-navy       { background-color: var(--dk2); }
-
-/* ── Tint area inside sidenav footer ── */
-html.dark .rounded-xl.bg-asm-tint { background-color: var(--dk2); }
-
-/* ── Text hierarchy ── */
-html.dark .text-asm-navy  { color: var(--dk-text-hi); }
-html.dark .text-asm-body  { color: var(--dk-text-body); }
-html.dark .text-asm-muted { color: var(--dk-text-muted); }
-
-/* ── asm-blue — lightened for charcoal bg (contrast ≥ 5:1) ── */
-html.dark .text-asm-blue      { color: var(--dk-blue); }
-html.dark .text-asm-blue-dark { color: #4d88ef; }
-html.dark .bg-asm-blue        { background-color: #3f7de8; }
-html.dark .border-asm-blue    { border-color: rgba(90, 150, 245, 0.38); }
-
-/* ── Green — profit signal ── */
-html.dark .text-asm-greenInk    { color: var(--dk-green); }
-html.dark .text-asm-green       { color: var(--dk-green); }
-html.dark .bg-asm-greenInk      { background-color: var(--dk-green); }
-
-/* ── Status badge text ── */
-html.dark .text-amber-700,
-html.dark .text-amber-600   { color: var(--dk-amber); }
-html.dark .text-green-700,
-html.dark .text-green-600   { color: var(--dk-green); }
-html.dark .text-red-600,
-html.dark .text-asm-red     { color: var(--dk-red); }
-html.dark .text-sky-600     { color: #64d2ff; }
-html.dark .text-violet-600  { color: #bf90ff; }
-
-/* ── Borders ── */
-html.dark .border-asm-line        { border-color: var(--dk-border-med); }
-html.dark .divide-asm-line > * + * { border-color: var(--dk-border); }
-html.dark .border-amber-200       { border-color: rgba(255, 212, 38, 0.25); }
-html.dark .border-green-200       { border-color: rgba(48, 209, 88, 0.25); }
-html.dark .border-red-200         { border-color: rgba(255, 69, 58, 0.25); }
-
-/* ── Shadows — charcoal dark-on-dark depth ──
-   Scoped to app pages only; excludes the sky toggle (styled-components,
-   no Tailwind shadow class) and theme-light-home admin surfaces.        */
-html.dark .app-content [class*="shadow-["],
-html.dark main [class*="shadow-["] {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5),
-              0 0 0 1px var(--dk-border);
-}
-
-/* ── Inputs ── */
-html.dark input,
-html.dark textarea,
-html.dark select {
-  background-color: #111113;
+/* ── Pseudo-elements (must stay on html.dark, not scoped) ── */
+html.dark ::selection {
+  background-color: rgba(90, 150, 245, 0.28);
   color: var(--dk-text-hi);
-  border-color: var(--dk-border-hi);
 }
-html.dark input:focus,
-html.dark textarea:focus {
-  border-color: rgba(90, 150, 245, 0.55);
-  box-shadow: 0 0 0 3px rgba(90, 150, 245, 0.14);
-  outline: none;
-}
-
-/* ── Key number glow — financial figures ──────────────────────
-   Subtle aura on large bold numbers. Charcoal base makes the
-   glow feel warmer and less neon than on navy backgrounds.    */
-html.dark .font-jakarta.font-extrabold {
-  text-shadow: 0 0 28px rgba(242, 242, 247, 0.07);
-}
-html.dark .text-asm-greenInk.font-bold,
-html.dark .text-asm-greenInk.font-extrabold {
-  text-shadow: 0 0 20px rgba(48, 209, 88, 0.22);
-}
-
-/* ── Scrollbar ── */
 html.dark ::-webkit-scrollbar-track { background: transparent; }
 html.dark ::-webkit-scrollbar-thumb {
   background-color: #3a3a3c;
@@ -404,108 +268,134 @@ html.dark ::-webkit-scrollbar-thumb {
 }
 html.dark ::-webkit-scrollbar-thumb:hover { background-color: #48484a; }
 
-/* ── Selection ── */
-html.dark ::selection {
-  background-color: rgba(90, 150, 245, 0.28);
+/* ════════════════════════════════════════════════════════════════
+   SURFACE RULES — scoped to .app-shell-dark
+   This class is added ONLY by AppShell when isDark=true.
+   Admin panel and landing never contain this class → zero bleed.
+   No !important needed; specificity (.app-shell-dark .X) beats (.X).
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── Page background ── */
+.app-shell-dark .bg-asm-tint { background-color: var(--dk0); }
+
+/* ── Cards — gradient L1 elevation ── */
+.app-shell-dark .bg-white {
+  background-color: var(--dk1);
+  background-image: linear-gradient(145deg, #1f1f22 0%, #161618 100%);
+  box-shadow: 0 0 0 1px var(--dk-border),
+              0 4px 16px rgba(0, 0, 0, 0.45),
+              0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Glass — header bg-white/88, bottom nav bg-white/88 ── */
+.app-shell-dark [class*="bg-white/"] {
+  background-color: rgba(13, 13, 14, 0.88);
+  backdrop-filter: blur(24px) saturate(1.8);
+}
+
+/* ── Header ── */
+.app-shell-dark header {
+  box-shadow: 0 1px 0 var(--dk-border) inset,
+              0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+/* ── Bottom nav ── */
+.app-shell-dark nav[aria-label="Main navigation"] {
+  background-color: rgba(11, 11, 12, 0.92);
+  border-top-color: var(--dk-border);
+  box-shadow: 0 -1px 0 var(--dk-border);
+}
+
+/* ── Desktop side nav ── */
+.app-shell-dark nav[aria-label="Primary"] {
+  background-color: #131315;
+  background-image: linear-gradient(180deg, #181819 0%, #111112 100%);
+  border-right-color: var(--dk-border);
+  box-shadow: 2px 0 24px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Mobile drawer — L3 elevation ── */
+.app-shell-dark .fixed.flex-col.bg-white {
+  background-color: var(--dk3);
+  background-image: linear-gradient(180deg, #353538 0%, #28282b 100%);
+  box-shadow: 16px 0 60px rgba(0, 0, 0, 0.75);
+}
+
+/* ── Tinted containers ── */
+.app-shell-dark .bg-asm-blue-tint  { background-color: rgba(90, 150, 245, 0.12); }
+.app-shell-dark .bg-asm-green-tint { background-color: rgba(48, 209, 88, 0.12); }
+.app-shell-dark .bg-amber-50       { background-color: rgba(255, 212, 38, 0.10); }
+.app-shell-dark .bg-red-50         { background-color: rgba(255, 69, 58, 0.10); }
+.app-shell-dark .bg-green-50       { background-color: rgba(48, 209, 88, 0.10); }
+.app-shell-dark .bg-violet-50      { background-color: rgba(191, 144, 255, 0.10); }
+.app-shell-dark .bg-sky-50         { background-color: rgba(100, 210, 255, 0.10); }
+.app-shell-dark .bg-asm-navy       { background-color: var(--dk2); }
+.app-shell-dark .rounded-xl.bg-asm-tint { background-color: var(--dk2); }
+
+/* ── Text hierarchy ── */
+.app-shell-dark .text-asm-navy  { color: var(--dk-text-hi); }
+.app-shell-dark .text-asm-body  { color: var(--dk-text-body); }
+.app-shell-dark .text-asm-muted { color: var(--dk-text-muted); }
+
+/* ── Accents ── */
+.app-shell-dark .text-asm-blue      { color: var(--dk-blue); }
+.app-shell-dark .text-asm-blue-dark { color: #4d88ef; }
+.app-shell-dark .bg-asm-blue        { background-color: #3f7de8; }
+.app-shell-dark .border-asm-blue    { border-color: rgba(90, 150, 245, 0.38); }
+.app-shell-dark .text-asm-greenInk  { color: var(--dk-green); }
+.app-shell-dark .text-asm-green     { color: var(--dk-green); }
+.app-shell-dark .bg-asm-greenInk    { background-color: var(--dk-green); }
+
+/* ── Status badge text ── */
+.app-shell-dark .text-amber-700,
+.app-shell-dark .text-amber-600   { color: var(--dk-amber); }
+.app-shell-dark .text-green-700,
+.app-shell-dark .text-green-600   { color: var(--dk-green); }
+.app-shell-dark .text-red-600,
+.app-shell-dark .text-asm-red     { color: var(--dk-red); }
+.app-shell-dark .text-sky-600     { color: #64d2ff; }
+.app-shell-dark .text-violet-600  { color: #bf90ff; }
+
+/* ── Borders ── */
+.app-shell-dark .border-asm-line        { border-color: var(--dk-border-med); }
+.app-shell-dark .divide-asm-line > * + * { border-color: var(--dk-border); }
+.app-shell-dark .border-amber-200       { border-color: rgba(255, 212, 38, 0.25); }
+.app-shell-dark .border-green-200       { border-color: rgba(48, 209, 88, 0.25); }
+.app-shell-dark .border-red-200         { border-color: rgba(255, 69, 58, 0.25); }
+
+/* ── Shadows ── */
+.app-shell-dark [class*="shadow-["] {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5),
+              0 0 0 1px var(--dk-border);
+}
+
+/* ── Inputs ── */
+.app-shell-dark input,
+.app-shell-dark textarea,
+.app-shell-dark select {
+  background-color: #111113;
   color: var(--dk-text-hi);
+  border-color: var(--dk-border-hi);
+}
+.app-shell-dark input:focus,
+.app-shell-dark textarea:focus {
+  border-color: rgba(90, 150, 245, 0.55);
+  box-shadow: 0 0 0 3px rgba(90, 150, 245, 0.14);
+  outline: none;
 }
 
 /* ── Focus ring ── */
-html.dark :focus-visible {
+.app-shell-dark :focus-visible {
   outline: 2px solid var(--dk-blue);
   outline-offset: 2px;
   border-radius: 6px;
 }
 
-/* ═════════════════════════════════════════════════════════════════
-   LIGHT-THEME RESTORATION
-   The admin panel and landing page use `.theme-light-home` hardcoded
-   on their root wrapper. html.dark rules fire at <html> level and
-   would bleed into these surfaces. Every dark-mode override that
-   targets a Tailwind class must be reversed here with higher
-   specificity (3 vs 2 class selectors) so those surfaces stay light
-   regardless of the user's OS/toggle preference.
-   ═════════════════════════════════════════════════════════════════ */
-
-/* Restore color-scheme for system UI inside light wrapper */
-html.dark .theme-light-home { color-scheme: light; }
-
-/* ── Surfaces ── */
-html.dark .theme-light-home .bg-white {
-  background-color: #ffffff !important;
-  background-image: none !important;
-  box-shadow: none !important;
+/* ── Key number glow ── */
+.app-shell-dark .font-jakarta.font-extrabold {
+  text-shadow: 0 0 28px rgba(242, 242, 247, 0.07);
 }
-html.dark .theme-light-home [class*="bg-white/"] {
-  background-color: rgba(255, 255, 255, 0.95) !important;
-  backdrop-filter: blur(12px) !important;
+.app-shell-dark .text-asm-greenInk.font-bold,
+.app-shell-dark .text-asm-greenInk.font-extrabold {
+  text-shadow: 0 0 20px rgba(48, 209, 88, 0.22);
 }
-html.dark .theme-light-home .bg-asm-tint       { background-color: #F4F7FE !important; }
-html.dark .theme-light-home .bg-asm-blue-tint  { background-color: #EDF3FF !important; }
-html.dark .theme-light-home .bg-asm-green-tint { background-color: #EAF7EF !important; }
-html.dark .theme-light-home .bg-amber-50       { background-color: #FFFBEB !important; }
-html.dark .theme-light-home .bg-red-50         { background-color: #FEF2F2 !important; }
-html.dark .theme-light-home .bg-green-50       { background-color: #F0FDF4 !important; }
-html.dark .theme-light-home .bg-violet-50      { background-color: #F5F3FF !important; }
-html.dark .theme-light-home .bg-sky-50         { background-color: #F0F9FF !important; }
-html.dark .theme-light-home .bg-asm-navy       { background-color: #102A5C !important; }
-
-/* ── Text ── */
-html.dark .theme-light-home .text-asm-navy     { color: #102A5C !important; }
-html.dark .theme-light-home .text-asm-body     { color: #546582 !important; }
-html.dark .theme-light-home .text-asm-muted    { color: #55698E !important; }
-html.dark .theme-light-home .text-asm-blue     { color: #0B4FD8 !important; }
-html.dark .theme-light-home .text-asm-blue-dark { color: #0740B8 !important; }
-html.dark .theme-light-home .text-asm-greenInk  { color: #15803D !important; }
-html.dark .theme-light-home .text-amber-700    { color: #B45309 !important; }
-html.dark .theme-light-home .text-amber-600    { color: #D97706 !important; }
-html.dark .theme-light-home .text-green-700    { color: #15803D !important; }
-html.dark .theme-light-home .text-green-600    { color: #16A34A !important; }
-html.dark .theme-light-home .text-red-600      { color: #DC2626 !important; }
-html.dark .theme-light-home .text-asm-red      { color: #C81E1E !important; }
-html.dark .theme-light-home .text-sky-600      { color: #0284C7 !important; }
-html.dark .theme-light-home .text-violet-600   { color: #7C3AED !important; }
-
-/* ── Borders ── */
-html.dark .theme-light-home .border-asm-line       { border-color: #E5EAF3 !important; }
-html.dark .theme-light-home .divide-asm-line > * + * { border-color: #E5EAF3 !important; }
-html.dark .theme-light-home .border-amber-200      { border-color: #FDE68A !important; }
-html.dark .theme-light-home .border-green-200      { border-color: #BBF7D0 !important; }
-html.dark .theme-light-home .border-red-200        { border-color: #FECACA !important; }
-
-/* ── Shadows ── */
-html.dark .theme-light-home [class*="shadow-["] {
-  box-shadow: revert !important;
-}
-
-/* ── Navigation inside light wrapper ── */
-html.dark .theme-light-home nav[aria-label="Admin navigation"],
-html.dark .theme-light-home aside {
-  background-color: #ffffff !important;
-  background-image: none !important;
-  border-right-color: #E5EAF3 !important;
-  box-shadow: none !important;
-}
-html.dark .theme-light-home header {
-  background-color: rgba(255, 255, 255, 0.95) !important;
-  box-shadow: 0 1px 0 #E5EAF3 !important;
-}
-
-/* ── Inputs ── */
-html.dark .theme-light-home input,
-html.dark .theme-light-home textarea,
-html.dark .theme-light-home select {
-  background-color: #ffffff !important;
-  color: #102A5C !important;
-  border-color: #E5EAF3 !important;
-}
-html.dark .theme-light-home input:focus,
-html.dark .theme-light-home textarea:focus {
-  border-color: #0B4FD8 !important;
-  box-shadow: 0 0 0 3px rgba(11, 79, 216, 0.12) !important;
-}
-
-/* ── Number glow: off inside light wrapper ── */
-html.dark .theme-light-home .font-jakarta.font-extrabold { text-shadow: none !important; }
-html.dark .theme-light-home .text-asm-greenInk.font-bold { text-shadow: none !important; }
-html.dark .theme-light-home .text-asm-greenInk.font-extrabold { text-shadow: none !important; }
