@@ -159,6 +159,25 @@ export const bulkApproveInvestments = (ids: string[]) =>
 export const bulkRejectInvestments = (ids: string[], note?: string) =>
   apiFetch<BulkRejectInvestmentsResult>('/admin/investments/bulk-reject', { method: 'POST', body: { ids, note } })
 
+export interface BulkApproveReturnsResult {
+  approved: number
+  failed: number
+}
+
+export interface BulkRejectReturnsResult {
+  rejected: number
+  failed: number
+}
+
+export const bulkApproveReturns = (ids: string[]) =>
+  apiFetch<BulkApproveReturnsResult>('/admin/investments/bulk-approve-returns', { method: 'POST', body: { ids } })
+
+export const bulkRejectReturns = (ids: string[], reason?: string, amount?: number) =>
+  apiFetch<BulkRejectReturnsResult>('/admin/investments/bulk-reject-returns', {
+    method: 'POST',
+    body: { ids, reason, amount: amount ?? 0 },
+  })
+
 export const adminUsers = (params: AdminUsersParams | string = '') => {
   if (typeof params === 'string') {
     return apiFetch<AdminUser[]>(`/admin/users${params ? `?q=${encodeURIComponent(params)}` : ''}`)

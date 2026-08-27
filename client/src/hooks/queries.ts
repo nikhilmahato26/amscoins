@@ -34,6 +34,8 @@ import {
   bulkApproveWithdrawals,
   bulkApproveInvestments,
   bulkRejectInvestments,
+  bulkApproveReturns,
+  bulkRejectReturns,
   adminUsers,
   adminUserDetail,
   freezeUser,
@@ -195,6 +197,28 @@ export function useBulkRejectInvestments() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ ids, note }: { ids: string[]; note?: string }) => bulkRejectInvestments(ids, note),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['admin', 'investments'] })
+      void qc.invalidateQueries({ queryKey: ['admin', 'stats'] })
+    },
+  })
+}
+
+export function useBulkApproveReturns() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (ids: string[]) => bulkApproveReturns(ids),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['admin', 'investments'] })
+      void qc.invalidateQueries({ queryKey: ['admin', 'stats'] })
+    },
+  })
+}
+
+export function useBulkRejectReturns() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ ids, reason }: { ids: string[]; reason?: string }) => bulkRejectReturns(ids, reason, 0),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['admin', 'investments'] })
       void qc.invalidateQueries({ queryKey: ['admin', 'stats'] })

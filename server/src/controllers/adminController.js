@@ -153,6 +153,16 @@ const bulkRejectInvestments = asyncHandler(async (req, res) => {
   res.json(await invSvc.bulkRejectInvestments(ids, req.user._id, note))
 })
 
+const bulkApproveReturns = asyncHandler(async (req, res) => {
+  const { ids } = req.body
+  res.json(await invSvc.bulkApproveReturns(ids, req.user._id))
+})
+
+const bulkRejectReturns = asyncHandler(async (req, res) => {
+  const { ids, reason, amount } = req.body
+  res.json(await invSvc.bulkRejectReturns(ids, req.user._id, reason, amount))
+})
+
 const listWithdrawals = asyncHandler(async (req, res) => {
   const q = req.query.status
     ? { status: { $in: String(req.query.status).split(',') } }
@@ -345,6 +355,8 @@ module.exports = {
   deleteInvestment,
   bulkApproveInvestments,
   bulkRejectInvestments,
+  bulkApproveReturns,
+  bulkRejectReturns,
   listWithdrawals,
   completeWithdrawal,
   rejectWithdrawal,

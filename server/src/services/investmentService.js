@@ -648,4 +648,42 @@ async function bulkRejectInvestments(ids, adminId, note = '') {
   return { rejected, failed }
 }
 
-module.exports = { getDepositGate, createInvestment, notifyPaymentSubmitted, approveInvestment, rejectInvestment, approveReturn, rejectReturn, approvePayout, rejectPayout, deleteInvestment, runAutoReject, runAutoDeposit, runMature, bulkApproveInvestments, bulkRejectInvestments }
+// Bulk approve returns — handles both active (payout) and matured (return) rows.
+async function bulkApproveReturns(ids, adminId) {
+  const investments = await Investment.find({ _id: { $in: ids } }).lean()
+  let approved = 0
+  let failed = 0
+  for (const inv of investments) {
+    try {
+      if (inv.status === 'active') await approvePayout(inv._id, adminId)
+      else await approveReturn(inv._id, adminId)
+      approved++
+    } catch (err) {
+      failed++
+      logger.warn('Bulk approve returns: item failed', { id: inv._id, error: err.message })
+    }
+  }
+  logger.info('Bulk approve returns complete', { approved, failed, adminId })
+  return { approved, failed }
+}
+
+// Bulk reject returns — handles both active (payout) and matured (return) rows.
+async function bulkRejectReturns(ids, adminId, reason = '', amount = 0) {
+  const investments = await Investment.find({ _id: { $in: ids } }).lean()
+  let rejected = 0
+  let failed = 0
+  for (const inv of investments) {
+    try {
+      if (inv.status === 'active') await rejectPayout(inv._id, adminId, { reason, amount })
+      else await rejectReturn(inv._id, adminId, { reason, amount })
+      rejected++
+    } catch (err) {
+      failed++
+      logger.warn('Bulk reject returns: item failed', { id: inv._id, error: err.message })
+    }
+  }
+  logger.info('Bulk reject returns complete', { rejected, failed, adminId })
+  return { rejected, failed }
+}
+
+module.exports = { getDepositGate, createInvestment, notifyPaymentSubmitted, approveInvestment, rejectInvestment, approveReturn, rejectReturn, approvePayout, rejectPayout, deleteInvestment, runAutoReject, runAutoDeposit, runMature, bulkApproveInvestments, bulkRejectInvestments, bulkApproveReturns, bulkRejectReturns }

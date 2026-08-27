@@ -136,6 +136,12 @@ const bulkRejectInvestmentsSchema = z.object({
   note: z.string().max(500).optional(),
 })
 
+const bulkRejectReturnsSchema = z.object({
+  ids: z.array(z.string().min(1)).min(1, 'At least one ID required'),
+  reason: z.string().max(500).optional().default(''),
+  amount: z.number().int().min(0).optional().default(0),
+})
+
 module.exports = {
   registerSchema,
   loginSchema,
@@ -154,4 +160,5 @@ module.exports = {
   resetPasswordSchema,
   bulkApproveSchema,
   bulkRejectInvestmentsSchema,
+  bulkRejectReturnsSchema,
 }

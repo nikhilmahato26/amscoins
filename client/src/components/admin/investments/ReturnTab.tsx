@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -8,6 +8,8 @@ import {
   useApprovePayout,
   useRejectPayout,
   useDeleteInvestment,
+  useBulkApproveReturns,
+  useBulkRejectReturns,
 } from '@/hooks/queries'
 import type { AdminInvestment } from '@/services/api/admin'
 import { StatusBanner } from '@/components/admin/StatusBanner'
@@ -160,18 +162,26 @@ function RejectReturnDialog({
 export function ReturnTab({ data, isLoading, isError }: TabDataProps) {
   const approveMutation = useApproveReturn()
   const rejectMutation = useRejectReturn()
-  // For still-running (active) rows: pay out now / reject with a custom amount /
-  // delete the whole cycle (endpoints accept active as well as matured).
   const approvePayoutMutation = useApprovePayout()
   const rejectPayoutMutation = useRejectPayout()
   const deleteMutation = useDeleteInvestment()
+  const bulkApproveMutation = useBulkApproveReturns()
+  const bulkRejectMutation = useBulkRejectReturns()
 
   const [approvingId, setApprovingId] = useState<string | null>(null)
   const [rejectingId, setRejectingId] = useState<string | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkTargetIds, setBulkTargetIds] = useState<string[]>([])
+  const [bulkApproving, setBulkApproving] = useState(false)
+  const [bulkRejecting, setBulkRejecting] = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
 
   const rows = data ?? []
   const table = useClientTable({ rows })
+
+  useEffect(() => {
+    setSelectedIds(new Set())
+  }, [data])
 
   const approvingInv = rows.find((d) => d._id === approvingId) ?? null
   const rejectingInv = rows.find((d) => d._id === rejectingId) ?? null
@@ -179,7 +189,33 @@ export function ReturnTab({ data, isLoading, isError }: TabDataProps) {
   const isMutating =
     approveMutation.isPending || rejectMutation.isPending ||
     approvePayoutMutation.isPending || rejectPayoutMutation.isPending ||
-    deleteMutation.isPending
+    deleteMutation.isPending || bulkApproveMutation.isPending || bulkRejectMutation.isPending
+
+  const allPageSelected = table.pageRows.length > 0 && table.pageRows.every((d) => selectedIds.has(d._id))
+  const somePageSelected = table.pageRows.some((d) => selectedIds.has(d._id))
+  const selCount = selectedIds.size
+  const allCount = rows.length
+
+  function togglePageSelection() {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (allPageSelected) table.pageRows.forEach((d) => next.delete(d._id))
+      else table.pageRows.forEach((d) => next.add(d._id))
+      return next
+    })
+  }
+
+  function toggleRow(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function openBulkApprove(ids: string[]) { setBulkTargetIds(ids); setBulkApproving(true) }
+  function openBulkReject(ids: string[]) { setBulkTargetIds(ids); setBulkRejecting(true) }
 
   function handleApprove() {
     if (!approvingId) return
@@ -189,7 +225,6 @@ export function ReturnTab({ data, isLoading, isError }: TabDataProps) {
     })
   }
 
-  // Active rows: pay out now (deposit + profit).
   function handlePayNow(inv: AdminInvestment) {
     if (!window.confirm(`Pay ${inv.user.name} ${inr(inv.amount + inv.expectedReturn)} now (deposit + profit)?`)) return
     approvePayoutMutation.mutate([inv._id], {
@@ -198,7 +233,6 @@ export function ReturnTab({ data, isLoading, isError }: TabDataProps) {
     })
   }
 
-  // Delete erases the whole cycle from the user's side. Irreversible.
   function handleDelete(inv: AdminInvestment) {
     if (!window.confirm(`Delete this investment completely? It disappears from ${inv.user.name}'s history and totals. This cannot be undone.`)) return
     deleteMutation.mutate([inv._id], {
@@ -207,8 +241,6 @@ export function ReturnTab({ data, isLoading, isError }: TabDataProps) {
     })
   }
 
-  // Shared by active + matured rows: active credits via payout endpoint, matured
-  // via return endpoint. Both keep the trace and end as 'rejected'.
   function handleReject(reason: string, amountPaise: number) {
     if (!rejectingInv) return
     const opts = {
@@ -222,7 +254,53 @@ export function ReturnTab({ data, isLoading, isError }: TabDataProps) {
     }
   }
 
-  const columns: Column<AdminInvestment>[] = [
+  function handleBulkApproveConfirm() {
+    bulkApproveMutation.mutate(bulkTargetIds, {
+      onSuccess: ({ approved, failed }) => {
+        setStatusMsg(`${approved} return(s) approved.${failed ? ` ${failed} failed.` : ''}`)
+        setBulkApproving(false)
+        setSelectedIds(new Set())
+      },
+      onError: () => { setStatusMsg('Bulk approve failed.'); setBulkApproving(false) },
+    })
+  }
+
+  function handleBulkRejectConfirm(reason?: string) {
+    bulkRejectMutation.mutate({ ids: bulkTargetIds, reason }, {
+      onSuccess: ({ rejected, failed }) => {
+        setStatusMsg(`${rejected} return(s) rejected.${failed ? ` ${failed} failed.` : ''}`)
+        setBulkRejecting(false)
+        setSelectedIds(new Set())
+      },
+      onError: () => { setStatusMsg('Bulk reject failed.'); setBulkRejecting(false) },
+    })
+  }
+
+  const checkboxColumn: Column<AdminInvestment> = {
+    key: 'select',
+    header: (
+      <input
+        type="checkbox"
+        className="h-4 w-4 cursor-pointer rounded border-asm-line accent-asm-blue"
+        checked={allPageSelected}
+        ref={(el) => { if (el) el.indeterminate = somePageSelected && !allPageSelected }}
+        onChange={togglePageSelection}
+        aria-label="Select all on this page"
+      />
+    ),
+    render: (inv) => (
+      <input
+        type="checkbox"
+        className="h-4 w-4 cursor-pointer rounded border-asm-line accent-asm-blue"
+        checked={selectedIds.has(inv._id)}
+        onChange={(e) => { e.stopPropagation(); toggleRow(inv._id) }}
+        onClick={(e) => e.stopPropagation()}
+        aria-label={`Select return for ${inv.user.name}`}
+      />
+    ),
+  }
+
+  const dataColumns: Column<AdminInvestment>[] = [
     {
       key: 'user',
       header: 'User',
@@ -311,16 +389,69 @@ export function ReturnTab({ data, isLoading, isError }: TabDataProps) {
 
   return (
     <>
+      {/* Bulk action toolbar — "Approve All" / "Reject All" when nothing selected */}
+      {allCount > 0 && selCount === 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <AdminButton
+            size="sm"
+            onClick={() => openBulkApprove(rows.map((d) => d._id))}
+            disabled={isMutating}
+          >
+            Approve All ({allCount})
+          </AdminButton>
+          <AdminButton
+            variant="outline"
+            size="sm"
+            onClick={() => openBulkReject(rows.map((d) => d._id))}
+            disabled={isMutating}
+          >
+            <span className="text-asm-red">Reject All ({allCount})</span>
+          </AdminButton>
+        </div>
+      )}
+
+      {/* Selection action bar */}
+      {selCount > 0 && (
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-asm-line bg-asm-blue-tint/30 px-4 py-2.5">
+          <span className="text-sm font-medium text-asm-navy">{selCount} selected</span>
+          <div className="flex gap-2">
+            <AdminButton
+              size="sm"
+              onClick={() => openBulkApprove(Array.from(selectedIds))}
+              disabled={isMutating}
+            >
+              Approve Selected
+            </AdminButton>
+            <AdminButton
+              variant="outline"
+              size="sm"
+              onClick={() => openBulkReject(Array.from(selectedIds))}
+              disabled={isMutating}
+            >
+              <span className="text-asm-red">Reject Selected</span>
+            </AdminButton>
+            <AdminButton
+              variant="outline"
+              size="sm"
+              onClick={() => setSelectedIds(new Set())}
+              disabled={isMutating}
+            >
+              Clear
+            </AdminButton>
+          </div>
+        </div>
+      )}
+
       <StatusBanner message={statusMsg} />
 
       <DataTable
-        columns={columns}
+        columns={[checkboxColumn, ...dataColumns]}
         rows={table.pageRows}
         getRowKey={(inv) => inv._id}
         isLoading={isLoading}
         isError={isError}
         errorMessage="Failed to load matured investments. Please refresh."
-        minWidth={860}
+        minWidth={900}
         empty={<EmptyState title="No active or matured investments" description="Nothing to review right now." />}
       />
 
@@ -357,6 +488,33 @@ export function ReturnTab({ data, isLoading, isError }: TabDataProps) {
           onConfirm={handleReject}
           onCancel={() => setRejectingId(null)}
           isPending={rejectMutation.isPending || rejectPayoutMutation.isPending}
+        />
+      )}
+      {bulkApproving && (
+        <ConfirmDialog
+          title={`Approve ${bulkTargetIds.length} return(s)?`}
+          body={`Credit returns for ${bulkTargetIds.length} investment(s) immediately. Each user's wallet will be updated. This cannot be undone.`}
+          confirmLabel="Approve All"
+          pendingLabel="Approving…"
+          confirmVariant="success"
+          isPending={bulkApproveMutation.isPending}
+          onConfirm={handleBulkApproveConfirm}
+          onCancel={() => setBulkApproving(false)}
+        />
+      )}
+      {bulkRejecting && (
+        <ConfirmDialog
+          title={`Reject ${bulkTargetIds.length} return(s)?`}
+          body={`Reject ${bulkTargetIds.length} return(s). No credit will be issued (₹0 partial amount). This cannot be undone.`}
+          confirmLabel="Reject All"
+          pendingLabel="Rejecting…"
+          confirmVariant="danger"
+          withNote
+          noteLabel="Reason (optional)"
+          notePlaceholder="Reason for rejection…"
+          isPending={bulkRejectMutation.isPending}
+          onConfirm={handleBulkRejectConfirm}
+          onCancel={() => setBulkRejecting(false)}
         />
       )}
     </>
