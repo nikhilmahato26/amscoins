@@ -214,90 +214,185 @@
   to   { clip-path: circle(200% at var(--vt-x, 50%) var(--vt-y, 50%)); }
 }
 
-/* ─────────────────────────────────────────────────────────────────
-   DARK MODE
-   Activated by adding .dark to <html>. ThemeContext manages this.
-   Palette: deep navy surfaces, asm-blue accent, no pure black.
-   ───────────────────────────────────────────────────────────────── */
+/* ═════════════════════════════════════════════════════════════════
+   DARK MODE — Premium deep-navy design system
+   Three-level elevation, glass navigation, adjusted accent colours.
+
+   Palette rationale:
+     • Base:   #06101d — midnight navy, not pure black (avoids harshness)
+     • L1 card: #0d1d30 + gradient — raised surface with subtle depth
+     • L2 card: #142538 — modal/drawer depth
+     • Blue:   #5b9cf6 — asm-blue shifted light for ≥4.5:1 contrast on base
+     • Green:  #2dd67a — brighter; signals profit clearly on dark
+   ═════════════════════════════════════════════════════════════════ */
 
 html.dark {
   color-scheme: dark;
-  scrollbar-color: #2a3f5e transparent;
+  scrollbar-color: #1e3352 transparent;
+
+  /* Elevation tokens consumed by the rules below */
+  --dk0: #06101d;                    /* Page / body */
+  --dk1: #0d1d30;                    /* Card surface */
+  --dk2: #142538;                    /* Elevated / modal */
+  --dk-glass: rgba(6, 16, 29, 0.88); /* Nav glass */
+  --dk-border: rgba(255, 255, 255, 0.055);
+  --dk-border-med: rgba(255, 255, 255, 0.09);
+
+  /* Text */
+  --dk-text-hi:   #dce9f8;  /* headings, key numbers */
+  --dk-text-body: #6e94b5;  /* paragraphs, labels */
+  --dk-text-muted:#3d5a78;  /* timestamps, secondary */
+
+  /* Adjusted accents */
+  --dk-blue:   #5b9cf6;  /* asm-blue at 4.6:1 on --dk0 */
+  --dk-green:  #2dd67a;  /* profit indicator — vivid */
+  --dk-amber:  #f5b84a;  /* pending / warning */
+  --dk-red:    #f06b6b;  /* rejection / error */
 }
 
-/* Body base */
+/* ── Body ── */
 html.dark body {
-  background-color: #080e1a;
-  color: #e2e8f4;
+  background-color: var(--dk0);
+  color: var(--dk-text-hi);
 }
 
-/* ── Page backgrounds ── */
-html.dark .bg-asm-tint       { background-color: #080e1a; }
-html.dark .bg-asm-blue-tint  { background-color: rgba(11, 79, 216, 0.14); }
-html.dark .bg-asm-green-tint { background-color: rgba(21, 128, 61, 0.12); }
-html.dark .bg-amber-50       { background-color: rgba(251, 191, 36, 0.10); }
-html.dark .bg-red-50         { background-color: rgba(239, 68, 68, 0.10); }
-html.dark .bg-green-50       { background-color: rgba(34, 197, 94, 0.10); }
-html.dark .bg-violet-50      { background-color: rgba(139, 92, 246, 0.10); }
-html.dark .bg-sky-50         { background-color: rgba(14, 165, 233, 0.10); }
+/* ── Page background ── */
+html.dark .bg-asm-tint { background-color: var(--dk0); }
 
-/* ── Card surfaces ── */
-html.dark .bg-white          { background-color: #0f1828; }
+/* ── Cards — gradient L1 elevation ──────────────────────────────
+   The subtle diagonal gradient creates the illusion of light hitting
+   the top-left corner — standard premium dark-mode technique.
+   box-shadow adds inner border glow + ambient depth.            */
+html.dark .bg-white {
+  background-color: var(--dk1);
+  background-image: linear-gradient(145deg, #0f2035 0%, #0a1826 100%);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.045),
+              0 4px 20px rgba(0,0,0,0.35);
+}
 
-/* ── Text ── */
-html.dark .text-asm-navy     { color: #e2e8f4; }
-html.dark .text-asm-body     { color: #8da4be; }
-html.dark .text-asm-muted    { color: #5f7a96; }
+/* ── Glass surfaces — header, bottom nav, any semi-transparent white ──
+   [class*="bg-white/"] catches bg-white/88, bg-white/95, bg-white/80.   */
+html.dark [class*="bg-white/"] {
+  background-color: var(--dk-glass) !important;
+  backdrop-filter: blur(20px) saturate(1.6) !important;
+}
+
+/* ── Header shadow — top chrome ── */
+html.dark header {
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.04) inset,
+    0 6px 30px rgba(0,0,0,0.55) !important;
+}
+
+/* ── Bottom nav — glass + border ── */
+html.dark nav[aria-label="Main navigation"] {
+  background-color: rgba(5, 13, 26, 0.92) !important;
+  border-top-color: var(--dk-border) !important;
+  box-shadow: 0 -1px 0 rgba(255,255,255,0.035) !important;
+}
+
+/* ── Side nav ── */
+html.dark nav[aria-label="Primary"] {
+  background-color: #091629 !important;
+  background-image: linear-gradient(180deg, #0c1e32 0%, #071322 100%) !important;
+  border-right-color: var(--dk-border) !important;
+  box-shadow: 2px 0 20px rgba(0,0,0,0.4) !important;
+}
+
+/* ── Mobile drawer ── */
+html.dark .fixed.flex-col.bg-white {
+  background-color: var(--dk2) !important;
+  background-image: linear-gradient(180deg, #1a3050 0%, #102030 100%) !important;
+  box-shadow: 12px 0 48px rgba(0,0,0,0.7) !important;
+}
+
+/* ── Tinted icon containers ── */
+html.dark .bg-asm-blue-tint  { background-color: rgba(91,156,246,0.12); }
+html.dark .bg-asm-green-tint { background-color: rgba(45,214,122,0.12); }
+html.dark .bg-amber-50       { background-color: rgba(245,184,74,0.10); }
+html.dark .bg-red-50         { background-color: rgba(240,107,107,0.10); }
+html.dark .bg-green-50       { background-color: rgba(45,214,122,0.10); }
+html.dark .bg-violet-50      { background-color: rgba(167,139,250,0.10); }
+html.dark .bg-sky-50         { background-color: rgba(56,189,248,0.10); }
+html.dark .bg-asm-navy       { background-color: #0a1828; }
+
+/* ── Text hierarchy ── */
+html.dark .text-asm-navy  { color: var(--dk-text-hi); }
+html.dark .text-asm-body  { color: var(--dk-text-body); }
+html.dark .text-asm-muted { color: var(--dk-text-muted); }
+
+/* ── asm-blue: lightened for dark bg (contrast ≥ 4.5:1) ── */
+html.dark .text-asm-blue      { color: var(--dk-blue); }
+html.dark .text-asm-blue-dark { color: #4d8ef0; }
+html.dark .bg-asm-blue        { background-color: #3d77e0; }
+html.dark .border-asm-blue    { border-color: rgba(91,156,246,0.40); }
+
+/* ── Green — profit / success ── */
+html.dark .text-asm-greenInk   { color: var(--dk-green); }
+html.dark .text-asm-green      { color: var(--dk-green); }
+html.dark .bg-asm-greenInk     { background-color: var(--dk-green); }
+
+/* ── Coloured text used by status badges ── */
+html.dark .text-amber-700   { color: var(--dk-amber); }
+html.dark .text-amber-600   { color: var(--dk-amber); }
+html.dark .text-green-700   { color: var(--dk-green); }
+html.dark .text-green-600   { color: var(--dk-green); }
+html.dark .text-red-600,
+html.dark .text-asm-red     { color: var(--dk-red); }
+html.dark .text-sky-600     { color: #38bdf8; }
+html.dark .text-violet-600  { color: #a78bfa; }
 
 /* ── Borders ── */
-html.dark .border-asm-line   { border-color: rgba(137, 192, 220, 0.10); }
-html.dark .divide-asm-line > * + *  { border-color: rgba(137, 192, 220, 0.10); }
-html.dark .border-amber-200  { border-color: rgba(251, 191, 36, 0.25); }
-html.dark .border-green-200  { border-color: rgba(34, 197, 94, 0.25); }
-html.dark .border-red-200    { border-color: rgba(239, 68, 68, 0.25); }
+html.dark .border-asm-line        { border-color: var(--dk-border-med); }
+html.dark .divide-asm-line > * + * { border-color: var(--dk-border); }
+html.dark .border-amber-200       { border-color: rgba(245,184,74,0.25); }
+html.dark .border-green-200       { border-color: rgba(45,214,122,0.25); }
+html.dark .border-red-200         { border-color: rgba(240,107,107,0.25); }
 
-/* ── Header ── */
-html.dark header.app-header {
-  background-color: rgba(8, 14, 26, 0.92) !important;
-  box-shadow: 0 1px 0 rgba(137, 192, 220, 0.06) inset, 0 4px 24px -8px rgba(0, 0, 0, 0.4) !important;
+/* ── Shadow override — all explicit shadow classes → dark-appropriate ── */
+html.dark [class*="shadow-["] {
+  box-shadow: 0 4px 20px rgba(0,0,0,0.45),
+              0 0 0 1px rgba(255,255,255,0.04) !important;
 }
 
-/* ── Navigation ── */
-html.dark nav.bottom-nav-root {
-  background-color: rgba(8, 14, 26, 0.94);
-  border-top-color: rgba(137, 192, 220, 0.10);
-}
-
-html.dark .bg-asm-navy { background-color: #0f1828; }
-
-/* ── Shadows — soften on dark ── */
-html.dark .shadow-card,
-html.dark [class*="shadow-[0_1px"] {
-  box-shadow: 0 1px 8px -2px rgba(0, 0, 0, 0.5);
-}
-
-/* ── Input surfaces ── */
+/* ── Inputs ── */
 html.dark input,
 html.dark textarea,
 html.dark select {
-  background-color: #111d30;
-  color: #e2e8f4;
-  border-color: rgba(137, 192, 220, 0.15);
+  background-color: #0d1e33;
+  color: var(--dk-text-hi);
+  border-color: var(--dk-border-med);
+}
+html.dark input:focus,
+html.dark textarea:focus {
+  border-color: rgba(91,156,246,0.5);
+  box-shadow: 0 0 0 3px rgba(91,156,246,0.12);
 }
 
+/* ── Key number glow — portfolio value, stat numbers ──
+   Adds a gentle aura around large financial figures.    */
+html.dark .font-jakarta.font-extrabold { text-shadow: 0 0 30px rgba(91,156,246,0.12); }
+html.dark .text-asm-greenInk.font-bold,
+html.dark .text-asm-greenInk.font-extrabold { text-shadow: 0 0 20px rgba(45,214,122,0.2); }
+
 /* ── Scrollbar ── */
-html.dark ::-webkit-scrollbar-track  { background: transparent; }
-html.dark ::-webkit-scrollbar-thumb  { background-color: #2a3f5e; border: 3px solid #080e1a; border-radius: 999px; }
+html.dark ::-webkit-scrollbar-track { background: transparent; }
+html.dark ::-webkit-scrollbar-thumb {
+  background-color: #1e3352;
+  border: 3px solid var(--dk0);
+  border-radius: 999px;
+}
+html.dark ::-webkit-scrollbar-thumb:hover { background-color: #2a4570; }
 
 /* ── Selection ── */
 html.dark ::selection {
-  background-color: rgba(11, 79, 216, 0.3);
-  color: #e2e8f4;
+  background-color: rgba(91,156,246,0.25);
+  color: var(--dk-text-hi);
 }
 
-/* ── Focus ring in dark ── */
+/* ── Focus ring ── */
 html.dark :focus-visible {
-  outline: 2px solid #4d8ef0;
+  outline: 2px solid var(--dk-blue);
   outline-offset: 2px;
   border-radius: 6px;
 }
