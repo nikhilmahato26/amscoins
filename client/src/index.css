@@ -360,10 +360,13 @@ html.dark .border-amber-200       { border-color: rgba(255, 212, 38, 0.25); }
 html.dark .border-green-200       { border-color: rgba(48, 209, 88, 0.25); }
 html.dark .border-red-200         { border-color: rgba(255, 69, 58, 0.25); }
 
-/* ── Shadows — charcoal dark-on-dark depth ── */
-html.dark [class*="shadow-["] {
+/* ── Shadows — charcoal dark-on-dark depth ──
+   Scoped to app pages only; excludes the sky toggle (styled-components,
+   no Tailwind shadow class) and theme-light-home admin surfaces.        */
+html.dark .app-content [class*="shadow-["],
+html.dark main [class*="shadow-["] {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5),
-              0 0 0 1px var(--dk-border) !important;
+              0 0 0 1px var(--dk-border);
 }
 
 /* ── Inputs ── */
@@ -413,3 +416,96 @@ html.dark :focus-visible {
   outline-offset: 2px;
   border-radius: 6px;
 }
+
+/* ═════════════════════════════════════════════════════════════════
+   LIGHT-THEME RESTORATION
+   The admin panel and landing page use `.theme-light-home` hardcoded
+   on their root wrapper. html.dark rules fire at <html> level and
+   would bleed into these surfaces. Every dark-mode override that
+   targets a Tailwind class must be reversed here with higher
+   specificity (3 vs 2 class selectors) so those surfaces stay light
+   regardless of the user's OS/toggle preference.
+   ═════════════════════════════════════════════════════════════════ */
+
+/* Restore color-scheme for system UI inside light wrapper */
+html.dark .theme-light-home { color-scheme: light; }
+
+/* ── Surfaces ── */
+html.dark .theme-light-home .bg-white {
+  background-color: #ffffff !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+html.dark .theme-light-home [class*="bg-white/"] {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(12px) !important;
+}
+html.dark .theme-light-home .bg-asm-tint       { background-color: #F4F7FE !important; }
+html.dark .theme-light-home .bg-asm-blue-tint  { background-color: #EDF3FF !important; }
+html.dark .theme-light-home .bg-asm-green-tint { background-color: #EAF7EF !important; }
+html.dark .theme-light-home .bg-amber-50       { background-color: #FFFBEB !important; }
+html.dark .theme-light-home .bg-red-50         { background-color: #FEF2F2 !important; }
+html.dark .theme-light-home .bg-green-50       { background-color: #F0FDF4 !important; }
+html.dark .theme-light-home .bg-violet-50      { background-color: #F5F3FF !important; }
+html.dark .theme-light-home .bg-sky-50         { background-color: #F0F9FF !important; }
+html.dark .theme-light-home .bg-asm-navy       { background-color: #102A5C !important; }
+
+/* ── Text ── */
+html.dark .theme-light-home .text-asm-navy     { color: #102A5C !important; }
+html.dark .theme-light-home .text-asm-body     { color: #546582 !important; }
+html.dark .theme-light-home .text-asm-muted    { color: #55698E !important; }
+html.dark .theme-light-home .text-asm-blue     { color: #0B4FD8 !important; }
+html.dark .theme-light-home .text-asm-blue-dark { color: #0740B8 !important; }
+html.dark .theme-light-home .text-asm-greenInk  { color: #15803D !important; }
+html.dark .theme-light-home .text-amber-700    { color: #B45309 !important; }
+html.dark .theme-light-home .text-amber-600    { color: #D97706 !important; }
+html.dark .theme-light-home .text-green-700    { color: #15803D !important; }
+html.dark .theme-light-home .text-green-600    { color: #16A34A !important; }
+html.dark .theme-light-home .text-red-600      { color: #DC2626 !important; }
+html.dark .theme-light-home .text-asm-red      { color: #C81E1E !important; }
+html.dark .theme-light-home .text-sky-600      { color: #0284C7 !important; }
+html.dark .theme-light-home .text-violet-600   { color: #7C3AED !important; }
+
+/* ── Borders ── */
+html.dark .theme-light-home .border-asm-line       { border-color: #E5EAF3 !important; }
+html.dark .theme-light-home .divide-asm-line > * + * { border-color: #E5EAF3 !important; }
+html.dark .theme-light-home .border-amber-200      { border-color: #FDE68A !important; }
+html.dark .theme-light-home .border-green-200      { border-color: #BBF7D0 !important; }
+html.dark .theme-light-home .border-red-200        { border-color: #FECACA !important; }
+
+/* ── Shadows ── */
+html.dark .theme-light-home [class*="shadow-["] {
+  box-shadow: revert !important;
+}
+
+/* ── Navigation inside light wrapper ── */
+html.dark .theme-light-home nav[aria-label="Admin navigation"],
+html.dark .theme-light-home aside {
+  background-color: #ffffff !important;
+  background-image: none !important;
+  border-right-color: #E5EAF3 !important;
+  box-shadow: none !important;
+}
+html.dark .theme-light-home header {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 1px 0 #E5EAF3 !important;
+}
+
+/* ── Inputs ── */
+html.dark .theme-light-home input,
+html.dark .theme-light-home textarea,
+html.dark .theme-light-home select {
+  background-color: #ffffff !important;
+  color: #102A5C !important;
+  border-color: #E5EAF3 !important;
+}
+html.dark .theme-light-home input:focus,
+html.dark .theme-light-home textarea:focus {
+  border-color: #0B4FD8 !important;
+  box-shadow: 0 0 0 3px rgba(11, 79, 216, 0.12) !important;
+}
+
+/* ── Number glow: off inside light wrapper ── */
+html.dark .theme-light-home .font-jakarta.font-extrabold { text-shadow: none !important; }
+html.dark .theme-light-home .text-asm-greenInk.font-bold { text-shadow: none !important; }
+html.dark .theme-light-home .text-asm-greenInk.font-extrabold { text-shadow: none !important; }
