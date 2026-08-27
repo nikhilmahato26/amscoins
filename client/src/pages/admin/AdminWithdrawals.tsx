@@ -30,6 +30,26 @@ const SORT_OPTIONS: SortOption<AdminWithdrawal>[] = [
 ]
 
 /* ── Shared helpers ── */
+function UpiChip({ upiId }: { upiId: string }) {
+  const [copied, setCopied] = useState(false)
+  function copy() {
+    void navigator.clipboard.writeText(upiId).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    })
+  }
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      title="Copy UPI ID"
+      className="inline-flex items-center gap-1.5 rounded-md border border-asm-line bg-asm-tint px-2.5 py-1 font-mono text-[12px] text-asm-navy transition-colors hover:border-asm-blue hover:bg-asm-blue-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue"
+    >
+      {copied ? '✓ Copied' : upiId}
+    </button>
+  )
+}
+
 function DestCell({ wd }: { wd: AdminWithdrawal }) {
   const dest = payoutView(wd)
   return (
@@ -42,7 +62,11 @@ function DestCell({ wd }: { wd: AdminWithdrawal }) {
       >
         {dest.badge}
       </span>
-      <span className="font-mono text-[11px] text-asm-navy">{dest.primary}</span>
+      {dest.method === 'upi' ? (
+        <UpiChip upiId={dest.primary} />
+      ) : (
+        <span className="font-mono text-[11px] text-asm-navy">{dest.primary}</span>
+      )}
       {dest.secondary && <span className="text-[11px] text-asm-muted">{dest.secondary}</span>}
     </div>
   )
@@ -183,7 +207,7 @@ function PendingTab() {
     { key: 'user', header: 'User', render: (wd) => <UserCell wd={wd} /> },
     { key: 'gross', header: 'Gross', align: 'right', className: 'font-mono tabular-nums text-asm-navy', render: (wd) => inr(wd.gross) },
     { key: 'tds', header: 'TDS', align: 'right', className: 'font-mono tabular-nums text-asm-body', render: (wd) => inr(wd.tds) },
-    { key: 'net', header: 'Net', align: 'right', className: 'font-mono tabular-nums font-semibold text-asm-navy', render: (wd) => inr(wd.net) },
+    { key: 'net', header: 'Net', align: 'right', className: 'font-mono text-[14px] font-bold tabular-nums text-asm-navy', render: (wd) => inr(wd.net) },
     { key: 'dest', header: 'Destination', render: (wd) => <DestCell wd={wd} /> },
     { key: 'date', header: 'Date', render: (wd) => <DateCell iso={wd.createdAt} /> },
     {
@@ -232,6 +256,8 @@ function PendingTab() {
         isError={isError}
         errorMessage="Failed to load withdrawals. Please refresh."
         minWidth={800}
+        stickyHeader
+        rowHover
         empty={
           <EmptyState
             title={table.q ? 'No matching withdrawals' : 'No pending withdrawals'}
@@ -300,7 +326,7 @@ function HistoryTab() {
     { key: 'user', header: 'User', render: (wd) => <UserCell wd={wd} /> },
     { key: 'gross', header: 'Gross', align: 'right', className: 'font-mono tabular-nums text-asm-navy', render: (wd) => inr(wd.gross) },
     { key: 'tds', header: 'TDS', align: 'right', className: 'font-mono tabular-nums text-asm-body', render: (wd) => inr(wd.tds) },
-    { key: 'net', header: 'Net', align: 'right', className: 'font-mono tabular-nums font-semibold text-asm-navy', render: (wd) => inr(wd.net) },
+    { key: 'net', header: 'Net', align: 'right', className: 'font-mono text-[14px] font-bold tabular-nums text-asm-navy', render: (wd) => inr(wd.net) },
     { key: 'dest', header: 'Destination', render: (wd) => <DestCell wd={wd} /> },
     { key: 'requested', header: 'Requested', render: (wd) => <DateCell iso={wd.createdAt} /> },
     {
@@ -334,6 +360,8 @@ function HistoryTab() {
         isError={isError}
         errorMessage="Failed to load history. Please refresh."
         minWidth={860}
+        stickyHeader
+        rowHover
         empty={
           <EmptyState
             title={table.q ? 'No matching records' : 'No withdrawal history yet'}
