@@ -79,7 +79,7 @@ const StyledWrapper = styled.div`
 
   @media (max-width: 1023px) {
     .theme-switch {
-      --toggle-size: 5px;
+      --toggle-size: 6px;
     }
   }
 
