@@ -6,8 +6,8 @@ import { cn } from '@/lib/utils'
 
 const TIERS = ['silver', 'gold', 'platinum'] as const
 const SORT_OPTIONS: { label: string; value: InvestmentSortKey }[] = [
-  { label: 'Newest first', value: '-createdAt' },
   { label: 'Oldest first', value: 'createdAt' },
+  { label: 'Newest first', value: '-createdAt' },
   { label: 'Amount ↑', value: 'amount' },
   { label: 'Amount ↓', value: '-amount' },
   { label: 'Matures soonest', value: 'maturesAt' },
@@ -33,7 +33,7 @@ export function InvestmentFilters({ params, onChange }: InvestmentFiltersProps) 
   // Active = any filter beyond the default sort.
   const hasActiveFilters =
     !!params.tier || params.amountMin != null || params.amountMax != null ||
-    !!params.dateFrom || !!params.dateTo || (!!params.sort && params.sort !== '-createdAt')
+    !!params.dateFrom || !!params.dateTo || (!!params.sort && params.sort !== 'createdAt')
 
   function clearFilters() {
     onChange({ q: params.q })
@@ -132,7 +132,7 @@ export function InvestmentFilters({ params, onChange }: InvestmentFiltersProps) 
 
           <div className="flex flex-wrap gap-3">
             <select
-              value={params.sort ?? '-createdAt'}
+              value={params.sort ?? 'createdAt'}
               onChange={(e) => setParam('sort', e.target.value as InvestmentSortKey)}
               className={cn(inputCls, 'cursor-pointer')}
               aria-label="Sort by"

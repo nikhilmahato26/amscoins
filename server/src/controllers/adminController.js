@@ -66,7 +66,7 @@ const listInvestments = asyncHandler(async (req, res) => {
     if (statuses.includes('pending')) filter.paymentNotified = { $ne: false }
   }
 
-  const sortBy = INVESTMENT_SORTS[sort] || '-createdAt'
+  const sortBy = INVESTMENT_SORTS[sort] || 'createdAt'
   res.json(await Investment.find(filter).sort(sortBy).populate('user', 'name email publicId tier'))
 })
 
