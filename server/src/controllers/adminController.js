@@ -343,6 +343,55 @@ const getStats = asyncHandler(async (_req, res) => {
   res.json(result)
 })
 
+/** GET /admin/activity — last 20 platform events for the dashboard timeline. */
+const getActivity = asyncHandler(async (_req, res) => {
+  const LIMIT = 20
+
+  const [investments, withdrawals, users] = await Promise.all([
+    Investment.find({ status: { $in: ['returned', 'rejected'] } })
+      .sort('-updatedAt')
+      .limit(LIMIT)
+      .populate('user', 'name')
+      .lean(),
+    Withdrawal.find({ status: { $in: ['completed', 'rejected'] } })
+      .sort('-updatedAt')
+      .limit(LIMIT)
+      .populate('user', 'name')
+      .lean(),
+    User.find()
+      .sort('-createdAt')
+      .limit(LIMIT)
+      .select('name createdAt')
+      .lean(),
+  ])
+
+  const events = [
+    ...investments.map((inv) => ({
+      id: inv._id.toString(),
+      type: inv.status === 'returned' ? 'investment_approved' : 'investment_rejected',
+      userName: inv.user?.name ?? 'Unknown',
+      amount: inv.amount, // paise
+      timestamp: inv.updatedAt.toISOString(),
+    })),
+    ...withdrawals.map((wd) => ({
+      id: wd._id.toString(),
+      type: wd.status === 'completed' ? 'withdrawal_approved' : 'withdrawal_rejected',
+      userName: wd.user?.name ?? 'Unknown',
+      amount: wd.amount, // paise
+      timestamp: wd.updatedAt.toISOString(),
+    })),
+    ...users.map((u) => ({
+      id: u._id.toString(),
+      type: 'user_registered',
+      userName: u.name,
+      timestamp: u.createdAt.toISOString(),
+    })),
+  ]
+
+  events.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+  res.json(events.slice(0, LIMIT))
+})
+
 module.exports = {
   listInvestments,
   getInvestmentStats,
@@ -370,4 +419,5 @@ module.exports = {
   listSupport,
   resolveSupport,
   getStats,
+  getActivity,
 }

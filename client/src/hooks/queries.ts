@@ -42,6 +42,8 @@ import {
   unfreezeUser,
   adjustWallet,
   getInvestmentStats,
+  adminActivity,
+  type ActivityEvent,
 } from '@/services/api/admin'
 
 // ── User queries ──
@@ -234,15 +236,13 @@ export function useInvestmentStats() {
   })
 }
 
-export type ActivityEvent = {
-  id: string
-  type: 'investment_approved' | 'investment_rejected' | 'withdrawal_approved' | 'withdrawal_rejected' | 'user_registered'
-  userName: string
-  amount?: number
-  timestamp: string
-}
+export type { ActivityEvent }
 
 export function useAdminActivity() {
-  // Stub — replace with real API call when backend endpoint is ready
-  return { data: [] as ActivityEvent[], isLoading: false }
+  return useQuery({
+    queryKey: ['admin', 'activity'],
+    queryFn: adminActivity,
+    staleTime: 30_000,       // treat as fresh for 30 s
+    refetchInterval: 60_000, // auto-refresh every minute
+  })
 }

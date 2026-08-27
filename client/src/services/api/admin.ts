@@ -220,3 +220,18 @@ export const getReport = (type: ReportType, params: ReportParams = {}) => {
   const s = qs.toString()
   return apiFetch<unknown>(`/admin/reports/${type}${s ? `?${s}` : ''}`)
 }
+
+export interface ActivityEvent {
+  id: string
+  type:
+    | 'investment_approved'
+    | 'investment_rejected'
+    | 'withdrawal_approved'
+    | 'withdrawal_rejected'
+    | 'user_registered'
+  userName: string
+  amount?: number  // paise
+  timestamp: string
+}
+
+export const adminActivity = () => apiFetch<ActivityEvent[]>('/admin/activity')
