@@ -275,7 +275,7 @@ export function WithdrawPage() {
               inputMode="decimal"
               placeholder="0"
               aria-label="Amount to withdraw in rupees"
-              className="min-w-0 flex-1 self-stretch bg-transparent font-mono text-base font-bold tabular-nums text-asm-navy outline-none focus-visible:!outline-none placeholder:font-sans placeholder:font-bold placeholder:text-asm-muted/50"
+              className="min-w-0 flex-1 self-stretch bg-transparent font-mono text-base font-bold tabular-nums text-asm-navy outline-none focus:ring-0 focus-visible:!outline-none placeholder:font-sans placeholder:font-bold placeholder:text-asm-muted/50"
             />
             <span className="shrink-0 text-[12px] font-bold text-asm-muted">INR</span>
           </label>
@@ -577,7 +577,7 @@ export function WithdrawPage() {
 
       {/* ── Sticky submit bar ── */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-10 border-t border-asm-line bg-white/95 px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 backdrop-blur-sm"
+        className="fixed left-0 right-0 z-20 border-t border-asm-line bg-white/95 px-4 pb-3 pt-3 backdrop-blur-sm [bottom:calc(60px+env(safe-area-inset-bottom,0px))] lg:bottom-0 lg:pb-[max(12px,env(safe-area-inset-bottom))]"
         aria-live="polite"
       >
         <button
@@ -649,7 +649,7 @@ function FormField({
         <input
           placeholder={placeholder}
           className={cn(
-            'min-w-0 flex-1 bg-transparent text-[13px] text-asm-navy outline-none placeholder:text-asm-muted',
+            'min-w-0 flex-1 bg-transparent text-[13px] text-asm-navy outline-none focus:ring-0 placeholder:text-asm-muted',
             className
           )}
           {...props}
