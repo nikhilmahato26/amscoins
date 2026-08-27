@@ -186,3 +186,118 @@
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────
+   VIEW TRANSITIONS — theme toggle circle-reveal
+   Origin is set as --vt-x / --vt-y CSS custom properties by
+   ThemeContext before the transition starts.
+   ───────────────────────────────────────────────────────────────── */
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 0;
+}
+
+::view-transition-new(root) {
+  z-index: 1;
+  clip-path: circle(0% at var(--vt-x, 50%) var(--vt-y, 50%));
+  animation: vt-circle-reveal 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes vt-circle-reveal {
+  from { clip-path: circle(0%   at var(--vt-x, 50%) var(--vt-y, 50%)); }
+  to   { clip-path: circle(200% at var(--vt-x, 50%) var(--vt-y, 50%)); }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   DARK MODE
+   Activated by adding .dark to <html>. ThemeContext manages this.
+   Palette: deep navy surfaces, asm-blue accent, no pure black.
+   ───────────────────────────────────────────────────────────────── */
+
+html.dark {
+  color-scheme: dark;
+  scrollbar-color: #2a3f5e transparent;
+}
+
+/* Body base */
+html.dark body {
+  background-color: #080e1a;
+  color: #e2e8f4;
+}
+
+/* ── Page backgrounds ── */
+html.dark .bg-asm-tint       { background-color: #080e1a; }
+html.dark .bg-asm-blue-tint  { background-color: rgba(11, 79, 216, 0.14); }
+html.dark .bg-asm-green-tint { background-color: rgba(21, 128, 61, 0.12); }
+html.dark .bg-amber-50       { background-color: rgba(251, 191, 36, 0.10); }
+html.dark .bg-red-50         { background-color: rgba(239, 68, 68, 0.10); }
+html.dark .bg-green-50       { background-color: rgba(34, 197, 94, 0.10); }
+html.dark .bg-violet-50      { background-color: rgba(139, 92, 246, 0.10); }
+html.dark .bg-sky-50         { background-color: rgba(14, 165, 233, 0.10); }
+
+/* ── Card surfaces ── */
+html.dark .bg-white          { background-color: #0f1828; }
+
+/* ── Text ── */
+html.dark .text-asm-navy     { color: #e2e8f4; }
+html.dark .text-asm-body     { color: #8da4be; }
+html.dark .text-asm-muted    { color: #5f7a96; }
+
+/* ── Borders ── */
+html.dark .border-asm-line   { border-color: rgba(137, 192, 220, 0.10); }
+html.dark .divide-asm-line > * + *  { border-color: rgba(137, 192, 220, 0.10); }
+html.dark .border-amber-200  { border-color: rgba(251, 191, 36, 0.25); }
+html.dark .border-green-200  { border-color: rgba(34, 197, 94, 0.25); }
+html.dark .border-red-200    { border-color: rgba(239, 68, 68, 0.25); }
+
+/* ── Header ── */
+html.dark header.app-header {
+  background-color: rgba(8, 14, 26, 0.92) !important;
+  box-shadow: 0 1px 0 rgba(137, 192, 220, 0.06) inset, 0 4px 24px -8px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* ── Navigation ── */
+html.dark nav.bottom-nav-root {
+  background-color: rgba(8, 14, 26, 0.94);
+  border-top-color: rgba(137, 192, 220, 0.10);
+}
+
+html.dark .bg-asm-navy { background-color: #0f1828; }
+
+/* ── Shadows — soften on dark ── */
+html.dark .shadow-card,
+html.dark [class*="shadow-[0_1px"] {
+  box-shadow: 0 1px 8px -2px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Input surfaces ── */
+html.dark input,
+html.dark textarea,
+html.dark select {
+  background-color: #111d30;
+  color: #e2e8f4;
+  border-color: rgba(137, 192, 220, 0.15);
+}
+
+/* ── Scrollbar ── */
+html.dark ::-webkit-scrollbar-track  { background: transparent; }
+html.dark ::-webkit-scrollbar-thumb  { background-color: #2a3f5e; border: 3px solid #080e1a; border-radius: 999px; }
+
+/* ── Selection ── */
+html.dark ::selection {
+  background-color: rgba(11, 79, 216, 0.3);
+  color: #e2e8f4;
+}
+
+/* ── Focus ring in dark ── */
+html.dark :focus-visible {
+  outline: 2px solid #4d8ef0;
+  outline-offset: 2px;
+  border-radius: 6px;
+}

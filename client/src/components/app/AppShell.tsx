@@ -5,6 +5,7 @@ import { LogOut, X } from 'lucide-react'
 import { NavLink, useNavigate } from 'react-router'
 
 import { useAuth } from '@/auth/AuthContext'
+import { useTheme } from '@/context/ThemeContext'
 import { AppHeader } from '@/components/app/AppHeader'
 import { BottomNav } from '@/components/app/BottomNav'
 import { GridBackdrop } from '@/components/app/GridBackdrop'
@@ -261,6 +262,7 @@ export function AppShell({
   const [drawerOpen, setDrawerOpen] = useState(false)
   const hamburgerRef = useRef<HTMLButtonElement>(null)
   const navigate = useNavigate()
+  const { isDark } = useTheme()
 
   const defaultHelp = useCallback(() => {
     void navigate('/app/support')
@@ -272,7 +274,10 @@ export function AppShell({
   return (
     <div
       className={cn(
-        'theme-light-home relative min-h-screen overflow-x-hidden bg-asm-tint font-jakarta text-asm-navy',
+        'relative min-h-screen overflow-x-hidden font-jakarta',
+        isDark
+          ? 'bg-[#080e1a] text-[#e2e8f4]'
+          : 'theme-light-home bg-asm-tint text-asm-navy',
         className
       )}
     >
