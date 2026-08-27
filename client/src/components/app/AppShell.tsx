@@ -276,7 +276,7 @@ export function AppShell({
       className={cn(
         'relative min-h-screen overflow-x-hidden font-jakarta',
         isDark
-          ? 'bg-[#080e1a] text-[#e2e8f4]'
+          ? 'bg-[#0d0d0e] text-[#f2f2f7]'
           : 'theme-light-home bg-asm-tint text-asm-navy',
         className
       )}

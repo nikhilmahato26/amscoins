@@ -215,39 +215,47 @@
 }
 
 /* ═════════════════════════════════════════════════════════════════
-   DARK MODE — Premium deep-navy design system
-   Three-level elevation, glass navigation, adjusted accent colours.
+   DARK MODE — Premium charcoal design system
+   Inspired by Apple's HIG dark palette, Linear, and Raycast.
 
-   Palette rationale:
-     • Base:   #06101d — midnight navy, not pure black (avoids harshness)
-     • L1 card: #0d1d30 + gradient — raised surface with subtle depth
-     • L2 card: #142538 — modal/drawer depth
-     • Blue:   #5b9cf6 — asm-blue shifted light for ≥4.5:1 contrast on base
-     • Green:  #2dd67a — brighter; signals profit clearly on dark
+   Elevation stack (warm charcoal, not blue-tinted):
+     --dk0  #0d0d0e  body / page          ← near-black charcoal
+     --dk1  #1a1a1c  card surface         ← raised 1 stop
+     --dk2  #252528  elevated card        ← raised 2 stops
+     --dk3  #2f2f32  drawer / modal       ← highest surface
+   Accents tuned for charcoal base (all ≥ 4.5:1 contrast):
+     blue   #5a96f5  — asm-blue lightened (~5:1 on dk0)
+     green  #30d158  — Apple's system green (profit, gain)
+     amber  #ffd426  — Apple's system yellow (warning)
+     red    #ff453a  — Apple's system red (error, rejection)
    ═════════════════════════════════════════════════════════════════ */
 
 html.dark {
   color-scheme: dark;
-  scrollbar-color: #1e3352 transparent;
+  scrollbar-color: #3a3a3c transparent;
 
-  /* Elevation tokens consumed by the rules below */
-  --dk0: #06101d;                    /* Page / body */
-  --dk1: #0d1d30;                    /* Card surface */
-  --dk2: #142538;                    /* Elevated / modal */
-  --dk-glass: rgba(6, 16, 29, 0.88); /* Nav glass */
-  --dk-border: rgba(255, 255, 255, 0.055);
+  /* ── Elevation palette ── */
+  --dk0:  #0d0d0e;
+  --dk1:  #1a1a1c;
+  --dk2:  #252528;
+  --dk3:  #2f2f32;
+  --dk-glass: rgba(13, 13, 14, 0.86);
+
+  /* ── Border alpha ── */
+  --dk-border:     rgba(255, 255, 255, 0.055);
   --dk-border-med: rgba(255, 255, 255, 0.09);
+  --dk-border-hi:  rgba(255, 255, 255, 0.13);
 
-  /* Text */
-  --dk-text-hi:   #dce9f8;  /* headings, key numbers */
-  --dk-text-body: #6e94b5;  /* paragraphs, labels */
-  --dk-text-muted:#3d5a78;  /* timestamps, secondary */
+  /* ── Text — Apple HIG charcoal scale ── */
+  --dk-text-hi:    #f2f2f7;   /* primary label */
+  --dk-text-body:  #8e8e93;   /* secondary label */
+  --dk-text-muted: #48484a;   /* tertiary label */
 
-  /* Adjusted accents */
-  --dk-blue:   #5b9cf6;  /* asm-blue at 4.6:1 on --dk0 */
-  --dk-green:  #2dd67a;  /* profit indicator — vivid */
-  --dk-amber:  #f5b84a;  /* pending / warning */
-  --dk-red:    #f06b6b;  /* rejection / error */
+  /* ── Accents ── */
+  --dk-blue:  #5a96f5;
+  --dk-green: #30d158;
+  --dk-amber: #ffd426;
+  --dk-red:   #ff453a;
 }
 
 /* ── Body ── */
@@ -259,134 +267,143 @@ html.dark body {
 /* ── Page background ── */
 html.dark .bg-asm-tint { background-color: var(--dk0); }
 
-/* ── Cards — gradient L1 elevation ──────────────────────────────
-   The subtle diagonal gradient creates the illusion of light hitting
-   the top-left corner — standard premium dark-mode technique.
-   box-shadow adds inner border glow + ambient depth.            */
+/* ── Cards — gradient elevation L1 ─────────────────────────────
+   Diagonal gradient simulates ambient light from top-left.
+   Inner shadow border lifts the card off the background cleanly. */
 html.dark .bg-white {
   background-color: var(--dk1);
-  background-image: linear-gradient(145deg, #0f2035 0%, #0a1826 100%);
-  box-shadow: 0 0 0 1px rgba(255,255,255,0.045),
-              0 4px 20px rgba(0,0,0,0.35);
+  background-image: linear-gradient(145deg, #1f1f22 0%, #161618 100%);
+  box-shadow: 0 0 0 1px var(--dk-border),
+              0 4px 16px rgba(0, 0, 0, 0.45),
+              0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
-/* ── Glass surfaces — header, bottom nav, any semi-transparent white ──
-   [class*="bg-white/"] catches bg-white/88, bg-white/95, bg-white/80.   */
+/* ── Glass surfaces — header, bottom nav, semi-transparent whites ──
+   Catches bg-white/88, bg-white/95, bg-white/80, etc.              */
 html.dark [class*="bg-white/"] {
-  background-color: var(--dk-glass) !important;
-  backdrop-filter: blur(20px) saturate(1.6) !important;
+  background-color: rgba(13, 13, 14, 0.84) !important;
+  backdrop-filter: blur(24px) saturate(1.8) !important;
 }
 
-/* ── Header shadow — top chrome ── */
+/* ── Header drop shadow ── */
 html.dark header {
   box-shadow:
-    0 1px 0 rgba(255,255,255,0.04) inset,
-    0 6px 30px rgba(0,0,0,0.55) !important;
+    0 1px 0 var(--dk-border) inset,
+    0 8px 32px rgba(0, 0, 0, 0.6) !important;
 }
 
-/* ── Bottom nav — glass + border ── */
+/* ── Bottom nav — glass charcoal ── */
 html.dark nav[aria-label="Main navigation"] {
-  background-color: rgba(5, 13, 26, 0.92) !important;
+  background-color: rgba(11, 11, 12, 0.90) !important;
   border-top-color: var(--dk-border) !important;
-  box-shadow: 0 -1px 0 rgba(255,255,255,0.035) !important;
+  box-shadow: 0 -1px 0 var(--dk-border) !important;
 }
 
-/* ── Side nav ── */
+/* ── Side nav — slightly elevated from page ── */
 html.dark nav[aria-label="Primary"] {
-  background-color: #091629 !important;
-  background-image: linear-gradient(180deg, #0c1e32 0%, #071322 100%) !important;
+  background-color: #131315 !important;
+  background-image: linear-gradient(180deg, #181819 0%, #111112 100%) !important;
   border-right-color: var(--dk-border) !important;
-  box-shadow: 2px 0 20px rgba(0,0,0,0.4) !important;
+  box-shadow: 2px 0 24px rgba(0, 0, 0, 0.5) !important;
 }
 
-/* ── Mobile drawer ── */
+/* ── Mobile drawer — L3 elevation ── */
 html.dark .fixed.flex-col.bg-white {
-  background-color: var(--dk2) !important;
-  background-image: linear-gradient(180deg, #1a3050 0%, #102030 100%) !important;
-  box-shadow: 12px 0 48px rgba(0,0,0,0.7) !important;
+  background-color: var(--dk3) !important;
+  background-image: linear-gradient(180deg, #353538 0%, #28282b 100%) !important;
+  box-shadow: 16px 0 60px rgba(0, 0, 0, 0.75) !important;
 }
 
-/* ── Tinted icon containers ── */
-html.dark .bg-asm-blue-tint  { background-color: rgba(91,156,246,0.12); }
-html.dark .bg-asm-green-tint { background-color: rgba(45,214,122,0.12); }
-html.dark .bg-amber-50       { background-color: rgba(245,184,74,0.10); }
-html.dark .bg-red-50         { background-color: rgba(240,107,107,0.10); }
-html.dark .bg-green-50       { background-color: rgba(45,214,122,0.10); }
-html.dark .bg-violet-50      { background-color: rgba(167,139,250,0.10); }
-html.dark .bg-sky-50         { background-color: rgba(56,189,248,0.10); }
-html.dark .bg-asm-navy       { background-color: #0a1828; }
+/* ── Tinted icon containers — desaturated on charcoal ── */
+html.dark .bg-asm-blue-tint  { background-color: rgba(90, 150, 245, 0.12); }
+html.dark .bg-asm-green-tint { background-color: rgba(48, 209, 88, 0.12); }
+html.dark .bg-amber-50       { background-color: rgba(255, 212, 38, 0.10); }
+html.dark .bg-red-50         { background-color: rgba(255, 69, 58, 0.10); }
+html.dark .bg-green-50       { background-color: rgba(48, 209, 88, 0.10); }
+html.dark .bg-violet-50      { background-color: rgba(191, 144, 255, 0.10); }
+html.dark .bg-sky-50         { background-color: rgba(100, 210, 255, 0.10); }
+html.dark .bg-asm-navy       { background-color: var(--dk2); }
+
+/* ── Tint area inside sidenav footer ── */
+html.dark .rounded-xl.bg-asm-tint { background-color: var(--dk2); }
 
 /* ── Text hierarchy ── */
 html.dark .text-asm-navy  { color: var(--dk-text-hi); }
 html.dark .text-asm-body  { color: var(--dk-text-body); }
 html.dark .text-asm-muted { color: var(--dk-text-muted); }
 
-/* ── asm-blue: lightened for dark bg (contrast ≥ 4.5:1) ── */
+/* ── asm-blue — lightened for charcoal bg (contrast ≥ 5:1) ── */
 html.dark .text-asm-blue      { color: var(--dk-blue); }
-html.dark .text-asm-blue-dark { color: #4d8ef0; }
-html.dark .bg-asm-blue        { background-color: #3d77e0; }
-html.dark .border-asm-blue    { border-color: rgba(91,156,246,0.40); }
+html.dark .text-asm-blue-dark { color: #4d88ef; }
+html.dark .bg-asm-blue        { background-color: #3f7de8; }
+html.dark .border-asm-blue    { border-color: rgba(90, 150, 245, 0.38); }
 
-/* ── Green — profit / success ── */
-html.dark .text-asm-greenInk   { color: var(--dk-green); }
-html.dark .text-asm-green      { color: var(--dk-green); }
-html.dark .bg-asm-greenInk     { background-color: var(--dk-green); }
+/* ── Green — profit signal ── */
+html.dark .text-asm-greenInk    { color: var(--dk-green); }
+html.dark .text-asm-green       { color: var(--dk-green); }
+html.dark .bg-asm-greenInk      { background-color: var(--dk-green); }
 
-/* ── Coloured text used by status badges ── */
-html.dark .text-amber-700   { color: var(--dk-amber); }
+/* ── Status badge text ── */
+html.dark .text-amber-700,
 html.dark .text-amber-600   { color: var(--dk-amber); }
-html.dark .text-green-700   { color: var(--dk-green); }
+html.dark .text-green-700,
 html.dark .text-green-600   { color: var(--dk-green); }
 html.dark .text-red-600,
 html.dark .text-asm-red     { color: var(--dk-red); }
-html.dark .text-sky-600     { color: #38bdf8; }
-html.dark .text-violet-600  { color: #a78bfa; }
+html.dark .text-sky-600     { color: #64d2ff; }
+html.dark .text-violet-600  { color: #bf90ff; }
 
 /* ── Borders ── */
 html.dark .border-asm-line        { border-color: var(--dk-border-med); }
 html.dark .divide-asm-line > * + * { border-color: var(--dk-border); }
-html.dark .border-amber-200       { border-color: rgba(245,184,74,0.25); }
-html.dark .border-green-200       { border-color: rgba(45,214,122,0.25); }
-html.dark .border-red-200         { border-color: rgba(240,107,107,0.25); }
+html.dark .border-amber-200       { border-color: rgba(255, 212, 38, 0.25); }
+html.dark .border-green-200       { border-color: rgba(48, 209, 88, 0.25); }
+html.dark .border-red-200         { border-color: rgba(255, 69, 58, 0.25); }
 
-/* ── Shadow override — all explicit shadow classes → dark-appropriate ── */
+/* ── Shadows — charcoal dark-on-dark depth ── */
 html.dark [class*="shadow-["] {
-  box-shadow: 0 4px 20px rgba(0,0,0,0.45),
-              0 0 0 1px rgba(255,255,255,0.04) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5),
+              0 0 0 1px var(--dk-border) !important;
 }
 
 /* ── Inputs ── */
 html.dark input,
 html.dark textarea,
 html.dark select {
-  background-color: #0d1e33;
+  background-color: #111113;
   color: var(--dk-text-hi);
-  border-color: var(--dk-border-med);
+  border-color: var(--dk-border-hi);
 }
 html.dark input:focus,
 html.dark textarea:focus {
-  border-color: rgba(91,156,246,0.5);
-  box-shadow: 0 0 0 3px rgba(91,156,246,0.12);
+  border-color: rgba(90, 150, 245, 0.55);
+  box-shadow: 0 0 0 3px rgba(90, 150, 245, 0.14);
+  outline: none;
 }
 
-/* ── Key number glow — portfolio value, stat numbers ──
-   Adds a gentle aura around large financial figures.    */
-html.dark .font-jakarta.font-extrabold { text-shadow: 0 0 30px rgba(91,156,246,0.12); }
+/* ── Key number glow — financial figures ──────────────────────
+   Subtle aura on large bold numbers. Charcoal base makes the
+   glow feel warmer and less neon than on navy backgrounds.    */
+html.dark .font-jakarta.font-extrabold {
+  text-shadow: 0 0 28px rgba(242, 242, 247, 0.07);
+}
 html.dark .text-asm-greenInk.font-bold,
-html.dark .text-asm-greenInk.font-extrabold { text-shadow: 0 0 20px rgba(45,214,122,0.2); }
+html.dark .text-asm-greenInk.font-extrabold {
+  text-shadow: 0 0 20px rgba(48, 209, 88, 0.22);
+}
 
 /* ── Scrollbar ── */
 html.dark ::-webkit-scrollbar-track { background: transparent; }
 html.dark ::-webkit-scrollbar-thumb {
-  background-color: #1e3352;
+  background-color: #3a3a3c;
   border: 3px solid var(--dk0);
   border-radius: 999px;
 }
-html.dark ::-webkit-scrollbar-thumb:hover { background-color: #2a4570; }
+html.dark ::-webkit-scrollbar-thumb:hover { background-color: #48484a; }
 
 /* ── Selection ── */
 html.dark ::selection {
-  background-color: rgba(91,156,246,0.25);
+  background-color: rgba(90, 150, 245, 0.28);
   color: var(--dk-text-hi);
 }
 

@@ -77,6 +77,13 @@ const StyledWrapper = styled.div`
     cursor: pointer;
   }
 
+  /* Mobile: 70% of desktop size (22px × 0.7 ≈ 15px) */
+  @media (max-width: 1023px) {
+    .theme-switch {
+      --toggle-size: 15px;
+    }
+  }
+
   .theme-switch, .theme-switch *, .theme-switch *::before, .theme-switch *::after {
     -webkit-box-sizing: border-box;
     box-sizing: border-box;
