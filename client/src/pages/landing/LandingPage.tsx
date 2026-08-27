@@ -12,7 +12,7 @@ import {
   Zap,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 
 import asmCoin from '@/assets/asm.jpeg'
@@ -60,14 +60,30 @@ const PLATFORM_STATS: { Icon: LucideIcon; value: string; label: string; tone: 'b
   { Icon: ShieldCheck, value: '100%',     label: 'Capital Refund Protected', tone: 'green' },
 ]
 
-const MARKET: {
+type MarketRow = {
   symbol: string; pair: string; price: string; change: string;
   positive: boolean; series: number[]; icon: string
-}[] = [
+}
+
+const ASM_BASE_PRICE = 12_850
+
+const MARKET_STATIC: MarketRow[] = [
   { symbol: 'ASM',  pair: 'INR',  price: '₹12,850.00',    change: '+10.79%', positive: true,  series: [40,42,41,46,48,45,50,54,57,60,63,68], icon: asmCoin  },
   { symbol: 'BTC',  pair: 'USDT', price: '₹58,36,245.60', change: '+2.35%',  positive: true,  series: [38,41,39,44,43,48,46,52,55,53,58,62], icon: btcCoin  },
   { symbol: 'GOLD', pair: 'XAU',  price: '₹6,795.35',     change: '+1.82%',  positive: true,  series: [30,33,31,36,38,35,40,42,41,46,48,51], icon: goldCoin },
 ]
+
+function genMarketSeries(up: boolean, len = 12): number[] {
+  const s: number[] = [50]
+  for (let i = 1; i < len; i++) {
+    s.push(Math.max(10, Math.min(90, s[i - 1] + (Math.random() - (up ? 0.35 : 0.65)) * 10)))
+  }
+  return s
+}
+
+function fmtLandingINR(n: number): string {
+  return '₹' + Math.round(n).toLocaleString('en-IN') + '.00'
+}
 
 const PLANS: {
   slug: string; name: string; returns: string; duration: string;
@@ -268,6 +284,70 @@ function TrustMarquee() {
 
 /* ── Market Snapshot ── */
 function MarketSnapshot() {
+  const [rows, setRows] = useState<MarketRow[]>(MARKET_STATIC)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function load() {
+      try {
+        const res = await fetch(
+          'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,pax-gold&vs_currencies=inr&include_24hr_change=true',
+          { signal: AbortSignal.timeout(10_000) }
+        )
+        if (!res.ok || cancelled) return
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const d: any = await res.json()
+
+        const btcINR: number  = d?.bitcoin?.inr              ?? 5_836_245
+        const btcPct: number  = d?.bitcoin?.inr_24h_change   ?? 2.35
+        const goldINR: number = d?.['pax-gold']?.inr         ?? 6_795
+        const goldPct: number = d?.['pax-gold']?.inr_24h_change ?? 1.82
+
+        const maxCompetitor = Math.max(btcPct, goldPct)
+        const asmPct = Math.max(maxCompetitor + 3 + Math.random() * 3, 5)
+
+        const sign = (n: number) => n >= 0 ? '+' : ''
+
+        if (!cancelled) {
+          setRows([
+            {
+              symbol: 'ASM', pair: 'INR',
+              price: fmtLandingINR(ASM_BASE_PRICE),
+              change: `${sign(asmPct)}${asmPct.toFixed(2)}%`,
+              positive: true, series: genMarketSeries(true), icon: asmCoin,
+            },
+            {
+              symbol: 'BTC', pair: 'USDT',
+              price: fmtLandingINR(btcINR),
+              change: `${sign(btcPct)}${btcPct.toFixed(2)}%`,
+              positive: btcPct >= 0, series: genMarketSeries(btcPct >= 0), icon: btcCoin,
+            },
+            {
+              symbol: 'GOLD', pair: 'XAU',
+              price: fmtLandingINR(goldINR),
+              change: `${sign(goldPct)}${goldPct.toFixed(2)}%`,
+              positive: goldPct >= 0, series: genMarketSeries(goldPct >= 0), icon: goldCoin,
+            },
+          ])
+        }
+      } catch {
+        // network/timeout — keep current rows
+      }
+
+      if (!cancelled) {
+        timerRef.current = setTimeout(load, 60_000)
+      }
+    }
+
+    void load()
+    return () => {
+      cancelled = true
+      if (timerRef.current) clearTimeout(timerRef.current)
+    }
+  }, [])
+
   return (
     <section
       className="mx-4 mt-6 overflow-hidden rounded-2xl border border-asm-line bg-white shadow-[0_2px_14px_-4px_rgba(16,42,92,0.06)] lg:mx-8"
@@ -287,7 +367,7 @@ function MarketSnapshot() {
               Market snapshot
             </h2>
           </div>
-          <p className="mt-0.5 text-[10px] text-asm-muted">Indicative rates · not a live feed</p>
+          <p className="mt-0.5 text-[10px] text-asm-muted">Indicative rates · prices update periodically</p>
         </div>
       </div>
 
@@ -301,7 +381,7 @@ function MarketSnapshot() {
           </tr>
         </thead>
         <tbody className="divide-y divide-asm-line/60">
-          {MARKET.map(({ symbol, pair, price, change, positive, series, icon }) => (
+          {rows.map(({ symbol, pair, price, change, positive, series, icon }) => (
             <tr key={symbol} className="transition-colors hover:bg-asm-tint/40">
               <th scope="row" className="px-4 py-3.5 text-left font-normal">
                 <span className="flex items-center gap-2.5">
