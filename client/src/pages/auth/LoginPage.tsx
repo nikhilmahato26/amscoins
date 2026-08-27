@@ -79,7 +79,7 @@ export function LoginPage() {
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Field label="Email" error={error && !email ? error : undefined}>
+        <Field label="Email">
           <Input
             type="email"
             placeholder="you@example.com"
@@ -91,7 +91,7 @@ export function LoginPage() {
           />
         </Field>
 
-        <Field label="Password" error={error && email ? error : undefined}>
+        <Field label="Password">
           <Input
             type="password"
             placeholder="Your password"
@@ -103,7 +103,6 @@ export function LoginPage() {
           />
         </Field>
 
-        {/* Global error */}
         {(error || oauthError) && (
           <p role="alert" className="text-[12px] font-medium text-asm-red">
             {error || 'Google sign-in failed. Please try again or use your password.'}
