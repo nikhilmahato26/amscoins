@@ -644,7 +644,7 @@ function FormField({
       <span className="px-1 text-[11px] font-bold uppercase leading-[15px] tracking-[0.06em] text-asm-muted">
         {label}
       </span>
-      <span className="flex h-12 items-center gap-3 rounded-xl border border-asm-line bg-white px-4 shadow-[0_1px_4px_-1px_rgba(16,42,92,0.06)]">
+      <span className="flex h-12 items-center gap-3 rounded-xl border border-asm-line bg-white px-4 shadow-[0_1px_4px_-1px_rgba(16,42,92,0.06)] focus-within:border-asm-blue focus-within:ring-2 focus-within:ring-asm-blue/20">
         <Icon className="size-3.5 shrink-0 text-asm-muted" aria-hidden />
         <input
           placeholder={placeholder}
