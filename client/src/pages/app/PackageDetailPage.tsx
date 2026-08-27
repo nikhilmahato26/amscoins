@@ -12,6 +12,14 @@ import { ordinal } from '@/lib/tiers'
 import { cn } from '@/lib/utils'
 import type { Tier } from '@/types'
 
+const TIER_BAND = {
+  silver:  { bg: 'bg-gradient-to-br from-[#CED5E1] to-[#9CA8B8]', text: 'text-asm-navy' },
+  gold:    { bg: 'bg-gradient-to-br from-[#F4C506] to-[#E8A000]', text: 'text-white'    },
+  diamond: { bg: 'bg-gradient-to-br from-asm-blue to-[#1E93FE]',   text: 'text-white'    },
+} as const
+
+const RETURN_BY_TIER = { silver: '25%', gold: '30%', diamond: '40%' } as const
+
 interface LocationState {
   planKey?: Tier
 }
@@ -165,6 +173,24 @@ export function PackageDetailPage() {
 
         {plan && plan.unlocked && (
           <>
+            {/* Tier hero band */}
+            {TIER_BAND[planKey as keyof typeof TIER_BAND] && (
+              <div className={cn('rounded-2xl px-5 py-8 text-center', TIER_BAND[planKey as keyof typeof TIER_BAND].bg)}>
+                <span className={cn('font-jakarta text-[13px] font-bold uppercase tracking-[0.12em] opacity-80',
+                  TIER_BAND[planKey as keyof typeof TIER_BAND].text)}>
+                  {planKey.charAt(0).toUpperCase() + planKey.slice(1)} Plan
+                </span>
+                <div className={cn('mt-1 font-jakarta text-[48px] font-extrabold leading-none',
+                  TIER_BAND[planKey as keyof typeof TIER_BAND].text)}>
+                  {RETURN_BY_TIER[planKey as keyof typeof RETURN_BY_TIER]}
+                </div>
+                <div className={cn('mt-1 text-[14px] font-semibold opacity-80',
+                  TIER_BAND[planKey as keyof typeof TIER_BAND].text)}>
+                  return in 24 hours
+                </div>
+              </div>
+            )}
+
             {/* Package summary */}
             <section className="relative flex flex-col gap-3 overflow-hidden rounded-[20px] border border-asm-line bg-white px-[25px] py-4 shadow-[0_2px_16px_-6px_rgba(16,42,92,0.1)]">
               <div className="flex flex-col items-center gap-1">

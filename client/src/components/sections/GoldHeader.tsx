@@ -14,7 +14,7 @@ export function GoldHeader({ className }: { className?: string }) {
   return (
     <header
       className={cn(
-        'flex w-full items-center justify-between bg-surface-nav/80 px-6 pb-4 pt-8 backdrop-blur-md',
+        'flex w-full items-center justify-between border-b border-asm-line bg-white/95 px-6 pb-4 pt-8 backdrop-blur-md',
         className
       )}
     >
@@ -23,7 +23,7 @@ export function GoldHeader({ className }: { className?: string }) {
           className="flex size-10 shrink-0 items-center justify-center rounded-full drop-shadow-[0px_0px_7.5px_rgba(212,175,55,0.3)]"
           style={{ backgroundImage: 'linear-gradient(135deg, #D4AF37 0%, #AA8A2E 100%)' }}
         >
-          <Gem className="size-[18px] text-surface-nav" strokeWidth={2} aria-hidden />
+          <Gem className="size-[18px] text-asm-navy" strokeWidth={2} aria-hidden />
         </span>
         <span className="flex flex-col">
           <span
@@ -32,7 +32,7 @@ export function GoldHeader({ className }: { className?: string }) {
           >
             ASM COINS
           </span>
-          <span className="text-[10px] uppercase leading-[15px] tracking-[2px] text-gold-antique/60">
+          <span className="text-[10px] uppercase leading-[15px] tracking-[2px] text-amber-700/60">
             Elite Asset Management
           </span>
         </span>
@@ -42,11 +42,11 @@ export function GoldHeader({ className }: { className?: string }) {
         type="button"
         aria-label="Notifications"
         className={cn(
-          'flex size-10 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.03] backdrop-blur-md',
-          'transition-colors hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-antique'
+          'flex size-10 items-center justify-center rounded-full border border-asm-line bg-asm-tint backdrop-blur-md',
+          'transition-colors hover:bg-asm-blue-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700'
         )}
       >
-        <Bell className="h-4 w-3.5" aria-hidden />
+        <Bell className="h-4 w-3.5 text-asm-navy" aria-hidden />
       </button>
     </header>
   )
