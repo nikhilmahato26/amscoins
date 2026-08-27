@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
-import { Loader2, Settings, Upload } from 'lucide-react'
+import { Loader2, Upload } from 'lucide-react'
 
 import { useSettings, useUpdateSettings } from '@/hooks/queries'
 import { uploadSettingsImage, type PublicSettings, type SettingsImageKey, type SettingsUpdate } from '@/services/api/settings'
 import { cn } from '@/lib/utils'
+import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 
 type FormValues = {
   inrThresholdRupees: number
@@ -94,16 +95,10 @@ export function AdminSettings() {
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
-      {/* Page heading */}
-      <div className="flex items-center gap-3">
-        <Settings className="size-5 shrink-0 text-asm-muted" strokeWidth={1.75} aria-hidden />
-        <div>
-          <h1 className="text-[22px] xl:text-[26px] font-bold tracking-tight text-asm-navy">Payment Settings</h1>
-          <p className="-mt-0.5 text-[13px] xl:text-[14px] text-asm-muted">
-            Configure payment methods, QR images, and availability.
-          </p>
-        </div>
-      </div>
+      <AdminPageHeader
+        title="Payment Settings"
+        subtitle="Configure payment methods, QR images, and availability."
+      />
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
         {/* ── INR (UPI) ── */}

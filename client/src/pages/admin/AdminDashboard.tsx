@@ -4,6 +4,7 @@ import { inr } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { PendingActionsStrip } from '@/components/admin/PendingActionsStrip'
 import { ActivityTimeline } from '@/components/admin/ActivityTimeline'
+import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 
 interface StatCardProps {
   label: string
@@ -61,11 +62,7 @@ export function AdminDashboard() {
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-[22px] xl:text-[26px] font-bold tracking-tight text-asm-navy">Dashboard</h1>
-        <p className="mt-0.5 text-[13px] xl:text-[14px] text-asm-muted">Platform overview at a glance.</p>
-      </div>
+      <AdminPageHeader title="Dashboard" subtitle="Platform overview at a glance." />
 
       {/* Stat cards */}
       <section aria-label="Platform statistics" aria-live="polite">

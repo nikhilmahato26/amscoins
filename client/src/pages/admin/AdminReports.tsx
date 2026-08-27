@@ -9,6 +9,7 @@ import { getReport } from '@/services/api/admin'
 import type { ReportType } from '@/services/api/admin'
 import { inr } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 
 /* ── Types ── */
 type MonthlyRow    = { month: string; count: number; totalInvested: number; totalReturned: number }
@@ -355,10 +356,7 @@ export function AdminReports() {
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
-      <div>
-        <h1 className="text-[22px] xl:text-[26px] font-bold tracking-tight text-asm-navy">Reports</h1>
-        <p className="mt-0.5 text-[13px] xl:text-[14px] text-asm-muted">Investment analytics and visualisations.</p>
-      </div>
+      <AdminPageHeader title="Reports" subtitle="Investment analytics and visualisations." />
 
       {/* Tabs */}
       <div className="flex flex-wrap gap-1.5">
