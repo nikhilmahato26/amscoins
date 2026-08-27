@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { CheckCircle2, XCircle } from 'lucide-react'
 import {
   useAdminWithdrawals,
   useCompleteWithdrawal,
@@ -19,6 +18,7 @@ import { Pagination } from '@/components/admin/Pagination'
 import { useClientTable, type SortOption } from '@/hooks/useClientTable'
 import { inr, payoutView } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { StatusBadge } from '@/components/admin/StatusBadge'
 
 type Tab = 'pending' | 'history'
 
@@ -314,18 +314,7 @@ function HistoryTab() {
     {
       key: 'status',
       header: 'Status',
-      render: (wd) =>
-        wd.status === 'completed' ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-asm-green-tint px-2.5 py-1 text-[11px] font-bold text-asm-greenInk">
-            <CheckCircle2 className="size-3" strokeWidth={2.5} aria-hidden />
-            Paid
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-[11px] font-bold text-red-600">
-            <XCircle className="size-3" strokeWidth={2.5} aria-hidden />
-            Rejected
-          </span>
-        ),
+      render: (wd) => <StatusBadge status={wd.status === 'completed' ? 'paid' : wd.status} />,
     },
     { key: 'note', header: 'Note', className: 'text-[12px] text-asm-muted', render: (wd) => wd.note ?? '—' },
   ]
