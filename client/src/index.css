@@ -56,6 +56,45 @@
   }
 }
 
+/*
+ * ── Site skin tokens ────────────────────────────────────────────────────
+ * One semantic set, two themes. Marketing + auth (and, over time, the app)
+ * read these instead of hard-coded literals, so a single .light/.dark class
+ * on <html> (managed by ThemeContext) flips the entire surface.
+ *   light = trusted fintech (white / navy / asm-blue + green)
+ *   dark  = "Ink & Gold" premium (ink #0B0B0C / warm white / gold #F4C506)
+ * Gold is a precise accent (CTAs, return figures), not a wash.
+ */
+@layer base {
+  .light {
+    --skin-bg: 0 0% 100%;
+    --skin-surface: 0 0% 100%;
+    --skin-tint: 222 60% 97%;        /* #F4F7FE */
+    --skin-text: 219 70% 21%;        /* asm-navy #102A5C */
+    --skin-body: 219 21% 42%;        /* asm-body */
+    --skin-muted: 217 25% 45%;       /* asm-muted */
+    --skin-accent: 220 90% 45%;      /* asm-blue #0B4FD8 */
+    --skin-accent-hover: 222 89% 37%;
+    --skin-on-accent: 0 0% 100%;
+    --skin-line: 219 37% 93%;        /* asm-line #E5EAF3 */
+    color-scheme: light;
+  }
+
+  .dark {
+    --skin-bg: 240 6% 4%;            /* ink #0B0B0C */
+    --skin-surface: 240 5% 9%;       /* lifted card */
+    --skin-tint: 240 5% 7%;
+    --skin-text: 0 0% 99%;           /* warm white #FCFCFC */
+    --skin-body: 220 9% 72%;
+    --skin-muted: 220 8% 58%;
+    --skin-accent: 48 95% 49%;       /* gold #F4C506 */
+    --skin-accent-hover: 46 92% 60%;
+    --skin-on-accent: 240 6% 5%;     /* ink text on gold */
+    --skin-line: 45 22% 16%;         /* subtle gold-tinted hairline */
+    color-scheme: dark;
+  }
+}
+
 @layer base {
   * {
     @apply border-border;
@@ -233,18 +272,20 @@ html.dark {
   color-scheme: dark;
   scrollbar-color: #3a3a3c transparent;
 
-  --dk0:  #0d0d0e;
-  --dk1:  #1a1a1c;
-  --dk2:  #252528;
-  --dk3:  #2f2f32;
-  --dk-glass:      rgba(13, 13, 14, 0.86);
-  --dk-border:     rgba(255, 255, 255, 0.055);
-  --dk-border-med: rgba(255, 255, 255, 0.09);
+  /* Ink & Gold — matched to the landing dark theme (skin-* tokens).
+     Ink surfaces, warm-white text, gold as THE accent. */
+  --dk0:  #0b0b0c;   /* ink page bg — landing --skin-bg */
+  --dk1:  #141416;   /* card surface — landing --skin-surface */
+  --dk2:  #1c1c1f;   /* elevated card */
+  --dk3:  #242428;   /* drawer / modal */
+  --dk-glass:      rgba(11, 11, 12, 0.86);
+  --dk-border:     rgba(244, 197, 6, 0.08);   /* subtle gold-tinted hairline */
+  --dk-border-med: rgba(244, 197, 6, 0.14);
   --dk-border-hi:  rgba(255, 255, 255, 0.13);
-  --dk-text-hi:    #f2f2f7;
-  --dk-text-body:  #8e8e93;
-  --dk-text-muted: #6e6e73;
-  --dk-blue:       #5a96f5;
+  --dk-text-hi:    #fcfcfc;   /* warm white — landing --skin-text */
+  --dk-text-body:  #b0b4bd;   /* landing --skin-body */
+  --dk-text-muted: #8b8f99;   /* landing --skin-muted */
+  --dk-blue:       #f4c506;   /* gold — THE accent (was blue #5a96f5) */
   --dk-green:      #30d158;
   --dk-amber:      #ffd426;
   --dk-red:        #ff453a;
@@ -257,7 +298,7 @@ html.dark body {
 
 /* ── Pseudo-elements (must stay on html.dark, not scoped) ── */
 html.dark ::selection {
-  background-color: rgba(90, 150, 245, 0.28);
+  background-color: rgba(244, 197, 6, 0.24);
   color: var(--dk-text-hi);
 }
 html.dark ::-webkit-scrollbar-track { background: transparent; }
@@ -296,7 +337,7 @@ html.dark ::-webkit-scrollbar-thumb:hover { background-color: #48484a; }
 /* ── Cards — gradient L1 elevation ── */
 .app-shell-dark .bg-white {
   background-color: var(--dk1);
-  background-image: linear-gradient(145deg, #1f1f22 0%, #161618 100%);
+  background-image: linear-gradient(145deg, #17171a 0%, #101012 100%);
   box-shadow: 0 0 0 1px var(--dk-border),
               0 4px 16px rgba(0, 0, 0, 0.45),
               0 1px 3px rgba(0, 0, 0, 0.3);
@@ -337,12 +378,12 @@ html.dark ::-webkit-scrollbar-thumb:hover { background-color: #48484a; }
 }
 
 /* ── Tinted containers ── */
-.app-shell-dark .bg-asm-blue-tint  { background-color: rgba(90, 150, 245, 0.12); }
+.app-shell-dark .bg-asm-blue-tint  { background-color: rgba(244, 197, 6, 0.12); }
 .app-shell-dark .bg-asm-green-tint { background-color: rgba(48, 209, 88, 0.12); }
 .app-shell-dark .bg-amber-50       { background-color: rgba(255, 212, 38, 0.10); }
 .app-shell-dark .bg-red-50         { background-color: rgba(255, 69, 58, 0.10); }
 .app-shell-dark .bg-green-50       { background-color: rgba(48, 209, 88, 0.10); }
-.app-shell-dark .bg-violet-50      { background-color: rgba(191, 144, 255, 0.10); }
+.app-shell-dark .bg-violet-50      { background-color: rgba(244, 197, 6, 0.10); }
 .app-shell-dark .bg-sky-50         { background-color: rgba(100, 210, 255, 0.10); }
 .app-shell-dark .bg-asm-navy       { background-color: var(--dk2); }
 .app-shell-dark .rounded-xl.bg-asm-tint { background-color: var(--dk2); }
@@ -366,12 +407,30 @@ html.dark ::-webkit-scrollbar-thumb:hover { background-color: #48484a; }
 
 /* ── Accents ── */
 .app-shell-dark .text-asm-blue      { color: var(--dk-blue); }
-.app-shell-dark .text-asm-blue-dark { color: #4d88ef; }
-.app-shell-dark .bg-asm-blue        { background-color: #3f7de8; }
-.app-shell-dark .border-asm-blue    { border-color: rgba(90, 150, 245, 0.38); }
+.app-shell-dark .text-asm-blue-dark { color: #d9ad05; }
+/* Primary buttons: gold fill needs dark ink text for contrast (matches the
+   landing's gold CTA + ink text). The element-level color inherits to the
+   label text and icons; nested pills/badges that set their own bg + text
+   colour (e.g. a count chip) are intentionally NOT forced, so they stay
+   readable on their own background. */
+.app-shell-dark .bg-asm-blue        { background-color: #f4c506; color: #0b0b0c; }
+.app-shell-dark .border-asm-blue    { border-color: rgba(244, 197, 6, 0.40); }
 .app-shell-dark .text-asm-greenInk  { color: var(--dk-green); }
 .app-shell-dark .text-asm-green     { color: var(--dk-green); }
 .app-shell-dark .bg-asm-greenInk    { background-color: var(--dk-green); }
+/* App-header cursive wordmark "Coins" → gold in dark (matches landing logo),
+   without touching functional greenInk used for positive/up indicators. */
+.app-shell-dark .font-script.text-asm-greenInk { color: var(--dk-blue); }
+
+/* Promotional / gradient cards (referral banners, plan headers, active nav):
+   Tailwind gradient stops (from-asm-blue/-navy) don't flow through the
+   .bg-asm-blue rule, so the composed blue gradient survives into dark. Override
+   the whole background-image with an ink→gold wash to match the landing theme.
+   (0,2,0) beats Tailwind's .bg-gradient-* (0,1,0) — no !important needed.) */
+.app-shell-dark .from-asm-blue,
+.app-shell-dark .from-asm-navy {
+  background-image: linear-gradient(135deg, #2a2207 0%, #0d0d0f 100%);
+}
 
 /* ── Status badge text ── */
 .app-shell-dark .text-amber-700,
@@ -381,7 +440,10 @@ html.dark ::-webkit-scrollbar-thumb:hover { background-color: #48484a; }
 .app-shell-dark .text-red-600,
 .app-shell-dark .text-asm-red     { color: var(--dk-red); }
 .app-shell-dark .text-sky-600     { color: #64d2ff; }
-.app-shell-dark .text-violet-600  { color: #bf90ff; }
+/* Withdrawals "violet" tone → gold in dark (light mode keeps violet). */
+.app-shell-dark .text-violet-600,
+.app-shell-dark .text-violet-700  { color: var(--dk-blue); }
+.app-shell-dark .border-l-violet-400 { border-left-color: rgba(244, 197, 6, 0.55); }
 
 /* ── Borders ── */
 .app-shell-dark .border-asm-line        { border-color: var(--dk-border-med); }
@@ -406,7 +468,7 @@ html.dark ::-webkit-scrollbar-thumb:hover { background-color: #48484a; }
 }
 .app-shell-dark input:focus,
 .app-shell-dark textarea:focus {
-  border-color: rgba(90, 150, 245, 0.55);
+  border-color: rgba(244, 197, 6, 0.55);
   outline: none;
 }
 /* Inputs nested inside a styled wrapper (bg-white → dark card gradient) must
@@ -429,6 +491,8 @@ html.dark ::-webkit-scrollbar-thumb:hover { background-color: #48484a; }
 }
 .app-shell-dark .membership-card .bg-white\/12 { background-color: rgb(255 255 255 / 0.12); }
 .app-shell-dark .membership-card .bg-white\/15 { background-color: rgb(255 255 255 / 0.15); }
+/* Membership card keeps its tier-colored gradient in dark (product decision);
+   its inline background is intentionally left untouched. */
 
 /* ── Focus ring ── */
 .app-shell-dark :focus-visible {
@@ -507,11 +571,11 @@ html.dark ::-webkit-scrollbar-thumb:hover { background-color: #48484a; }
    without touching component JSX.
    ─────────────────────────────────────────────────────────────────────── */
 .app-shell-dark .from-asm-blue-tint {
-  --tw-gradient-from: #0d1521 var(--tw-gradient-from-position);
+  --tw-gradient-from: #2a2207 var(--tw-gradient-from-position);
 }
 .app-shell-dark .to-asm-green-tint,
 .app-shell-dark .to-asm-green-tint\/60 {
-  --tw-gradient-to: #091812 var(--tw-gradient-to-position);
+  --tw-gradient-to: #0d0d0f var(--tw-gradient-to-position);
 }
 .app-shell-dark .via-white {
   --tw-gradient-via: var(--dk1) var(--tw-gradient-via-position);
@@ -526,12 +590,16 @@ html.dark ::-webkit-scrollbar-thumb:hover { background-color: #48484a; }
 .app-shell-dark .bg-amber-100          { background-color: rgba(255, 212, 38, 0.16); }
 .app-shell-dark .bg-amber-50\/60       { background-color: rgba(200, 140, 0,  0.14); }
 .app-shell-dark .bg-asm-green-tint\/25 { background-color: rgba(48,  209, 88, 0.11); }
-.app-shell-dark .bg-asm-blue-tint\/40  { background-color: rgba(90,  150, 245, 0.16); }
-.app-shell-dark .bg-asm-blue-tint\/20  { background-color: rgba(90,  150, 245, 0.10); }
+.app-shell-dark .bg-asm-blue-tint\/40  { background-color: rgba(244, 197, 6, 0.16); }
+.app-shell-dark .bg-asm-blue-tint\/20  { background-color: rgba(244, 197, 6, 0.10); }
+/* Top-tier "Diamond unlocked" card (ReferralPage) — was rendering light-gray
+   because bg-asm-blue-tint/50 had no dark rule, washing out its text. */
+.app-shell-dark .bg-asm-blue-tint\/50  { background-color: rgba(244, 197, 6, 0.12); }
 
 /* ── Missing border variants ── */
-.app-shell-dark .border-asm-blue\/15 { border-color: rgba(90, 150, 245, 0.20); }
-.app-shell-dark .border-asm-blue\/20 { border-color: rgba(90, 150, 245, 0.28); }
+.app-shell-dark .border-asm-blue\/15 { border-color: rgba(244, 197, 6, 0.22); }
+.app-shell-dark .border-asm-blue\/20 { border-color: rgba(244, 197, 6, 0.30); }
+.app-shell-dark .border-asm-blue\/30 { border-color: rgba(244, 197, 6, 0.35); }
 
 /* ── Deposit confirmation — send-proof card (hard-coded light green) ── */
 .app-shell-dark .bg-\[\#E7F8EE\] {
@@ -540,7 +608,7 @@ html.dark ::-webkit-scrollbar-thumb:hover { background-color: #48484a; }
 
 /* ── UPI chip hover — Tailwind hover:bg-asm-blue-tint renders light in dark mode ── */
 .app-shell-dark .hover\:bg-asm-blue-tint:hover {
-  background-color: rgba(90, 150, 245, 0.12);
+  background-color: rgba(244, 197, 6, 0.12);
 }
 
 /* ── Stats card tint/60 (AdminUserDetail wallet-balance / total-invested cards) ── */
@@ -555,3 +623,51 @@ html.dark ::-webkit-scrollbar-thumb:hover { background-color: #48484a; }
 .app-shell-dark .text-zinc-600      { color: var(--dk-text-muted); }
 .app-shell-dark .border-zinc-300    { border-color: var(--dk-border-med); }
 .app-shell-dark .hover\:bg-zinc-200:hover { background-color: rgba(255, 255, 255, 0.07); }
+
+/* ════════════════════════════════════════════════════════════════
+   HOVER & FOCUS VARIANTS
+   Tailwind hover:/focus: classes are separate from their base utility,
+   so the base .bg-asm-blue / .border-asm-blue / .text-asm-blue overrides
+   above do NOT cover them. Without these, interactive states still render
+   the OLD blue accent (or a near-white value) in the Ink & Gold theme —
+   most visibly a gold primary button flipping to blue on hover.
+   ════════════════════════════════════════════════════════════════ */
+
+/* Primary-button hover: base bg-asm-blue is gold → hover must brighten gold,
+   not go blue (hover:bg-asm-blue-dark). Text stays ink from the .bg-asm-blue rule. */
+.app-shell-dark .hover\:bg-asm-blue-dark:hover { background-color: #ffd633; }
+.app-shell-dark .hover\:bg-asm-blue\/15:hover  { background-color: rgba(244, 197, 6, 0.15); }
+
+/* Hover text / border accents → gold */
+.app-shell-dark .hover\:text-asm-blue:hover,
+.app-shell-dark .hover\:text-asm-blue-dark:hover { color: var(--dk-blue); }
+.app-shell-dark .hover\:border-asm-blue:hover,
+.app-shell-dark .hover\:border-asm-blue\/40:hover,
+.app-shell-dark .hover\:border-asm-blue\/50:hover { border-color: rgba(244, 197, 6, 0.45); }
+
+/* Neutral hover backgrounds → subtle light-on-dark (not white / light red) */
+.app-shell-dark .hover\:bg-white:hover      { background-color: rgba(255, 255, 255, 0.08); }
+.app-shell-dark .hover\:bg-red-50:hover     { background-color: rgba(255, 69, 58, 0.12); }
+.app-shell-dark .hover\:text-asm-body:hover { color: var(--dk-text-body); }
+
+/* Focus rings / borders → gold (ring + border variants bypass base rules) */
+.app-shell-dark .focus\:ring-asm-blue:focus,
+.app-shell-dark .focus-visible\:ring-asm-blue:focus-visible { --tw-ring-color: rgba(244, 197, 6, 0.60); }
+.app-shell-dark .focus\:border-asm-blue:focus { border-color: rgba(244, 197, 6, 0.55); }
+
+/* Muted status grays not yet mapped → theme grays (keep text visible) */
+.app-shell-dark .text-zinc-500 { color: var(--dk-text-body); }
+.app-shell-dark .text-zinc-400 { color: var(--dk-text-muted); }
+
+/* Segmented-control active tab: the light-mode active state is `bg-white`,
+   which becomes the same dark card gradient as everything else in dark — so
+   the selected tab reads as barely-there. Give it an elevated surface + gold
+   inset border + gold label so the selection is obvious. Scoped to bg-white
+   tabs, so gold-pill tabs (bg-asm-blue active) are left as-is. */
+.app-shell-dark [role="tab"][aria-selected="true"].bg-white {
+  background-image: none;
+  background-color: var(--dk2);
+  color: var(--dk-blue);
+  box-shadow: inset 0 0 0 1px rgba(244, 197, 6, 0.50),
+              0 2px 8px rgba(0, 0, 0, 0.45);
+}

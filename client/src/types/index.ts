@@ -27,6 +27,8 @@ export interface User {
   referralCode: string
   referralCount: number
   tier: Tier
+  /** Highest tier whose upgrade celebration has been acknowledged — server-persisted. */
+  celebrationSeenTier: Tier
   payoutMethods: PayoutMethod[]
   createdAt: string
 }

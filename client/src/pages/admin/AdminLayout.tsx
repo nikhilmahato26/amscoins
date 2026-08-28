@@ -76,7 +76,7 @@ export function AdminLayout() {
     <div className={cn(
       'min-h-screen font-sans',
       isDark
-        ? 'app-shell-dark bg-[#0d0d0e] text-[#f2f2f7]'
+        ? 'app-shell-dark bg-[#0b0b0c] text-[#fcfcfc]'
         : 'theme-light-home bg-asm-tint text-asm-navy',
     )}>
       {/* ── Desktop sidebar (hidden on mobile) ── */}
@@ -95,7 +95,7 @@ export function AdminLayout() {
         </nav>
         <div className="flex flex-col gap-1 border-t border-asm-line p-3">
           <div className="flex items-center justify-between rounded-lg px-3 py-1.5">
-            <span className="text-[12px] font-medium text-asm-muted">Appearance</span>
+            <span className="text-[12px] font-medium text-asm-muted">{isDark ? 'Dark Mode' : 'Light Mode'}</span>
             <SkyToggle checked={isDark} onChange={(x, y) => toggle(x, y)} />
           </div>
           <button
@@ -118,7 +118,10 @@ export function AdminLayout() {
         <Brand />
         <div className="flex items-center gap-2">
           <NotificationBell />
-          <SkyToggle checked={isDark} onChange={(x, y) => toggle(x, y)} />
+          <div className="flex flex-col items-center gap-0.5">
+            <SkyToggle checked={isDark} onChange={(x, y) => toggle(x, y)} />
+            <span className="text-[9px] font-semibold uppercase tracking-wide text-asm-muted">{isDark ? 'Dark Mode' : 'Light Mode'}</span>
+          </div>
           <button
             ref={hamburgerRef}
             type="button"
@@ -176,7 +179,7 @@ export function AdminLayout() {
               </nav>
               <div className="border-t border-asm-line p-3">
                 <div className="flex items-center justify-between px-3 py-2.5 mb-0.5">
-                  <span className="text-[13px] font-medium text-asm-body">Appearance</span>
+                  <span className="text-[13px] font-medium text-asm-body">{isDark ? 'Dark Mode' : 'Light Mode'}</span>
                   <SkyToggle checked={isDark} onChange={(x, y) => toggle(x, y)} />
                 </div>
                 <button

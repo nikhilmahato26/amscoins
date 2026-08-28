@@ -37,6 +37,9 @@ const userSchema = new Schema(
     referredBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
     referralCount: { type: Number, default: 0 },
     tier: { type: String, enum: ['silver', 'gold', 'diamond'], default: 'silver' },
+    // Highest tier whose upgrade celebration the user has already seen.
+    // Stored server-side so it survives cache clears and device switches.
+    celebrationSeenTier: { type: String, enum: ['silver', 'gold', 'diamond'], default: 'silver' },
     firstDepositCredited: { type: Boolean, default: false },
     payoutMethods: { type: [payoutMethodSchema], default: [] },
   },
@@ -56,6 +59,7 @@ userSchema.methods.toPublic = function () {
     referralCode: this.referralCode,
     referralCount: this.referralCount,
     tier: this.tier,
+    celebrationSeenTier: this.celebrationSeenTier || 'silver',
     payoutMethods: (this.payoutMethods || []).map((m) => ({
       id: m._id,
       type: m.type,

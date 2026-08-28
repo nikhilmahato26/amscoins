@@ -107,6 +107,20 @@ module.exports = {
           line: "#E5EAF3",
           tint: "#F4F7FE",
         },
+        // Semantic site skin — theme-aware via CSS vars (see index.css .light/.dark).
+        // One name, two values; used by marketing/auth so the whole surface flips.
+        skin: {
+          bg: "hsl(var(--skin-bg) / <alpha-value>)",
+          surface: "hsl(var(--skin-surface) / <alpha-value>)",
+          tint: "hsl(var(--skin-tint) / <alpha-value>)",
+          text: "hsl(var(--skin-text) / <alpha-value>)",
+          body: "hsl(var(--skin-body) / <alpha-value>)",
+          muted: "hsl(var(--skin-muted) / <alpha-value>)",
+          accent: "hsl(var(--skin-accent) / <alpha-value>)",
+          "accent-hover": "hsl(var(--skin-accent-hover) / <alpha-value>)",
+          "on-accent": "hsl(var(--skin-on-accent) / <alpha-value>)",
+          line: "hsl(var(--skin-line) / <alpha-value>)",
+        },
         bluesteel: {
           from: "#8FA8C0",
           to: "#6A8AA8",

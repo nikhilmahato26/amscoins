@@ -3,6 +3,8 @@ import { Link } from 'react-router'
 import { Headphones, ShieldCheck, Zap } from 'lucide-react'
 
 import { AsmMark } from '@/components/home/AsmLogo'
+import { SkyToggle } from '@/components/ui/sky-toggle'
+import { useTheme } from '@/context/ThemeContext'
 
 const TRUST_POINTS = [
   { Icon: ShieldCheck, text: '100% SSL encrypted and secure' },
@@ -11,11 +13,12 @@ const TRUST_POINTS = [
 ]
 
 export function AuthLayout({ children }: { children: React.ReactNode }) {
+  const { isDark, toggle } = useTheme()
   return (
-    <div className="theme-light-home flex min-h-[100dvh] flex-col font-jakarta text-asm-navy md:flex-row">
+    <div className="flex min-h-[100dvh] flex-col bg-skin-bg font-jakarta text-skin-text transition-colors md:flex-row">
 
       {/* ── Left panel: brand (desktop) / top strip (mobile) ── */}
-      <div className="relative flex w-full flex-col overflow-hidden bg-asm-blue p-6 md:w-[42%] md:p-10">
+      <div className="relative flex w-full flex-col overflow-hidden bg-[#0B4FD8] p-6 transition-colors md:w-[42%] md:p-10 dark:bg-gradient-to-b dark:from-[#141007] dark:to-[#0B0B0C]">
         {/* Subtle grid wash */}
         <div
           aria-hidden
@@ -67,12 +70,18 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* ── Right panel: form ── */}
-      <div className="relative flex flex-1 flex-col items-center justify-center overflow-y-auto bg-white px-6 py-10 md:px-12">
+      <div className="relative flex flex-1 flex-col items-center justify-center overflow-y-auto bg-skin-bg px-6 py-10 transition-colors md:px-12">
+        {/* Theme toggle */}
+        <div className="absolute right-4 top-4 z-10 flex flex-col items-center gap-0.5">
+          <SkyToggle checked={isDark} onChange={(x, y) => toggle(x, y)} label="Toggle dark mode" />
+          <span className="text-[9px] font-semibold uppercase tracking-wide text-skin-muted">{isDark ? 'Dark Mode' : 'Light Mode'}</span>
+        </div>
+
         <div className="w-full max-w-md">
           {children}
         </div>
 
-        <p className="mt-8 flex items-center gap-2 text-center text-[11px] text-asm-muted md:absolute md:bottom-6 md:mt-0">
+        <p className="mt-8 flex items-center gap-2 text-center text-[11px] text-skin-muted md:absolute md:bottom-6 md:mt-0">
           <svg className="size-3.5 shrink-0 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           </svg>

@@ -485,7 +485,7 @@ export function InvestmentTab({ data, isLoading, isError }: TabDataProps) {
           body={
             <>
               Activate <strong className="font-semibold text-asm-navy">{inr(approvingInv.amount)}</strong> investment from{' '}
-              <strong className="font-semibold text-asm-navy">{approvingInv.user.name}</strong>. The 36-hour term will start
+              <strong className="font-semibold text-asm-navy">{approvingInv.user.name}</strong>. The 24-hour term will start
               immediately. This cannot be undone.
             </>
           }
@@ -517,7 +517,7 @@ export function InvestmentTab({ data, isLoading, isError }: TabDataProps) {
       {bulkApproving && (
         <ConfirmDialog
           title={`Approve ${bulkTargetIds.length} investment(s)?`}
-          body={`Activate ${bulkTargetIds.length} pending investment(s) immediately. Each 36-hour term starts now. This cannot be undone.`}
+          body={`Activate ${bulkTargetIds.length} pending investment(s) immediately. Each 24-hour term starts now. This cannot be undone.`}
           confirmLabel="Approve All"
           pendingLabel="Approving…"
           isPending={bulkApproveMutation.isPending}

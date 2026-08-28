@@ -97,7 +97,14 @@ export function AppHeader({
 
         <div className="flex items-center justify-end gap-1.5">
           {/* Sky day/night toggle — passes origin coords for circle-reveal */}
-          <SkyToggle checked={isDark} onChange={(x, y) => toggle(x, y)} />
+          <div className="flex flex-col items-center gap-0.5 lg:hidden">
+            <SkyToggle checked={isDark} onChange={(x, y) => toggle(x, y)} />
+            <span className="text-[9px] font-semibold uppercase tracking-wide text-asm-muted">{isDark ? 'Dark Mode' : 'Light Mode'}</span>
+          </div>
+          <div className="hidden flex-col items-center gap-0.5 lg:flex">
+            <SkyToggle checked={isDark} onChange={(x, y) => toggle(x, y)} />
+            <span className="text-[9px] font-semibold uppercase tracking-wide text-asm-muted">{isDark ? 'Dark Mode' : 'Light Mode'}</span>
+          </div>
 
           {variant === 'detail' ? (
             <button

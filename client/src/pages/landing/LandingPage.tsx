@@ -123,49 +123,49 @@ function CountUp({
 /* ── TrustSection (Task 3) ── */
 function TrustSection() {
   return (
-    <section aria-labelledby="trust-heading" className="bg-asm-tint px-4 py-10 sm:px-6">
+    <section aria-labelledby="trust-heading" className="bg-skin-tint px-4 py-10 sm:px-6">
       <div className="mx-auto max-w-3xl">
-        <h2 id="trust-heading" className="mb-6 text-center font-jakarta text-[22px] font-extrabold text-asm-navy sm:text-[28px]">
+        <h2 id="trust-heading" className="mb-6 text-center font-jakarta text-[22px] font-extrabold text-skin-text sm:text-[28px]">
           Why investors trust ASM Coins
         </h2>
 
         <div className="grid gap-4 sm:grid-cols-3">
           {/* Regulatory */}
-          <div className="flex flex-col items-center gap-3 rounded-2xl border border-asm-line bg-white p-5 text-center">
-            <span className="flex size-12 items-center justify-center rounded-xl bg-asm-blue-tint">
-              <ShieldCheck className="size-6 text-asm-blue" strokeWidth={1.75} aria-hidden />
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-skin-line bg-skin-surface p-5 text-center">
+            <span className="flex size-12 items-center justify-center rounded-xl bg-skin-tint">
+              <ShieldCheck className="size-6 text-skin-accent" strokeWidth={1.75} aria-hidden />
             </span>
-            <span className="text-[14px] font-bold text-asm-navy">Registered in India</span>
-            <span className="text-[13px] leading-snug text-asm-body">Committed to regulatory compliance. Your investment is documented and protected.</span>
+            <span className="text-[14px] font-bold text-skin-text">Registered in India</span>
+            <span className="text-[13px] leading-snug text-skin-body">Committed to regulatory compliance. Your investment is documented and protected.</span>
           </div>
 
           {/* Human approval */}
-          <div className="flex flex-col items-center gap-3 rounded-2xl border border-asm-line bg-white p-5 text-center">
-            <span className="flex size-12 items-center justify-center rounded-xl bg-asm-green-tint">
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-skin-line bg-skin-surface p-5 text-center">
+            <span className="flex size-12 items-center justify-center rounded-xl bg-skin-tint">
               <Award className="size-6 text-asm-greenInk" strokeWidth={1.75} aria-hidden />
             </span>
-            <span className="text-[14px] font-bold text-asm-navy">Human-Approved Payouts</span>
-            <span className="text-[13px] leading-snug text-asm-body">Every withdrawal is manually reviewed and approved by our team — no black-box automation.</span>
+            <span className="text-[14px] font-bold text-skin-text">Human-Approved Payouts</span>
+            <span className="text-[13px] leading-snug text-skin-body">Every withdrawal is manually reviewed and approved by our team — no black-box automation.</span>
           </div>
 
           {/* UPI speed */}
-          <div className="flex flex-col items-center gap-3 rounded-2xl border border-asm-line bg-white p-5 text-center">
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-skin-line bg-skin-surface p-5 text-center">
             <span className="flex size-12 items-center justify-center rounded-xl bg-amber-50">
               <Zap className="size-6 text-amber-600" strokeWidth={1.75} aria-hidden />
             </span>
-            <span className="text-[14px] font-bold text-asm-navy">Fast UPI Payouts</span>
-            <span className="text-[13px] leading-snug text-asm-body">Returns credited directly to your UPI ID. No bank transfer delays, no intermediaries.</span>
+            <span className="text-[14px] font-bold text-skin-text">Fast UPI Payouts</span>
+            <span className="text-[13px] leading-snug text-skin-body">Returns credited directly to your UPI ID. No bank transfer delays, no intermediaries.</span>
           </div>
         </div>
 
         {/* Payment marks */}
         <div className="mt-8 flex flex-col items-center gap-3">
-          <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-asm-muted">Accepted payment methods</span>
+          <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-skin-muted">Accepted payment methods</span>
           <div className="flex flex-wrap items-center justify-center gap-4">
             {['UPI', 'Paytm', 'PhonePe', 'Google Pay'].map((method) => (
               <span
                 key={method}
-                className="rounded-lg border border-asm-line bg-white px-3 py-1.5 text-[13px] font-bold text-asm-body shadow-sm"
+                className="rounded-lg border border-skin-line bg-skin-surface px-3 py-1.5 text-[13px] font-bold text-skin-body shadow-sm"
               >
                 {method}
               </span>
@@ -180,8 +180,8 @@ function TrustSection() {
 /* ── PatrioticStrip (Task 5) ── */
 function PatrioticStrip() {
   return (
-    <div className="overflow-hidden border-y border-asm-blue/10 bg-gradient-to-r from-asm-blue-tint via-white to-asm-green-tint py-3">
-      <p className="text-center text-[12px] font-bold tracking-[0.1em] text-asm-navy/70 uppercase">
+    <div className="overflow-hidden border-y border-skin-accent/10 bg-gradient-to-r from-skin-tint via-skin-surface to-skin-tint py-3">
+      <p className="text-center text-[12px] font-bold tracking-[0.1em] text-skin-text/70 uppercase">
         🇮🇳 Our Country · Our Pride · Our Strength — Invest in India&apos;s growth
       </p>
     </div>
@@ -207,7 +207,7 @@ const HOW_STEPS = [
   {
     n: '03',
     title: 'Withdraw your return',
-    body: 'After 36 hours your principal + return is credited. Withdraw to UPI in minutes.',
+    body: 'After 24 hours your principal + return is credited. Withdraw to UPI in minutes.',
     icon: ChartNoAxesCombined,
     tone: 'blue' as const,
   },
@@ -217,45 +217,45 @@ function HowItWorksSection() {
   return (
     <section id="about" aria-labelledby="how-heading" className="px-4 py-12 sm:px-6">
       <div className="mx-auto max-w-3xl">
-        <div className="mb-2 text-center text-[12px] font-bold uppercase tracking-[0.12em] text-asm-blue">Simple process</div>
-        <h2 id="how-heading" className="mb-8 text-center font-jakarta text-[22px] font-extrabold text-asm-navy sm:text-[28px]">
+        <div className="mb-2 text-center text-[12px] font-bold uppercase tracking-[0.12em] text-skin-accent">Simple process</div>
+        <h2 id="how-heading" className="mb-8 text-center font-jakarta text-[22px] font-extrabold text-skin-text sm:text-[28px]">
           Start earning in 3 steps
         </h2>
 
         <div className="flex flex-col gap-6 sm:flex-row sm:gap-4">
           {HOW_STEPS.map(({ n, title, body, icon: Icon, tone }) => (
-            <div key={n} className="relative flex flex-1 flex-col gap-4 rounded-2xl border border-asm-line bg-white p-5">
+            <div key={n} className="relative flex flex-1 flex-col gap-4 rounded-2xl border border-skin-line bg-skin-surface p-5">
               {/* Step number — large, light weight, positioned top-right */}
               <span
                 aria-hidden
-                className="absolute right-4 top-3 font-jakarta text-[48px] font-extrabold leading-none text-asm-tint"
+                className="absolute right-4 top-3 font-jakarta text-[48px] font-extrabold leading-none text-skin-tint"
               >
                 {n}
               </span>
               <span
                 className={cn(
                   'flex size-11 items-center justify-center rounded-xl',
-                  tone === 'blue' ? 'bg-asm-blue-tint' : 'bg-asm-green-tint'
+                  tone === 'blue' ? 'bg-skin-tint' : 'bg-skin-tint'
                 )}
               >
                 <Icon
-                  className={cn('size-5', tone === 'blue' ? 'text-asm-blue' : 'text-asm-greenInk')}
+                  className={cn('size-5', tone === 'blue' ? 'text-skin-accent' : 'text-asm-greenInk')}
                   strokeWidth={1.75}
                   aria-hidden
                 />
               </span>
               <div>
-                <h3 className="text-[15px] font-bold text-asm-navy">{title}</h3>
-                <p className="mt-1 text-[13px] leading-relaxed text-asm-body">{body}</p>
+                <h3 className="text-[15px] font-bold text-skin-text">{title}</h3>
+                <p className="mt-1 text-[13px] leading-relaxed text-skin-body">{body}</p>
               </div>
             </div>
           ))}
         </div>
 
-        {/* 36-hour callout */}
-        <div className="mt-6 flex items-center justify-center gap-2 rounded-xl border border-asm-blue/20 bg-asm-blue-tint px-4 py-3">
-          <Clock className="size-4 text-asm-blue" strokeWidth={2} aria-hidden />
-          <span className="text-[13px] font-semibold text-asm-blue">36-hour investment cycles — deposit today, withdraw tomorrow</span>
+        {/* 24-hour callout */}
+        <div className="mt-6 flex items-center justify-center gap-2 rounded-xl border border-skin-accent/20 bg-skin-tint px-4 py-3">
+          <Clock className="size-4 text-skin-accent" strokeWidth={2} aria-hidden />
+          <span className="text-[13px] font-semibold text-skin-accent">24-hour investment cycles — deposit today, withdraw tomorrow</span>
         </div>
       </div>
     </section>
@@ -267,7 +267,7 @@ export function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   return (
-    <div className="theme-light-home min-h-screen overflow-x-hidden bg-white font-jakarta text-asm-navy">
+    <div className="min-h-screen overflow-x-hidden bg-skin-bg font-jakarta text-skin-text transition-colors">
       <LandingHeader menuOpen={menuOpen} onMenu={() => setMenuOpen(true)} />
       <LandingMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
 
@@ -282,29 +282,29 @@ export function LandingPage() {
         <TrustMarquee />
 
         {/* ── Stats bar — full-bleed border, centered content ── */}
-        <section aria-label="Platform statistics" className="border-y border-asm-line bg-white py-8">
+        <section aria-label="Platform statistics" className="border-y border-skin-line bg-skin-surface py-8">
           <div className="mx-auto max-w-3xl px-4">
-            <div className="grid grid-cols-3 divide-x divide-asm-line">
+            <div className="grid grid-cols-3 divide-x divide-skin-line">
               {[
                 { value: 25000, suffix: '+', label: 'Investors' },
                 { value: 50, prefix: '₹', suffix: 'Cr+', label: 'Investments' },
                 { value: 12, prefix: '₹', suffix: 'Cr+', label: 'Payouts' },
               ].map(({ value, suffix, prefix, label }) => (
                 <div key={label} className="flex flex-col items-center gap-1 px-4 text-center">
-                  <span className="font-jakarta text-[28px] font-extrabold text-asm-navy sm:text-[36px]">
+                  <span className="font-jakarta text-[28px] font-extrabold text-skin-text sm:text-[36px]">
                     <CountUp to={value} suffix={suffix} prefix={prefix} />
                   </span>
-                  <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-asm-muted">{label}</span>
+                  <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-skin-muted">{label}</span>
                 </div>
               ))}
             </div>
-            <p className="mt-4 text-center text-[11px] text-asm-muted">
+            <p className="mt-4 text-center text-[11px] text-skin-muted">
               Figures updated periodically. Past performance does not guarantee future returns.
             </p>
           </div>
         </section>
 
-        {/* Full-bleed bg-asm-tint section */}
+        {/* Full-bleed bg-skin-tint section */}
         <TrustSection />
 
         {/* Remaining content constrained to max-width */}
@@ -316,8 +316,7 @@ export function LandingPage() {
           {/* ── Invite & Level Up ── */}
           <section
             id="referral"
-            className="mx-4 mt-8 overflow-hidden rounded-2xl lg:mx-8"
-            style={{ background: 'linear-gradient(135deg, #0B4FD8 0%, #0E6E32 100%)' }}
+            className="mx-4 mt-8 overflow-hidden rounded-2xl bg-gradient-to-br from-[#0B4FD8] to-[#0E6E32] ring-1 ring-transparent transition-colors lg:mx-8 dark:from-[#3a2e08] dark:to-[#0B0B0C] dark:ring-skin-line"
           >
           <div className="relative px-5 py-6">
             <div
@@ -333,9 +332,10 @@ export function LandingPage() {
             <Link
               to="/register"
               className={cn(
-                'group mt-5 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3',
-                'text-[13px] font-bold uppercase tracking-[0.06em] text-asm-blue',
-                'transition-colors hover:bg-asm-blue-tint'
+                'group mt-5 inline-flex items-center gap-2 rounded-xl bg-skin-surface px-5 py-3',
+                'text-[13px] font-bold uppercase tracking-[0.06em] text-[#0B4FD8]',
+                'transition-colors hover:bg-blue-50',
+                'dark:bg-[#F4C506] dark:text-[#0B0B0C] dark:hover:bg-[#FFD700]'
               )}
             >
               Start Referring
@@ -358,14 +358,23 @@ export function LandingPage() {
 /* ── Hero (Task 1) ── */
 function Hero() {
   return (
-    <section className="relative overflow-hidden px-4 pb-8 pt-7 lg:px-8">
-      {/* Subtle radial glow */}
+    <section className="relative px-4 pb-8 pt-7 lg:px-8">
+      {/* Ambient top wash — full viewport width so it reads as light, not a box.
+         Blue/green in light, warm gold in dark. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[340px]"
+        className="pointer-events-none absolute left-1/2 top-0 h-[460px] w-screen -translate-x-1/2 dark:hidden"
         style={{
           background:
-            'radial-gradient(ellipse 90% 60% at 15% 0%, rgba(11,79,216,0.07) 0%, transparent 70%), radial-gradient(ellipse 60% 40% at 85% 10%, rgba(21,128,61,0.06) 0%, transparent 60%)',
+            'radial-gradient(130% 90% at 50% 0%, rgba(11,79,216,0.07) 0%, rgba(21,128,61,0.04) 34%, transparent 68%)',
+        }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-0 hidden h-[460px] w-screen -translate-x-1/2 dark:block"
+        style={{
+          background:
+            'radial-gradient(130% 90% at 50% 0%, rgba(244,197,6,0.11) 0%, rgba(244,197,6,0.04) 40%, transparent 72%)',
         }}
       />
 
@@ -373,7 +382,7 @@ function Hero() {
 
         {/* Live price pill */}
         <motion.div variants={fadeUp} className="mb-5 inline-flex">
-          <div className="inline-flex items-center gap-2 rounded-full border border-asm-greenInk/20 bg-asm-green-tint px-3.5 py-1.5">
+          <div className="inline-flex items-center gap-2 rounded-full border border-asm-greenInk/20 bg-skin-tint px-3.5 py-1.5">
             <span className="relative flex size-[7px] shrink-0" aria-hidden>
               <span className="absolute inline-flex h-full w-full animate-[live-pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite] rounded-full bg-asm-greenInk opacity-60" />
               <span className="relative inline-flex size-[7px] rounded-full bg-asm-greenInk" />
@@ -387,28 +396,28 @@ function Hero() {
         {/* Headline */}
         <motion.h1
           variants={fadeUp}
-          className="font-jakarta text-[42px] font-extrabold leading-[1.1] tracking-tight text-asm-navy sm:text-[52px] lg:text-[60px]"
+          className="font-jakarta text-[42px] font-extrabold leading-[1.1] tracking-tight text-skin-text sm:text-[52px] lg:text-[60px]"
         >
           Smart Investment,{' '}
-          <span className="text-asm-blue">Secure Future</span>
+          <span className="text-skin-accent">Secure Future</span>
         </motion.h1>
 
         {/* Subtitle */}
-        <motion.p variants={fadeUp} className="mt-3 max-w-[34ch] text-[16px] leading-snug text-asm-body sm:text-[18px]">
-          25–40% returns in 36 hours. UPI payout. Human-approved.
+        <motion.p variants={fadeUp} className="mt-3 max-w-[34ch] text-[16px] leading-snug text-skin-body sm:text-[18px]">
+          25–40% returns in 24 hours. UPI payout. Human-approved.
         </motion.p>
 
         {/* CTA pair */}
         <motion.div variants={fadeUp} className="mt-6 flex flex-wrap items-center gap-3">
           <Link
             to="/register"
-            className="inline-flex min-h-[48px] items-center gap-2 rounded-xl bg-asm-blue px-6 text-[15px] font-bold text-white shadow-[0_4px_16px_-4px_rgba(11,79,216,0.5)] transition-all hover:bg-asm-blue-dark hover:shadow-[0_6px_20px_-4px_rgba(11,79,216,0.55)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-2"
+            className="inline-flex min-h-[48px] items-center gap-2 rounded-xl bg-skin-accent px-6 text-[15px] font-bold text-skin-on-accent shadow-[0_4px_16px_-4px_rgba(11,79,216,0.5)] transition-all hover:bg-skin-accent-hover hover:shadow-[0_6px_20px_-4px_rgba(11,79,216,0.55)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skin-accent focus-visible:ring-offset-2 dark:shadow-[0_4px_16px_-4px_rgba(244,197,6,0.4)] dark:hover:shadow-[0_6px_20px_-4px_rgba(244,197,6,0.45)]"
           >
             Start Investing <ArrowRight className="size-4" strokeWidth={2.5} aria-hidden />
           </Link>
           <a
             href="#plans"
-            className="inline-flex min-h-[48px] items-center gap-2 rounded-xl border border-asm-line bg-white px-6 text-[15px] font-semibold text-asm-navy transition-colors hover:border-asm-blue hover:text-asm-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue"
+            className="inline-flex min-h-[48px] items-center gap-2 rounded-xl border border-skin-line bg-skin-surface px-6 text-[15px] font-semibold text-skin-text transition-colors hover:border-skin-accent hover:text-skin-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skin-accent"
           >
             See Plans
           </a>
@@ -423,12 +432,12 @@ function Hero() {
 function TrustMarquee() {
   return (
     <div
-      className="relative overflow-hidden border-y border-asm-line bg-asm-tint/60 py-3"
+      className="relative overflow-hidden border-y border-skin-line bg-skin-tint/60 py-3"
       aria-hidden
     >
       {/* Fade edges */}
-      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-gradient-to-r from-[#F4F7FE] to-transparent" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-[#F4F7FE] to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-gradient-to-r from-skin-tint to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-skin-tint to-transparent" />
 
       {/* Double list for seamless loop */}
       <div className="flex animate-marquee gap-4 will-change-transform">
@@ -436,10 +445,10 @@ function TrustMarquee() {
           <div
             // eslint-disable-next-line react/no-array-index-key
             key={i}
-            className="flex shrink-0 items-center gap-2 rounded-full border border-asm-line bg-white px-3.5 py-1.5"
+            className="flex shrink-0 items-center gap-2 rounded-full border border-skin-line bg-skin-surface px-3.5 py-1.5"
           >
-            <Icon className="size-3.5 shrink-0 text-asm-blue" strokeWidth={2.2} aria-hidden />
-            <span className="whitespace-nowrap text-[11px] font-bold uppercase tracking-[0.05em] text-asm-navy">
+            <Icon className="size-3.5 shrink-0 text-skin-accent" strokeWidth={2.2} aria-hidden />
+            <span className="whitespace-nowrap text-[11px] font-bold uppercase tracking-[0.05em] text-skin-text">
               {label}
             </span>
           </div>
@@ -517,10 +526,10 @@ function MarketSnapshot() {
 
   return (
     <section
-      className="mx-4 mt-6 overflow-hidden rounded-2xl border border-asm-line bg-white shadow-[0_2px_14px_-4px_rgba(16,42,92,0.06)] lg:mx-8"
+      className="mx-4 mt-6 overflow-hidden rounded-2xl border border-skin-line bg-skin-surface shadow-[0_2px_14px_-4px_rgba(16,42,92,0.06)] lg:mx-8"
       aria-labelledby="market-heading"
     >
-      <div className="flex items-center gap-3 border-b border-asm-line px-4 py-3">
+      <div className="flex items-center gap-3 border-b border-skin-line px-4 py-3">
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="flex items-center gap-2">
             <span className="relative flex size-[7px] shrink-0" aria-hidden>
@@ -529,27 +538,27 @@ function MarketSnapshot() {
             </span>
             <h2
               id="market-heading"
-              className="text-[12px] font-extrabold uppercase tracking-[0.12em] text-asm-navy"
+              className="text-[12px] font-extrabold uppercase tracking-[0.12em] text-skin-text"
             >
               Market snapshot
             </h2>
           </div>
-          <p className="mt-0.5 text-[10px] text-asm-muted">Indicative rates · prices update periodically</p>
+          <p className="mt-0.5 text-[10px] text-skin-muted">Indicative rates · prices update periodically</p>
         </div>
       </div>
 
       <table className="w-full border-collapse text-left">
         <thead>
-          <tr className="bg-asm-tint/70">
-            <th scope="col" className="px-4 py-2 text-[9px] font-bold uppercase tracking-[0.12em] text-asm-muted">Asset</th>
-            <th scope="col" className="px-2 py-2 text-right text-[9px] font-bold uppercase tracking-[0.12em] text-asm-muted">Price</th>
-            <th scope="col" className="px-3 py-2 text-right text-[9px] font-bold uppercase tracking-[0.12em] text-asm-muted sm:px-2">24h</th>
-            <th scope="col" className="hidden px-4 py-2 text-right text-[9px] font-bold uppercase tracking-[0.12em] text-asm-muted sm:table-cell">Chart</th>
+          <tr className="bg-skin-tint/70">
+            <th scope="col" className="px-4 py-2 text-[9px] font-bold uppercase tracking-[0.12em] text-skin-muted">Asset</th>
+            <th scope="col" className="px-2 py-2 text-right text-[9px] font-bold uppercase tracking-[0.12em] text-skin-muted">Price</th>
+            <th scope="col" className="px-3 py-2 text-right text-[9px] font-bold uppercase tracking-[0.12em] text-skin-muted sm:px-2">24h</th>
+            <th scope="col" className="hidden px-4 py-2 text-right text-[9px] font-bold uppercase tracking-[0.12em] text-skin-muted sm:table-cell">Chart</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-asm-line/60">
+        <tbody className="divide-y divide-skin-line/60">
           {rows.map(({ symbol, pair, price, change, positive, series, icon }) => (
-            <tr key={symbol} className="transition-colors hover:bg-asm-tint/40">
+            <tr key={symbol} className="transition-colors hover:bg-skin-tint/40">
               <th scope="row" className="px-4 py-3.5 text-left font-normal">
                 <span className="flex items-center gap-2.5">
                   <img
@@ -559,11 +568,11 @@ function MarketSnapshot() {
                     height={32}
                     loading="lazy"
                     decoding="async"
-                    className="size-8 shrink-0 rounded-full bg-white object-contain ring-1 ring-asm-line"
+                    className="size-8 shrink-0 rounded-full bg-skin-surface object-contain ring-1 ring-skin-line"
                   />
                   <span className="flex flex-col">
                     <span className="text-[13px] font-bold leading-tight">{symbol}</span>
-                    <span className="text-[10px] leading-tight text-asm-muted">{pair}</span>
+                    <span className="text-[10px] leading-tight text-skin-muted">{pair}</span>
                   </span>
                 </span>
               </th>
@@ -587,28 +596,28 @@ function MarketSnapshot() {
 /* ── Plan accent config ── */
 const PLAN_ACCENT = {
   silver: {
-    ring: 'ring-[#B1B5BB]/40',
+    ring: 'ring-[#B1B5BB]/40 dark:ring-white/15',
     strip: 'from-[#CED5E1] to-[#9CA8B8]',
     medallion: silverMedallion,
-    figure: 'text-asm-navy',
-    button: 'bg-asm-blue hover:bg-asm-blue-dark',
-    badge: 'bg-[#CED5E1]/40 text-[#5A6472]',
+    figure: 'text-skin-text',
+    button: 'bg-skin-accent hover:bg-skin-accent-hover',
+    badge: 'bg-[#CED5E1]/40 text-[#5A6472] dark:bg-white/10 dark:text-skin-body',
   },
   gold: {
     ring: 'ring-[#E8B84B]/50',
     strip: 'from-[#F4C506] to-[#E8A000]',
     medallion: goldMedallion,
-    figure: 'text-asm-greenInk',
-    button: 'bg-asm-greenInk hover:bg-[#0E6E32]',
-    badge: 'bg-amber-50 text-amber-700',
+    figure: 'text-asm-greenInk dark:text-[#F4C506]',
+    button: 'bg-asm-greenInk hover:bg-[#0E6E32] dark:bg-[#F4C506] dark:hover:bg-[#FFD700]',
+    badge: 'bg-amber-50 text-amber-700 dark:bg-[#F4C506]/15 dark:text-[#F4C506]',
   },
   diamond: {
     ring: 'ring-[#7DD3FC]/50',
     strip: 'from-[#0B4FD8] to-[#1E93FE]',
     medallion: diamondMedallion,
-    figure: 'text-asm-blue',
-    button: 'bg-asm-blue hover:bg-asm-blue-dark',
-    badge: 'bg-asm-blue-tint text-asm-blue',
+    figure: 'text-skin-accent dark:text-[#5AB0FF]',
+    button: 'bg-skin-accent hover:bg-skin-accent-hover dark:bg-[#1E93FE] dark:hover:bg-[#3AA5FF]',
+    badge: 'bg-skin-tint text-skin-accent dark:bg-[#1E93FE]/15 dark:text-[#7DD3FC]',
   },
 } as const
 
@@ -618,14 +627,14 @@ function PlansSection() {
     <section id="plans" className="scroll-mt-4 pt-8" aria-labelledby="plans-heading">
       <div className="mb-5 flex items-end justify-between px-4 lg:px-8">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-asm-blue">Investment Plans</p>
-          <h2 id="plans-heading" className="mt-0.5 text-[22px] font-extrabold leading-tight text-asm-navy">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-skin-accent">Investment Plans</p>
+          <h2 id="plans-heading" className="mt-0.5 text-[22px] font-extrabold leading-tight text-skin-text">
             Choose your tier
           </h2>
         </div>
         <a
           href="#about"
-          className="flex items-center gap-1 text-[12px] font-bold text-asm-blue hover:text-asm-blue-dark"
+          className="flex items-center gap-1 text-[12px] font-bold text-skin-accent hover:text-skin-accent-hover"
         >
           How it works
           <ArrowRight className="size-3.5" strokeWidth={2.5} aria-hidden />
@@ -648,7 +657,7 @@ function PlansSection() {
               key={slug}
               whileHover={{ y: -4, transition: { type: 'spring' as const, stiffness: 320, damping: 26 } }}
               className={cn(
-                'flex w-[80%] min-w-[220px] shrink-0 snap-start flex-col overflow-hidden rounded-2xl bg-white ring-1',
+                'flex w-[80%] min-w-[220px] shrink-0 snap-start flex-col overflow-hidden rounded-2xl bg-skin-surface ring-1',
                 'sm:w-auto sm:min-w-0',
                 a.ring
               )}
@@ -668,7 +677,7 @@ function PlansSection() {
                 <span className={cn('mt-1.5 rounded-full px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.1em]', a.badge)}>
                   {name}
                 </span>
-                <span className="mt-1 text-[10px] font-semibold text-asm-muted">
+                <span className="mt-1 text-[10px] font-semibold text-skin-muted">
                   {unlockNote}
                 </span>
 
@@ -677,19 +686,19 @@ function PlansSection() {
                   <span className={cn('font-jakarta text-[44px] font-extrabold leading-none', a.figure)}>
                     {returns}
                   </span>
-                  <span className="mt-1 text-[13px] font-semibold text-asm-muted">annual equivalent return</span>
+                  <span className="mt-1 text-[13px] font-semibold text-skin-muted">annual equivalent return</span>
                 </div>
 
-                <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-asm-muted">Duration</p>
+                <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-skin-muted">Duration</p>
                 <p className="text-[13px] font-bold uppercase tabular-nums">{duration}</p>
 
-                <dl className="mt-3.5 flex w-full items-start justify-between border-t border-asm-line pt-3">
+                <dl className="mt-3.5 flex w-full items-start justify-between border-t border-skin-line pt-3">
                   <div className="flex flex-col">
-                    <dt className="text-[10px] font-bold uppercase tracking-[0.1em] text-asm-muted">Min</dt>
+                    <dt className="text-[10px] font-bold uppercase tracking-[0.1em] text-skin-muted">Min</dt>
                     <dd className="text-[12px] font-bold tabular-nums">{min}</dd>
                   </div>
                   <div className="flex flex-col items-end">
-                    <dt className="text-[10px] font-bold uppercase tracking-[0.1em] text-asm-muted">Max</dt>
+                    <dt className="text-[10px] font-bold uppercase tracking-[0.1em] text-skin-muted">Max</dt>
                     <dd className="text-[12px] font-bold tabular-nums">{max}</dd>
                   </div>
                 </dl>
@@ -699,7 +708,7 @@ function PlansSection() {
                   aria-label={`Get started with the ${name}`}
                   className={cn(
                     'mt-4 flex min-h-[44px] w-full items-center justify-center rounded-xl px-2',
-                    'text-[11px] font-bold uppercase tracking-[0.1em] text-white transition-colors',
+                    'text-[11px] font-bold uppercase tracking-[0.1em] text-skin-on-accent transition-colors',
                     a.button
                   )}
                 >
@@ -711,7 +720,7 @@ function PlansSection() {
         })}
       </div>
 
-      <p className="mt-4 px-4 text-center text-[11px] leading-relaxed text-asm-body lg:px-8">
+      <p className="mt-4 px-4 text-center text-[11px] leading-relaxed text-skin-body lg:px-8">
         Returns shown are plan terms, not guarantees. Read the full terms before you invest.
       </p>
     </section>

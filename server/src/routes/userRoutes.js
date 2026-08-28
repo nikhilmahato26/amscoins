@@ -24,5 +24,6 @@ router.post('/me/avatar', upload.single('file'), c.uploadAvatar)
 router.post('/me/payout-methods', validate(payoutMethodSchema), c.addPayoutMethod)
 router.delete('/me/payout-methods/:id', c.deletePayoutMethod)
 router.patch('/me/payout-methods/:id/default', c.setDefaultPayoutMethod)
+router.post('/me/celebration-seen', c.markCelebrationSeen)
 
 module.exports = router

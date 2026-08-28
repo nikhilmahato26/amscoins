@@ -80,10 +80,26 @@ const setDefaultPayoutMethod = asyncHandler(async (req, res) => {
   res.json({ user: user.toPublic() })
 })
 
+// POST /api/users/me/celebration-seen
+// Marks the current tier's celebration as seen server-side so it never
+// replays on cache clears or device switches.
+const TIER_ORDER = ['silver', 'gold', 'diamond']
+const markCelebrationSeen = asyncHandler(async (req, res) => {
+  const user = req.user
+  const current = TIER_ORDER.indexOf(user.tier)
+  const seen = TIER_ORDER.indexOf(user.celebrationSeenTier || 'silver')
+  if (current > seen) {
+    user.celebrationSeenTier = user.tier
+    await user.save()
+  }
+  res.json({ celebrationSeenTier: user.celebrationSeenTier })
+})
+
 module.exports = {
   updateMe,
   uploadAvatar,
   addPayoutMethod,
   deletePayoutMethod,
   setDefaultPayoutMethod,
+  markCelebrationSeen,
 }

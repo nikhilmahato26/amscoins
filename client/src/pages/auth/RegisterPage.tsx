@@ -59,8 +59,8 @@ export function RegisterPage() {
   return (
     <AuthLayout>
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-semibold text-asm-navy">Create Your <span className="text-asm-blue">Account</span></h2>
-        <p className="mt-2 text-sm text-asm-body">Join ASM Coins and start your journey towards smart investments.</p>
+        <h2 className="text-2xl font-semibold text-skin-text">Create Your <span className="text-skin-accent">Account</span></h2>
+        <p className="mt-2 text-sm text-skin-body">Join ASM Coins and start your journey towards smart investments.</p>
         {/*
           The landing plan cards pass ?plan=<slug>. Echoing it back is the
           minimum: the user picked something, so the next screen should show it
@@ -68,7 +68,7 @@ export function RegisterPage() {
           investment once there is a backend to carry it to.
         */}
         {selectedPlan ? (
-          <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-asm-blue/30 bg-asm-blue-tint px-3 py-1 text-xs text-asm-blue">
+          <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-skin-accent/30 bg-skin-tint px-3 py-1 text-xs text-skin-accent">
             Selected plan: <span className="font-bold uppercase">{selectedPlan}</span>
           </p>
         ) : null}
@@ -82,7 +82,7 @@ export function RegisterPage() {
           // Google redirect so referred sign-ups are still attributed.
           window.location.href = authService.googleLoginUrl(referralCode.trim() || undefined)
         }}
-        className="mb-6 h-11 w-full border-asm-line bg-white text-asm-navy hover:bg-asm-tint"
+        className="mb-6 h-11 w-full border-skin-line bg-skin-surface text-skin-text hover:bg-skin-tint"
       >
         <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
           <path
@@ -108,10 +108,10 @@ export function RegisterPage() {
 
       <div className="relative mb-6">
         <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-asm-line" />
+          <span className="w-full border-t border-skin-line" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-white px-2 text-asm-muted">OR</span>
+          <span className="bg-skin-surface px-2 text-skin-muted">OR</span>
         </div>
       </div>
 
@@ -128,7 +128,7 @@ export function RegisterPage() {
             placeholder="Your full name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="h-11 border-asm-line bg-white text-asm-navy placeholder:text-asm-muted focus-visible:border-asm-blue focus-visible:ring-asm-blue/30"
+            className="h-11 border-skin-line bg-skin-surface text-skin-text placeholder:text-skin-muted focus-visible:border-skin-accent focus-visible:ring-skin-accent/30"
             required
           />
         </Field>
@@ -139,7 +139,7 @@ export function RegisterPage() {
             placeholder="Enter your email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="h-11 border-asm-line bg-white text-asm-navy placeholder:text-asm-muted focus-visible:border-asm-blue focus-visible:ring-asm-blue/30"
+            className="h-11 border-skin-line bg-skin-surface text-skin-text placeholder:text-skin-muted focus-visible:border-skin-accent focus-visible:ring-skin-accent/30"
             required
           />
         </Field>
@@ -150,7 +150,7 @@ export function RegisterPage() {
             placeholder="Create a strong password" 
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="h-11 border-asm-line bg-white text-asm-navy placeholder:text-asm-muted focus-visible:border-asm-blue focus-visible:ring-asm-blue/30"
+            className="h-11 border-skin-line bg-skin-surface text-skin-text placeholder:text-skin-muted focus-visible:border-skin-accent focus-visible:ring-skin-accent/30"
             required
           />
         </Field>
@@ -161,7 +161,7 @@ export function RegisterPage() {
             placeholder="Confirm your password" 
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="h-11 border-asm-line bg-white text-asm-navy placeholder:text-asm-muted focus-visible:border-asm-blue focus-visible:ring-asm-blue/30"
+            className="h-11 border-skin-line bg-skin-surface text-skin-text placeholder:text-skin-muted focus-visible:border-skin-accent focus-visible:ring-skin-accent/30"
             required
           />
         </Field>
@@ -173,7 +173,7 @@ export function RegisterPage() {
               placeholder="USER010"
               value={referralCode}
               onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-              className="h-11 border-asm-line bg-white pr-10 text-asm-navy placeholder:text-asm-muted focus-visible:border-asm-blue focus-visible:ring-asm-blue/30"
+              className="h-11 border-skin-line bg-skin-surface pr-10 text-skin-text placeholder:text-skin-muted focus-visible:border-skin-accent focus-visible:ring-skin-accent/30"
              />
              {referralCode && (
                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-asm-greenInk">
@@ -189,26 +189,26 @@ export function RegisterPage() {
         </Field>
         
         <div className="pt-2">
-           <Button type="submit" className="h-11 w-full border-0 bg-asm-blue text-white hover:bg-asm-blue-dark" disabled={loading}>
+           <Button type="submit" className="h-11 w-full border-0 bg-skin-accent text-skin-on-accent hover:bg-skin-accent-hover" disabled={loading}>
             {loading ? 'Creating Account...' : 'Sign Up'}
           </Button>
         </div>
       </form>
 
-      <div className="mb-6 mt-6 text-center text-sm text-asm-body">
-        Already have an account? <Link to="/login" className="font-semibold text-asm-blue hover:underline">Log In</Link>
+      <div className="mb-6 mt-6 text-center text-sm text-skin-body">
+        Already have an account? <Link to="/login" className="font-semibold text-skin-accent hover:underline">Log In</Link>
       </div>
 
       <div className="space-y-3 mt-8">
          <div className="flex items-start space-x-2">
-           <Checkbox id="terms" className="mt-1 border-asm-line data-[state=checked]:border-asm-blue data-[state=checked]:bg-asm-blue" defaultChecked />
-           <label htmlFor="terms" className="text-xs leading-relaxed text-asm-body">
-              I agree to ASM Coins <Link to="#" className="font-semibold text-asm-blue hover:underline">Terms of Service</Link> and <Link to="#" className="font-semibold text-asm-blue hover:underline">Privacy Policy</Link>
+           <Checkbox id="terms" className="mt-1 border-skin-line data-[state=checked]:border-skin-accent data-[state=checked]:bg-skin-accent" defaultChecked />
+           <label htmlFor="terms" className="text-xs leading-relaxed text-skin-body">
+              I agree to ASM Coins <Link to="#" className="font-semibold text-skin-accent hover:underline">Terms of Service</Link> and <Link to="#" className="font-semibold text-skin-accent hover:underline">Privacy Policy</Link>
            </label>
          </div>
          <div className="flex items-start space-x-2">
-           <Checkbox id="residency" className="mt-1 border-asm-line data-[state=checked]:border-asm-blue data-[state=checked]:bg-asm-blue" defaultChecked />
-           <label htmlFor="residency" className="text-xs leading-relaxed text-asm-body">
+           <Checkbox id="residency" className="mt-1 border-skin-line data-[state=checked]:border-skin-accent data-[state=checked]:bg-skin-accent" defaultChecked />
+           <label htmlFor="residency" className="text-xs leading-relaxed text-skin-body">
               I confirm that I am a resident of India and I am at least 18 years old.
            </label>
          </div>

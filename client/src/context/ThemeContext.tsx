@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
+import { flushSync } from 'react-dom'
 
 interface ThemeContextValue {
   isDark: boolean
@@ -55,11 +56,19 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     document.documentElement.style.setProperty('--vt-x', `${x}px`)
     document.documentElement.style.setProperty('--vt-y', `${y}px`)
 
-    // Use View Transitions API when available (Chrome 111+, Safari 18+)
+    // Use View Transitions API when available (Chrome 111+, Safari 18+).
+    // flushSync forces React to apply state-driven theme classes (e.g.
+    // `app-shell-dark` on AppShell/AdminLayout) SYNCHRONOUSLY inside the
+    // transition callback. Without it, those updates land after the browser
+    // snapshots the "new" DOM, so the app/admin colour change happens outside
+    // the circle-reveal — making the animation look like it starts from
+    // nowhere. Landing/auth flip via pure CSS so they always looked right.
     if (typeof document.startViewTransition === 'function') {
       document.startViewTransition(() => {
-        applyTheme(next)
-        setIsDark(next)
+        flushSync(() => {
+          applyTheme(next)
+          setIsDark(next)
+        })
       })
     } else {
       applyTheme(next)
