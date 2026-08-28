@@ -6,6 +6,8 @@ import { useAuth } from '@/auth/AuthContext'
 import { authService } from '@/services/authService'
 import { NotificationBell } from '@/components/admin/NotificationBell'
 import { AsmMark } from '@/components/home/AsmLogo'
+import { SkyToggle } from '@/components/ui/sky-toggle'
+import { useTheme } from '@/context/ThemeContext'
 import { cn } from '@/lib/utils'
 
 const NAV_ITEMS = [
@@ -40,6 +42,7 @@ function navLinkClass({ isActive }: { isActive: boolean }) {
 export function AdminLayout() {
   const { setUser } = useAuth()
   const navigate = useNavigate()
+  const { isDark, toggle } = useTheme()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const hamburgerRef = useRef<HTMLButtonElement>(null)
 
@@ -70,7 +73,12 @@ export function AdminLayout() {
   }, [drawerOpen])
 
   return (
-    <div className="theme-light-home min-h-screen bg-asm-tint font-sans text-asm-navy">
+    <div className={cn(
+      'min-h-screen font-sans',
+      isDark
+        ? 'app-shell-dark bg-[#0d0d0e] text-[#f2f2f7]'
+        : 'theme-light-home bg-asm-tint text-asm-navy',
+    )}>
       {/* ── Desktop sidebar (hidden on mobile) ── */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 2xl:w-72 flex-col border-r border-asm-line bg-white lg:flex">
         <div className="flex h-14 shrink-0 items-center justify-between gap-2.5 border-b border-asm-line px-5">
@@ -85,7 +93,11 @@ export function AdminLayout() {
             </NavLink>
           ))}
         </nav>
-        <div className="flex flex-col gap-3 border-t border-asm-line p-3">
+        <div className="flex flex-col gap-1 border-t border-asm-line p-3">
+          <div className="flex items-center justify-between rounded-lg px-3 py-1.5">
+            <span className="text-[12px] font-medium text-asm-muted">Appearance</span>
+            <SkyToggle checked={isDark} onChange={(x, y) => toggle(x, y)} />
+          </div>
           <button
             type="button"
             onClick={handleLogout}
@@ -106,6 +118,7 @@ export function AdminLayout() {
         <Brand />
         <div className="flex items-center gap-2">
           <NotificationBell />
+          <SkyToggle checked={isDark} onChange={(x, y) => toggle(x, y)} />
           <button
             ref={hamburgerRef}
             type="button"
@@ -162,6 +175,10 @@ export function AdminLayout() {
                 ))}
               </nav>
               <div className="border-t border-asm-line p-3">
+                <div className="flex items-center justify-between px-3 py-2.5 mb-0.5">
+                  <span className="text-[13px] font-medium text-asm-body">Appearance</span>
+                  <SkyToggle checked={isDark} onChange={(x, y) => toggle(x, y)} />
+                </div>
                 <button
                   type="button"
                   onClick={handleLogout}

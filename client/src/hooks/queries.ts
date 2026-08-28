@@ -42,6 +42,8 @@ import {
   unfreezeUser,
   adjustWallet,
   getInvestmentStats,
+  adminActivity,
+  type ActivityEvent,
 } from '@/services/api/admin'
 
 // ── User queries ──
@@ -231,5 +233,16 @@ export function useInvestmentStats() {
     queryKey: ['admin', 'investment-stats'],
     queryFn: getInvestmentStats,
     refetchInterval: 30_000,
+  })
+}
+
+export type { ActivityEvent }
+
+export function useAdminActivity() {
+  return useQuery({
+    queryKey: ['admin', 'activity'],
+    queryFn: adminActivity,
+    staleTime: 30_000,       // treat as fresh for 30 s
+    refetchInterval: 60_000, // auto-refresh every minute
   })
 }

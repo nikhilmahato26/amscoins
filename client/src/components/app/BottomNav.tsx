@@ -1,11 +1,11 @@
 import { NavLink, useLocation } from 'react-router'
-import { House, TrendingUp, Trophy, CircleUserRound } from 'lucide-react'
+import { House, TrendingUp, Gift, CircleUserRound } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const TABS = [
   { to: '/app',             label: 'Home',      Icon: House,            end: true  },
   { to: '/app/investments', label: 'Invest',     Icon: TrendingUp,       end: false },
-  { to: '/app/leaderboard', label: 'Leaders',    Icon: Trophy,           end: false },
+  { to: '/app/referral',    label: 'Referral',   Icon: Gift,             end: false },
   { to: '/app/account',     label: 'Account',    Icon: CircleUserRound,  end: false },
 ] as const
 

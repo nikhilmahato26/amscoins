@@ -6,6 +6,15 @@ import { type Tier } from '@/components/app/TierBadge'
 import { usePlans } from '@/hooks/queries'
 import { inr } from '@/lib/format'
 import type { Plan } from '@/services/api/plans'
+import { cn } from '@/lib/utils'
+
+const TIER_BAND = {
+  silver:  { bg: 'bg-gradient-to-br from-[#CED5E1] to-[#9CA8B8]', text: 'text-asm-navy' },
+  gold:    { bg: 'bg-gradient-to-br from-[#F4C506] to-[#E8A000]', text: 'text-white'    },
+  diamond: { bg: 'bg-gradient-to-br from-asm-blue to-[#1E93FE]',   text: 'text-white'    },
+} as const
+
+const RETURN_BY_TIER = { silver: '25%', gold: '30%', diamond: '40%' } as const
 
 const TIER_ICONS: Record<Tier, LucideIcon> = {
   silver: Medal,
@@ -71,8 +80,25 @@ function FeatureCard({ plan }: { plan: Plan }) {
     { label: 'Secure', value: '100%', Icon: ShieldCheck },
   ]
 
+  const band = TIER_BAND[plan.key as keyof typeof TIER_BAND]
+
   return (
-    <article className="relative overflow-hidden rounded-[20px] border border-asm-line bg-white px-7 py-6 shadow-[0_2px_16px_-6px_rgba(16,42,92,0.1)]">
+    <article className="relative overflow-hidden rounded-[20px] border border-asm-line bg-white shadow-[0_2px_16px_-6px_rgba(16,42,92,0.1)]">
+      {/* Tier hero band */}
+      {band && (
+        <div className={cn('px-5 py-6 text-center', band.bg)}>
+          <span className={cn('font-jakarta text-[13px] font-bold uppercase tracking-[0.12em] opacity-80', band.text)}>
+            {plan.name} Plan
+          </span>
+          <div className={cn('mt-1 font-jakarta text-[48px] font-extrabold leading-none', band.text)}>
+            {RETURN_BY_TIER[plan.key as keyof typeof RETURN_BY_TIER]}
+          </div>
+          <div className={cn('mt-1 text-[14px] font-semibold opacity-80', band.text)}>
+            return in {plan.durationHours} hours
+          </div>
+        </div>
+      )}
+      <div className="px-7 py-6">
       <div className="flex items-center gap-[18px]">
         <BenefitBadge Icon={Icon} />
         <div className="flex min-w-0 flex-col">
@@ -116,6 +142,7 @@ function FeatureCard({ plan }: { plan: Plan }) {
           </span>
         </div>
       )}
+      </div>
     </article>
   )
 }

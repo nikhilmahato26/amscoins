@@ -9,6 +9,8 @@ import { getReport } from '@/services/api/admin'
 import type { ReportType } from '@/services/api/admin'
 import { inr } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
+import { useTheme } from '@/context/ThemeContext'
 
 /* ── Types ── */
 type MonthlyRow    = { month: string; count: number; totalInvested: number; totalReturned: number }
@@ -105,6 +107,7 @@ function StatCard({ label, value, sub, accent = 'blue' }: {
 
 /* ── Monthly chart ── */
 function MonthlyChart({ data }: { data: MonthlyRow[] }) {
+  const { isDark } = useTheme()
   const chartData = data.map((r) => ({
     month: r.month.replace(/^\d{4}-/, ''),
     'Invested':  r.totalInvested  / 100,
@@ -115,6 +118,12 @@ function MonthlyChart({ data }: { data: MonthlyRow[] }) {
   const totalInvested  = data.reduce((s, r) => s + r.totalInvested, 0)
   const totalReturned  = data.reduce((s, r) => s + r.totalReturned, 0)
   const totalDeposits  = data.reduce((s, r) => s + r.count, 0)
+
+  const gridStroke    = isDark ? 'rgba(255,255,255,0.07)' : '#E8EDF5'
+  const cursorFill    = isDark ? 'rgba(255,255,255,0.05)' : '#F0F4FF'
+  const cursorStroke  = isDark ? 'rgba(255,255,255,0.07)' : '#E8EDF5'
+  const tickFill      = isDark ? '#6e6e73' : MUTED
+  const lineStroke    = isDark ? '#5a96f5' : NAVY
 
   return (
     <div className="flex flex-col gap-6">
@@ -128,10 +137,10 @@ function MonthlyChart({ data }: { data: MonthlyRow[] }) {
         <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.08em] text-asm-muted">Volume (₹) by Month</p>
         <ResponsiveContainer width="100%" height={260}>
           <BarChart data={chartData} barGap={4} barCategoryGap="30%">
-            <CartesianGrid strokeDasharray="3 3" stroke="#E8EDF5" vertical={false} />
-            <XAxis dataKey="month" tick={{ fontSize: 11, fill: MUTED }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 11, fill: MUTED }} axisLine={false} tickLine={false} tickFormatter={(v) => `₹${(v/1000).toFixed(0)}k`} />
-            <Tooltip content={<ChartTooltip />} cursor={{ fill: '#F0F4FF' }} />
+            <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
+            <XAxis dataKey="month" tick={{ fontSize: 11, fill: tickFill }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 11, fill: tickFill }} axisLine={false} tickLine={false} tickFormatter={(v) => `₹${(v/1000).toFixed(0)}k`} />
+            <Tooltip content={<ChartTooltip />} cursor={{ fill: cursorFill }} />
             <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
             <Bar dataKey="Invested" fill={BLUE}  radius={[4,4,0,0]} />
             <Bar dataKey="Returned" fill={GREEN} radius={[4,4,0,0]} />
@@ -143,11 +152,11 @@ function MonthlyChart({ data }: { data: MonthlyRow[] }) {
         <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.08em] text-asm-muted">Deposit Count by Month</p>
         <ResponsiveContainer width="100%" height={200}>
           <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E8EDF5" vertical={false} />
-            <XAxis dataKey="month" tick={{ fontSize: 11, fill: MUTED }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 11, fill: MUTED }} axisLine={false} tickLine={false} allowDecimals={false} />
-            <Tooltip content={<ChartTooltip />} cursor={{ stroke: '#E8EDF5' }} />
-            <Line dataKey="Deposits" stroke={NAVY} strokeWidth={2.5} dot={{ r: 4, fill: NAVY }} activeDot={{ r: 6 }} />
+            <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
+            <XAxis dataKey="month" tick={{ fontSize: 11, fill: tickFill }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 11, fill: tickFill }} axisLine={false} tickLine={false} allowDecimals={false} />
+            <Tooltip content={<ChartTooltip />} cursor={{ stroke: cursorStroke }} />
+            <Line dataKey="Deposits" stroke={lineStroke} strokeWidth={2.5} dot={{ r: 4, fill: lineStroke }} activeDot={{ r: 6 }} />
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -224,12 +233,17 @@ function ConversionChart({ data }: { data: ConversionData }) {
 
 /* ── ROI chart ── */
 function RoiChart({ data }: { data: RoiData }) {
+  const { isDark } = useTheme()
   const pct       = Math.min(data.roiPct, 100)
   const roiAccent = pct >= 80 ? 'green' : pct >= 50 ? 'amber' : 'red'
   const barData   = [
     { name: 'Expected', value: data.expectedReturn / 100 },
     { name: 'Paid Out', value: data.actualReturn   / 100 },
   ]
+
+  const gridStroke = isDark ? 'rgba(255,255,255,0.07)' : '#E8EDF5'
+  const cursorFill = isDark ? 'rgba(255,255,255,0.05)' : '#F0F4FF'
+  const tickFill   = isDark ? '#6e6e73' : MUTED
 
   return (
     <div className="flex flex-col gap-6">
@@ -244,10 +258,10 @@ function RoiChart({ data }: { data: RoiData }) {
           <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.08em] text-asm-muted">Expected vs Paid (₹)</p>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={barData} barCategoryGap="40%">
-              <CartesianGrid strokeDasharray="3 3" stroke="#E8EDF5" vertical={false} />
-              <XAxis dataKey="name" tick={{ fontSize: 12, fill: MUTED }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: MUTED }} axisLine={false} tickLine={false} tickFormatter={(v) => `₹${(v/1000).toFixed(0)}k`} />
-              <Tooltip content={<ChartTooltip />} cursor={{ fill: '#F0F4FF' }} />
+              <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
+              <XAxis dataKey="name" tick={{ fontSize: 12, fill: tickFill }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: tickFill }} axisLine={false} tickLine={false} tickFormatter={(v) => `₹${(v/1000).toFixed(0)}k`} />
+              <Tooltip content={<ChartTooltip />} cursor={{ fill: cursorFill }} />
               <Bar dataKey="value" radius={[6,6,0,0]}>
                 <Cell fill={BLUE}  />
                 <Cell fill={GREEN} />
@@ -285,12 +299,17 @@ function RoiChart({ data }: { data: RoiData }) {
 
 /* ── Plan performance chart ── */
 function PerformanceChart({ data }: { data: PerfRow[] }) {
+  const { isDark } = useTheme()
   const chartData = data.map((r) => ({
     plan:      r.planKey,
     Invested:  r.totalInvested / 100,
     Count:     r.count,
     'Avg %':   r.avgReturn,
   }))
+
+  const gridStroke = isDark ? 'rgba(255,255,255,0.07)' : '#E8EDF5'
+  const cursorFill = isDark ? 'rgba(255,255,255,0.05)' : '#F0F4FF'
+  const tickFill   = isDark ? '#6e6e73' : MUTED
 
   return (
     <div className="flex flex-col gap-6">
@@ -310,10 +329,10 @@ function PerformanceChart({ data }: { data: PerfRow[] }) {
         <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.08em] text-asm-muted">Total Invested by Plan (₹)</p>
         <ResponsiveContainer width="100%" height={240}>
           <BarChart data={chartData} barCategoryGap="40%">
-            <CartesianGrid strokeDasharray="3 3" stroke="#E8EDF5" vertical={false} />
-            <XAxis dataKey="plan" tick={{ fontSize: 12, fill: MUTED }} axisLine={false} tickLine={false} className="capitalize" />
-            <YAxis tick={{ fontSize: 11, fill: MUTED }} axisLine={false} tickLine={false} tickFormatter={(v) => `₹${(v/1000).toFixed(0)}k`} />
-            <Tooltip content={<ChartTooltip />} cursor={{ fill: '#F0F4FF' }} />
+            <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
+            <XAxis dataKey="plan" tick={{ fontSize: 12, fill: tickFill }} axisLine={false} tickLine={false} className="capitalize" />
+            <YAxis tick={{ fontSize: 11, fill: tickFill }} axisLine={false} tickLine={false} tickFormatter={(v) => `₹${(v/1000).toFixed(0)}k`} />
+            <Tooltip content={<ChartTooltip />} cursor={{ fill: cursorFill }} />
             <Bar dataKey="Invested" radius={[6,6,0,0]}>
               {chartData.map((entry) => (
                 <Cell key={entry.plan} fill={PLAN_COLORS[entry.plan] ?? BLUE} />
@@ -327,13 +346,13 @@ function PerformanceChart({ data }: { data: PerfRow[] }) {
         <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.08em] text-asm-muted">Deposit Count &amp; Avg Return % by Plan</p>
         <ResponsiveContainer width="100%" height={200}>
           <BarChart data={chartData} barGap={6} barCategoryGap="35%">
-            <CartesianGrid strokeDasharray="3 3" stroke="#E8EDF5" vertical={false} />
-            <XAxis dataKey="plan" tick={{ fontSize: 12, fill: MUTED }} axisLine={false} tickLine={false} />
-            <YAxis yAxisId="left"  tick={{ fontSize: 11, fill: MUTED }} axisLine={false} tickLine={false} allowDecimals={false} />
-            <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: MUTED }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
-            <Tooltip content={<ChartTooltip />} cursor={{ fill: '#F0F4FF' }} />
+            <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
+            <XAxis dataKey="plan" tick={{ fontSize: 12, fill: tickFill }} axisLine={false} tickLine={false} />
+            <YAxis yAxisId="left"  tick={{ fontSize: 11, fill: tickFill }} axisLine={false} tickLine={false} allowDecimals={false} />
+            <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: tickFill }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
+            <Tooltip content={<ChartTooltip />} cursor={{ fill: cursorFill }} />
             <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
-            <Bar yAxisId="left"  dataKey="Count"  fill={NAVY}  radius={[4,4,0,0]} />
+            <Bar yAxisId="left"  dataKey="Count"  fill={isDark ? '#5a96f5' : NAVY}  radius={[4,4,0,0]} />
             <Bar yAxisId="right" dataKey="Avg %"  fill={AMBER} radius={[4,4,0,0]} />
           </BarChart>
         </ResponsiveContainer>
@@ -355,10 +374,7 @@ export function AdminReports() {
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
-      <div>
-        <h1 className="text-[22px] xl:text-[26px] font-bold tracking-tight text-asm-navy">Reports</h1>
-        <p className="mt-0.5 text-[13px] xl:text-[14px] text-asm-muted">Investment analytics and visualisations.</p>
-      </div>
+      <AdminPageHeader title="Reports" subtitle="Investment analytics and visualisations." />
 
       {/* Tabs */}
       <div className="flex flex-wrap gap-1.5">

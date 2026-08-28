@@ -1,9 +1,9 @@
-import { motion } from 'framer-motion'
+import { animate, motion, useInView, useMotionValue } from 'framer-motion'
 import {
   ArrowRight,
+  Award,
   ChartNoAxesCombined,
   Clock,
-  Coins,
   Headphones,
   ShieldCheck,
   TrendingUp,
@@ -53,13 +53,6 @@ const TRUST_PILLS: { Icon: LucideIcon; label: string }[] = [
   { Icon: Wallet,      label: 'Direct UPI Payout'    },
 ]
 
-const PLATFORM_STATS: { Icon: LucideIcon; value: string; label: string; tone: 'blue' | 'green' }[] = [
-  { Icon: Clock,       value: '24 Hours', label: 'Cycle Duration',          tone: 'blue'  },
-  { Icon: TrendingUp,  value: '25%–40%',  label: 'Tier-Based Returns',      tone: 'green' },
-  { Icon: Wallet,      value: '3 Hours',  label: 'UPI Payout Speed',        tone: 'blue'  },
-  { Icon: ShieldCheck, value: '100%',     label: 'Capital Refund Protected', tone: 'green' },
-]
-
 type MarketRow = {
   symbol: string; pair: string; price: string; change: string;
   positive: boolean; series: number[]; icon: string
@@ -94,64 +87,238 @@ const PLANS: {
   { slug: 'diamond', name: 'Diamond Plan', returns: '40%', duration: '24 Hours', min: '₹5,000', max: '₹5,00,000',  unlockNote: 'Unlocks with 52 referrals', accent: 'diamond' },
 ]
 
-const HOW_IT_WORKS: { step: string; title: string; body: string }[] = [
-  { step: '01', title: 'Create your account', body: 'Register with your email and access the Silver tier immediately.' },
-  { step: '02', title: 'Deposit & start plan', body: 'Choose an amount, complete payment via Telegram QR, and your plan activates upon admin confirmation.' },
-  { step: '03', title: 'Track and withdraw',   body: 'Follow your 24-hour investment from the dashboard. Withdraw to UPI within 3 hours, or invite friends to unlock Gold & Diamond.' },
-]
+/* ── CountUp component (Task 2) ── */
+function CountUp({
+  to,
+  suffix = '',
+  prefix = '',
+  duration = 1.8,
+}: {
+  to: number
+  suffix?: string
+  prefix?: string
+  duration?: number
+}) {
+  const ref = useRef<HTMLSpanElement>(null)
+  const inView = useInView(ref, { once: true, margin: '-10% 0px' })
+  const motionVal = useMotionValue(0)
+
+  useEffect(() => {
+    if (!inView) return
+    const controls = animate(motionVal, to, {
+      duration,
+      ease: [0.16, 1, 0.3, 1],
+      onUpdate(v) {
+        if (ref.current) ref.current.textContent = `${prefix}${Math.round(v).toLocaleString('en-IN')}${suffix}`
+      },
+    })
+    return controls.stop
+  }, [inView, motionVal, to, duration, prefix, suffix])
+
+  return (
+    <span ref={ref}>{prefix}0{suffix}</span>
+  )
+}
+
+/* ── TrustSection (Task 3) ── */
+function TrustSection() {
+  return (
+    <section aria-labelledby="trust-heading" className="bg-asm-tint px-4 py-10 sm:px-6">
+      <div className="mx-auto max-w-3xl">
+        <h2 id="trust-heading" className="mb-6 text-center font-jakarta text-[22px] font-extrabold text-asm-navy sm:text-[28px]">
+          Why investors trust ASM Coins
+        </h2>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          {/* Regulatory */}
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-asm-line bg-white p-5 text-center">
+            <span className="flex size-12 items-center justify-center rounded-xl bg-asm-blue-tint">
+              <ShieldCheck className="size-6 text-asm-blue" strokeWidth={1.75} aria-hidden />
+            </span>
+            <span className="text-[14px] font-bold text-asm-navy">Registered in India</span>
+            <span className="text-[13px] leading-snug text-asm-body">Committed to regulatory compliance. Your investment is documented and protected.</span>
+          </div>
+
+          {/* Human approval */}
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-asm-line bg-white p-5 text-center">
+            <span className="flex size-12 items-center justify-center rounded-xl bg-asm-green-tint">
+              <Award className="size-6 text-asm-greenInk" strokeWidth={1.75} aria-hidden />
+            </span>
+            <span className="text-[14px] font-bold text-asm-navy">Human-Approved Payouts</span>
+            <span className="text-[13px] leading-snug text-asm-body">Every withdrawal is manually reviewed and approved by our team — no black-box automation.</span>
+          </div>
+
+          {/* UPI speed */}
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-asm-line bg-white p-5 text-center">
+            <span className="flex size-12 items-center justify-center rounded-xl bg-amber-50">
+              <Zap className="size-6 text-amber-600" strokeWidth={1.75} aria-hidden />
+            </span>
+            <span className="text-[14px] font-bold text-asm-navy">Fast UPI Payouts</span>
+            <span className="text-[13px] leading-snug text-asm-body">Returns credited directly to your UPI ID. No bank transfer delays, no intermediaries.</span>
+          </div>
+        </div>
+
+        {/* Payment marks */}
+        <div className="mt-8 flex flex-col items-center gap-3">
+          <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-asm-muted">Accepted payment methods</span>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            {['UPI', 'Paytm', 'PhonePe', 'Google Pay'].map((method) => (
+              <span
+                key={method}
+                className="rounded-lg border border-asm-line bg-white px-3 py-1.5 text-[13px] font-bold text-asm-body shadow-sm"
+              >
+                {method}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ── PatrioticStrip (Task 5) ── */
+function PatrioticStrip() {
+  return (
+    <div className="overflow-hidden border-y border-asm-blue/10 bg-gradient-to-r from-asm-blue-tint via-white to-asm-green-tint py-3">
+      <p className="text-center text-[12px] font-bold tracking-[0.1em] text-asm-navy/70 uppercase">
+        🇮🇳 Our Country · Our Pride · Our Strength — Invest in India&apos;s growth
+      </p>
+    </div>
+  )
+}
+
+/* ── HOW_STEPS (Task 4) ── */
+const HOW_STEPS = [
+  {
+    n: '01',
+    title: 'Deposit funds',
+    body: 'Add money to your ASM Coins wallet via UPI, Paytm, PhonePe, or Google Pay. Minimum ₹1,000.',
+    icon: Wallet,
+    tone: 'blue' as const,
+  },
+  {
+    n: '02',
+    title: 'Pick your plan',
+    body: 'Choose Silver (25%), Gold (30%), or Diamond (40%) based on your investment amount.',
+    icon: TrendingUp,
+    tone: 'green' as const,
+  },
+  {
+    n: '03',
+    title: 'Withdraw your return',
+    body: 'After 36 hours your principal + return is credited. Withdraw to UPI in minutes.',
+    icon: ChartNoAxesCombined,
+    tone: 'blue' as const,
+  },
+] as const
+
+function HowItWorksSection() {
+  return (
+    <section id="about" aria-labelledby="how-heading" className="px-4 py-12 sm:px-6">
+      <div className="mx-auto max-w-3xl">
+        <div className="mb-2 text-center text-[12px] font-bold uppercase tracking-[0.12em] text-asm-blue">Simple process</div>
+        <h2 id="how-heading" className="mb-8 text-center font-jakarta text-[22px] font-extrabold text-asm-navy sm:text-[28px]">
+          Start earning in 3 steps
+        </h2>
+
+        <div className="flex flex-col gap-6 sm:flex-row sm:gap-4">
+          {HOW_STEPS.map(({ n, title, body, icon: Icon, tone }) => (
+            <div key={n} className="relative flex flex-1 flex-col gap-4 rounded-2xl border border-asm-line bg-white p-5">
+              {/* Step number — large, light weight, positioned top-right */}
+              <span
+                aria-hidden
+                className="absolute right-4 top-3 font-jakarta text-[48px] font-extrabold leading-none text-asm-tint"
+              >
+                {n}
+              </span>
+              <span
+                className={cn(
+                  'flex size-11 items-center justify-center rounded-xl',
+                  tone === 'blue' ? 'bg-asm-blue-tint' : 'bg-asm-green-tint'
+                )}
+              >
+                <Icon
+                  className={cn('size-5', tone === 'blue' ? 'text-asm-blue' : 'text-asm-greenInk')}
+                  strokeWidth={1.75}
+                  aria-hidden
+                />
+              </span>
+              <div>
+                <h3 className="text-[15px] font-bold text-asm-navy">{title}</h3>
+                <p className="mt-1 text-[13px] leading-relaxed text-asm-body">{body}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* 36-hour callout */}
+        <div className="mt-6 flex items-center justify-center gap-2 rounded-xl border border-asm-blue/20 bg-asm-blue-tint px-4 py-3">
+          <Clock className="size-4 text-asm-blue" strokeWidth={2} aria-hidden />
+          <span className="text-[13px] font-semibold text-asm-blue">36-hour investment cycles — deposit today, withdraw tomorrow</span>
+        </div>
+      </div>
+    </section>
+  )
+}
 
 /* ── Page ── */
 export function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   return (
-    <div className="theme-light-home min-h-screen bg-white font-jakarta text-asm-navy">
+    <div className="theme-light-home min-h-screen overflow-x-hidden bg-white font-jakarta text-asm-navy">
       <LandingHeader menuOpen={menuOpen} onMenu={() => setMenuOpen(true)} />
       <LandingMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
 
-      <main className="mx-auto w-full max-w-[1180px] pb-8">
-        <Hero />
+      <main>
+        {/* Hero constrained to max-width */}
+        <div className="mx-auto w-full max-w-[1180px]">
+          <Hero />
+        </div>
+
+        {/* Full-bleed strips */}
+        <PatrioticStrip />
         <TrustMarquee />
 
-        {/* ── Stats ── */}
-        <section className="px-4 pt-6 lg:px-8" aria-label="Platform figures">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {PLATFORM_STATS.map(({ Icon, value, label, tone }) => (
-              <div
-                key={label}
-                className="flex flex-col rounded-2xl border border-asm-line bg-white p-4 shadow-[0_2px_14px_-4px_rgba(16,42,92,0.07)]"
-              >
-                <span
-                  className={cn(
-                    'mb-3 flex size-9 shrink-0 items-center justify-center rounded-xl',
-                    tone === 'green' ? 'bg-asm-green-tint' : 'bg-asm-blue-tint'
-                  )}
-                >
-                  <Icon
-                    className={cn('size-[18px]', tone === 'green' ? 'text-asm-greenInk' : 'text-asm-blue')}
-                    strokeWidth={2}
-                    aria-hidden
-                  />
-                </span>
-                <span className="text-[22px] font-extrabold leading-none tabular-nums text-asm-navy">
-                  {value}
-                </span>
-                <span className="mt-1 text-[11px] leading-tight text-asm-body">{label}</span>
-              </div>
-            ))}
+        {/* ── Stats bar — full-bleed border, centered content ── */}
+        <section aria-label="Platform statistics" className="border-y border-asm-line bg-white py-8">
+          <div className="mx-auto max-w-3xl px-4">
+            <div className="grid grid-cols-3 divide-x divide-asm-line">
+              {[
+                { value: 25000, suffix: '+', label: 'Investors' },
+                { value: 50, prefix: '₹', suffix: 'Cr+', label: 'Investments' },
+                { value: 12, prefix: '₹', suffix: 'Cr+', label: 'Payouts' },
+              ].map(({ value, suffix, prefix, label }) => (
+                <div key={label} className="flex flex-col items-center gap-1 px-4 text-center">
+                  <span className="font-jakarta text-[28px] font-extrabold text-asm-navy sm:text-[36px]">
+                    <CountUp to={value} suffix={suffix} prefix={prefix} />
+                  </span>
+                  <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-asm-muted">{label}</span>
+                </div>
+              ))}
+            </div>
+            <p className="mt-4 text-center text-[11px] text-asm-muted">
+              Figures updated periodically. Past performance does not guarantee future returns.
+            </p>
           </div>
         </section>
 
-        <MarketSnapshot />
-        <PlansSection />
-        <HowItWorks />
+        {/* Full-bleed bg-asm-tint section */}
+        <TrustSection />
 
-        {/* ── Invite & Level Up ── */}
-        <section
-          id="referral"
-          className="mx-4 mt-8 overflow-hidden rounded-2xl lg:mx-8"
-          style={{ background: 'linear-gradient(135deg, #0B4FD8 0%, #0E6E32 100%)' }}
-        >
+        {/* Remaining content constrained to max-width */}
+        <div className="mx-auto w-full max-w-[1180px] pb-8">
+          <MarketSnapshot />
+          <PlansSection />
+          <HowItWorksSection />
+
+          {/* ── Invite & Level Up ── */}
+          <section
+            id="referral"
+            className="mx-4 mt-8 overflow-hidden rounded-2xl lg:mx-8"
+            style={{ background: 'linear-gradient(135deg, #0B4FD8 0%, #0E6E32 100%)' }}
+          >
           <div className="relative px-5 py-6">
             <div
               aria-hidden
@@ -179,7 +346,8 @@ export function LandingPage() {
               />
             </Link>
           </div>
-        </section>
+          </section>
+        </div>
       </main>
 
       <LandingFooter />
@@ -187,7 +355,7 @@ export function LandingPage() {
   )
 }
 
-/* ── Hero ── */
+/* ── Hero (Task 1) ── */
 function Hero() {
   return (
     <section className="relative overflow-hidden px-4 pb-8 pt-7 lg:px-8">
@@ -219,31 +387,30 @@ function Hero() {
         {/* Headline */}
         <motion.h1
           variants={fadeUp}
-          className="text-[38px] font-extrabold leading-[1.08] tracking-[-0.02em] sm:text-[48px]"
+          className="font-jakarta text-[42px] font-extrabold leading-[1.1] tracking-tight text-asm-navy sm:text-[52px] lg:text-[60px]"
         >
-          <span className="block text-asm-navy">Smart</span>
-          <span className="block text-asm-navy">Investment,</span>
-          <span className="block text-asm-blue">Secure Future.</span>
+          Smart Investment,{' '}
+          <span className="text-asm-blue">Secure Future</span>
         </motion.h1>
 
         {/* Subtitle */}
-        <motion.p variants={fadeUp} className="mt-4 max-w-[38ch] text-[14px] leading-relaxed text-asm-body">
-          ASM Coins is a time-boxed 24-hour investment platform designed for simple deposits, fast 3-hour UPI payouts, and progressive tier returns.
+        <motion.p variants={fadeUp} className="mt-3 max-w-[34ch] text-[16px] leading-snug text-asm-body sm:text-[18px]">
+          25–40% returns in 36 hours. UPI payout. Human-approved.
         </motion.p>
 
-        {/* CTA */}
-        <motion.div variants={fadeUp} className="mt-6">
+        {/* CTA pair */}
+        <motion.div variants={fadeUp} className="mt-6 flex flex-wrap items-center gap-3">
+          <Link
+            to="/register"
+            className="inline-flex min-h-[48px] items-center gap-2 rounded-xl bg-asm-blue px-6 text-[15px] font-bold text-white shadow-[0_4px_16px_-4px_rgba(11,79,216,0.5)] transition-all hover:bg-asm-blue-dark hover:shadow-[0_6px_20px_-4px_rgba(11,79,216,0.55)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-2"
+          >
+            Start Investing <ArrowRight className="size-4" strokeWidth={2.5} aria-hidden />
+          </Link>
           <a
             href="#plans"
-            className={cn(
-              'flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-asm-blue px-6',
-              'text-[14px] font-bold uppercase tracking-[0.07em] text-white',
-              'shadow-[0_12px_28px_-10px_rgba(11,79,216,0.55)]',
-              'transition-all hover:bg-asm-blue-dark sm:w-fit sm:inline-flex'
-            )}
+            className="inline-flex min-h-[48px] items-center gap-2 rounded-xl border border-asm-line bg-white px-6 text-[15px] font-semibold text-asm-navy transition-colors hover:border-asm-blue hover:text-asm-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue"
           >
-            Investment Plans
-            <ChartNoAxesCombined className="size-[18px]" strokeWidth={2.2} aria-hidden />
+            See Plans
           </a>
         </motion.div>
 
@@ -445,7 +612,7 @@ const PLAN_ACCENT = {
   },
 } as const
 
-/* ── Plans Section ── */
+/* ── Plans Section (Task 5) ── */
 function PlansSection() {
   return (
     <section id="plans" className="scroll-mt-4 pt-8" aria-labelledby="plans-heading">
@@ -505,12 +672,15 @@ function PlansSection() {
                   {unlockNote}
                 </span>
 
-                <p className={cn('mt-2 text-[44px] font-extrabold leading-none tabular-nums', a.figure)}>
-                  {returns}
-                </p>
-                <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-asm-muted">Returns</p>
+                {/* Return % — largest element on the card */}
+                <div className="flex flex-col items-center py-4">
+                  <span className={cn('font-jakarta text-[44px] font-extrabold leading-none', a.figure)}>
+                    {returns}
+                  </span>
+                  <span className="mt-1 text-[13px] font-semibold text-asm-muted">annual equivalent return</span>
+                </div>
 
-                <p className="mt-3 text-[9px] font-bold uppercase tracking-[0.14em] text-asm-muted">Duration</p>
+                <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-asm-muted">Duration</p>
                 <p className="text-[13px] font-bold uppercase tabular-nums">{duration}</p>
 
                 <dl className="mt-3.5 flex w-full items-start justify-between border-t border-asm-line pt-3">
@@ -544,54 +714,6 @@ function PlansSection() {
       <p className="mt-4 px-4 text-center text-[11px] leading-relaxed text-asm-body lg:px-8">
         Returns shown are plan terms, not guarantees. Read the full terms before you invest.
       </p>
-    </section>
-  )
-}
-
-/* ── How It Works ── */
-function HowItWorks() {
-  return (
-    <section id="about" className="scroll-mt-4 px-4 pt-10 lg:px-8" aria-labelledby="about-heading">
-      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-asm-blue">Getting started</p>
-      <h2 id="about-heading" className="mt-0.5 text-[22px] font-extrabold leading-tight text-asm-navy">
-        How it works
-      </h2>
-
-      {/* Timeline */}
-      <ol className="relative mt-6 sm:grid sm:grid-cols-3 sm:gap-4">
-        {/* Vertical connector — mobile only */}
-        <div aria-hidden className="absolute left-[19px] top-0 h-full w-px bg-asm-line sm:hidden" />
-
-        {HOW_IT_WORKS.map(({ step, title, body }) => (
-          <li key={step} className="relative flex gap-4 pb-8 last:pb-0 sm:flex-col sm:gap-3 sm:pb-0">
-            <span className="relative z-[1] flex size-10 shrink-0 items-center justify-center rounded-2xl bg-asm-blue-tint text-[13px] font-extrabold tabular-nums text-asm-blue ring-2 ring-white">
-              {step}
-            </span>
-            <div className="pt-1.5 sm:pt-0">
-              <h3 className="text-[15px] font-extrabold leading-tight text-asm-navy">{title}</h3>
-              <p className="mt-1.5 text-[13px] leading-relaxed text-asm-body">{body}</p>
-            </div>
-          </li>
-        ))}
-      </ol>
-
-      {/* Support nudge */}
-      <div className="mt-7 flex flex-col items-start gap-4 rounded-2xl border border-asm-line bg-asm-tint/70 p-5 sm:flex-row sm:items-center">
-        <Coins className="size-8 shrink-0 text-asm-blue" strokeWidth={1.8} aria-hidden />
-        <p className="flex-1 text-[13px] leading-relaxed text-asm-body">
-          Questions before you start? Our support team answers on WhatsApp and email, every day.
-        </p>
-        <Link
-          to="/register"
-          className={cn(
-            'flex min-h-[44px] shrink-0 items-center rounded-xl bg-asm-blue px-5',
-            'text-[12px] font-bold uppercase tracking-[0.08em] text-white',
-            'transition-colors hover:bg-asm-blue-dark'
-          )}
-        >
-          Create account
-        </Link>
-      </div>
     </section>
   )
 }

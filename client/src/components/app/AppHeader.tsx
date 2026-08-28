@@ -2,6 +2,8 @@ import { ChevronLeft, Menu } from 'lucide-react'
 import type { RefObject } from 'react'
 import { useNavigate } from 'react-router'
 
+import { SkyToggle } from '@/components/ui/sky-toggle'
+import { useTheme } from '@/context/ThemeContext'
 import { cn } from '@/lib/utils'
 
 interface AppHeaderProps {
@@ -31,6 +33,7 @@ export function AppHeader({
   className,
 }: AppHeaderProps) {
   const navigate = useNavigate()
+  const { isDark, toggle } = useTheme()
 
   return (
     <header
@@ -92,7 +95,10 @@ export function AppHeader({
           <span className="font-script text-[22px] text-asm-greenInk">Coins</span>
         </div>
 
-        <div className="flex items-center justify-end gap-0.5">
+        <div className="flex items-center justify-end gap-1.5">
+          {/* Sky day/night toggle — passes origin coords for circle-reveal */}
+          <SkyToggle checked={isDark} onChange={(x, y) => toggle(x, y)} />
+
           {variant === 'detail' ? (
             <button
               type="button"

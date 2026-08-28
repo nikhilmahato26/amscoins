@@ -186,3 +186,372 @@
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────
+   VIEW TRANSITIONS — theme toggle circle-reveal
+   Origin is set as --vt-x / --vt-y CSS custom properties by
+   ThemeContext before the transition starts.
+   ───────────────────────────────────────────────────────────────── */
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 0;
+}
+
+::view-transition-new(root) {
+  z-index: 1;
+  clip-path: circle(0% at var(--vt-x, 50%) var(--vt-y, 50%));
+  animation: vt-circle-reveal 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes vt-circle-reveal {
+  from { clip-path: circle(0%   at var(--vt-x, 50%) var(--vt-y, 50%)); }
+  to   { clip-path: circle(200% at var(--vt-x, 50%) var(--vt-y, 50%)); }
+}
+
+/* ═════════════════════════════════════════════════════════════════
+   DARK MODE — Premium charcoal design system
+   Architecture: ALL surface overrides are scoped to .app-shell-dark
+   which is only added to the AppShell wrapper div when dark mode is
+   active. Admin (/admin/*) and landing (/) use theme-light-home on
+   their own root — they never contain .app-shell-dark, so zero bleed.
+
+   Elevation stack (charcoal, Apple HIG-inspired):
+     --dk0  #0d0d0e  page background
+     --dk1  #1a1a1c  card surface
+     --dk2  #252528  elevated card
+     --dk3  #2f2f32  drawer / modal
+   ═════════════════════════════════════════════════════════════════ */
+
+/* ── Global tokens (on html, for pseudo-elements & pre-hydration) ── */
+html.dark {
+  color-scheme: dark;
+  scrollbar-color: #3a3a3c transparent;
+
+  --dk0:  #0d0d0e;
+  --dk1:  #1a1a1c;
+  --dk2:  #252528;
+  --dk3:  #2f2f32;
+  --dk-glass:      rgba(13, 13, 14, 0.86);
+  --dk-border:     rgba(255, 255, 255, 0.055);
+  --dk-border-med: rgba(255, 255, 255, 0.09);
+  --dk-border-hi:  rgba(255, 255, 255, 0.13);
+  --dk-text-hi:    #f2f2f7;
+  --dk-text-body:  #8e8e93;
+  --dk-text-muted: #6e6e73;
+  --dk-blue:       #5a96f5;
+  --dk-green:      #30d158;
+  --dk-amber:      #ffd426;
+  --dk-red:        #ff453a;
+}
+
+html.dark body {
+  background-color: var(--dk0);
+  color: var(--dk-text-hi);
+}
+
+/* ── Pseudo-elements (must stay on html.dark, not scoped) ── */
+html.dark ::selection {
+  background-color: rgba(90, 150, 245, 0.28);
+  color: var(--dk-text-hi);
+}
+html.dark ::-webkit-scrollbar-track { background: transparent; }
+html.dark ::-webkit-scrollbar-thumb {
+  background-color: #3a3a3c;
+  border: 3px solid var(--dk0);
+  border-radius: 999px;
+}
+html.dark ::-webkit-scrollbar-thumb:hover { background-color: #48484a; }
+
+/* ── Always-light surfaces: block dark: variant bleed ───────────
+   html.dark is set globally so dark:bg-input/30 fires everywhere,
+   including auth pages (login / register / forgot-password) that use
+   theme-light-home and must stay visually white.
+   Selector specificity: .dark .theme-light-home input = (0,2,1)
+   beats .dark .dark\:bg-input\/30 = (0,2,0) — no !important needed.
+   ─────────────────────────────────────────────────────────────── */
+.dark .theme-light-home input,
+.dark .theme-light-home textarea {
+  background-color: rgb(255 255 255);
+}
+.dark .theme-light-home button.bg-white {
+  background-color: rgb(255 255 255);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SURFACE RULES — scoped to .app-shell-dark
+   This class is added ONLY by AppShell when isDark=true.
+   Admin panel and landing never contain this class → zero bleed.
+   No !important needed; specificity (.app-shell-dark .X) beats (.X).
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── Page background ── */
+.app-shell-dark .bg-asm-tint { background-color: var(--dk0); }
+
+/* ── Cards — gradient L1 elevation ── */
+.app-shell-dark .bg-white {
+  background-color: var(--dk1);
+  background-image: linear-gradient(145deg, #1f1f22 0%, #161618 100%);
+  box-shadow: 0 0 0 1px var(--dk-border),
+              0 4px 16px rgba(0, 0, 0, 0.45),
+              0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Glass — header bg-white/88, bottom nav bg-white/88 ── */
+.app-shell-dark [class*="bg-white/"] {
+  background-color: rgba(13, 13, 14, 0.88);
+  backdrop-filter: blur(24px) saturate(1.8);
+}
+
+/* ── Header ── */
+.app-shell-dark header {
+  box-shadow: 0 1px 0 var(--dk-border) inset,
+              0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+/* ── Bottom nav ── */
+.app-shell-dark nav[aria-label="Main navigation"] {
+  background-color: rgba(11, 11, 12, 0.92);
+  border-top-color: var(--dk-border);
+  box-shadow: 0 -1px 0 var(--dk-border);
+}
+
+/* ── Desktop side nav ── */
+.app-shell-dark nav[aria-label="Primary"] {
+  background-color: #131315;
+  background-image: linear-gradient(180deg, #181819 0%, #111112 100%);
+  border-right-color: var(--dk-border);
+  box-shadow: 2px 0 24px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Mobile drawer — L3 elevation ── */
+.app-shell-dark .fixed.flex-col.bg-white {
+  background-color: var(--dk3);
+  background-image: linear-gradient(180deg, #16161a 0%, #0f0f12 100%);
+  box-shadow: 16px 0 60px rgba(0, 0, 0, 0.75);
+}
+
+/* ── Tinted containers ── */
+.app-shell-dark .bg-asm-blue-tint  { background-color: rgba(90, 150, 245, 0.12); }
+.app-shell-dark .bg-asm-green-tint { background-color: rgba(48, 209, 88, 0.12); }
+.app-shell-dark .bg-amber-50       { background-color: rgba(255, 212, 38, 0.10); }
+.app-shell-dark .bg-red-50         { background-color: rgba(255, 69, 58, 0.10); }
+.app-shell-dark .bg-green-50       { background-color: rgba(48, 209, 88, 0.10); }
+.app-shell-dark .bg-violet-50      { background-color: rgba(191, 144, 255, 0.10); }
+.app-shell-dark .bg-sky-50         { background-color: rgba(100, 210, 255, 0.10); }
+.app-shell-dark .bg-asm-navy       { background-color: var(--dk2); }
+.app-shell-dark .rounded-xl.bg-asm-tint { background-color: var(--dk2); }
+
+/* ── Nav hover states ── */
+.app-shell-dark .hover\:bg-asm-tint:hover {
+  background-color: rgba(255, 255, 255, 0.07);
+}
+.app-shell-dark .hover\:text-asm-navy:hover {
+  color: var(--dk-text-hi);
+}
+/* Table row hover (DataTable rowHover) */
+.app-shell-dark .hover\:bg-asm-tint\/60:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* ── Text hierarchy ── */
+.app-shell-dark .text-asm-navy  { color: var(--dk-text-hi); }
+.app-shell-dark .text-asm-body  { color: var(--dk-text-body); }
+.app-shell-dark .text-asm-muted { color: var(--dk-text-muted); }
+
+/* ── Accents ── */
+.app-shell-dark .text-asm-blue      { color: var(--dk-blue); }
+.app-shell-dark .text-asm-blue-dark { color: #4d88ef; }
+.app-shell-dark .bg-asm-blue        { background-color: #3f7de8; }
+.app-shell-dark .border-asm-blue    { border-color: rgba(90, 150, 245, 0.38); }
+.app-shell-dark .text-asm-greenInk  { color: var(--dk-green); }
+.app-shell-dark .text-asm-green     { color: var(--dk-green); }
+.app-shell-dark .bg-asm-greenInk    { background-color: var(--dk-green); }
+
+/* ── Status badge text ── */
+.app-shell-dark .text-amber-700,
+.app-shell-dark .text-amber-600   { color: var(--dk-amber); }
+.app-shell-dark .text-green-700,
+.app-shell-dark .text-green-600   { color: var(--dk-green); }
+.app-shell-dark .text-red-600,
+.app-shell-dark .text-asm-red     { color: var(--dk-red); }
+.app-shell-dark .text-sky-600     { color: #64d2ff; }
+.app-shell-dark .text-violet-600  { color: #bf90ff; }
+
+/* ── Borders ── */
+.app-shell-dark .border-asm-line        { border-color: var(--dk-border-med); }
+.app-shell-dark .divide-asm-line > * + * { border-color: var(--dk-border); }
+.app-shell-dark .border-amber-200       { border-color: rgba(255, 212, 38, 0.25); }
+.app-shell-dark .border-green-200       { border-color: rgba(48, 209, 88, 0.25); }
+.app-shell-dark .border-red-200         { border-color: rgba(255, 69, 58, 0.25); }
+
+/* ── Shadows ── */
+.app-shell-dark [class*="shadow-["]:not(img):not([class*="drop-shadow-"]) {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5),
+              0 0 0 1px var(--dk-border);
+}
+
+/* ── Inputs ── */
+.app-shell-dark input,
+.app-shell-dark textarea,
+.app-shell-dark select {
+  background-color: #111113;
+  color: var(--dk-text-hi);
+  border-color: var(--dk-border-hi);
+}
+.app-shell-dark input:focus,
+.app-shell-dark textarea:focus {
+  border-color: rgba(90, 150, 245, 0.55);
+  outline: none;
+}
+/* Inputs nested inside a styled wrapper (bg-white → dark card gradient) must
+   be transparent so they blend with the wrapper rather than showing a mismatched
+   near-black (#111113) inset. The wrapper provides the visual container; the
+   input itself only needs text + caret styling. */
+.app-shell-dark .bg-white input,
+.app-shell-dark .bg-white textarea {
+  background-color: transparent;
+}
+
+/* ── Membership / profile card — restore white-tint overlays ──────────────
+   The broad [class*="bg-white/"] rule converts semi-transparent white tints to
+   dark glass, which breaks gradient cards that rely on bg-white/X for avatar,
+   badge, edit button, and chip affordances.
+   Scoped to .membership-card so all other bg-white/ glass rules are untouched. */
+.app-shell-dark .membership-card [class*="bg-white/"] {
+  background-color: initial;
+  backdrop-filter: none;
+}
+.app-shell-dark .membership-card .bg-white\/12 { background-color: rgb(255 255 255 / 0.12); }
+.app-shell-dark .membership-card .bg-white\/15 { background-color: rgb(255 255 255 / 0.15); }
+
+/* ── Focus ring ── */
+.app-shell-dark :focus-visible {
+  outline: 2px solid var(--dk-blue);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+/* Inputs/textareas already get visual focus feedback through their own
+   border-color/box-shadow change (input:focus rule above) or their wrapper's
+   focus-within ring — suppress the redundant inner outline the broad
+   :focus-visible rule would otherwise add on top. */
+.app-shell-dark input:focus-visible,
+.app-shell-dark textarea:focus-visible,
+.app-shell-dark select:focus-visible {
+  outline: none;
+  outline-offset: 0;
+}
+
+/* ── Key number glow ── */
+.app-shell-dark .font-jakarta.font-extrabold {
+  text-shadow: 0 0 28px rgba(242, 242, 247, 0.07);
+}
+.app-shell-dark .text-asm-greenInk.font-bold,
+.app-shell-dark .text-asm-greenInk.font-extrabold {
+  text-shadow: 0 0 20px rgba(48, 209, 88, 0.22);
+}
+
+/* ── Explicit escaped-class selectors for Tailwind opacity utilities ──
+   The broad [class*="bg-white/"] attribute selector is not reliable for
+   Tailwind JIT's escaped class names (.bg-white\/65 etc.) in all builds.
+   These explicit selectors are the canonical fix. */
+
+.app-shell-dark .bg-white\/65 {
+  background-color: rgba(18, 18, 20, 0.92);
+  backdrop-filter: blur(16px) saturate(1.6);
+}
+.app-shell-dark .bg-white\/88 {
+  background-color: rgba(13, 13, 14, 0.88);
+  backdrop-filter: blur(24px) saturate(1.8);
+}
+.app-shell-dark .bg-white\/95 {
+  background-color: rgba(15, 15, 17, 0.96);
+  backdrop-filter: blur(24px) saturate(1.8);
+}
+
+/* Alternating table rows (DataTable odd rows) */
+.app-shell-dark .bg-asm-tint\/40 {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* Sticky date-group headers in account/dashboard use bg-asm-tint/80 */
+.app-shell-dark .bg-asm-tint\/80 {
+  background-color: rgba(24, 24, 26, 0.92);
+  backdrop-filter: blur(8px);
+}
+
+/* Slate utilities — used in plan card lock overlays and other components */
+.app-shell-dark .bg-slate-100 { background-color: var(--dk2); }
+.app-shell-dark .bg-slate-50  { background-color: rgba(30, 30, 32, 0.6); }
+.app-shell-dark .text-slate-500,
+.app-shell-dark .text-slate-600 { color: var(--dk-text-body); }
+.app-shell-dark .text-slate-400 { color: var(--dk-text-muted); }
+.app-shell-dark .border-slate-200,
+.app-shell-dark .border-slate-200\/90 { border-color: var(--dk-border-med); }
+
+/* Nav inactive link text must be body-level contrast (not tertiary #6e6e73)
+   on the very dark sidebar (#131315 background) */
+.app-shell-dark nav[aria-label="Primary"] .text-asm-muted {
+  color: var(--dk-text-body);
+}
+
+/* ── Gradient stop overrides ────────────────────────────────────────────
+   Tailwind builds gradients through CSS custom properties (--tw-gradient-from,
+   --tw-gradient-via, --tw-gradient-to). Overriding them here turns every
+   "from-asm-blue-tint via-white to-asm-green-tint" gradient dark-aware
+   without touching component JSX.
+   ─────────────────────────────────────────────────────────────────────── */
+.app-shell-dark .from-asm-blue-tint {
+  --tw-gradient-from: #0d1521 var(--tw-gradient-from-position);
+}
+.app-shell-dark .to-asm-green-tint,
+.app-shell-dark .to-asm-green-tint\/60 {
+  --tw-gradient-to: #091812 var(--tw-gradient-to-position);
+}
+.app-shell-dark .via-white {
+  --tw-gradient-via: var(--dk1) var(--tw-gradient-via-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to, rgba(26, 26, 28, 0));
+}
+
+/* ── Amber deep tones — body text in warning/info amber cards ── */
+.app-shell-dark .text-amber-900,
+.app-shell-dark .text-amber-800 { color: var(--dk-amber); }
+
+/* ── Missing background variants ── */
+.app-shell-dark .bg-amber-100          { background-color: rgba(255, 212, 38, 0.16); }
+.app-shell-dark .bg-amber-50\/60       { background-color: rgba(200, 140, 0,  0.14); }
+.app-shell-dark .bg-asm-green-tint\/25 { background-color: rgba(48,  209, 88, 0.11); }
+.app-shell-dark .bg-asm-blue-tint\/40  { background-color: rgba(90,  150, 245, 0.16); }
+.app-shell-dark .bg-asm-blue-tint\/20  { background-color: rgba(90,  150, 245, 0.10); }
+
+/* ── Missing border variants ── */
+.app-shell-dark .border-asm-blue\/15 { border-color: rgba(90, 150, 245, 0.20); }
+.app-shell-dark .border-asm-blue\/20 { border-color: rgba(90, 150, 245, 0.28); }
+
+/* ── Deposit confirmation — send-proof card (hard-coded light green) ── */
+.app-shell-dark .bg-\[\#E7F8EE\] {
+  background-color: rgba(48, 209, 88, 0.08);
+}
+
+/* ── UPI chip hover — Tailwind hover:bg-asm-blue-tint renders light in dark mode ── */
+.app-shell-dark .hover\:bg-asm-blue-tint:hover {
+  background-color: rgba(90, 150, 245, 0.12);
+}
+
+/* ── Stats card tint/60 (AdminUserDetail wallet-balance / total-invested cards) ── */
+.app-shell-dark .bg-asm-tint\/60 {
+  background-color: var(--dk2);
+}
+
+/* ── Zinc palette (Delete button, deleted-status badge) ── */
+.app-shell-dark .bg-zinc-100        { background-color: var(--dk2); }
+.app-shell-dark .bg-zinc-200        { background-color: rgba(255, 255, 255, 0.06); }
+.app-shell-dark .text-zinc-700      { color: var(--dk-text-body); }
+.app-shell-dark .text-zinc-600      { color: var(--dk-text-muted); }
+.app-shell-dark .border-zinc-300    { border-color: var(--dk-border-med); }
+.app-shell-dark .hover\:bg-zinc-200:hover { background-color: rgba(255, 255, 255, 0.07); }

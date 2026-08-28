@@ -9,6 +9,7 @@ const reportsRoutes = require('./reportsRoutes')
 router.use(auth, requireAdmin)
 
 router.get('/stats', c.getStats)
+router.get('/activity', c.getActivity)
 
 router.get('/investments', c.listInvestments)
 router.get('/investments/stats', c.getInvestmentStats)

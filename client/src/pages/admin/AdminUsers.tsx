@@ -17,6 +17,7 @@ import { useClientTable } from '@/hooks/useClientTable'
 import { inr } from '@/lib/format'
 import { formatUserId } from '@/lib/ids'
 import { cn } from '@/lib/utils'
+import { useTheme } from '@/context/ThemeContext'
 
 /* ── Adjust wallet dialog (specialised form: direction + amount + note) ── */
 interface AdjustDialogProps {
@@ -130,15 +131,37 @@ function AdjustDialog({ user, onConfirm, onCancel, isPending }: AdjustDialogProp
   )
 }
 
-/* ── Tier badge ── */
-function TierChip({ tier }: { tier: AdminUser['tier'] }) {
-  const styles: Record<AdminUser['tier'], string> = {
-    silver: 'bg-slate-100 text-slate-600',
-    gold: 'bg-amber-50 text-amber-700',
-    diamond: 'bg-blue-50 text-blue-600',
-  }
+/* ── User avatar ── */
+function UserAvatar({ name }: { name: string }) {
+  const initials = name
+    .split(' ')
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? '')
+    .join('')
   return (
-    <span className={cn('inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide', styles[tier])}>
+    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-asm-blue-tint text-[13px] font-bold text-asm-blue">
+      {initials}
+    </span>
+  )
+}
+
+/* ── Tier badge ── */
+const TIER_BADGE: Record<AdminUser['tier'], string> = {
+  silver:  'bg-[#CED5E1]/40 text-[#5A6472] border-[#B1B5BB]/40',
+  gold:    'bg-amber-50 text-amber-700 border-amber-200',
+  diamond: 'bg-asm-blue-tint text-asm-blue border-asm-blue/20',
+}
+const TIER_BADGE_DARK: Record<AdminUser['tier'], string> = {
+  silver:  'bg-[#2a2a2e] text-[#a0a8b4] border-[#3a3a42]',
+  gold:    'bg-amber-900/30 text-amber-400 border-amber-700/40',
+  diamond: 'bg-blue-900/30 text-[#5a96f5] border-blue-700/30',
+}
+
+function TierChip({ tier }: { tier: AdminUser['tier'] }) {
+  const { isDark } = useTheme()
+  const cls = (isDark ? TIER_BADGE_DARK : TIER_BADGE)[tier] ?? 'bg-asm-tint text-asm-muted border-asm-line'
+  return (
+    <span className={cn('inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold capitalize', cls)}>
       {tier}
     </span>
   )
@@ -220,11 +243,14 @@ export function AdminUsers() {
       key: 'user',
       header: 'User',
       render: (user) => (
-        <>
-          <p className="font-medium text-asm-navy">{user.name}</p>
-          <p className="text-[11px] text-asm-muted">{user.email}</p>
-          {user.publicId && <p className="font-mono text-[10px] text-asm-blue">{formatUserId(user.publicId)}</p>}
-        </>
+        <div className="flex items-center gap-3">
+          <UserAvatar name={user.name} />
+          <div>
+            <p className="text-[13px] font-semibold text-asm-navy">{user.name}</p>
+            <p className="text-[11px] text-asm-muted">{user.email}</p>
+            {user.publicId && <p className="font-mono text-[10px] text-asm-blue">{formatUserId(user.publicId)}</p>}
+          </div>
+        </div>
       ),
     },
     { key: 'tier', header: 'Tier', render: (user) => <TierChip tier={user.tier} /> },

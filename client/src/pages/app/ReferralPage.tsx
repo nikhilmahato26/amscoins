@@ -140,7 +140,7 @@ export function ReferralPage() {
               <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-asm-muted">
                 Your referral link
               </span>
-              <div className="flex min-h-[64px] items-center justify-between gap-3 rounded-xl border-2 border-asm-blue/30 bg-asm-blue-tint/30 px-4 py-3">
+              <div className="flex min-h-[64px] items-center justify-between gap-3 rounded-xl border border-asm-blue/20 bg-asm-blue-tint px-4 py-3">
                 <span className="min-w-0 truncate text-[16px] font-bold text-asm-navy">{data.link}</span>
                 <div className="flex shrink-0 gap-1.5">
                   <CopyButton value={data.link} label="Copy referral link" />
@@ -149,18 +149,32 @@ export function ReferralPage() {
               </div>
             </div>
 
-            {/* Referral code (compact — below link) */}
-            <div className="flex flex-col gap-2">
-              <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-asm-muted">
-                Your referral code
-              </span>
-              <div className="flex h-11 items-center justify-between gap-3 rounded-xl border border-asm-line bg-asm-tint px-4">
-                <span className="min-w-0 font-mono text-[13px] font-extrabold uppercase tracking-[2px] text-asm-muted">
+            {/* Referral code (prominent card) */}
+            <div className="rounded-2xl border border-asm-blue/20 bg-asm-blue-tint p-5">
+              <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-asm-blue">Your referral code</span>
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <span className="font-mono text-[14px] font-bold tracking-[0.1em] text-asm-navy">
                   {data.referralCode}
                 </span>
                 <CopyButton value={data.referralCode} label="Copy referral code" />
               </div>
             </div>
+
+            {/* Tier progress bar — compact, below code */}
+            {nextTierAt !== null && nextTierAt > 0 && (
+              <div className="rounded-xl border border-asm-line bg-white p-4">
+                <div className="flex items-center justify-between text-[12px] font-semibold">
+                  <span className="text-asm-body">{count} referrals</span>
+                  <span className="text-asm-muted">{remaining} to unlock next tier</span>
+                </div>
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-asm-tint">
+                  <div
+                    className="h-full rounded-full bg-asm-blue transition-all duration-700"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              </div>
+            )}
           </motion.section>
 
           {/* ── Progress card ── */}

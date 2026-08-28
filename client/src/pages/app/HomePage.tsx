@@ -1,14 +1,16 @@
 import { motion } from 'framer-motion'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router'
 import { ArrowRight, Award, Lock, TrendingUp, Wallet } from 'lucide-react'
 
-// vault.png lives in /public — referenced as an absolute URL, no import needed
+// vault.png / vault_dark.png live in /public — absolute URL, no import needed
 import { AppShell } from '@/components/app/AppShell'
 import { MarketTicker } from '@/components/app/MarketTicker'
 import { ReferralBanner } from '@/components/app/ReferralBanner'
 import { TierBadge, type Tier } from '@/components/app/TierBadge'
 import { useDashboard, useWallet } from '@/hooks/queries'
 import { useAuth } from '@/auth/AuthContext'
+import { useTheme } from '@/context/ThemeContext'
 import { inr } from '@/lib/format'
 import { ordinal } from '@/lib/tiers'
 import { cn } from '@/lib/utils'
@@ -45,6 +47,30 @@ function maturityLabel(maturesAt?: string): string | null {
   return `${days}d ${hours % 24}h remaining`
 }
 
+function TimeRemaining({ maturesAt }: { maturesAt: string }) {
+  const [label, setLabel] = useState(() => maturityLabel(maturesAt) ?? '')
+  useEffect(() => {
+    // Already matured — no polling needed
+    if (maturityLabel(maturesAt) === 'Matured') return
+    const id = setInterval(() => {
+      const l = maturityLabel(maturesAt) ?? ''
+      setLabel(l)
+      if (l === 'Matured') clearInterval(id) // stop once matured
+    }, 60_000)
+    return () => clearInterval(id)
+  }, [maturesAt])
+  if (!label) return null
+  const matured = label === 'Matured'
+  return (
+    <span className={matured
+      ? 'text-[11px] font-semibold text-asm-greenInk'
+      : 'text-[11px] font-semibold text-asm-blue'
+    }>
+      {label}
+    </span>
+  )
+}
+
 /* ── Data ───────────────────────────────────────────────────────── */
 
 const PLANS: { tier: Tier; name: string; returns: string; duration: string; min: string; max: string; requiredReferrals: number }[] = [
@@ -56,6 +82,7 @@ const PLANS: { tier: Tier; name: string; returns: string; duration: string; min:
 /* ── Page ───────────────────────────────────────────────────────── */
 
 export function HomePage() {
+  const { isDark } = useTheme()
   const { user } = useAuth()
   const dashQuery   = useDashboard()
   const walletQuery = useWallet()
@@ -141,15 +168,20 @@ export function HomePage() {
               aria-hidden
               className="absolute inset-0 -z-0 mx-auto rounded-full"
               style={{
-                background: 'radial-gradient(circle at 50% 55%, rgba(21,128,61,0.07) 0%, transparent 72%)',
+                background: isDark
+                  ? 'radial-gradient(circle at 50% 55%, rgba(0,200,160,0.10) 0%, transparent 72%)'
+                  : 'radial-gradient(circle at 50% 55%, rgba(21,128,61,0.07) 0%, transparent 72%)',
               }}
             />
             <motion.img
-              src="/vault.png"
+              src={isDark ? '/vault_dark.png' : '/vault.png'}
               alt=""
               width={600}
               height={548}
-              className="relative w-full object-contain drop-shadow-[0_12px_40px_rgba(21,128,61,0.15)]"
+              className={isDark
+                ? 'relative w-full object-contain drop-shadow-[0_16px_48px_rgba(0,200,160,0.22)]'
+                : 'relative w-full object-contain drop-shadow-[0_12px_40px_rgba(21,128,61,0.15)]'
+              }
               fetchPriority="high"
               decoding="async"
               animate={{ y: [0, -10, 0] }}
@@ -177,6 +209,24 @@ export function HomePage() {
                 Hey {firstName}, here's your portfolio
               </p>
             )}
+
+            {/* Portfolio hero — the number users came to see */}
+            {!isLoadingDash && (
+              <div className="mb-3 rounded-2xl border border-asm-line bg-white px-5 py-5 shadow-[0_2px_12px_-4px_rgba(16,42,92,0.08)]">
+                <span className="text-[12px] font-bold uppercase tracking-[0.1em] text-asm-muted">Total Portfolio Value</span>
+                <div className="mt-1.5 flex items-end gap-3">
+                  <span className="font-jakarta text-[38px] font-extrabold leading-none tabular-nums text-asm-navy">
+                    {displayBalance !== null ? inr(displayBalance) : '—'}
+                  </span>
+                  {totalInvested !== null && totalInvested > 0 && (
+                    <span className="mb-1 rounded-full bg-asm-green-tint px-2.5 py-0.5 text-[12px] font-bold text-asm-greenInk">
+                      ₹{inr(totalInvested)} active
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-3 gap-2.5">
               {isLoadingDash ? (
                 <>
@@ -284,7 +334,6 @@ export function HomePage() {
             <div className="flex flex-col gap-2.5">
               {activeInvests.slice(0, 3).map((inv) => {
                 const planTier = inv.planKey as Tier
-                const matLabel = maturityLabel(inv.maturesAt)
                 const profit   = inv.expectedReturn - inv.amount
                 return (
                   <div
@@ -294,7 +343,7 @@ export function HomePage() {
                     <TierBadge tier={planTier} size={40} className="shrink-0" />
                     <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                       <span className="text-[13px] font-bold capitalize text-asm-navy">{planTier} Plan</span>
-                      {matLabel && <span className="text-[11px] text-asm-muted">{matLabel}</span>}
+                      {inv.maturesAt && <TimeRemaining maturesAt={inv.maturesAt} />}
                     </div>
                     <div className="flex shrink-0 flex-col items-end">
                       <span className="font-mono text-[14px] font-bold tabular-nums text-asm-greenInk">

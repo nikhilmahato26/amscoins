@@ -183,7 +183,7 @@ export function InvestmentTab({ data, isLoading, isError }: TabDataProps) {
         </span>
       ),
     },
-    { key: 'amount', header: 'Amount', align: 'right', className: 'font-mono tabular-nums text-asm-navy', render: (inv) => inr(inv.amount) },
+    { key: 'amount', header: 'Amount', align: 'right', className: 'font-mono text-[14px] font-bold tabular-nums text-asm-navy', render: (inv) => inr(inv.amount) },
     {
       key: 'reference',
       header: 'Reference',
@@ -329,6 +329,8 @@ export function InvestmentTab({ data, isLoading, isError }: TabDataProps) {
         errorMessage="Failed to load investments. Please refresh."
         minWidth={760}
         onRowClick={openPanel}
+        stickyHeader
+        rowHover
         empty={<EmptyState title="No pending investments" description="Nothing to review right now." />}
       />
 

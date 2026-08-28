@@ -11,6 +11,21 @@ import { inr } from '@/lib/format'
 import { ordinal } from '@/lib/tiers'
 import { cn } from '@/lib/utils'
 import type { Tier } from '@/types'
+import { useTheme } from '@/context/ThemeContext'
+
+const TIER_BAND = {
+  silver:  { bg: 'bg-gradient-to-br from-[#CED5E1] to-[#9CA8B8]', text: 'text-asm-navy' },
+  gold:    { bg: 'bg-gradient-to-br from-[#F4C506] to-[#E8A000]', text: 'text-white'    },
+  diamond: { bg: 'bg-gradient-to-br from-asm-blue to-[#1E93FE]',   text: 'text-white'    },
+} as const
+
+const TIER_BAND_DARK = {
+  silver:  { bg: 'bg-gradient-to-br from-[#28282e] to-[#1c1c20]', text: 'text-[#a8b0bc]' },
+  gold:    { bg: 'bg-gradient-to-br from-[#3a2800] to-[#261a00]', text: 'text-[#ffc840]' },
+  diamond: { bg: 'bg-gradient-to-br from-[#1a3a6e] to-[#0f2348]', text: 'text-[#7ab4ff]' },
+} as const
+
+const RETURN_BY_TIER = { silver: '25%', gold: '30%', diamond: '40%' } as const
 
 interface LocationState {
   planKey?: Tier
@@ -56,6 +71,7 @@ export function PackageDetailPage() {
   const location = useLocation()
   const [params] = useSearchParams()
   const state = location.state as LocationState | null
+  const { isDark } = useTheme()
 
   const { data: plans, isLoading, isError } = usePlans()
 
@@ -165,6 +181,24 @@ export function PackageDetailPage() {
 
         {plan && plan.unlocked && (
           <>
+            {/* Tier hero band */}
+            {TIER_BAND[planKey as keyof typeof TIER_BAND] && (() => {
+              const band = (isDark ? TIER_BAND_DARK : TIER_BAND)[planKey as keyof typeof TIER_BAND]
+              return (
+                <div className={cn('rounded-2xl px-5 py-8 text-center', band.bg)}>
+                  <span className={cn('font-jakarta text-[13px] font-bold uppercase tracking-[0.12em] opacity-80', band.text)}>
+                    {planKey.charAt(0).toUpperCase() + planKey.slice(1)} Plan
+                  </span>
+                  <div className={cn('mt-1 font-jakarta text-[48px] font-extrabold leading-none', band.text)}>
+                    {RETURN_BY_TIER[planKey as keyof typeof RETURN_BY_TIER]}
+                  </div>
+                  <div className={cn('mt-1 text-[14px] font-semibold opacity-80', band.text)}>
+                    return in 24 hours
+                  </div>
+                </div>
+              )
+            })()}
+
             {/* Package summary */}
             <section className="relative flex flex-col gap-3 overflow-hidden rounded-[20px] border border-asm-line bg-white px-[25px] py-4 shadow-[0_2px_16px_-6px_rgba(16,42,92,0.1)]">
               <div className="flex flex-col items-center gap-1">
