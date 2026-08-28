@@ -294,7 +294,7 @@ export function AccountPage() {
         {/* ── Membership / identity card ── */}
         <motion.section
           variants={fadeUp}
-          className="relative isolate overflow-hidden rounded-2xl text-white shadow-[0_16px_40px_-14px_rgba(11,42,92,0.55)]"
+          className="membership-card relative isolate overflow-hidden rounded-2xl text-white shadow-[0_16px_40px_-14px_rgba(11,42,92,0.55)]"
           style={{ background: tier ? TIER_BANNER[tier] : DEFAULT_BANNER }}
         >
           {/* Decorative geometry — soft glows, concentric rings, top sheen, scrim */}

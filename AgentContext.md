@@ -230,3 +230,75 @@ _Anything that affects multiple agents: shared types, API contracts, routes, mig
 
 - 2026-08-26 — 🟡 In progress. `tsc -b` clean, `vitest run` 38/38 green after the refactor. Wiring up the bell dropdown now.
 - 2026-08-26 — ✅ **DONE.** Notification bell is now a clickable dropdown breakdown (Pending approvals / Returns awaiting / About to complete), each row deep-links to `/admin/investments?tab=…`. `AdminInvestments` honours the `?tab=` param. Final verification (Node 22): `tsc -b` exit 0, `npm run build` OK, `npx vitest run` **39/39 pass** (added a bell-dropdown test; wrapped `NotificationBell.test.tsx` in `MemoryRouter`), no lint warnings in my files. Nothing committed — changes in working tree for user review.
+
+---
+
+## Agent 6
+**Focus:** **Admin panel dark mode toggle** — add `SkyToggle` + `useTheme` to `AdminLayout.tsx` (same pattern as `AppHeader`/`AppShell`), verify with Playwright screenshots at 375px and 1440px.
+
+### Tasks (Agent 6)
+1. `AdminLayout.tsx` — import SkyToggle + useTheme; toggle root class between `theme-light-home` and `app-shell-dark`; add SkyToggle in desktop sidebar footer, mobile header, and mobile drawer footer.
+2. Write + run `client/tests-e2e/admin-dark-toggle.spec.ts`; fix any visual defects found.
+
+### Files touched (Agent 6)
+| File | Change |
+|------|--------|
+| `client/src/pages/admin/AdminLayout.tsx` | Add SkyToggle + useTheme; dark root class; 3× toggle placements |
+| `client/tests-e2e/admin-dark-toggle.spec.ts` | NEW Playwright spec |
+| `client/src/index.css` | Possible additive dark-rule for admin nav (if needed) |
+
+### Notes for other agents
+- ⚠️ **@Agent 5:** I touch `AdminLayout.tsx` — your refactor already landed here. My edits are additive only (new imports at the top, `cn()` on the root div, and 3× `<SkyToggle>` insertions). I will NOT touch any nav links, sorting, or bell logic.
+
+- 2026-08-28 — ✅ **DONE.** `AdminLayout.tsx`: SkyToggle + useTheme imported; root div alternates `theme-light-home` ↔ `app-shell-dark bg-[#0d0d0e]` exactly like AppShell; toggle placed in desktop sidebar footer (with "Appearance" label), mobile header (between NotificationBell + hamburger), and mobile drawer footer (above Log out). No `index.css` changes needed — existing `.app-shell-dark` rules covered all admin elements. `tsc -b --force` exit 0. Impeccable detector: 0 findings. Playwright `admin-dark-toggle.spec.ts` → **6/6 pass** (375px + 1440px, light + dark, sidebar + header + drawer). Screenshots in `tests-e2e/screenshots/`. Nothing committed.
+
+## Agent 7
+**Focus:** UI/UX bug fixes — landing page horizontal overflow, dark-mode input bg, profile card.
+
+### Tasks (Agent 7)
+1. Landing page — sections (PatrioticStrip, TrustMarquee, Stats, TrustSection) inside `max-w-[1180px]` main causing edge-cutting on wide viewports; restructured layout so these are full-bleed outside the max-width container. Added `overflow-x-hidden` to root wrapper.
+2. Dark-mode inputs — `.app-shell-dark input { background-color: #111113 }` overrides `bg-transparent` inside FormField wrappers, creating a mismatched dark inner color. Fix: `.app-shell-dark .bg-white input { background-color: transparent }` (higher specificity scoped rule in index.css).
+3. Profile card — `.app-shell-dark [class*="bg-white/"]` converts all `bg-white/X` overlays to dark glass, breaking the gradient card's avatar, badge, edit button, and chips. Fix: `.membership-card` marker class on the section + CSS exemption rules restoring `rgb(255 255 255 / 0.12)` and `rgb(255 255 255 / 0.15)`.
+
+### Files touched (Agent 7)
+| File | Region |
+|------|--------|
+| `client/src/pages/landing/LandingPage.tsx` | LandingPage return block — full-bleed section restructure + overflow-x-hidden |
+| `client/src/index.css` | `.app-shell-dark .bg-white input` + `.membership-card` restoration rules (appended to Inputs section) |
+| `client/src/pages/app/AccountPage.tsx` | Profile card `motion.section` — added `membership-card` class |
+
+### Notes for other agents
+- ⚠️ **@Agent 6:** I also touch `client/src/index.css` — my additions are appended AFTER your `[class*="shadow-["]` block. My rules are `.app-shell-dark .bg-white input` and `.app-shell-dark .membership-card [...]` — no overlap with any existing rule you may add.
+- `AccountPage.tsx`: only the `className` prop of the profile card `motion.section` was changed (added `membership-card`). No logic, handlers, or query code touched.
+- Landing page restructure: `PatrioticStrip`, `TrustMarquee`, Stats section, and `TrustSection` are now direct children of `<main>` (full-bleed). Hero and all card content are wrapped in `mx-auto max-w-[1180px]`. No impact on admin routes.
+
+- 2026-08-28 — ✅ **DONE.** `tsc -b` exit 0. Playwright verified landing page at 375px, 768px, 1440px — full-bleed strips correct, no horizontal overflow, no UX regressions visible. Dark-mode input + profile card fixes applied (CSS verified via specificity analysis; dark-mode app requires login to screenshot).
+
+- 2026-08-28 — Continuing dark-mode bug-fix session. Additional files touched (all CSS/className only, no logic):
+
+| File | Change |
+|------|--------|
+| `client/src/index.css` | Many additive dark-mode CSS rules appended (see below) |
+| `client/src/pages/admin/AdminReports.tsx` | `useTheme()` → dynamic chart tokens (CartesianGrid, cursor, tick, line stroke) — no logic |
+| `client/src/pages/admin/AdminUsers.tsx` | `TIER_BADGE_DARK` + `useTheme()` in `TierChip` — className only |
+| `client/src/pages/app/PackageDetailPage.tsx` | `TIER_BAND_DARK` + `useTheme()` for hero band gradient — className only |
+
+**`index.css` additions (all appended, zero clobber):**
+  - Auth pages: `.dark .theme-light-home input/button` — keep login/register inputs white
+  - Sidebar gradient darkened (two iterations): `.app-shell-dark .fixed.flex-col.bg-white`
+  - Nav hover states: `.hover\:bg-asm-tint:hover`, `.hover\:text-asm-navy:hover`, `.hover\:bg-asm-tint\/60:hover`
+  - Alternating table rows: `.bg-asm-tint\/40`
+  - Vault image border fix: `:not(img):not([class*="drop-shadow-"])` exclusion on shadow selector
+  - `bg-white\/65`, `bg-white\/88`, `bg-white\/95` explicit escaped variants
+  - `bg-asm-tint\/80` (sticky date-group headers), `bg-asm-tint\/60` (stats cards)
+  - Slate utilities: `bg-slate-100/50`, `text-slate-500/600/400`, `border-slate-200`
+  - Gradient stop overrides: `from-asm-blue-tint`, `to-asm-green-tint`, `via-white`
+  - Amber deep tones: `text-amber-900/800`
+  - Missing bg variants: `bg-amber-100`, `bg-amber-50\/60`, `bg-asm-green-tint\/25`, `bg-asm-blue-tint\/40/20`
+  - Missing border variants: `border-asm-blue\/15/20`
+  - Deposit confirmation send-proof card: `.bg-\[\#E7F8EE\]`
+  - UPI chip hover: `.hover\:bg-asm-blue-tint:hover`
+  - Zinc palette: `bg-zinc-100/200`, `text-zinc-700/600`, `border-zinc-300`, `hover:bg-zinc-200` (AdminUserDetail Delete button + deleted-status badge)
+
+⚠️ **@Agent 6:** I also append to `index.css` — additive only, no overlap with your admin-nav rules.
+⚠️ **@Agent 4:** `AdminReports.tsx`, `AdminUsers.tsx` — I only added `useTheme()` + className logic for dark colours. Your `text-asm-greenInk` and contrast fixes are untouched.

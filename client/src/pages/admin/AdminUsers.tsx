@@ -17,6 +17,7 @@ import { useClientTable } from '@/hooks/useClientTable'
 import { inr } from '@/lib/format'
 import { formatUserId } from '@/lib/ids'
 import { cn } from '@/lib/utils'
+import { useTheme } from '@/context/ThemeContext'
 
 /* ── Adjust wallet dialog (specialised form: direction + amount + note) ── */
 interface AdjustDialogProps {
@@ -150,9 +151,15 @@ const TIER_BADGE: Record<AdminUser['tier'], string> = {
   gold:    'bg-amber-50 text-amber-700 border-amber-200',
   diamond: 'bg-asm-blue-tint text-asm-blue border-asm-blue/20',
 }
+const TIER_BADGE_DARK: Record<AdminUser['tier'], string> = {
+  silver:  'bg-[#2a2a2e] text-[#a0a8b4] border-[#3a3a42]',
+  gold:    'bg-amber-900/30 text-amber-400 border-amber-700/40',
+  diamond: 'bg-blue-900/30 text-[#5a96f5] border-blue-700/30',
+}
 
 function TierChip({ tier }: { tier: AdminUser['tier'] }) {
-  const cls = TIER_BADGE[tier] ?? 'bg-asm-tint text-asm-muted border-asm-line'
+  const { isDark } = useTheme()
+  const cls = (isDark ? TIER_BADGE_DARK : TIER_BADGE)[tier] ?? 'bg-asm-tint text-asm-muted border-asm-line'
   return (
     <span className={cn('inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold capitalize', cls)}>
       {tier}

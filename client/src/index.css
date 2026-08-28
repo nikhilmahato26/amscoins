@@ -268,6 +268,21 @@ html.dark ::-webkit-scrollbar-thumb {
 }
 html.dark ::-webkit-scrollbar-thumb:hover { background-color: #48484a; }
 
+/* ── Always-light surfaces: block dark: variant bleed ───────────
+   html.dark is set globally so dark:bg-input/30 fires everywhere,
+   including auth pages (login / register / forgot-password) that use
+   theme-light-home and must stay visually white.
+   Selector specificity: .dark .theme-light-home input = (0,2,1)
+   beats .dark .dark\:bg-input\/30 = (0,2,0) — no !important needed.
+   ─────────────────────────────────────────────────────────────── */
+.dark .theme-light-home input,
+.dark .theme-light-home textarea {
+  background-color: rgb(255 255 255);
+}
+.dark .theme-light-home button.bg-white {
+  background-color: rgb(255 255 255);
+}
+
 /* ════════════════════════════════════════════════════════════════
    SURFACE RULES — scoped to .app-shell-dark
    This class is added ONLY by AppShell when isDark=true.
@@ -317,7 +332,7 @@ html.dark ::-webkit-scrollbar-thumb:hover { background-color: #48484a; }
 /* ── Mobile drawer — L3 elevation ── */
 .app-shell-dark .fixed.flex-col.bg-white {
   background-color: var(--dk3);
-  background-image: linear-gradient(180deg, #353538 0%, #28282b 100%);
+  background-image: linear-gradient(180deg, #16161a 0%, #0f0f12 100%);
   box-shadow: 16px 0 60px rgba(0, 0, 0, 0.75);
 }
 
@@ -331,6 +346,18 @@ html.dark ::-webkit-scrollbar-thumb:hover { background-color: #48484a; }
 .app-shell-dark .bg-sky-50         { background-color: rgba(100, 210, 255, 0.10); }
 .app-shell-dark .bg-asm-navy       { background-color: var(--dk2); }
 .app-shell-dark .rounded-xl.bg-asm-tint { background-color: var(--dk2); }
+
+/* ── Nav hover states ── */
+.app-shell-dark .hover\:bg-asm-tint:hover {
+  background-color: rgba(255, 255, 255, 0.07);
+}
+.app-shell-dark .hover\:text-asm-navy:hover {
+  color: var(--dk-text-hi);
+}
+/* Table row hover (DataTable rowHover) */
+.app-shell-dark .hover\:bg-asm-tint\/60:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
 
 /* ── Text hierarchy ── */
 .app-shell-dark .text-asm-navy  { color: var(--dk-text-hi); }
@@ -364,7 +391,7 @@ html.dark ::-webkit-scrollbar-thumb:hover { background-color: #48484a; }
 .app-shell-dark .border-red-200         { border-color: rgba(255, 69, 58, 0.25); }
 
 /* ── Shadows ── */
-.app-shell-dark [class*="shadow-["] {
+.app-shell-dark [class*="shadow-["]:not(img):not([class*="drop-shadow-"]) {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5),
               0 0 0 1px var(--dk-border);
 }
@@ -380,15 +407,44 @@ html.dark ::-webkit-scrollbar-thumb:hover { background-color: #48484a; }
 .app-shell-dark input:focus,
 .app-shell-dark textarea:focus {
   border-color: rgba(90, 150, 245, 0.55);
-  box-shadow: 0 0 0 3px rgba(90, 150, 245, 0.14);
   outline: none;
 }
+/* Inputs nested inside a styled wrapper (bg-white → dark card gradient) must
+   be transparent so they blend with the wrapper rather than showing a mismatched
+   near-black (#111113) inset. The wrapper provides the visual container; the
+   input itself only needs text + caret styling. */
+.app-shell-dark .bg-white input,
+.app-shell-dark .bg-white textarea {
+  background-color: transparent;
+}
+
+/* ── Membership / profile card — restore white-tint overlays ──────────────
+   The broad [class*="bg-white/"] rule converts semi-transparent white tints to
+   dark glass, which breaks gradient cards that rely on bg-white/X for avatar,
+   badge, edit button, and chip affordances.
+   Scoped to .membership-card so all other bg-white/ glass rules are untouched. */
+.app-shell-dark .membership-card [class*="bg-white/"] {
+  background-color: initial;
+  backdrop-filter: none;
+}
+.app-shell-dark .membership-card .bg-white\/12 { background-color: rgb(255 255 255 / 0.12); }
+.app-shell-dark .membership-card .bg-white\/15 { background-color: rgb(255 255 255 / 0.15); }
 
 /* ── Focus ring ── */
 .app-shell-dark :focus-visible {
   outline: 2px solid var(--dk-blue);
   outline-offset: 2px;
   border-radius: 6px;
+}
+/* Inputs/textareas already get visual focus feedback through their own
+   border-color/box-shadow change (input:focus rule above) or their wrapper's
+   focus-within ring — suppress the redundant inner outline the broad
+   :focus-visible rule would otherwise add on top. */
+.app-shell-dark input:focus-visible,
+.app-shell-dark textarea:focus-visible,
+.app-shell-dark select:focus-visible {
+  outline: none;
+  outline-offset: 0;
 }
 
 /* ── Key number glow ── */
@@ -416,6 +472,11 @@ html.dark ::-webkit-scrollbar-thumb:hover { background-color: #48484a; }
 .app-shell-dark .bg-white\/95 {
   background-color: rgba(15, 15, 17, 0.96);
   backdrop-filter: blur(24px) saturate(1.8);
+}
+
+/* Alternating table rows (DataTable odd rows) */
+.app-shell-dark .bg-asm-tint\/40 {
+  background-color: rgba(255, 255, 255, 0.03);
 }
 
 /* Sticky date-group headers in account/dashboard use bg-asm-tint/80 */
@@ -471,3 +532,26 @@ html.dark ::-webkit-scrollbar-thumb:hover { background-color: #48484a; }
 /* ── Missing border variants ── */
 .app-shell-dark .border-asm-blue\/15 { border-color: rgba(90, 150, 245, 0.20); }
 .app-shell-dark .border-asm-blue\/20 { border-color: rgba(90, 150, 245, 0.28); }
+
+/* ── Deposit confirmation — send-proof card (hard-coded light green) ── */
+.app-shell-dark .bg-\[\#E7F8EE\] {
+  background-color: rgba(48, 209, 88, 0.08);
+}
+
+/* ── UPI chip hover — Tailwind hover:bg-asm-blue-tint renders light in dark mode ── */
+.app-shell-dark .hover\:bg-asm-blue-tint:hover {
+  background-color: rgba(90, 150, 245, 0.12);
+}
+
+/* ── Stats card tint/60 (AdminUserDetail wallet-balance / total-invested cards) ── */
+.app-shell-dark .bg-asm-tint\/60 {
+  background-color: var(--dk2);
+}
+
+/* ── Zinc palette (Delete button, deleted-status badge) ── */
+.app-shell-dark .bg-zinc-100        { background-color: var(--dk2); }
+.app-shell-dark .bg-zinc-200        { background-color: rgba(255, 255, 255, 0.06); }
+.app-shell-dark .text-zinc-700      { color: var(--dk-text-body); }
+.app-shell-dark .text-zinc-600      { color: var(--dk-text-muted); }
+.app-shell-dark .border-zinc-300    { border-color: var(--dk-border-med); }
+.app-shell-dark .hover\:bg-zinc-200:hover { background-color: rgba(255, 255, 255, 0.07); }

@@ -267,16 +267,21 @@ export function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   return (
-    <div className="theme-light-home min-h-screen bg-white font-jakarta text-asm-navy">
+    <div className="theme-light-home min-h-screen overflow-x-hidden bg-white font-jakarta text-asm-navy">
       <LandingHeader menuOpen={menuOpen} onMenu={() => setMenuOpen(true)} />
       <LandingMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
 
-      <main className="mx-auto w-full max-w-[1180px] pb-8">
-        <Hero />
+      <main>
+        {/* Hero constrained to max-width */}
+        <div className="mx-auto w-full max-w-[1180px]">
+          <Hero />
+        </div>
+
+        {/* Full-bleed strips */}
         <PatrioticStrip />
         <TrustMarquee />
 
-        {/* ── Stats bar (Task 2) ── */}
+        {/* ── Stats bar — full-bleed border, centered content ── */}
         <section aria-label="Platform statistics" className="border-y border-asm-line bg-white py-8">
           <div className="mx-auto max-w-3xl px-4">
             <div className="grid grid-cols-3 divide-x divide-asm-line">
@@ -299,18 +304,21 @@ export function LandingPage() {
           </div>
         </section>
 
+        {/* Full-bleed bg-asm-tint section */}
         <TrustSection />
 
-        <MarketSnapshot />
-        <PlansSection />
-        <HowItWorksSection />
+        {/* Remaining content constrained to max-width */}
+        <div className="mx-auto w-full max-w-[1180px] pb-8">
+          <MarketSnapshot />
+          <PlansSection />
+          <HowItWorksSection />
 
-        {/* ── Invite & Level Up ── */}
-        <section
-          id="referral"
-          className="mx-4 mt-8 overflow-hidden rounded-2xl lg:mx-8"
-          style={{ background: 'linear-gradient(135deg, #0B4FD8 0%, #0E6E32 100%)' }}
-        >
+          {/* ── Invite & Level Up ── */}
+          <section
+            id="referral"
+            className="mx-4 mt-8 overflow-hidden rounded-2xl lg:mx-8"
+            style={{ background: 'linear-gradient(135deg, #0B4FD8 0%, #0E6E32 100%)' }}
+          >
           <div className="relative px-5 py-6">
             <div
               aria-hidden
@@ -338,7 +346,8 @@ export function LandingPage() {
               />
             </Link>
           </div>
-        </section>
+          </section>
+        </div>
       </main>
 
       <LandingFooter />
