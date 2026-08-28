@@ -61,21 +61,21 @@ export function ForgotPasswordPage() {
 
   const btn = [
     'flex min-h-11 w-full items-center justify-center rounded-xl',
-    'bg-asm-blue px-6 text-[13px] font-bold uppercase tracking-[0.08em] text-white',
-    'transition-colors hover:bg-asm-blue-dark active:scale-[0.99]',
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-2',
+    'bg-skin-accent px-6 text-[13px] font-bold uppercase tracking-[0.08em] text-skin-on-accent',
+    'transition-colors hover:bg-skin-accent-hover active:scale-[0.99]',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skin-accent focus-visible:ring-offset-2',
     'disabled:opacity-55 disabled:cursor-not-allowed',
   ].join(' ')
   const inputCls =
-    'border-asm-line bg-white text-asm-navy placeholder:text-asm-muted/60 focus-visible:ring-asm-blue'
+    'border-skin-line bg-skin-surface text-skin-text placeholder:text-skin-muted/60 focus-visible:ring-skin-accent'
 
   return (
     <AuthLayout>
       <div className="mb-7">
-        <h2 className="text-[26px] font-extrabold leading-tight tracking-tight text-asm-navy">
+        <h2 className="text-[26px] font-extrabold leading-tight tracking-tight text-skin-text">
           Reset your password
         </h2>
-        <p className="mt-1.5 text-[13px] leading-relaxed text-asm-body">
+        <p className="mt-1.5 text-[13px] leading-relaxed text-skin-body">
           {step === 'email' && 'Enter your email and we will send you a one-time code.'}
           {step === 'otp' && `Enter the 6-digit code we sent to ${email}.`}
           {step === 'password' && 'Choose a new password for your account.'}
@@ -111,7 +111,7 @@ export function ForgotPasswordPage() {
           <button type="submit" disabled={loading || otp.length !== 6} className={btn}>
             {loading ? 'Verifying…' : 'Verify code'}
           </button>
-          <button type="button" className="w-full text-[12px] text-asm-blue hover:underline"
+          <button type="button" className="w-full text-[12px] text-skin-accent hover:underline"
             onClick={() => { setStep('email'); setError(''); setOtp('') }}>
             Use a different email
           </button>
@@ -137,9 +137,9 @@ export function ForgotPasswordPage() {
         </form>
       )}
 
-      <p className="mt-6 text-center text-[13px] text-asm-body">
+      <p className="mt-6 text-center text-[13px] text-skin-body">
         Remembered it?{' '}
-        <Link to="/login" className="font-semibold text-asm-blue hover:underline">Back to sign in</Link>
+        <Link to="/login" className="font-semibold text-skin-accent hover:underline">Back to sign in</Link>
       </p>
     </AuthLayout>
   )

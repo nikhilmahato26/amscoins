@@ -11,6 +11,8 @@ import { BottomNav } from '@/components/app/BottomNav'
 import { GridBackdrop } from '@/components/app/GridBackdrop'
 import { APP_NAV_LINKS } from '@/components/app/navLinks'
 import { SideNav } from '@/components/app/SideNav'
+import { TierUpgradeCelebration } from '@/components/app/TierUpgradeCelebration'
+import { useTierUpgrade } from '@/hooks/useTierUpgrade'
 import { cn } from '@/lib/utils'
 
 /* ── Mobile slide-in drawer ─────────────────────────────────────── */
@@ -263,6 +265,7 @@ export function AppShell({
   const hamburgerRef = useRef<HTMLButtonElement>(null)
   const navigate = useNavigate()
   const { isDark } = useTheme()
+  const { celebrationTier, dismiss } = useTierUpgrade()
 
   const defaultHelp = useCallback(() => {
     void navigate('/app/support')
@@ -276,13 +279,16 @@ export function AppShell({
       className={cn(
         'relative min-h-screen overflow-x-hidden font-jakarta',
         isDark
-          ? 'app-shell-dark bg-[#0d0d0e] text-[#f2f2f7]'
+          ? 'app-shell-dark bg-[#0b0b0c] text-[#fcfcfc]'
           : 'theme-light-home bg-asm-tint text-asm-navy',
         className
       )}
     >
       <GridBackdrop />
       <SideNav />
+
+      {/* Tier upgrade celebration — fixed overlay, plays once per upgrade */}
+      <TierUpgradeCelebration tier={celebrationTier} onDismiss={dismiss} />
 
       {/* Mobile drawer */}
       <MobileDrawer open={drawerOpen} onClose={closeDrawer} triggerRef={hamburgerRef} />

@@ -37,10 +37,10 @@ export function LoginPage() {
     <AuthLayout>
       {/* Heading */}
       <div className="mb-7">
-        <h2 className="text-[26px] font-extrabold leading-tight tracking-tight text-asm-navy">
+        <h2 className="text-[26px] font-extrabold leading-tight tracking-tight text-skin-text">
           Welcome back
         </h2>
-        <p className="mt-1.5 text-[13px] leading-relaxed text-asm-body">
+        <p className="mt-1.5 text-[13px] leading-relaxed text-skin-body">
           Sign in to continue your investment journey.
         </p>
       </div>
@@ -51,10 +51,10 @@ export function LoginPage() {
         onClick={() => { window.location.href = authService.googleLoginUrl() }}
         className={[
           'flex w-full items-center justify-center gap-3 rounded-xl',
-          'border border-asm-line bg-white px-4 py-3',
-          'text-[13px] font-semibold text-asm-navy',
-          'transition-colors hover:bg-asm-tint active:scale-[0.99]',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-2',
+          'border border-skin-line bg-skin-surface px-4 py-3',
+          'text-[13px] font-semibold text-skin-text',
+          'transition-colors hover:bg-skin-tint active:scale-[0.99]',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skin-accent focus-visible:ring-offset-2',
         ].join(' ')}
       >
         <svg className="size-4 shrink-0" viewBox="0 0 24 24" aria-hidden>
@@ -70,10 +70,10 @@ export function LoginPage() {
       {/* Divider */}
       <div className="relative my-5">
         <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-asm-line" />
+          <span className="w-full border-t border-skin-line" />
         </div>
         <div className="relative flex justify-center">
-          <span className="bg-white px-3 text-[11px] uppercase tracking-widest text-asm-muted">or</span>
+          <span className="bg-skin-surface px-3 text-[11px] uppercase tracking-widest text-skin-muted">or</span>
         </div>
       </div>
 
@@ -85,7 +85,7 @@ export function LoginPage() {
             placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="border-asm-line bg-white text-asm-navy placeholder:text-asm-muted/60 focus-visible:ring-asm-blue focus-visible:border-asm-greenInk"
+            className="border-skin-line bg-skin-surface text-skin-text placeholder:text-skin-muted/60 focus-visible:ring-skin-accent focus-visible:border-asm-greenInk"
             required
             autoComplete="email"
           />
@@ -97,7 +97,7 @@ export function LoginPage() {
             placeholder="Your password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="border-asm-line bg-white text-asm-navy placeholder:text-asm-muted/60 focus-visible:ring-asm-blue"
+            className="border-skin-line bg-skin-surface text-skin-text placeholder:text-skin-muted/60 focus-visible:ring-skin-accent"
             required
             autoComplete="current-password"
           />
@@ -110,7 +110,7 @@ export function LoginPage() {
         )}
 
         <div className="flex justify-end">
-          <Link to="/forgot-password" className="text-[12px] text-asm-blue hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue rounded">
+          <Link to="/forgot-password" className="text-[12px] text-skin-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skin-accent rounded">
             Forgot password?
           </Link>
         </div>
@@ -120,10 +120,10 @@ export function LoginPage() {
           disabled={loading}
           className={[
             'flex min-h-11 w-full items-center justify-center rounded-xl',
-            'bg-asm-blue px-6 text-[13px] font-bold uppercase tracking-[0.08em] text-white',
+            'bg-skin-accent px-6 text-[13px] font-bold uppercase tracking-[0.08em] text-skin-on-accent',
             'shadow-[0_8px_20px_-8px_rgb(11_79_216_/_0.55)]',
-            'transition-colors hover:bg-asm-blue-dark active:scale-[0.99]',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-2',
+            'transition-colors hover:bg-skin-accent-hover active:scale-[0.99]',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skin-accent focus-visible:ring-offset-2',
             'disabled:opacity-55 disabled:cursor-not-allowed disabled:shadow-none',
           ].join(' ')}
         >
@@ -131,9 +131,9 @@ export function LoginPage() {
         </button>
       </form>
 
-      <p className="mt-6 text-center text-[13px] text-asm-body">
+      <p className="mt-6 text-center text-[13px] text-skin-body">
         No account yet?{' '}
-        <Link to="/register" className="font-semibold text-asm-blue hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue rounded">
+        <Link to="/register" className="font-semibold text-skin-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skin-accent rounded">
           Create one
         </Link>
       </p>
@@ -141,25 +141,25 @@ export function LoginPage() {
       {/* Trust blurbs */}
       <ul className="mt-10 space-y-3 text-left">
         <li className="flex gap-3">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-asm-blue-tint">
-            <svg className="size-4 text-asm-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-skin-tint">
+            <svg className="size-4 text-skin-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
             </svg>
           </span>
           <div>
-            <p className="text-[13px] font-semibold text-asm-navy">Secure &amp; protected</p>
-            <p className="text-[12px] text-asm-body mt-0.5">Your account is shielded with advanced encryption.</p>
+            <p className="text-[13px] font-semibold text-skin-text">Secure &amp; protected</p>
+            <p className="text-[12px] text-skin-body mt-0.5">Your account is shielded with advanced encryption.</p>
           </div>
         </li>
         <li className="flex gap-3">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-asm-blue-tint">
-            <svg className="size-4 text-asm-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-skin-tint">
+            <svg className="size-4 text-skin-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
             </svg>
           </span>
           <div>
-            <p className="text-[13px] font-semibold text-asm-navy">Quick access</p>
-            <p className="text-[12px] text-asm-body mt-0.5">Pick up exactly where you left off.</p>
+            <p className="text-[13px] font-semibold text-skin-text">Quick access</p>
+            <p className="text-[12px] text-skin-body mt-0.5">Pick up exactly where you left off.</p>
           </div>
         </li>
       </ul>

@@ -27,8 +27,10 @@ export function AsmLogo({
       <AsmMark className="size-9" />
       <span className="flex flex-col">
         <span className="flex items-baseline gap-1.5 text-[19px] font-extrabold leading-none tracking-[0.02em] sm:text-[22px]">
-          <span className="text-asm-navy">ASM</span>
-          <span className="text-asm-greenInk">COINS</span>
+          {/* Light keeps the brand navy + green; dark shifts to warm-white + gold
+             for contrast and to match the Ink & Gold theme. */}
+          <span className="text-skin-text">ASM</span>
+          <span className="text-asm-greenInk dark:text-skin-accent">COINS</span>
         </span>
         {/*
           data-tagline lets a tight container drop the strapline without a
@@ -37,7 +39,7 @@ export function AsmLogo({
         {showTagline ? (
           <span
             data-tagline
-            className="pt-1 text-[10px] font-semibold uppercase leading-none tracking-[0.28em] text-asm-muted"
+            className="pt-1 text-[10px] font-semibold uppercase leading-none tracking-[0.28em] text-skin-muted"
           >
             Invest · Grow · Prosper
           </span>

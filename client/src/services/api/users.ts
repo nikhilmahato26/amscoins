@@ -32,6 +32,10 @@ export const deletePayoutMethod = (id: string) =>
 export const setDefaultPayoutMethod = (id: string) =>
   apiFetch<{ user: User }>(`/users/me/payout-methods/${id}/default`, { method: 'PATCH' })
 
+/** Tells the server the tier celebration has been seen — persists across devices. */
+export const markCelebrationSeen = () =>
+  apiFetch<{ celebrationSeenTier: string }>('/users/me/celebration-seen', { method: 'POST' })
+
 /**
  * Upload a profile photo. Uses raw fetch (not apiFetch) because the body is
  * multipart FormData, which must not be JSON-stringified or given a manual

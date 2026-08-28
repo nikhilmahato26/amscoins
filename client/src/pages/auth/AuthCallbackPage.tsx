@@ -28,9 +28,9 @@ export function AuthCallbackPage() {
 
   if (failed) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-asm-tint text-asm-navy">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-skin-tint text-skin-text">
         <p className="text-sm">Google sign-in could not be completed.</p>
-        <button className="text-asm-blue underline text-sm" onClick={() => navigate('/login', { replace: true })}>
+        <button className="text-skin-accent underline text-sm" onClick={() => navigate('/login', { replace: true })}>
           Back to sign in
         </button>
       </div>
@@ -38,9 +38,9 @@ export function AuthCallbackPage() {
   }
 
   return (
-    <div role="status" aria-live="polite" className="min-h-screen flex items-center justify-center bg-asm-tint">
+    <div role="status" aria-live="polite" className="min-h-screen flex items-center justify-center bg-skin-tint">
       <span className="sr-only">Signing you in</span>
-      <span aria-hidden className="size-8 animate-spin rounded-full border-2 border-asm-blue/20 border-t-asm-blue" />
+      <span aria-hidden className="size-8 animate-spin rounded-full border-2 border-skin-accent/20 border-t-skin-accent" />
     </div>
   )
 }
