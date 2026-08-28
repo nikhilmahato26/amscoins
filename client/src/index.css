@@ -589,6 +589,10 @@ html.dark ::-webkit-scrollbar-thumb:hover { background-color: #48484a; }
 /* ── Missing background variants ── */
 .app-shell-dark .bg-amber-100          { background-color: rgba(255, 212, 38, 0.16); }
 .app-shell-dark .bg-amber-50\/60       { background-color: rgba(200, 140, 0,  0.14); }
+/* Leaderboard podium medals — silver (#2) and bronze (#3) had no dark rule and
+   rendered as bright light cards. Give them subtle metallic tints on ink. */
+.app-shell-dark .bg-slate-50\/60       { background-color: rgba(148, 163, 184, 0.12); }
+.app-shell-dark .bg-orange-50\/40      { background-color: rgba(217, 130, 60,  0.13); }
 .app-shell-dark .bg-asm-green-tint\/25 { background-color: rgba(48,  209, 88, 0.11); }
 .app-shell-dark .bg-asm-blue-tint\/40  { background-color: rgba(244, 197, 6, 0.16); }
 .app-shell-dark .bg-asm-blue-tint\/20  { background-color: rgba(244, 197, 6, 0.10); }
