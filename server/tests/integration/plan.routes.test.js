@@ -14,7 +14,7 @@ async function registerToken() {
   return res.body.token
 }
 
-test('silver user sees silver unlocked, gold/diamond locked', async () => {
+test('silver user sees silver unlocked, gold locked (diamond inactive)', async () => {
   await seedPlans()
   const token = await registerToken()
   const res = await request(app).get('/api/plans').set('Authorization', `Bearer ${token}`)
@@ -22,7 +22,7 @@ test('silver user sees silver unlocked, gold/diamond locked', async () => {
   const byKey = Object.fromEntries(res.body.map((p) => [p.key, p.unlocked]))
   expect(byKey.silver).toBe(true)
   expect(byKey.gold).toBe(false)
-  expect(byKey.diamond).toBe(false)
+  expect(byKey.diamond).toBeUndefined() // diamond is inactive and not returned
 })
 
 test('plans require auth', async () => {
