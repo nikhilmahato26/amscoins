@@ -88,12 +88,19 @@ async function cancelMature(id) {
   if (job) await job.remove()
 }
 
+// Stub — fully implemented in Task 5. Added here so Task 4's approveInvestment
+// can call it without a runtime error; it is a no-op until the worker is wired.
+async function scheduleInstallment(_inv, _day) {
+  // no-op until Task 5 implements the installment job
+}
+
 module.exports = {
   investmentQueue,
   queueConnection,
   scheduleAutoReject,
   scheduleAutoDeposit,
   scheduleMature,
+  scheduleInstallment,
   cancelAutoReject,
   cancelAutoDeposit,
   cancelMature,

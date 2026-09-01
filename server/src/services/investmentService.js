@@ -151,6 +151,7 @@ async function createInvestment(user, { planKey, amount, referralCode }) {
     planKey,
     amount,
     returnPct: plan.returnPct,
+    installmentPcts: plan.installmentPcts || [],
     expectedReturn: Math.round((amount * plan.returnPct) / 100),
     referenceCode: await uniqueRef(),
     referralCodeUsed: isFirstDeposit && referralCode ? referralCode : null,
@@ -222,7 +223,23 @@ async function approveInvestment(investmentId, adminId, { auto = false } = {}) {
       const now = new Date()
       inv.status = 'active'
       inv.startAt = now
-      inv.maturesAt = new Date(now.getTime() + settings.cycleDurationHours * 3600 * 1000)
+      if (inv.installmentPcts && inv.installmentPcts.length > 0) {
+        // Build installments so their amounts sum exactly to expectedReturn.
+        const pcts = inv.installmentPcts
+        const partialAmounts = pcts.slice(0, -1).map((pct) => Math.round((inv.amount * pct) / 100))
+        const lastAmount = inv.expectedReturn - partialAmounts.reduce((s, a) => s + a, 0)
+        inv.installments = pcts.map((pct, i) => ({
+          day: i + 1,
+          pct,
+          amount: i < pcts.length - 1 ? partialAmounts[i] : lastAmount,
+          status: 'scheduled',
+          maturesAt: new Date(now.getTime() + (i + 1) * 24 * 3600 * 1000),
+        }))
+        // maturesAt on the investment = when the last installment fires
+        inv.maturesAt = inv.installments[inv.installments.length - 1].maturesAt
+      } else {
+        inv.maturesAt = new Date(now.getTime() + settings.cycleDurationHours * 3600 * 1000)
+      }
       // auto = the auto-deposit timeout approved this (adminId is null); flag it
       // so admin History can distinguish an automated approval from a manual one.
       inv.approvedBy = adminId
@@ -265,7 +282,13 @@ async function approveInvestment(investmentId, adminId, { auto = false } = {}) {
       if (result.user) email.depositApproved(result.user, result.inv).catch(() => {}) // fire-and-forget
       await queue.cancelAutoReject(result.inv._id)
       await queue.cancelAutoDeposit(result.inv._id)
-      await queue.scheduleMature(result.inv)
+      if (result.inv.installmentPcts && result.inv.installmentPcts.length > 0) {
+        for (const inst of result.inv.installments) {
+          await queue.scheduleInstallment(result.inv, inst.day)
+        }
+      } else {
+        await queue.scheduleMature(result.inv)
+      }
     }
 
     return result?.inv
@@ -596,12 +619,22 @@ async function runAutoDeposit(investmentId) {
 }
 
 async function runMature(investmentId) {
+  // Guard: installment-based investments never use this path — they are handled
+  // by runInstallment. An empty installmentPcts means single-payout (old Diamond
+  // or legacy).
   const inv = await Investment.findOneAndUpdate(
-    { _id: investmentId, status: 'active' },
+    {
+      _id: investmentId,
+      status: 'active',
+      $or: [
+        { installmentPcts: { $size: 0 } },
+        { installmentPcts: { $exists: false } },
+      ],
+    },
     { $set: { status: 'matured', maturedAt: new Date() } },
     { returnDocument: 'after' }
   )
-  if (!inv) return null // not active — idempotent no-op
+  if (!inv) return null
   await cacheDel('cache:admin:stats', `cache:dashboard:${inv.user}`)
   logger.info('Investment matured', { investmentId })
 
