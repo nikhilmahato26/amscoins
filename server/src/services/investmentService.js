@@ -236,7 +236,7 @@ async function approveInvestment(investmentId, adminId, { auto = false } = {}) {
 
       const user = await User.findById(inv.user).session(session)
       const referralResult = user
-        ? await creditReferralIfFirst(user, session)
+        ? await creditReferralIfFirst(user, session, inv.amount)
         : { credited: false, referrerId: null }
 
       // Send approval notification after the transaction commits (below)
