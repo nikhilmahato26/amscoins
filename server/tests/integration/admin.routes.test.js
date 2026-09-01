@@ -36,7 +36,8 @@ test('non-admin is blocked from admin routes with 403', async () => {
 test('admin approves a deposit; funds stay locked and referrer incremented', async () => {
   const referrer = await registerToken()
   const { token: userToken } = await registerToken(referrer.user.referralCode)
-  await request(app).post('/api/investments').set('Authorization', `Bearer ${userToken}`).send({ planKey: 'silver', amount: 200000 })
+  const inv = await request(app).post('/api/investments').set('Authorization', `Bearer ${userToken}`).send({ planKey: 'silver', amount: 200000 })
+  await request(app).post(`/api/investments/${inv.body.investment._id}/notify`).set('Authorization', `Bearer ${userToken}`)
 
   const aToken = await adminToken()
   const pending = await request(app).get('/api/admin/investments?status=pending').set('Authorization', `Bearer ${aToken}`)

@@ -51,6 +51,7 @@ describe('getDepositGate status', () => {
   test('a pending deposit reports status "pending"', async () => {
     const u = await makeUser()
     const { investment } = await createInvestment(u, { planKey: 'silver', amount: 200000 })
+    await Investment.updateOne({ _id: investment._id }, { $set: { paymentNotified: true } })
     const gate = await getDepositGate(u._id)
     expect(gate.status).toBe('pending')
     expect(gate.pendingInvestmentId).toBe(String(investment._id))
@@ -104,7 +105,8 @@ describe('getDepositGate status', () => {
 describe('createInvestment enforces the gate', () => {
   test('a second deposit while one is pending is blocked (409)', async () => {
     const u = await makeUser()
-    await createInvestment(u, { planKey: 'silver', amount: 200000 })
+    const { investment } = await createInvestment(u, { planKey: 'silver', amount: 200000 })
+    await Investment.updateOne({ _id: investment._id }, { $set: { paymentNotified: true } })
     await expect(createInvestment(u, { planKey: 'silver', amount: 200000 })).rejects.toMatchObject({
       statusCode: 409,
     })
