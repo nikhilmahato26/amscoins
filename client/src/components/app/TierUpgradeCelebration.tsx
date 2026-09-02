@@ -33,7 +33,7 @@ interface Benefit { label: string; value: string }
 
 const TIER_BENEFITS: Record<CelebratableTier, Benefit[]> = {
   gold: [
-    { label: 'Total Return',      value: '40% in 72h'  },
+    { label: 'Total Return',      value: '35% in 72h'  },
     { label: 'TDS on Withdrawal', value: '3% only'    },
     { label: 'Max Investment',   value: '₹3,00,000'   },
     { label: 'Min Investment',   value: '₹3,000'      },
