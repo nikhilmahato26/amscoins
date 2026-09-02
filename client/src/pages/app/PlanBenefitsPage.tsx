@@ -14,7 +14,7 @@ const TIER_BAND = {
   diamond: { bg: 'bg-gradient-to-br from-asm-blue to-[#1E93FE]',   text: 'text-white'    },
 } as const
 
-const RETURN_BY_TIER = { silver: '25%', gold: '30%', diamond: '40%' } as const
+const RETURN_BY_TIER = { silver: '30%', gold: '40%', diamond: '40%' } as const
 
 const TIER_ICONS: Record<Tier, LucideIcon> = {
   silver: Medal,

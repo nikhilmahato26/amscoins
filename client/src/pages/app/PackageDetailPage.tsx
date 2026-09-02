@@ -25,7 +25,7 @@ const TIER_BAND_DARK = {
   diamond: { bg: 'bg-gradient-to-br from-[#1a3a6e] to-[#0f2348]', text: 'text-[#7ab4ff]' },
 } as const
 
-const RETURN_BY_TIER = { silver: '25%', gold: '30%', diamond: '40%' } as const
+const RETURN_BY_TIER = { silver: '30%', gold: '40%', diamond: '40%' } as const
 
 interface LocationState {
   planKey?: Tier

@@ -22,10 +22,10 @@ export const TIER_TDS_PCT: Record<Tier, number> = {
   diamond: 0,
 }
 
-/** Investment return percentage per tier (24h term). */
+/** Investment return percentage per tier (3-day installment plan). */
 export const TIER_RETURN_PCT: Record<Tier, number> = {
-  silver: 25,
-  gold: 30,
+  silver: 30,
+  gold: 40,
   diamond: 40,
 }
 
