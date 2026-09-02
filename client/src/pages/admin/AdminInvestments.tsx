@@ -76,12 +76,17 @@ export function AdminInvestments() {
     status: activeStatus,
   })
 
-  // Installment-plan investments (installmentPcts.length > 0) belong exclusively
-  // in the Installments tab — they must never appear in Returns, because the
-  // Returns "Approve" button credits everything at once, which is wrong for
-  // day-by-day installment plans. Filter them out before handing data to ReturnTab.
+  // Installment-plan investments (active + installmentPcts.length > 0) belong in the
+  // Installments tab only — the Returns "Approve" button credits everything at once,
+  // which is wrong for day-by-day plans.
+  //
+  // Exception: matured investments always stay in Returns. An investment only reaches
+  // 'matured' via the legacy single-payout path (runMature) — installment-plan
+  // investments never mature, they stay 'active' until all days are paid. So any
+  // 'matured' row in this data set is by definition a legacy/non-installment one and
+  // must remain visible here until the admin processes it.
   const returnsData = activeTab === 'returns'
-    ? data?.filter((d) => !d.installmentPcts?.length)
+    ? data?.filter((d) => d.status === 'matured' || !d.installmentPcts?.length)
     : undefined
 
   // Pipeline summary counts — derived from already-loaded data, no extra API call.
