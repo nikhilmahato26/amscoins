@@ -719,4 +719,11 @@ async function bulkRejectReturns(ids, adminId, reason = '', amount = 0) {
   return { rejected, failed }
 }
 
-module.exports = { getDepositGate, createInvestment, notifyPaymentSubmitted, approveInvestment, rejectInvestment, approveReturn, rejectReturn, approvePayout, rejectPayout, deleteInvestment, runAutoReject, runAutoDeposit, runMature, bulkApproveInvestments, bulkRejectInvestments, bulkApproveReturns, bulkRejectReturns }
+// Stub — fully implemented in Task 6. Exported here so the worker and sweep
+// can reference it without a runtime error; it is a no-op until Task 6 lands.
+async function runInstallment(_investmentId, _day) {
+  // TODO Task 6: mark installment available and credit wallet if last
+  return null
+}
+
+module.exports = { getDepositGate, createInvestment, notifyPaymentSubmitted, approveInvestment, rejectInvestment, approveReturn, rejectReturn, approvePayout, rejectPayout, deleteInvestment, runAutoReject, runAutoDeposit, runMature, runInstallment, bulkApproveInvestments, bulkRejectInvestments, bulkApproveReturns, bulkRejectReturns }
