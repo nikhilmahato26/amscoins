@@ -74,9 +74,8 @@ function TimeRemaining({ maturesAt }: { maturesAt: string }) {
 /* ── Data ───────────────────────────────────────────────────────── */
 
 const PLANS: { tier: Tier; name: string; returns: string; duration: string; min: string; max: string; requiredReferrals: number }[] = [
-  { tier: 'silver',  name: 'Silver',  returns: '25%', duration: '24 Hours', min: '₹1,000', max: '₹10,000',   requiredReferrals: 0  },
-  { tier: 'gold',    name: 'Gold',    returns: '30%', duration: '24 Hours', min: '₹3,000', max: '₹3,00,000',  requiredReferrals: 11 },
-  { tier: 'diamond', name: 'Diamond', returns: '40%', duration: '24 Hours', min: '₹5,000', max: '₹5,00,000',  requiredReferrals: 21 },
+  { tier: 'silver', name: 'Silver', returns: '30%', duration: '72 Hours', min: '₹1,000', max: '₹10,000',   requiredReferrals: 0  },
+  { tier: 'gold',   name: 'Gold',   returns: '40%', duration: '72 Hours', min: '₹3,000', max: '₹3,00,000', requiredReferrals: 21 },
 ]
 
 /* ── Page ───────────────────────────────────────────────────────── */

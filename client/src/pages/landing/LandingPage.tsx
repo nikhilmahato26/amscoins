@@ -48,8 +48,8 @@ const TRUST_PILLS: { Icon: LucideIcon; label: string }[] = [
   { Icon: ShieldCheck, label: 'Admin Verified'       },
   { Icon: Zap,         label: '3-Hour Payouts'       },
   { Icon: Headphones,  label: 'Daily Support'        },
-  { Icon: TrendingUp,  label: '25%–40% Returns'      },
-  { Icon: Clock,       label: '24-Hour Cycles'       },
+  { Icon: TrendingUp,  label: '30%–40% Returns'      },
+  { Icon: Clock,       label: '72-Hour Cycles'       },
   { Icon: Wallet,      label: 'Direct UPI Payout'    },
 ]
 
@@ -82,9 +82,9 @@ const PLANS: {
   slug: string; name: string; returns: string; duration: string;
   min: string; max: string; unlockNote: string; accent: 'silver' | 'gold' | 'diamond'
 }[] = [
-  { slug: 'silver',  name: 'Silver Plan',  returns: '25%', duration: '24 Hours', min: '₹1,000', max: '₹10,000',   unlockNote: 'Default Tier',              accent: 'silver'  },
-  { slug: 'gold',    name: 'Gold Plan',    returns: '30%', duration: '24 Hours', min: '₹3,000', max: '₹3,00,000',  unlockNote: 'Unlocks with 21 referrals', accent: 'gold'    },
-  { slug: 'diamond', name: 'Diamond Plan', returns: '40%', duration: '24 Hours', min: '₹5,000', max: '₹5,00,000',  unlockNote: 'Unlocks with 52 referrals', accent: 'diamond' },
+  { slug: 'silver',  name: 'Silver Plan',  returns: '30%', duration: '72 Hours', min: '₹1,000', max: '₹10,000',   unlockNote: 'Default Tier',              accent: 'silver'  },
+  { slug: 'gold',    name: 'Gold Plan',    returns: '40%', duration: '72 Hours', min: '₹3,000', max: '₹3,00,000',  unlockNote: 'Unlocks with 21 referrals', accent: 'gold'    },
+  { slug: 'diamond', name: 'Diamond Plan', returns: '40%', duration: '72 Hours', min: '₹5,000', max: '₹5,00,000',  unlockNote: 'Unlocks with 52 referrals', accent: 'diamond' },
 ]
 
 /* ── CountUp component (Task 2) ── */
@@ -200,7 +200,7 @@ const HOW_STEPS = [
   {
     n: '02',
     title: 'Pick your plan',
-    body: 'Choose Silver (25%), Gold (30%), or Diamond (40%) based on your investment amount.',
+    body: 'Choose Silver (30%), Gold (40%), or Diamond (40%) based on your investment amount.',
     icon: TrendingUp,
     tone: 'green' as const,
   },
@@ -327,7 +327,7 @@ export function LandingPage() {
             <UserPlus className="mb-3 size-8 text-white/80" strokeWidth={1.8} aria-hidden />
             <h2 className="text-[22px] font-extrabold leading-tight text-white">Invite &amp; Level Up</h2>
             <p className="mt-1.5 max-w-[38ch] text-[13px] leading-relaxed text-white/75">
-              Refer members to unlock Gold (30%) and Diamond (40%) tiers with higher limits. Referrals credit when friends complete their first deposit.
+              Refer members to unlock Gold (40%) and Diamond tiers with higher limits. Referrals credit when friends complete their first deposit.
             </p>
             <Link
               to="/register"

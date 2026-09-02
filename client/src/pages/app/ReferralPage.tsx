@@ -43,21 +43,21 @@ const UNLOCK_LEVELS: {
     requirement: 'Default Tier',
     card: 'border-asm-line bg-white',
     requirementTone: 'text-asm-greenInk',
-    perks: ['Invest up to ₹10,000', '25% Returns in 24h', '5% TDS on withdrawal'],
+    perks: ['Invest up to ₹10,000', '30% Returns in 72h', '5% TDS on withdrawal'],
   },
   {
     tier: 'gold',    name: 'Gold',
     requirement: 'Unlock with 21 referrals',
     card: 'border-amber-200 bg-amber-50',
     requirementTone: 'text-amber-600',
-    perks: ['Invest up to ₹3,00,000', '30% Returns in 24h', '3% TDS on withdrawal'],
+    perks: ['Invest up to ₹3,00,000', '40% Returns in 72h', '3% TDS on withdrawal'],
   },
   {
     tier: 'diamond', name: 'Diamond',
     requirement: 'Unlock with 52 referrals',
     card: 'border-asm-blue/20 bg-asm-blue-tint/40',
     requirementTone: 'text-asm-blue',
-    perks: ['Invest up to ₹5,00,000', '40% Returns in 24h', '0% TDS on withdrawal'],
+    perks: ['Invest up to ₹5,00,000', '40% Returns in 72h', '0% TDS on withdrawal'],
   },
 ]
 
