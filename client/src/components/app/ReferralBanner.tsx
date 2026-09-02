@@ -19,7 +19,7 @@ export function ReferralBanner({ className }: { className?: string }) {
       <div className="flex min-w-0 flex-1 flex-col">
         <h3 className="text-lg font-bold leading-[22.5px] text-asm-navy">Invite &amp; Level Up</h3>
         <p className="pt-1 text-xs leading-[19.5px] text-asm-body">
-          Refer friends to unlock Gold (35%) tier with higher limits and lower TDS.
+          Refer friends to unlock Gold (30%) and Diamond (40%) tiers with higher limits.
         </p>
         <Link
           to="/app/referral"
