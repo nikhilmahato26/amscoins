@@ -719,11 +719,213 @@ async function bulkRejectReturns(ids, adminId, reason = '', amount = 0) {
   return { rejected, failed }
 }
 
-// Stub — fully implemented in Task 6. Exported here so the worker and sweep
-// can reference it without a runtime error; it is a no-op until Task 6 lands.
-async function runInstallment(_investmentId, _day) {
-  // TODO Task 6: mark installment available and credit wallet if last
-  return null
+async function runInstallment(investmentId, day) {
+  // Mark the installment 'available'. The atomic positional update ensures only
+  // the first caller wins (subsequent calls find no matching 'scheduled' entry).
+  const inv = await Investment.findOneAndUpdate(
+    {
+      _id: investmentId,
+      status: 'active',
+      installments: { $elemMatch: { day, status: 'scheduled' } },
+    },
+    { $set: { 'installments.$[el].status': 'available' } },
+    {
+      arrayFilters: [{ 'el.day': day }],
+      returnDocument: 'after',
+    }
+  )
+  if (!inv) return null // already processed or wrong state
+
+  await cacheDel(`cache:admin:stats`, `cache:dashboard:${inv.user}`)
+  logger.info('Installment available', { investmentId, day })
+
+  const settings = await Settings.getSingleton()
+  if (env.WALLET_AUTO_CREDIT_ON_MATURITY && settings.autoPayEnabled) {
+    await approveInstallment(investmentId, day, null)
+  }
+  return Investment.findById(investmentId)
 }
 
-module.exports = { getDepositGate, createInvestment, notifyPaymentSubmitted, approveInvestment, rejectInvestment, approveReturn, rejectReturn, approvePayout, rejectPayout, deleteInvestment, runAutoReject, runAutoDeposit, runMature, runInstallment, bulkApproveInvestments, bulkRejectInvestments, bulkApproveReturns, bulkRejectReturns }
+async function approveInstallment(investmentId, day, adminId) {
+  const session = await mongoose.startSession()
+  try {
+    let updated
+    await session.withTransaction(async () => {
+      const inv = await Investment.findById(investmentId).session(session)
+      if (!inv) throw new ApiError(404, 'Investment not found')
+
+      const instIdx = inv.installments.findIndex((i) => i.day === day)
+      if (instIdx === -1) throw new ApiError(404, `Day ${day} installment not found`)
+      const installment = inv.installments[instIdx]
+      if (installment.status === 'paid')      throw new ApiError(409, 'Installment already paid')
+      if (installment.status === 'scheduled') throw new ApiError(409, 'Installment not yet available')
+
+      // Credit this day's return amount.
+      await walletService.credit(
+        inv.user,
+        installment.amount,
+        {
+          type: 'return',
+          actor: adminId ? 'admin' : 'system',
+          note: `Day ${day} return ${inv.referenceCode}`,
+          ref: inv._id,
+        },
+        session
+      )
+
+      inv.installments[instIdx].status = 'paid'
+      inv.installments[instIdx].creditedAt = new Date()
+      inv.installments[instIdx].creditedBy = adminId || null
+      inv.creditedAmount = (inv.creditedAmount || 0) + installment.amount
+
+      // Check if this was the last unpaid installment.
+      const isLastInstallment = inv.installments.every(
+        (i) => i.day === day || i.status === 'paid'
+      )
+      if (isLastInstallment) {
+        // Credit principal back and close the investment.
+        await walletService.credit(
+          inv.user,
+          inv.amount,
+          {
+            type: 'deposit',
+            actor: adminId ? 'admin' : 'system',
+            note: `Principal ${inv.referenceCode}`,
+            ref: inv._id,
+          },
+          session
+        )
+        inv.creditedAmount += inv.amount
+        inv.walletCredited = true
+        inv.status = 'returned'
+        inv.returnDecidedBy = adminId || null
+        inv.returnDecidedAt = new Date()
+      }
+
+      inv.markModified('installments')
+      await inv.save({ session })
+      updated = inv
+    })
+
+    if (updated) {
+      await cacheDel(
+        'cache:admin:stats',
+        `cache:dashboard:${updated.user}`,
+        `cache:wallet:${updated.user}`
+      )
+      logger.info('Installment approved', { investmentId, day, adminId })
+    }
+    return updated
+  } finally {
+    session.endSession()
+  }
+}
+
+async function requestBreak(investmentId, userId) {
+  const inv = await Investment.findOneAndUpdate(
+    { _id: investmentId, user: userId, status: 'active' },
+    { $set: { status: 'break_requested', breakRequestedAt: new Date() } },
+    { returnDocument: 'after' }
+  )
+  if (!inv) throw new ApiError(409, 'Investment is not active or not found')
+  await cacheDel('cache:admin:stats', `cache:dashboard:${userId}`)
+  logger.info('Break requested', { investmentId, userId })
+  return inv
+}
+
+async function approveBreak(investmentId, adminId) {
+  const session = await mongoose.startSession()
+  try {
+    let updated
+    await session.withTransaction(async () => {
+      const inv = await Investment.findById(investmentId).session(session)
+      if (!inv) throw new ApiError(404, 'Investment not found')
+      if (inv.status !== 'break_requested') throw new ApiError(409, 'No break request pending')
+
+      const breakAt = inv.breakRequestedAt || new Date()
+      let credited = inv.creditedAmount || 0
+
+      // Credit installments that had actually matured by the time of the break request.
+      for (let i = 0; i < inv.installments.length; i++) {
+        const inst = inv.installments[i]
+        if (inst.status !== 'paid' && (inst.maturesAt <= breakAt || inst.status === 'available')) {
+          await walletService.credit(
+            inv.user,
+            inst.amount,
+            {
+              type: 'return',
+              actor: 'admin',
+              note: `Day ${inst.day} return (break) ${inv.referenceCode}`,
+              ref: inv._id,
+            },
+            session
+          )
+          inv.installments[i].status = 'paid'
+          inv.installments[i].creditedAt = new Date()
+          inv.installments[i].creditedBy = adminId
+          credited += inst.amount
+        }
+      }
+
+      // Always credit principal on break.
+      await walletService.credit(
+        inv.user,
+        inv.amount,
+        {
+          type: 'deposit',
+          actor: 'admin',
+          note: `Principal (break) ${inv.referenceCode}`,
+          ref: inv._id,
+        },
+        session
+      )
+      credited += inv.amount
+
+      inv.markModified('installments')
+      inv.status = 'returned'
+      inv.walletCredited = true
+      inv.creditedAmount = credited
+      inv.returnDecidedBy = adminId
+      inv.returnDecidedAt = new Date()
+      await inv.save({ session })
+      updated = inv
+    })
+
+    if (updated) {
+      await queue.cancelInstallments(updated._id)
+      await cacheDel(
+        'cache:admin:stats',
+        `cache:dashboard:${updated.user}`,
+        `cache:wallet:${updated.user}`
+      )
+      logger.info('Break approved', { investmentId, adminId, credited: updated.creditedAmount })
+    }
+    return updated
+  } finally {
+    session.endSession()
+  }
+}
+
+async function rejectBreak(investmentId, adminId) {
+  const inv = await Investment.findOneAndUpdate(
+    { _id: investmentId, status: 'break_requested' },
+    { $set: { status: 'active', breakRequestedAt: null } },
+    { returnDocument: 'after' }
+  )
+  if (!inv) throw new ApiError(409, 'No break request pending')
+  logger.info('Break rejected', { investmentId, adminId })
+  return inv
+}
+
+module.exports = {
+  getDepositGate, createInvestment, notifyPaymentSubmitted,
+  approveInvestment, rejectInvestment,
+  approveReturn, rejectReturn,
+  approvePayout, rejectPayout,
+  deleteInvestment,
+  runAutoReject, runAutoDeposit, runMature,
+  runInstallment, approveInstallment,
+  requestBreak, approveBreak, rejectBreak,
+  bulkApproveInvestments, bulkRejectInvestments,
+  bulkApproveReturns, bulkRejectReturns,
+}
