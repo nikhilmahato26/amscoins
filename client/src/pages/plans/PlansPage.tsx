@@ -49,8 +49,8 @@ export function PlansPage() {
       </header>
 
       {isLoading && (
-        <div role="status" aria-live="polite" aria-label="Loading investment plans" className="grid gap-6 pt-12 sm:grid-cols-2 lg:grid-cols-3">
-          {[0, 1, 2].map((i) => (
+        <div role="status" aria-live="polite" aria-label="Loading investment plans" className="mx-auto grid w-full max-w-2xl gap-6 pt-12 sm:grid-cols-2">
+          {[0, 1].map((i) => (
             <div key={i} className="h-[360px] animate-pulse rounded-2xl border border-asm-line bg-white/70" />
           ))}
         </div>
@@ -67,7 +67,7 @@ export function PlansPage() {
           initial="hidden"
           animate="visible"
           transition={{ staggerChildren: 0.08 }}
-          className="grid gap-6 pt-12 sm:grid-cols-2 lg:grid-cols-3"
+          className="mx-auto grid w-full max-w-2xl gap-6 pt-12 sm:grid-cols-2"
         >
           {plans.map((plan) => (
             <PlanCard key={plan.key} plan={plan} />

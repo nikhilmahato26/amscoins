@@ -7,6 +7,7 @@ import { ArrowRight, Award, Lock, TrendingUp, Wallet } from 'lucide-react'
 import { AppShell } from '@/components/app/AppShell'
 import { MarketTicker } from '@/components/app/MarketTicker'
 import { ReferralBanner } from '@/components/app/ReferralBanner'
+import { ReferralBonusNotice } from '@/components/app/ReferralBonusNotice'
 import { TierBadge, type Tier } from '@/components/app/TierBadge'
 import { useDashboard, useWallet } from '@/hooks/queries'
 import { useAuth } from '@/auth/AuthContext'
@@ -401,6 +402,9 @@ export function HomePage() {
             <span className="text-asm-body">Read the full terms before you invest.</span>
           </p>
         </motion.section>
+
+        {/* ── Referral bonus notification (dismissible, keyed per transaction) ── */}
+        <ReferralBonusNotice className="mx-5 mb-4" />
 
         {/* ── Referral ── */}
         <motion.section variants={fadeUp} className="px-5 pb-8">

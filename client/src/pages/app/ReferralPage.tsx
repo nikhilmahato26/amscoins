@@ -50,7 +50,7 @@ const UNLOCK_LEVELS: {
     requirement: 'Unlock with 21 referrals',
     card: 'border-amber-200 bg-amber-50',
     requirementTone: 'text-amber-600',
-    perks: ['Invest up to ₹3,00,000', '30% Returns in 24h', '3% TDS on withdrawal'],
+    perks: ['Invest up to ₹3,00,000', '35% Returns in 24h', '3% TDS on withdrawal'],
   },
   {
     tier: 'diamond', name: 'Diamond',
@@ -65,7 +65,7 @@ const VALUE_PROPS: { Icon: LucideIcon; title: string; subtitle: string }[] = [
   { Icon: ShieldCheck, title: 'Admin Verified',  subtitle: 'Manual security check' },
   { Icon: Zap,         title: '3-Hour Payout',   subtitle: 'Direct to your UPI'    },
   { Icon: Headphones,  title: 'Daily Support',   subtitle: "We're here for you"     },
-  { Icon: Users,       title: 'Tier Progress',   subtitle: 'Unlock up to 40% returns' },
+  { Icon: Users,       title: 'Tier Progress',   subtitle: 'Unlock up to 35% returns' },
 ]
 
 /* ── Page ── */
@@ -276,7 +276,7 @@ export function ReferralPage() {
                     Next level benefits
                   </span>
                   <span className="text-[12px] leading-snug text-amber-900">
-                    Higher returns (up to 40%) and larger investment limits unlock at{' '}
+                    Higher returns (up to 35%) and larger investment limits unlock at{' '}
                     {nextTier.charAt(0).toUpperCase() + nextTier.slice(1)}.
                   </span>
                 </span>
