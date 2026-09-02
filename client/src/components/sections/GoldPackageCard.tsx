@@ -11,10 +11,10 @@ import { cn } from '@/lib/utils'
  * amber-500/10 rather than a solid fill. Flagged rather than silently changed.
  */
 export function GoldPackageCard({
-  rate = '35%',
+  rate = '30%',
   period = 'Per Term',
   minInvestment = '₹3,000',
-  roi = '35% Fixed',
+  roi = '30% Fixed',
   className,
 }: {
   rate?: string

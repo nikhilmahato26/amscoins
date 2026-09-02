@@ -40,7 +40,7 @@ const BENEFITS: { Icon: LucideIcon; title: string; subtitle: string }[] = [
   {
     Icon: TrendingUp,
     title: 'Structured Returns',
-    subtitle: 'Paid in daily installments over the 72-hour term',
+    subtitle: 'Calculated and paid at term maturity (24 hours)',
   },
 ]
 
@@ -193,7 +193,7 @@ export function PackageDetailPage() {
                     {RETURN_BY_TIER[planKey as keyof typeof RETURN_BY_TIER]}
                   </div>
                   <div className={cn('mt-1 text-[14px] font-semibold opacity-80', band.text)}>
-                    return over 72 hours
+                    return in 24 hours
                   </div>
                 </div>
               )

@@ -209,7 +209,7 @@ export function LandingMenu({ open, onClose }: { open: boolean; onClose: () => v
 const TRUST_BAR: { Icon: LucideIcon; title: string; note: string }[] = [
   { Icon: Lock, title: 'SSL Encrypted', note: 'Secure platform' },
   { Icon: ShieldCheck, title: 'Admin Verified', note: 'Manual review for safety' },
-  { Icon: Eye, title: 'Transparent Terms', note: '72-hour investment cycles' },
+  { Icon: Eye, title: 'Transparent Terms', note: '24-hour defined terms' },
   { Icon: Zap, title: '3-Hour Payouts', note: 'Direct to UPI' },
   { Icon: Headphones, title: 'Daily Support', note: 'WhatsApp & email team' },
 ]
