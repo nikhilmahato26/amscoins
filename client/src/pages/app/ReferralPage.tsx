@@ -4,7 +4,6 @@ import {
   Check,
   Copy,
   Gift,
-  Headphones,
   Loader2,
   Share2,
   ShieldCheck,
@@ -43,29 +42,29 @@ const UNLOCK_LEVELS: {
     requirement: 'Default Tier',
     card: 'border-asm-line bg-white',
     requirementTone: 'text-asm-greenInk',
-    perks: ['Invest up to ₹10,000', '25% Returns in 24h', '5% TDS on withdrawal'],
+    perks: ['Invest up to ₹10,000', '30% Returns in 72h', '5% TDS on withdrawal'],
   },
   {
     tier: 'gold',    name: 'Gold',
     requirement: 'Unlock with 21 referrals',
     card: 'border-amber-200 bg-amber-50',
     requirementTone: 'text-amber-600',
-    perks: ['Invest up to ₹3,00,000', '30% Returns in 24h', '3% TDS on withdrawal'],
+    perks: ['Invest up to ₹3,00,000', '35% Returns in 72h', '3% TDS on withdrawal'],
   },
   {
     tier: 'diamond', name: 'Diamond',
     requirement: 'Unlock with 52 referrals',
     card: 'border-asm-blue/20 bg-asm-blue-tint/40',
     requirementTone: 'text-asm-blue',
-    perks: ['Invest up to ₹5,00,000', '40% Returns in 24h', '0% TDS on withdrawal'],
+    perks: ['Invest up to ₹5,00,000', '40% Returns in 72h', '0% TDS on withdrawal'],
   },
 ]
 
 const VALUE_PROPS: { Icon: LucideIcon; title: string; subtitle: string }[] = [
-  { Icon: ShieldCheck, title: 'Admin Verified',  subtitle: 'Manual security check' },
-  { Icon: Zap,         title: '3-Hour Payout',   subtitle: 'Direct to your UPI'    },
-  { Icon: Headphones,  title: 'Daily Support',   subtitle: "We're here for you"     },
-  { Icon: Users,       title: 'Tier Progress',   subtitle: 'Unlock up to 40% returns' },
+  { Icon: ShieldCheck, title: 'Admin Verified',  subtitle: 'Manual security check'       },
+  { Icon: Zap,         title: '3-Hour Payout',   subtitle: 'Direct to your UPI'          },
+  { Icon: Gift,        title: '3% Cash Bonus',   subtitle: 'Per referral\'s deposit'     },
+  { Icon: Users,       title: 'Tier Unlock',     subtitle: 'Gold at 21, Diamond at 52'   },
 ]
 
 /* ── Page ── */
@@ -107,26 +106,65 @@ export function ReferralPage() {
           animate="visible"
         >
 
-          {/* ── Tier Progression hero ── */}
+          {/* ── Hero — dual benefit ── */}
           <motion.section
             variants={fadeUp}
             className="relative overflow-hidden rounded-2xl border border-asm-blue/15 bg-gradient-to-br from-asm-blue-tint via-white to-asm-green-tint/60 p-5 shadow-[0_4px_20px_-6px_rgba(11,79,216,0.12)]"
           >
-            {/* Decorative circle */}
             <div aria-hidden className="absolute -right-6 -top-6 size-24 rounded-full bg-asm-blue/5" />
             <div className="relative flex items-start gap-4">
               <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-white shadow-[0_2px_8px_-2px_rgba(16,42,92,0.12)]">
                 <Gift className="size-5 text-asm-blue" aria-hidden />
               </span>
               <div className="flex flex-col gap-1">
-                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-asm-muted">Tier Progression</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-asm-muted">Referral Program</p>
                 <p className="text-[22px] font-extrabold leading-tight tracking-tight text-asm-navy">
-                  Unlock <span className="text-asm-greenInk">Gold &amp; Diamond</span>
+                  Invite friends,{' '}
+                  <span className="text-asm-greenInk">earn cash</span>
                 </p>
                 <p className="text-[13px] leading-snug text-asm-body">
-                  Every friend who joins and completes their first deposit counts toward unlocking higher return tiers.
+                  You earn a <strong className="font-bold text-asm-navy">3% cash bonus</strong> on every friend's
+                  first deposit — credited straight to your wallet. Plus, grow your network to unlock higher
+                  return tiers.
                 </p>
               </div>
+            </div>
+          </motion.section>
+
+          {/* ── 3% Bonus explainer ── */}
+          <motion.section
+            variants={fadeUp}
+            className="flex flex-col gap-3 rounded-2xl border border-asm-greenInk/20 bg-asm-green-tint/40 p-5"
+          >
+            <div className="flex items-center gap-2">
+              <span className="flex size-8 items-center justify-center rounded-xl bg-asm-greenInk/10">
+                <Gift className="size-4 text-asm-greenInk" strokeWidth={1.8} aria-hidden />
+              </span>
+              <p className="text-[12px] font-bold uppercase tracking-[0.1em] text-asm-greenInk">How the bonus works</p>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              {[
+                { step: '1', text: 'Share your referral link or code with a friend' },
+                { step: '2', text: 'They register and complete their first deposit' },
+                { step: '3', text: 'You instantly receive 3% of their deposit in your wallet' },
+              ].map(({ step, text }) => (
+                <div key={step} className="flex items-start gap-3">
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-asm-greenInk text-[10px] font-extrabold text-white">
+                    {step}
+                  </span>
+                  <p className="text-[13px] leading-snug text-asm-navy">{text}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-xl border border-asm-greenInk/20 bg-white/60 px-4 py-3">
+              <p className="text-[12px] font-semibold text-asm-body">
+                Example: Your friend deposits{' '}
+                <strong className="text-asm-navy">₹5,000</strong> →{' '}
+                you get{' '}
+                <strong className="text-asm-greenInk">₹150</strong> in your wallet immediately.
+              </p>
             </div>
           </motion.section>
 
@@ -276,8 +314,9 @@ export function ReferralPage() {
                     Next level benefits
                   </span>
                   <span className="text-[12px] leading-snug text-amber-900">
-                    Higher returns (up to 40%) and larger investment limits unlock at{' '}
+                    Higher returns and larger investment limits unlock at{' '}
                     {nextTier.charAt(0).toUpperCase() + nextTier.slice(1)}.
+                    Plus every referral keeps earning you a 3% cash bonus.
                   </span>
                 </span>
               </div>
@@ -326,7 +365,7 @@ export function ReferralPage() {
               <div className="flex flex-col items-center gap-2 rounded-2xl border border-asm-line bg-white px-5 py-8 text-center">
                 <Users className="size-8 text-asm-muted/40" aria-hidden />
                 <p className="text-[13px] font-semibold text-asm-navy">No referrals yet</p>
-                <p className="text-[12px] text-asm-body">Share your code to start unlocking higher tiers.</p>
+                <p className="text-[12px] text-asm-body">Share your link — every friend who deposits earns you a 3% cash bonus.</p>
               </div>
             ) : (
               <ul className="flex flex-col gap-2">

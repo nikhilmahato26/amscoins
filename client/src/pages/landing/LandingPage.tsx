@@ -4,6 +4,7 @@ import {
   Award,
   ChartNoAxesCombined,
   Clock,
+  Gift,
   Headphones,
   ShieldCheck,
   TrendingUp,
@@ -48,8 +49,8 @@ const TRUST_PILLS: { Icon: LucideIcon; label: string }[] = [
   { Icon: ShieldCheck, label: 'Admin Verified'       },
   { Icon: Zap,         label: '3-Hour Payouts'       },
   { Icon: Headphones,  label: 'Daily Support'        },
-  { Icon: TrendingUp,  label: '25%–40% Returns'      },
-  { Icon: Clock,       label: '24-Hour Cycles'       },
+  { Icon: TrendingUp,  label: '30%–35% Returns'      },
+  { Icon: Clock,       label: '72-Hour Cycles'       },
   { Icon: Wallet,      label: 'Direct UPI Payout'    },
 ]
 
@@ -82,9 +83,9 @@ const PLANS: {
   slug: string; name: string; returns: string; duration: string;
   min: string; max: string; unlockNote: string; accent: 'silver' | 'gold' | 'diamond'
 }[] = [
-  { slug: 'silver',  name: 'Silver Plan',  returns: '25%', duration: '24 Hours', min: '₹1,000', max: '₹10,000',   unlockNote: 'Default Tier',              accent: 'silver'  },
-  { slug: 'gold',    name: 'Gold Plan',    returns: '30%', duration: '24 Hours', min: '₹3,000', max: '₹3,00,000',  unlockNote: 'Unlocks with 21 referrals', accent: 'gold'    },
-  { slug: 'diamond', name: 'Diamond Plan', returns: '40%', duration: '24 Hours', min: '₹5,000', max: '₹5,00,000',  unlockNote: 'Unlocks with 52 referrals', accent: 'diamond' },
+  { slug: 'silver', name: 'Silver Plan', returns: '30%', duration: '72 Hours', min: '₹1,000', max: '₹10,000',   unlockNote: 'Default Tier',              accent: 'silver'  },
+  { slug: 'gold',   name: 'Gold Plan',   returns: '35%', duration: '72 Hours', min: '₹3,000', max: '₹3,00,000', unlockNote: 'Unlocks with 21 referrals', accent: 'gold'    },
+  { slug: 'diamond', name: 'Diamond Plan', returns: '40%', duration: '72 Hours', min: '₹5,000', max: '₹5,00,000', unlockNote: 'Unlocks with 52 referrals', accent: 'diamond' },
 ]
 
 /* ── CountUp component (Task 2) ── */
@@ -200,14 +201,14 @@ const HOW_STEPS = [
   {
     n: '02',
     title: 'Pick your plan',
-    body: 'Choose Silver (25%), Gold (30%), or Diamond (40%) based on your investment amount.',
+    body: 'Choose Silver (30%) or Gold (35%) based on your investment amount and referral tier.',
     icon: TrendingUp,
     tone: 'green' as const,
   },
   {
     n: '03',
     title: 'Withdraw your return',
-    body: 'After 24 hours your principal + return is credited. Withdraw to UPI in minutes.',
+    body: 'After 72 hours your principal + return is credited in daily installments. Withdraw to UPI in minutes.',
     icon: ChartNoAxesCombined,
     tone: 'blue' as const,
   },
@@ -255,7 +256,7 @@ function HowItWorksSection() {
         {/* 24-hour callout */}
         <div className="mt-6 flex items-center justify-center gap-2 rounded-xl border border-skin-accent/20 bg-skin-tint px-4 py-3">
           <Clock className="size-4 text-skin-accent" strokeWidth={2} aria-hidden />
-          <span className="text-[13px] font-semibold text-skin-accent">24-hour investment cycles — deposit today, withdraw tomorrow</span>
+          <span className="text-[13px] font-semibold text-skin-accent">72-hour investment cycles — returns paid daily in installments</span>
         </div>
       </div>
     </section>
@@ -313,39 +314,95 @@ export function LandingPage() {
           <PlansSection />
           <HowItWorksSection />
 
-          {/* ── Invite & Level Up ── */}
+          {/* ── Referral — Earn While You Invite ── */}
           <section
             id="referral"
+            aria-labelledby="referral-heading"
             className="mx-4 mt-8 overflow-hidden rounded-2xl bg-gradient-to-br from-[#0B4FD8] to-[#0E6E32] ring-1 ring-transparent transition-colors lg:mx-8 dark:from-[#3a2e08] dark:to-[#0B0B0C] dark:ring-skin-line"
           >
-          <div className="relative px-5 py-6">
-            <div
-              aria-hidden
-              className="pointer-events-none absolute right-0 top-0 h-full w-[60%] opacity-10"
-              style={{ background: 'radial-gradient(circle at 80% 30%, #fff 0%, transparent 70%)' }}
-            />
-            <UserPlus className="mb-3 size-8 text-white/80" strokeWidth={1.8} aria-hidden />
-            <h2 className="text-[22px] font-extrabold leading-tight text-white">Invite &amp; Level Up</h2>
-            <p className="mt-1.5 max-w-[38ch] text-[13px] leading-relaxed text-white/75">
-              Refer members to unlock Gold (30%) and Diamond (40%) tiers with higher limits. Referrals credit when friends complete their first deposit.
-            </p>
-            <Link
-              to="/register"
-              className={cn(
-                'group mt-5 inline-flex items-center gap-2 rounded-xl bg-skin-surface px-5 py-3',
-                'text-[13px] font-bold uppercase tracking-[0.06em] text-[#0B4FD8]',
-                'transition-colors hover:bg-blue-50',
-                'dark:bg-[#F4C506] dark:text-[#0B0B0C] dark:hover:bg-[#FFD700]'
-              )}
-            >
-              Start Referring
-              <ArrowRight
-                className="size-4 transition-transform duration-300 group-hover:translate-x-0.5"
-                strokeWidth={2.4}
+            <div className="relative px-5 py-7 sm:px-8">
+              {/* Ambient glow */}
+              <div
                 aria-hidden
+                className="pointer-events-none absolute right-0 top-0 h-full w-[60%] opacity-10"
+                style={{ background: 'radial-gradient(circle at 80% 30%, #fff 0%, transparent 70%)' }}
               />
-            </Link>
-          </div>
+
+              <div className="relative flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-10">
+
+                {/* Left — headline + CTA */}
+                <div className="flex flex-1 flex-col gap-3">
+                  <UserPlus className="size-8 text-white/80" strokeWidth={1.8} aria-hidden />
+                  <h2 id="referral-heading" className="text-[22px] font-extrabold leading-tight text-white sm:text-[26px]">
+                    Invite friends.<br />Earn real money.
+                  </h2>
+                  <p className="max-w-[38ch] text-[13px] leading-relaxed text-white/80">
+                    Every friend who joins and makes their first deposit earns you a{' '}
+                    <strong className="font-bold text-white">3% cash bonus</strong> — credited
+                    instantly to your wallet. Plus, unlock higher return tiers as your network grows.
+                  </p>
+                  <Link
+                    to="/register"
+                    className={cn(
+                      'group mt-1 inline-flex w-fit items-center gap-2 rounded-xl bg-white/95 px-5 py-3',
+                      'text-[13px] font-bold uppercase tracking-[0.06em] text-[#0B4FD8]',
+                      'transition-colors hover:bg-white',
+                      'dark:bg-[#F4C506] dark:text-[#0B0B0C] dark:hover:bg-[#FFD700]'
+                    )}
+                  >
+                    Start Referring
+                    <ArrowRight
+                      className="size-4 transition-transform duration-300 group-hover:translate-x-0.5"
+                      strokeWidth={2.4}
+                      aria-hidden
+                    />
+                  </Link>
+                </div>
+
+                {/* Right — benefit cards */}
+                <div className="flex flex-col gap-3 sm:min-w-[220px]">
+                  {/* 3% cash bonus card */}
+                  <div className="flex items-start gap-3 rounded-xl bg-white/10 px-4 py-3.5 backdrop-blur-sm">
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white/15">
+                      <Gift className="size-4 text-white" strokeWidth={1.8} aria-hidden />
+                    </span>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[13px] font-bold leading-none text-white">3% Cash Bonus</span>
+                      <span className="text-[11px] leading-snug text-white/70">
+                        Per referral's deposit amount, direct to your wallet
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Tier unlock card */}
+                  <div className="flex items-start gap-3 rounded-xl bg-white/10 px-4 py-3.5 backdrop-blur-sm">
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white/15">
+                      <TrendingUp className="size-4 text-white" strokeWidth={1.8} aria-hidden />
+                    </span>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[13px] font-bold leading-none text-white">Unlock Higher Tiers</span>
+                      <span className="text-[11px] leading-snug text-white/70">
+                        21 referrals → Gold (35%) · 52 → Diamond (40%)
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* No limit card */}
+                  <div className="flex items-start gap-3 rounded-xl bg-white/10 px-4 py-3.5 backdrop-blur-sm">
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white/15">
+                      <Zap className="size-4 text-white" strokeWidth={1.8} aria-hidden />
+                    </span>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[13px] font-bold leading-none text-white">No Cap on Earnings</span>
+                      <span className="text-[11px] leading-snug text-white/70">
+                        The more friends you bring, the more you earn
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
           </section>
         </div>
       </main>
@@ -404,7 +461,7 @@ function Hero() {
 
         {/* Subtitle */}
         <motion.p variants={fadeUp} className="mt-3 max-w-[34ch] text-[16px] leading-snug text-skin-body sm:text-[18px]">
-          25–40% returns in 24 hours. UPI payout. Human-approved.
+          30–35% returns in 72 hours. UPI payout. Human-approved.
         </motion.p>
 
         {/* CTA pair */}
