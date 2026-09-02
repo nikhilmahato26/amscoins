@@ -1,6 +1,7 @@
 'use strict'
 
 const logger = require('../lib/logger').child({ service: 'error' })
+const env = require('../config/env')
 
 class ApiError extends Error {
   constructor(statusCode, message) {
@@ -34,7 +35,11 @@ const errorHandler = (err, req, res, _next) => {
     })
   }
 
-  res.status(code).json({ error: err.message || 'Server error' })
+  const clientMessage =
+    code >= 500 && env.NODE_ENV === 'production'
+      ? 'Server error'
+      : err.message || 'Server error'
+  res.status(code).json({ error: clientMessage })
 }
 
 module.exports = { ApiError, notFound, errorHandler }

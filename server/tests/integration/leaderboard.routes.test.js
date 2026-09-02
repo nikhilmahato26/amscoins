@@ -12,7 +12,7 @@ afterEach(clearDb)
 afterAll(teardownDb)
 
 async function registerToken() {
-  const res = await request(app).post('/api/auth/register').send({ name: 'TestUser', email: `user${Math.random()}@b.com`, password: 'secret1', referralCode: '' })
+  const res = await request(app).post('/api/auth/register').send({ name: 'TestUser', email: `user${Math.random()}@b.com`, password: 'secret12', referralCode: '' })
   return res.body.token
 }
 

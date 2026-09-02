@@ -18,7 +18,7 @@ afterAll(teardownDb)
 test('register then fetch me', async () => {
   const reg = await request(app)
     .post('/api/auth/register')
-    .send({ name: 'A', email: 'a@b.com', password: 'secret1' })
+    .send({ name: 'A', email: 'a@b.com', password: 'secret12' })
   expect(reg.status).toBe(201)
   expect(reg.body.token).toBeTruthy()
   expect(reg.body.user.referralCode).toHaveLength(6)
@@ -40,8 +40,8 @@ test('register with invalid body is 400', async () => {
 })
 
 test('login works after register', async () => {
-  await request(app).post('/api/auth/register').send({ name: 'A', email: 'l@b.com', password: 'secret1' })
-  const res = await request(app).post('/api/auth/login').send({ email: 'l@b.com', password: 'secret1' })
+  await request(app).post('/api/auth/register').send({ name: 'A', email: 'l@b.com', password: 'secret12' })
+  const res = await request(app).post('/api/auth/login').send({ email: 'l@b.com', password: 'secret12' })
   expect(res.status).toBe(200)
   expect(res.body.token).toBeTruthy()
 })
@@ -49,7 +49,7 @@ test('login works after register', async () => {
 test('pwreset token rejected as session token (401)', async () => {
   const reg = await request(app)
     .post('/api/auth/register')
-    .send({ name: 'P', email: 'p@b.com', password: 'secret1' })
+    .send({ name: 'P', email: 'p@b.com', password: 'secret12' })
   const pwresetToken = jwt.sign(
     { id: reg.body.user._id, purpose: 'pwreset' },
     process.env.JWT_SECRET

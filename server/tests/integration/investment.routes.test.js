@@ -11,7 +11,7 @@ afterEach(clearDb)
 afterAll(teardownDb)
 
 async function registerToken(referralCode) {
-  const res = await request(app).post('/api/auth/register').send({ name: 'A', email: `a${Math.random()}@b.com`, password: 'secret1', referralCode })
+  const res = await request(app).post('/api/auth/register').send({ name: 'A', email: `a${Math.random()}@b.com`, password: 'secret12', referralCode })
   return res.body.token
 }
 

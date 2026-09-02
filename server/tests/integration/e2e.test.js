@@ -26,7 +26,7 @@ async function makeAdminToken() {
 }
 
 async function register(referralCode) {
-  const res = await request(app).post('/api/auth/register').send({ name: 'U', email: `u${Math.random()}@b.com`, password: 'secret1', referralCode })
+  const res = await request(app).post('/api/auth/register').send({ name: 'U', email: `u${Math.random()}@b.com`, password: 'secret12', referralCode })
   return { token: res.body.token, user: res.body.user }
 }
 

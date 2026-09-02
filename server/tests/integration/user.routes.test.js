@@ -9,7 +9,7 @@ afterEach(clearDb)
 afterAll(teardownDb)
 
 async function registerUser(email = 'u@b.com') {
-  const reg = await request(app).post('/api/auth/register').send({ name: 'U', email, password: 'secret1' })
+  const reg = await request(app).post('/api/auth/register').send({ name: 'U', email, password: 'secret12' })
   return { token: reg.body.token, user: reg.body.user }
 }
 
