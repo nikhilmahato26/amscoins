@@ -76,10 +76,18 @@ export function AdminInvestments() {
     status: activeStatus,
   })
 
+  // Installment-plan investments (installmentPcts.length > 0) belong exclusively
+  // in the Installments tab — they must never appear in Returns, because the
+  // Returns "Approve" button credits everything at once, which is wrong for
+  // day-by-day installment plans. Filter them out before handing data to ReturnTab.
+  const returnsData = activeTab === 'returns'
+    ? data?.filter((d) => !d.installmentPcts?.length)
+    : undefined
+
   // Pipeline summary counts — derived from already-loaded data, no extra API call.
   const pendingCount = activeTab === 'investments' ? (data?.length ?? 0) : (stats?.pendingApprovals ?? 0)
-  const activeCount = activeTab === 'returns' ? (data?.filter((d) => d.status === 'active').length ?? 0) : 0
-  const maturedCount = activeTab === 'returns' ? (data?.filter((d) => d.status === 'matured').length ?? 0) : 0
+  const activeCount = activeTab === 'returns' ? (returnsData?.filter((d) => d.status === 'active').length ?? 0) : 0
+  const maturedCount = activeTab === 'returns' ? (returnsData?.filter((d) => d.status === 'matured').length ?? 0) : 0
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
@@ -148,7 +156,7 @@ export function AdminInvestments() {
 
       <div role="tabpanel" id={`tabpanel-${activeTab}`} aria-labelledby={`tab-${activeTab}`} className="flex flex-col gap-4">
         {activeTab === 'investments' && <InvestmentTab data={data} isLoading={isLoading} isError={isError} />}
-        {activeTab === 'returns' && <ReturnTab data={data} isLoading={isLoading} isError={isError} />}
+        {activeTab === 'returns' && <ReturnTab data={returnsData} isLoading={isLoading} isError={isError} />}
         {activeTab === 'installments' && <InstallmentsTab data={data} isLoading={isLoading} isError={isError} />}
         {activeTab === 'history' && <HistoryTab data={data} isLoading={isLoading} isError={isError} />}
       </div>
