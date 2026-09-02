@@ -9,14 +9,16 @@ import { ExportButton } from '@/components/admin/ExportButton'
 import { InvestmentTab } from '@/components/admin/investments/InvestmentTab'
 import { ReturnTab } from '@/components/admin/investments/ReturnTab'
 import { HistoryTab } from '@/components/admin/investments/HistoryTab'
+import { InstallmentsTab } from '@/components/admin/investments/InstallmentsTab'
 import { parseUrlFilters, filtersToSearch } from '@/lib/filters'
 import { cn } from '@/lib/utils'
 
-type Tab = 'investments' | 'returns' | 'history'
+type Tab = 'investments' | 'returns' | 'installments' | 'history'
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'investments', label: 'Investments' },
   { id: 'returns', label: 'Returns' },
+  { id: 'installments', label: 'Installments' },
   { id: 'history', label: 'History' },
 ]
 
@@ -61,10 +63,12 @@ export function AdminInvestments() {
 
   // Pipeline: Investments (pending) → Returns (active + matured) → History
   // (returned/rejected/deleted). An investment leaves the Investments tab the
-  // moment it's approved (active).
+  // moment it's approved (active). Installments tab fetches active + break_requested
+  // and filters client-side.
   const activeStatus =
     activeTab === 'investments' ? 'pending' :
     activeTab === 'returns' ? 'active,matured' :
+    activeTab === 'installments' ? 'active,break_requested' :
     'returned,rejected,deleted'
 
   const { data, isLoading, isError } = useAdminInvestments({
@@ -145,6 +149,7 @@ export function AdminInvestments() {
       <div role="tabpanel" id={`tabpanel-${activeTab}`} aria-labelledby={`tab-${activeTab}`} className="flex flex-col gap-4">
         {activeTab === 'investments' && <InvestmentTab data={data} isLoading={isLoading} isError={isError} />}
         {activeTab === 'returns' && <ReturnTab data={data} isLoading={isLoading} isError={isError} />}
+        {activeTab === 'installments' && <InstallmentsTab data={data} isLoading={isLoading} isError={isError} />}
         {activeTab === 'history' && <HistoryTab data={data} isLoading={isLoading} isError={isError} />}
       </div>
     </div>
