@@ -7,6 +7,7 @@ import { ArrowRight, Award, Lock, TrendingUp, Wallet } from 'lucide-react'
 import { AppShell } from '@/components/app/AppShell'
 import { MarketTicker } from '@/components/app/MarketTicker'
 import { ReferralBanner } from '@/components/app/ReferralBanner'
+import { ReferralBonusNotice } from '@/components/app/ReferralBonusNotice'
 import { TierBadge, type Tier } from '@/components/app/TierBadge'
 import { useDashboard, useWallet } from '@/hooks/queries'
 import { useAuth } from '@/auth/AuthContext'
@@ -74,9 +75,8 @@ function TimeRemaining({ maturesAt }: { maturesAt: string }) {
 /* ── Data ───────────────────────────────────────────────────────── */
 
 const PLANS: { tier: Tier; name: string; returns: string; duration: string; min: string; max: string; requiredReferrals: number }[] = [
-  { tier: 'silver',  name: 'Silver',  returns: '25%', duration: '24 Hours', min: '₹1,000', max: '₹10,000',   requiredReferrals: 0  },
-  { tier: 'gold',    name: 'Gold',    returns: '30%', duration: '24 Hours', min: '₹3,000', max: '₹3,00,000',  requiredReferrals: 11 },
-  { tier: 'diamond', name: 'Diamond', returns: '40%', duration: '24 Hours', min: '₹5,000', max: '₹5,00,000',  requiredReferrals: 21 },
+  { tier: 'silver', name: 'Silver', returns: '25%', duration: '72 Hours', min: '₹1,000', max: '₹10,000',  requiredReferrals: 0  },
+  { tier: 'gold',   name: 'Gold',   returns: '35%', duration: '72 Hours', min: '₹3,000', max: '₹3,00,000', requiredReferrals: 21 },
 ]
 
 /* ── Page ───────────────────────────────────────────────────────── */
@@ -383,7 +383,7 @@ export function HomePage() {
           <h2 className="mb-4 text-[18px] font-extrabold tracking-tight text-asm-navy">
             Investment Packages
           </h2>
-          <div className="flex flex-col gap-4 sm:grid sm:grid-cols-3">
+          <div className="flex flex-col gap-4 sm:grid sm:grid-cols-2">
             {PLANS.map((plan) => {
               const currentTier = (dash?.tier ?? user?.tier ?? 'silver') as Tier
               const unlocked = isPlanUnlocked(currentTier, plan.tier)
@@ -401,6 +401,11 @@ export function HomePage() {
             <span className="text-asm-body">Read the full terms before you invest.</span>
           </p>
         </motion.section>
+
+        {/* ── Referral bonus notification (dismissible, one per transaction) ── */}
+        <motion.div variants={fadeUp} className="px-5 pb-2">
+          <ReferralBonusNotice />
+        </motion.div>
 
         {/* ── Referral ── */}
         <motion.section variants={fadeUp} className="px-5 pb-8">
