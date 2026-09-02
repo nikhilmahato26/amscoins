@@ -58,7 +58,8 @@ const STATUS_CONFIG: Record<
   rejected: { label: 'Rejected',       icon: XCircle,       cls: 'bg-red-50 text-red-700 border-red-200',             iconCls: 'text-red-500'    },
   // Deleted cycles are filtered out server-side and never reach the user — this
   // entry exists only to satisfy the status map's exhaustiveness.
-  deleted:  { label: 'Removed',        icon: XCircle,       cls: 'bg-zinc-100 text-zinc-500 border-zinc-200',         iconCls: 'text-zinc-400'   },
+  deleted:          { label: 'Removed',        icon: XCircle,       cls: 'bg-zinc-100 text-zinc-500 border-zinc-200',         iconCls: 'text-zinc-400'   },
+  break_requested:  { label: 'Break Requested', icon: Clock,         cls: 'bg-orange-50 text-orange-700 border-orange-200',    iconCls: 'text-orange-500'  },
 }
 
 function StatusPill({ status }: { status: Investment['status'] }) {

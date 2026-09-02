@@ -3,7 +3,7 @@ import { getPlans } from '@/services/api/plans'
 import { getWallet } from '@/services/api/wallet'
 import { getReferral } from '@/services/api/referral'
 import { getDashboard } from '@/services/api/dashboard'
-import { getInvestment, getInvestments, getDepositGate } from '@/services/api/investments'
+import { getInvestment, getInvestments, getDepositGate, requestBreak } from '@/services/api/investments'
 import { getWithdrawals, createWithdrawal, type WithdrawalInput } from '@/services/api/withdrawals'
 import { getLeaderboard, type LeaderboardPeriod } from '@/services/api/leaderboard'
 import {
@@ -23,6 +23,9 @@ import {
   approvePayout,
   rejectPayout,
   deleteInvestment,
+  approveInstallment,
+  approveBreak,
+  rejectBreak,
   type RejectReturnBody,
   type PayoutRejectBody,
   type AdminInvestmentParams,
@@ -172,6 +175,26 @@ export const useAdjustWallet = () =>
   )
 export const useResolveSupport = () =>
   useAdminMutation((id: string, adminNote?: string) => resolveSupport(id, adminNote), [['admin', 'support']])
+
+export const useApproveInstallment = () =>
+  useAdminMutation(
+    (id: string, day: number) => approveInstallment(id, day),
+    [['admin', 'investments'], ['admin', 'stats']]
+  )
+
+export const useApproveBreak = () =>
+  useAdminMutation((id: string) => approveBreak(id), [['admin', 'investments'], ['admin', 'stats']])
+
+export const useRejectBreak = () =>
+  useAdminMutation((id: string) => rejectBreak(id), [['admin', 'investments'], ['admin', 'stats']])
+
+export function useRequestBreak() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => requestBreak(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['investments'] }),
+  })
+}
 
 export function useBulkApproveWithdrawals() {
   const qc = useQueryClient()
