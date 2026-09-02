@@ -10,6 +10,7 @@ const STATUS_STYLES: Record<InvStatus, string> = {
   returned: 'bg-green-50 text-asm-greenInk',
   rejected: 'bg-red-50 text-asm-red',
   deleted: 'bg-zinc-200 text-zinc-600 line-through',
+  break_requested: 'bg-orange-50 text-orange-700',
 }
 
 export function StatusBadge({ status }: { status: InvStatus }) {

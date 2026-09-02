@@ -27,7 +27,7 @@ async function registerToken() {
 
 test('admin stats returns counts and totals', async () => {
   const { id } = await registerToken()
-  await Investment.create({ user: id, planKey: 'silver', amount: 200000, returnPct: 25, expectedReturn: 50000, referenceCode: `ASM-${Math.random()}`, status: 'pending' })
+  await Investment.create({ user: id, planKey: 'silver', amount: 200000, returnPct: 25, expectedReturn: 50000, referenceCode: `ASM-${Math.random()}`, status: 'pending', paymentNotified: true })
   const token = await adminToken()
 
   const res = await request(app).get('/api/admin/stats').set('Authorization', `Bearer ${token}`)

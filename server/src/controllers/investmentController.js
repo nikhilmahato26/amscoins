@@ -1,6 +1,6 @@
 const asyncHandler = require('../middleware/asyncHandler')
 const Investment = require('../models/Investment')
-const { createInvestment, notifyPaymentSubmitted, getDepositGate } = require('../services/investmentService')
+const { createInvestment, notifyPaymentSubmitted, getDepositGate, requestBreak: requestBreakSvc } = require('../services/investmentService')
 
 const create = asyncHandler(async (req, res) => {
   const { investment, telegramLink, whatsappLink } = await createInvestment(req.user, req.body)
@@ -40,4 +40,8 @@ const getOne = asyncHandler(async (req, res) => {
   res.json(investment)
 })
 
-module.exports = { create, notify, mine, getOne, depositGate }
+const requestBreak = asyncHandler(async (req, res) =>
+  res.json(await requestBreakSvc(req.params.id, req.user._id))
+)
+
+module.exports = { create, notify, mine, getOne, depositGate, requestBreak }

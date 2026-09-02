@@ -9,14 +9,16 @@ import { ExportButton } from '@/components/admin/ExportButton'
 import { InvestmentTab } from '@/components/admin/investments/InvestmentTab'
 import { ReturnTab } from '@/components/admin/investments/ReturnTab'
 import { HistoryTab } from '@/components/admin/investments/HistoryTab'
+import { InstallmentsTab } from '@/components/admin/investments/InstallmentsTab'
 import { parseUrlFilters, filtersToSearch } from '@/lib/filters'
 import { cn } from '@/lib/utils'
 
-type Tab = 'investments' | 'returns' | 'history'
+type Tab = 'investments' | 'returns' | 'installments' | 'history'
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'investments', label: 'Investments' },
   { id: 'returns', label: 'Returns' },
+  { id: 'installments', label: 'Installments' },
   { id: 'history', label: 'History' },
 ]
 
@@ -61,10 +63,12 @@ export function AdminInvestments() {
 
   // Pipeline: Investments (pending) → Returns (active + matured) → History
   // (returned/rejected/deleted). An investment leaves the Investments tab the
-  // moment it's approved (active).
+  // moment it's approved (active). Installments tab fetches active + break_requested
+  // and filters client-side.
   const activeStatus =
     activeTab === 'investments' ? 'pending' :
     activeTab === 'returns' ? 'active,matured' :
+    activeTab === 'installments' ? 'active,break_requested' :
     'returned,rejected,deleted'
 
   const { data, isLoading, isError } = useAdminInvestments({
@@ -72,10 +76,23 @@ export function AdminInvestments() {
     status: activeStatus,
   })
 
+  // Installment-plan investments (active + installmentPcts.length > 0) belong in the
+  // Installments tab only — the Returns "Approve" button credits everything at once,
+  // which is wrong for day-by-day plans.
+  //
+  // Exception: matured investments always stay in Returns. An investment only reaches
+  // 'matured' via the legacy single-payout path (runMature) — installment-plan
+  // investments never mature, they stay 'active' until all days are paid. So any
+  // 'matured' row in this data set is by definition a legacy/non-installment one and
+  // must remain visible here until the admin processes it.
+  const returnsData = activeTab === 'returns'
+    ? data?.filter((d) => d.status === 'matured' || !d.installmentPcts?.length)
+    : undefined
+
   // Pipeline summary counts — derived from already-loaded data, no extra API call.
   const pendingCount = activeTab === 'investments' ? (data?.length ?? 0) : (stats?.pendingApprovals ?? 0)
-  const activeCount = activeTab === 'returns' ? (data?.filter((d) => d.status === 'active').length ?? 0) : 0
-  const maturedCount = activeTab === 'returns' ? (data?.filter((d) => d.status === 'matured').length ?? 0) : 0
+  const activeCount = activeTab === 'returns' ? (returnsData?.filter((d) => d.status === 'active').length ?? 0) : 0
+  const maturedCount = activeTab === 'returns' ? (returnsData?.filter((d) => d.status === 'matured').length ?? 0) : 0
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
@@ -144,7 +161,8 @@ export function AdminInvestments() {
 
       <div role="tabpanel" id={`tabpanel-${activeTab}`} aria-labelledby={`tab-${activeTab}`} className="flex flex-col gap-4">
         {activeTab === 'investments' && <InvestmentTab data={data} isLoading={isLoading} isError={isError} />}
-        {activeTab === 'returns' && <ReturnTab data={data} isLoading={isLoading} isError={isError} />}
+        {activeTab === 'returns' && <ReturnTab data={returnsData} isLoading={isLoading} isError={isError} />}
+        {activeTab === 'installments' && <InstallmentsTab data={data} isLoading={isLoading} isError={isError} />}
         {activeTab === 'history' && <HistoryTab data={data} isLoading={isLoading} isError={isError} />}
       </div>
     </div>

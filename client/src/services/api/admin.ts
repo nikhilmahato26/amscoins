@@ -18,8 +18,10 @@ export interface PopulatedRef {
 
 export type AdminInvestment = Omit<Investment, 'planKey' | 'status'> & {
   planKey: Tier
-  status: 'pending' | 'active' | 'matured' | 'returned' | 'rejected' | 'deleted'
+  status: 'pending' | 'active' | 'matured' | 'returned' | 'rejected' | 'deleted' | 'break_requested'
   creditedAmount?: number // paise — set when returned with partial/custom amount
+  installments?: import('./investments').Installment[]
+  breakRequestedAt?: string
   user: PopulatedRef
 }
 
@@ -126,6 +128,15 @@ export const rejectPayout = (id: string, body: PayoutRejectBody) =>
   apiFetch<AdminInvestment>(`/admin/investments/${id}/reject-payout`, { method: 'POST', body })
 export const deleteInvestment = (id: string) =>
   apiFetch<AdminInvestment>(`/admin/investments/${id}`, { method: 'DELETE' })
+
+export const approveInstallment = (id: string, day: number) =>
+  apiFetch<AdminInvestment>(`/admin/investments/${id}/installments/${day}/approve`, { method: 'POST' })
+
+export const approveBreak = (id: string) =>
+  apiFetch<AdminInvestment>(`/admin/investments/${id}/approve-break`, { method: 'POST' })
+
+export const rejectBreak = (id: string) =>
+  apiFetch<AdminInvestment>(`/admin/investments/${id}/reject-break`, { method: 'POST' })
 
 export const adminWithdrawals = (status = 'pending') =>
   apiFetch<AdminWithdrawal[]>(`/admin/withdrawals?status=${status}`)

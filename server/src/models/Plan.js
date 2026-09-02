@@ -5,6 +5,7 @@ const planSchema = new Schema(
     key: { type: String, enum: ['silver', 'gold', 'diamond'], unique: true, required: true },
     name: { type: String, required: true },
     returnPct: { type: Number, required: true },
+    installmentPcts: { type: [Number], default: [] }, // daily breakdown; empty = single-payout
     minInvest: { type: Number, required: true }, // paise
     maxInvest: { type: Number, required: true }, // paise
     unlockReferrals: { type: Number, required: true },

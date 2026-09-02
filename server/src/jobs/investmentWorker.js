@@ -35,6 +35,27 @@ async function runSweep() {
   const due = await Investment.find({ status: 'active', maturesAt: { $lte: new Date(now) } }).select('_id')
   for (const d of due) await svc.runMature(d._id)
 
+  // Safety-net: catch any installment that fired while the server was down.
+  const invWithDueInstallments = await Investment.find({
+    status: 'active',
+    installments: {
+      $elemMatch: { status: 'scheduled', maturesAt: { $lte: new Date(now) } },
+    },
+  }).select('_id installments')
+
+  let installmentsTriggered = 0
+  for (const inv of invWithDueInstallments) {
+    for (const inst of inv.installments) {
+      if (inst.status === 'scheduled' && inst.maturesAt <= new Date(now)) {
+        if (await svc.runInstallment(inv._id, inst.day)) installmentsTriggered++
+      }
+    }
+  }
+
+  if (installmentsTriggered) {
+    logger.info('Sweep triggered overdue installments', { installmentsTriggered })
+  }
+
   if (autoDeposited || stalePending.length || due.length) {
     logger.info('Sweep processed investments', { autoDeposited, autoRejected: stalePending.length, matured: due.length })
   }
@@ -54,10 +75,11 @@ async function startInvestmentWorker() {
   worker = new Worker(
     QUEUE_NAME,
     async (job) => {
-      if (job.name === 'auto-reject') return svc.runAutoReject(job.data.investmentId)
+      if (job.name === 'auto-reject')  return svc.runAutoReject(job.data.investmentId)
       if (job.name === 'auto-deposit') return svc.runAutoDeposit(job.data.investmentId)
-      if (job.name === 'mature') return svc.runMature(job.data.investmentId)
-      if (job.name === 'sweep') return runSweep()
+      if (job.name === 'mature')       return svc.runMature(job.data.investmentId)
+      if (job.name === 'installment')  return svc.runInstallment(job.data.investmentId, job.data.day)
+      if (job.name === 'sweep')        return runSweep()
     },
     { connection, prefix: PREFIX }
   )

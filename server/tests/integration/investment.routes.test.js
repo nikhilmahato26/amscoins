@@ -58,6 +58,8 @@ test('deposit-gate is open for a new user, pending after a deposit, and blocks a
   // First deposit succeeds.
   const first = await request(app).post('/api/investments').set('Authorization', `Bearer ${token}`).send({ planKey: 'silver', amount: 200000 })
   expect(first.status).toBe(201)
+  // Notify payment submitted so the gate sees this deposit as blocking.
+  await request(app).post(`/api/investments/${first.body.investment._id}/notify`).set('Authorization', `Bearer ${token}`)
 
   // Gate now reports pending, and a second deposit is refused with 409.
   const gated = await request(app).get('/api/investments/deposit-gate').set('Authorization', `Bearer ${token}`)

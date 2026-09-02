@@ -21,7 +21,7 @@ test('silver deposit creates a pending first-deposit investment', async () => {
   const { investment, telegramLink } = await createInvestment(u, { planKey: 'silver', amount: 200000 })
   expect(investment.status).toBe('pending')
   expect(investment.isFirstDeposit).toBe(true)
-  expect(investment.expectedReturn).toBe(50000) // 25% of 200000
+  expect(investment.expectedReturn).toBe(60000) // 30% of 200000
   expect(investment.referenceCode).toMatch(/^ASM-/)
   expect(telegramLink).toBeTruthy()
 })

@@ -13,8 +13,8 @@ import {
 
 import { AppShell } from '@/components/app/AppShell'
 import { TierBadge, type Tier } from '@/components/app/TierBadge'
-import { useInvestments } from '@/hooks/queries'
-import type { Investment } from '@/services/api/investments'
+import { useInvestments, useRequestBreak } from '@/hooks/queries'
+import type { Investment, Installment } from '@/services/api/investments'
 import { inr } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
@@ -41,7 +41,7 @@ const TABS: { id: Tab; label: string }[] = [
 
 function matchesTab(inv: Investment, tab: Tab): boolean {
   if (tab === 'all') return true
-  if (tab === 'active')   return inv.status === 'active' || inv.status === 'matured'
+  if (tab === 'active')   return inv.status === 'active' || inv.status === 'matured' || inv.status === 'break_requested'
   if (tab === 'returned') return inv.status === 'returned'
   return inv.status === tab
 }
@@ -58,7 +58,8 @@ const STATUS_CONFIG: Record<
   rejected: { label: 'Rejected',       icon: XCircle,       cls: 'bg-red-50 text-red-700 border-red-200',             iconCls: 'text-red-500'    },
   // Deleted cycles are filtered out server-side and never reach the user — this
   // entry exists only to satisfy the status map's exhaustiveness.
-  deleted:  { label: 'Removed',        icon: XCircle,       cls: 'bg-zinc-100 text-zinc-500 border-zinc-200',         iconCls: 'text-zinc-400'   },
+  deleted:          { label: 'Removed',        icon: XCircle,       cls: 'bg-zinc-100 text-zinc-500 border-zinc-200',         iconCls: 'text-zinc-400'   },
+  break_requested:  { label: 'Break Requested', icon: Clock,         cls: 'bg-orange-50 text-orange-700 border-orange-200',    iconCls: 'text-orange-500'  },
 }
 
 function StatusPill({ status }: { status: Investment['status'] }) {
@@ -68,6 +69,67 @@ function StatusPill({ status }: { status: Investment['status'] }) {
       <Icon className={cn('size-2.5', iconCls)} strokeWidth={2.5} aria-hidden />
       {label}
     </span>
+  )
+}
+
+/* ── Installment timeline ── */
+function InstallmentTimeline({
+  installments,
+  investmentId,
+  status,
+}: {
+  installments: Installment[]
+  investmentId: string
+  status: string
+}) {
+  const breakMutation = useRequestBreak()
+  const canBreak =
+    status === 'active' &&
+    installments.some((i) => i.status === 'available' || i.status === 'paid')
+
+  return (
+    <div className="mt-3 space-y-1.5">
+      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Daily returns</p>
+      <div className="flex gap-2">
+        {installments.map((inst) => (
+          <div
+            key={inst.day}
+            className={cn(
+              'flex-1 rounded-lg border px-2 py-1.5 text-center text-[11px] font-semibold',
+              inst.status === 'paid'
+                ? 'border-asm-green-tint bg-asm-green-tint text-asm-greenInk'
+                : inst.status === 'available'
+                  ? 'border-amber-200 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400'
+                  : 'border-border bg-muted/40 text-muted-foreground'
+            )}
+          >
+            <div>Day {inst.day}</div>
+            <div>{inst.pct}%</div>
+            <div className="mt-0.5 text-[10px] font-normal opacity-70">
+              {inst.status === 'paid' ? 'Paid' : inst.status === 'available' ? 'Ready' : 'Pending'}
+            </div>
+          </div>
+        ))}
+      </div>
+      {canBreak && (
+        <button
+          onClick={() => {
+            if (window.confirm('Exit early? You will receive your principal back without the remaining returns.')) {
+              breakMutation.mutate(investmentId)
+            }
+          }}
+          disabled={breakMutation.isPending}
+          className="mt-1 w-full rounded-lg border border-orange-200 bg-orange-50 py-1.5 text-[12px] font-semibold text-orange-700 transition hover:bg-orange-100 disabled:opacity-50 dark:border-orange-800/30 dark:bg-orange-950/30 dark:text-orange-400"
+        >
+          {breakMutation.isPending ? 'Requesting…' : 'Request Early Exit'}
+        </button>
+      )}
+      {status === 'break_requested' && (
+        <p className="text-center text-[11px] text-orange-600 dark:text-orange-400">
+          Break Requested — pending admin review
+        </p>
+      )}
+    </div>
   )
 }
 
@@ -168,6 +230,14 @@ function InvestmentCard({ inv }: { inv: Investment }) {
           </div>
         )}
       </div>
+
+      {inv.installments && inv.installments.length > 0 && (
+        <InstallmentTimeline
+          installments={inv.installments}
+          investmentId={inv._id}
+          status={inv.status}
+        />
+      )}
     </motion.div>
   )
 }
@@ -217,7 +287,7 @@ export function InvestmentsPage() {
   const counts: Record<Tab, number> = {
     all:      investments?.length ?? 0,
     pending:  investments?.filter((i) => i.status === 'pending').length ?? 0,
-    active:   investments?.filter((i) => i.status === 'active' || i.status === 'matured').length ?? 0,
+    active:   investments?.filter((i) => i.status === 'active' || i.status === 'matured' || i.status === 'break_requested').length ?? 0,
     returned: investments?.filter((i) => i.status === 'returned').length ?? 0,
     rejected: investments?.filter((i) => i.status === 'rejected').length ?? 0,
   }

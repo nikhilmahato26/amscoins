@@ -1,16 +1,28 @@
 import { apiFetch } from '@/lib/api'
 import type { Tier } from '@/types'
 
+export interface Installment {
+  day: number
+  pct: number
+  amount: number // paise
+  status: 'scheduled' | 'available' | 'paid'
+  maturesAt: string
+  creditedAt?: string
+}
+
 export interface Investment {
   _id: string
   planKey: Tier
   amount: number // paise
   returnPct: number
+  installmentPcts: number[]
   expectedReturn: number // paise
   referenceCode: string
-  status: 'pending' | 'active' | 'matured' | 'returned' | 'rejected' | 'deleted'
-  returnedAt?: string
+  status: 'pending' | 'active' | 'matured' | 'returned' | 'rejected' | 'deleted' | 'break_requested'
+  installments?: Installment[]
+  breakRequestedAt?: string
   creditedAmount?: number
+  returnedAt?: string
   startAt?: string
   maturesAt?: string
   createdAt: string
@@ -45,6 +57,5 @@ export const getInvestments = () => apiFetch<Investment[]>('/investments')
 
 export const getInvestment = (id: string) => apiFetch<Investment>(`/investments/${id}`)
 
-// NOTE: the admin investment/return API lives in `./admin.ts` (the canonical
-// admin API module the admin pages consume via `@/hooks/queries`). It is not
-// duplicated here.
+export const requestBreak = (id: string) =>
+  apiFetch<Investment>(`/investments/${id}/break`, { method: 'POST' })

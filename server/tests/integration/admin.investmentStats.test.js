@@ -31,7 +31,7 @@ async function makeUser(name) {
 function invDoc(user, extra = {}) {
   return {
     user: user._id, planKey: 'silver', amount: 100000, returnPct: 25, expectedReturn: 25000,
-    referenceCode: `ASM-${Math.random().toString(36).slice(2, 10)}`, ...extra,
+    referenceCode: `ASM-${Math.random().toString(36).slice(2, 10)}`, paymentNotified: true, ...extra,
   }
 }
 

@@ -31,6 +31,7 @@ if (!DISABLED) {
 const autoRejectJobId = (id) => `auto-reject-${id}`
 const autoDepositJobId = (id) => `auto-deposit-${id}`
 const matureJobId = (id) => `mature-${id}`
+const installmentJobId = (id, day) => `installment-${id}-day-${day}`
 
 async function scheduleAutoReject(inv) {
   if (!investmentQueue) return
@@ -88,18 +89,41 @@ async function cancelMature(id) {
   if (job) await job.remove()
 }
 
+async function scheduleInstallment(inv, day) {
+  if (!investmentQueue) return
+  const installment = inv.installments.find((i) => i.day === day)
+  if (!installment) return
+  const delay = Math.max(0, new Date(installment.maturesAt).getTime() - Date.now())
+  await investmentQueue.add(
+    'installment',
+    { investmentId: String(inv._id), day },
+    { delay, jobId: installmentJobId(inv._id, day), removeOnComplete: true, removeOnFail: 100 }
+  )
+}
+
+async function cancelInstallments(id) {
+  if (!investmentQueue) return
+  for (const day of [1, 2, 3]) {
+    const job = await investmentQueue.getJob(installmentJobId(id, day))
+    if (job) await job.remove()
+  }
+}
+
 module.exports = {
   investmentQueue,
   queueConnection,
   scheduleAutoReject,
   scheduleAutoDeposit,
   scheduleMature,
+  scheduleInstallment,
   cancelAutoReject,
   cancelAutoDeposit,
   cancelMature,
+  cancelInstallments,
   QUEUE_NAME,
   PREFIX,
   autoRejectJobId,
   autoDepositJobId,
   matureJobId,
+  installmentJobId,
 }

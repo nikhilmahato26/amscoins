@@ -18,7 +18,7 @@ async function pendingInv(extra = {}) {
     user: new mongoose.Types.ObjectId(),
     planKey: 'silver', amount: 100000, returnPct: 25, expectedReturn: 25000,
     referenceCode: `ASM-${Math.random().toString(36).slice(2, 10)}`,
-    status: 'pending', ...extra,
+    status: 'pending', paymentNotified: true, ...extra,
   })
 }
 

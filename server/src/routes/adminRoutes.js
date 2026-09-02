@@ -27,6 +27,9 @@ router.post('/investments/:id/return/reject', validate(returnRejectSchema), c.re
 router.post('/investments/:id/approve-payout', c.approvePayout)
 router.post('/investments/:id/reject-payout', validate(payoutRejectSchema), c.rejectPayout)
 router.delete('/investments/:id', c.deleteInvestment)
+router.post('/investments/:id/installments/:day/approve', c.approveInstallment)
+router.post('/investments/:id/approve-break', c.approveBreak)
+router.post('/investments/:id/reject-break', c.rejectBreak)
 
 router.get('/withdrawals', c.listWithdrawals)
 router.post('/withdrawals/bulk-approve', validate(bulkApproveSchema), c.bulkApproveWithdrawals)

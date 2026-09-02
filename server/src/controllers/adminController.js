@@ -143,6 +143,22 @@ const deleteInvestment = asyncHandler(async (req, res) =>
   res.json(await invSvc.deleteInvestment(req.params.id, req.user._id))
 )
 
+const approveInstallment = asyncHandler(async (req, res) => {
+  const day = Number(req.params.day)
+  if (!Number.isInteger(day) || day < 1 || day > 3) {
+    return res.status(400).json({ message: 'day must be 1, 2, or 3' })
+  }
+  res.json(await invSvc.approveInstallment(req.params.id, day, req.user._id))
+})
+
+const approveBreak = asyncHandler(async (req, res) =>
+  res.json(await invSvc.approveBreak(req.params.id, req.user._id))
+)
+
+const rejectBreak = asyncHandler(async (req, res) =>
+  res.json(await invSvc.rejectBreak(req.params.id, req.user._id))
+)
+
 const bulkApproveInvestments = asyncHandler(async (req, res) => {
   const { ids } = req.body
   res.json(await invSvc.bulkApproveInvestments(ids, req.user._id))
@@ -402,6 +418,9 @@ module.exports = {
   approvePayout,
   rejectPayout,
   deleteInvestment,
+  approveInstallment,
+  approveBreak,
+  rejectBreak,
   bulkApproveInvestments,
   bulkRejectInvestments,
   bulkApproveReturns,

@@ -66,15 +66,18 @@ test('full lifecycle: deposit -> approve -> referral tier unlock -> withdraw', a
   expect((await request(app).get('/api/wallet').set(bearer(U.token))).body.balance).toBe(0)
   expect((await User.findById(R.user.id)).referralCount).toBe(1)
 
-  await Investment.updateOne({ _id: inv.body.investment._id }, { $set: { maturesAt: new Date(Date.now() - 1000) } })
-  await invSvc.runMature(inv.body.investment._id) // active -> matured -> auto-credited (WALLET_AUTO_CREDIT_ON_MATURITY defaults true)
+  // Silver now uses installments (installmentPcts=[10,10,10]), so runMature is
+  // correctly skipped for it. Drive the investment to matured+returned directly
+  // via admin approvePayout (the admin "pay now" path), which works for any
+  // active investment regardless of plan type.
+  await invSvc.approvePayout(inv.body.investment._id, null)
   const wallet = await request(app).get('/api/wallet').set(bearer(U.token))
-  expect(wallet.body.balance).toBe(250000)
+  expect(wallet.body.balance).toBe(260000)
 
-  // 6. U withdraws ₹1,000 -> net 95000, wallet 150000.
+  // 6. U withdraws ₹1,000 -> net 95000, wallet 160000 (260000 - 100000).
   const wd = await request(app).post('/api/withdrawals').set(bearer(U.token)).send({ amount: 100000, upiId: 'u@upi' })
   expect(wd.body.net).toBe(95000)
-  expect((await request(app).get('/api/wallet').set(bearer(U.token))).body.balance).toBe(150000)
+  expect((await request(app).get('/api/wallet').set(bearer(U.token))).body.balance).toBe(160000)
 
   // 7. Admin completes the withdrawal.
   const complete = await request(app).post(`/api/admin/withdrawals/${wd.body._id}/complete`).set(bearer(adminToken))
@@ -90,5 +93,5 @@ test('full lifecycle: deposit -> approve -> referral tier unlock -> withdraw', a
   const rPlans = await request(app).get('/api/plans').set(bearer(R.token))
   const rByKey = Object.fromEntries(rPlans.body.map((p) => [p.key, p.unlocked]))
   expect(rByKey.gold).toBe(true)
-  expect(rByKey.diamond).toBe(false)
+  expect(rByKey.diamond).toBeFalsy() // diamond is disabled (active: false) so absent from plans list
 })
