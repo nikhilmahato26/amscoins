@@ -17,8 +17,8 @@ const DEFAULTS = [
   {
     key: 'gold',
     name: 'Gold',
-    returnPct: 35,
-    installmentPcts: [11, 12, 12],
+    returnPct: 40,
+    installmentPcts: [13, 13, 14],
     minInvest: 300000,    // ₹3,000
     maxInvest: 30000000,  // ₹3,00,000
     unlockReferrals: 21,

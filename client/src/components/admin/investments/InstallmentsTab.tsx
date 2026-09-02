@@ -1,5 +1,4 @@
-import { useState, useCallback } from 'react'
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import { useState } from 'react'
 import { useApproveInstallment, useApproveBreak, useRejectBreak } from '@/hooks/queries'
 import type { AdminInvestment } from '@/services/api/admin'
 import type { Installment } from '@/services/api/investments'
@@ -69,90 +68,46 @@ function InstallmentPip({ inst }: { inst: Installment }) {
   )
 }
 
-// ── Running investments compact table row (expands to timeline on click) ──────
+// ── Running investments card list ─────────────────────────────────────────────
 
-function RunningInvestmentRow({
-  inv,
-  expanded,
-  onToggle,
-}: {
-  inv: AdminInvestment
-  expanded: boolean
-  onToggle: () => void
-}) {
+function RunningInvestmentCard({ inv }: { inv: AdminInvestment }) {
   const installments = inv.installments ?? []
   const paidCount = installments.filter((i) => i.status === 'paid').length
-  const availableCount = installments.filter((i) => i.status === 'available').length
 
   return (
-    <>
-      <tr
-        className="cursor-pointer border-b border-asm-line transition-colors last:border-0 hover:bg-asm-tint/60"
-        onClick={onToggle}
-      >
-        {/* Expand chevron */}
-        <td className="w-8 pl-3 pr-0 py-3 text-asm-muted">
-          {expanded
-            ? <ChevronDown className="size-4" strokeWidth={2} aria-hidden />
-            : <ChevronRight className="size-4" strokeWidth={2} aria-hidden />}
-        </td>
-
-        {/* User */}
-        <td className="px-3 py-3">
-          <p className="text-[13px] font-semibold text-asm-navy leading-none">{inv.user.name}</p>
-          <p className="mt-0.5 text-[11px] text-asm-muted">{inv.user.email}</p>
-        </td>
-
-        {/* Plan */}
-        <td className="px-3 py-3">
+    <div className="rounded-xl border border-asm-line bg-white p-4 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <p className="text-[13px] font-semibold text-asm-navy">{inv.user.name}</p>
+          <p className="text-[11px] text-asm-muted">{inv.user.email}</p>
+        </div>
+        <div className="flex items-center gap-2">
           <span className="inline-flex items-center rounded-md bg-asm-blue-tint px-2 py-0.5 text-[11px] font-semibold capitalize text-asm-blue">
             {inv.planKey}
           </span>
-        </td>
-
-        {/* Principal */}
-        <td className="px-3 py-3 font-mono text-[12px] tabular-nums text-asm-navy text-right">
-          {inr(inv.amount)}
-        </td>
-
-        {/* Progress */}
-        <td className="px-3 py-3 text-right">
-          <span className={cn(
-            'rounded-full px-2 py-0.5 text-[11px] font-semibold',
-            availableCount > 0
-              ? 'bg-asm-blue-tint text-asm-blue'
-              : 'bg-asm-tint text-asm-muted'
-          )}>
-            {paidCount}/{installments.length} paid
-            {availableCount > 0 && ` · ${availableCount} ready`}
+          <span className="font-mono text-[12px] tabular-nums text-asm-body">
+            {inr(inv.amount)} principal
           </span>
-        </td>
+          <span className="rounded-full bg-asm-tint px-2 py-0.5 text-[11px] text-asm-muted">
+            {paidCount}/{installments.length} paid
+          </span>
+        </div>
+      </div>
 
-        {/* Reference */}
-        <td className="px-3 py-3 font-mono text-[10px] text-asm-muted text-right pr-4 hidden sm:table-cell">
-          {inv.referenceCode}
-        </td>
-      </tr>
+      {/* Day timeline */}
+      <div className="mt-4 flex flex-wrap items-start gap-6">
+        {installments.map((inst, idx) => (
+          <div key={inst.day} className="flex items-start gap-6">
+            <InstallmentPip inst={inst} />
+            {idx < installments.length - 1 && (
+              <div className="mt-1 h-px w-8 self-center bg-asm-line" />
+            )}
+          </div>
+        ))}
+      </div>
 
-      {/* Expanded timeline */}
-      {expanded && (
-        <tr className="border-b border-asm-line bg-asm-tint/40">
-          <td colSpan={6} className="px-6 py-4">
-            <div className="flex flex-wrap items-start gap-6">
-              {installments.map((inst, idx) => (
-                <div key={inst.day} className="flex items-start gap-6">
-                  <InstallmentPip inst={inst} />
-                  {idx < installments.length - 1 && (
-                    <div className="mt-1 h-px w-8 self-center bg-asm-line" />
-                  )}
-                </div>
-              ))}
-            </div>
-            <p className="mt-3 font-mono text-[10px] text-asm-muted sm:hidden">{inv.referenceCode}</p>
-          </td>
-        </tr>
-      )}
-    </>
+      <p className="mt-3 font-mono text-[10px] text-asm-muted">{inv.referenceCode}</p>
+    </div>
   )
 }
 
@@ -167,16 +122,6 @@ export function InstallmentsTab({ data, isLoading, isError }: Props) {
   const [approvingBreakId, setApprovingBreakId] = useState<string | null>(null)
   const [rejectingBreakId, setRejectingBreakId] = useState<string | null>(null)
   const [statusMsg, setStatusMsg] = useState('')
-  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
-
-  const toggleRow = useCallback((id: string) => {
-    setExpandedRows((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }, [])
 
   // Bucket investments into three groups:
   // 1. pendingInstallments — installments that are 'available' (ready to pay out now)
@@ -395,7 +340,7 @@ export function InstallmentsTab({ data, isLoading, isError }: Props) {
           </section>
         )}
 
-        {/* ── 2. Running investments (compact table, click to expand timeline) ── */}
+        {/* ── 2. Running investments (all active — timeline view) ─────────── */}
         <section>
           <h2 className="mb-3 text-sm font-semibold text-asm-navy">
             Running Investments
@@ -420,34 +365,10 @@ export function InstallmentsTab({ data, isLoading, isError }: Props) {
               <p className="mt-1 text-[12px] text-asm-muted">Approved installment-plan investments will appear here.</p>
             </div>
           ) : (
-            <div className="overflow-hidden rounded-xl border border-asm-line bg-white shadow-sm">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[560px] text-left">
-                  <thead>
-                    <tr className="border-b border-asm-line bg-asm-tint/60">
-                      <th className="w-8 pl-3 pr-0 py-2.5" />
-                      <th className="px-3 py-2.5 text-[10px] font-bold uppercase tracking-[0.1em] text-asm-muted">User</th>
-                      <th className="px-3 py-2.5 text-[10px] font-bold uppercase tracking-[0.1em] text-asm-muted">Plan</th>
-                      <th className="px-3 py-2.5 text-[10px] font-bold uppercase tracking-[0.1em] text-asm-muted text-right">Principal</th>
-                      <th className="px-3 py-2.5 text-[10px] font-bold uppercase tracking-[0.1em] text-asm-muted text-right">Progress</th>
-                      <th className="px-3 pr-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.1em] text-asm-muted text-right hidden sm:table-cell">Reference</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {runningInvestments.map((inv) => (
-                      <RunningInvestmentRow
-                        key={inv._id}
-                        inv={inv}
-                        expanded={expandedRows.has(inv._id)}
-                        onToggle={() => toggleRow(inv._id)}
-                      />
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <p className="border-t border-asm-line px-4 py-2 text-[11px] text-asm-muted">
-                Click any row to see the day-by-day installment timeline.
-              </p>
+            <div className="flex flex-col gap-3">
+              {runningInvestments.map((inv) => (
+                <RunningInvestmentCard key={inv._id} inv={inv} />
+              ))}
             </div>
           )}
         </section>
