@@ -75,7 +75,7 @@ function TimeRemaining({ maturesAt }: { maturesAt: string }) {
 
 const PLANS: { tier: Tier; name: string; returns: string; duration: string; min: string; max: string; requiredReferrals: number }[] = [
   { tier: 'silver', name: 'Silver', returns: '30%', duration: '72 Hours', min: '₹1,000', max: '₹10,000',   requiredReferrals: 0  },
-  { tier: 'gold',   name: 'Gold',   returns: '40%', duration: '72 Hours', min: '₹3,000', max: '₹3,00,000', requiredReferrals: 21 },
+  { tier: 'gold',   name: 'Gold',   returns: '35%', duration: '72 Hours', min: '₹3,000', max: '₹3,00,000', requiredReferrals: 21 },
 ]
 
 /* ── Page ───────────────────────────────────────────────────────── */

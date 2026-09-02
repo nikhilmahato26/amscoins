@@ -50,7 +50,7 @@ const UNLOCK_LEVELS: {
     requirement: 'Unlock with 21 referrals',
     card: 'border-amber-200 bg-amber-50',
     requirementTone: 'text-amber-600',
-    perks: ['Invest up to ₹3,00,000', '40% Returns in 72h', '3% TDS on withdrawal'],
+    perks: ['Invest up to ₹3,00,000', '35% Returns in 72h', '3% TDS on withdrawal'],
   },
   {
     tier: 'diamond', name: 'Diamond',
