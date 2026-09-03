@@ -33,21 +33,21 @@ async function makeUser(overrides = {}) {
 
 // ── Step 1: createInvestment snapshots installmentPcts ────────────────────────
 
-test('createInvestment snapshots installmentPcts=[10,10,10] for silver plan', async () => {
+test('createInvestment snapshots installmentPcts=[15,15] for silver plan', async () => {
   const u = await makeUser()
   const { investment } = await svc.createInvestment(u, { planKey: 'silver', amount: 200000 })
-  expect(investment.installmentPcts).toEqual([10, 10, 10])
+  expect(investment.installmentPcts).toEqual([15, 15])
 })
 
-test('createInvestment snapshots installmentPcts=[13,13,14] for gold plan', async () => {
+test('createInvestment snapshots installmentPcts=[17.5,17.5] for gold plan', async () => {
   const u = await makeUser({ tier: 'gold' })
   const { investment } = await svc.createInvestment(u, { planKey: 'gold', amount: 300000 })
-  expect(investment.installmentPcts).toEqual([13, 13, 14])
+  expect(investment.installmentPcts).toEqual([17.5, 17.5])
 })
 
 // ── Step 2: approveInvestment populates installments[] ───────────────────────
 
-test('approveInvestment populates 3 installments for silver (10/10/10) at 200 000 paise', async () => {
+test('approveInvestment populates 2 installments for silver (15/15) at 200 000 paise', async () => {
   const u = await makeUser()
   const { investment } = await svc.createInvestment(u, { planKey: 'silver', amount: 200000 })
   const admin = await makeUser({ role: 'admin' })
@@ -56,34 +56,28 @@ test('approveInvestment populates 3 installments for silver (10/10/10) at 200 00
   await svc.approveInvestment(investment._id, admin._id)
 
   const inv = await Investment.findById(investment._id)
-  expect(inv.installments).toHaveLength(3)
+  expect(inv.installments).toHaveLength(2)
   // day field
   expect(inv.installments[0].day).toBe(1)
   expect(inv.installments[1].day).toBe(2)
-  expect(inv.installments[2].day).toBe(3)
   // pct snapshot
-  expect(inv.installments[0].pct).toBe(10)
-  expect(inv.installments[1].pct).toBe(10)
-  expect(inv.installments[2].pct).toBe(10)
-  // amounts: 10% of 200000=20000 each, expectedReturn=60000, last=60000-40000=20000
-  expect(inv.installments[0].amount).toBe(20000)
-  expect(inv.installments[1].amount).toBe(20000)
-  expect(inv.installments[2].amount).toBe(20000)
+  expect(inv.installments[0].pct).toBe(15)
+  expect(inv.installments[1].pct).toBe(15)
+  // amounts: 15% of 200000=30000 each, expectedReturn=60000, last=60000-30000=30000
+  expect(inv.installments[0].amount).toBe(30000)
+  expect(inv.installments[1].amount).toBe(30000)
   // amounts sum to expectedReturn
   const total = inv.installments.reduce((s, i) => s + i.amount, 0)
   expect(total).toBe(inv.expectedReturn)
   // all scheduled
   expect(inv.installments.every((i) => i.status === 'scheduled')).toBe(true)
-  // maturesAt timing: day 1 → +24h, day 2 → +48h, day 3 → +72h
+  // maturesAt timing: day 1 → +24h, day 2 → +48h (full 48h term, 50-50)
   const d1 = inv.installments[0].maturesAt.getTime()
   const d2 = inv.installments[1].maturesAt.getTime()
-  const d3 = inv.installments[2].maturesAt.getTime()
   expect(d1 - before).toBeGreaterThan(23.9 * 3600e3)
   expect(d1 - before).toBeLessThan(24.1 * 3600e3)
   expect(d2 - before).toBeGreaterThan(47.9 * 3600e3)
   expect(d2 - before).toBeLessThan(48.1 * 3600e3)
-  expect(d3 - before).toBeGreaterThan(71.9 * 3600e3)
-  expect(d3 - before).toBeLessThan(72.1 * 3600e3)
 })
 
 test('approveInvestment sets investment.maturesAt to last installment maturesAt for silver', async () => {
@@ -94,26 +88,24 @@ test('approveInvestment sets investment.maturesAt to last installment maturesAt 
   await svc.approveInvestment(investment._id, admin._id)
 
   const inv = await Investment.findById(investment._id)
-  expect(inv.maturesAt.getTime()).toBe(inv.installments[2].maturesAt.getTime())
+  expect(inv.maturesAt.getTime()).toBe(inv.installments[1].maturesAt.getTime())
 })
 
-test('approveInvestment populates 3 installments for gold (13/13/14) with rounding guard', async () => {
+test('approveInvestment populates 2 installments for gold (17.5/17.5) with sum-exact guard', async () => {
   const u = await makeUser({ tier: 'gold' })
-  // Use an amount that can produce rounding drift: 300 000 paise
-  // returnPct=40 → expectedReturn = 120 000
-  // 13% of 300000 = 39000, 13% = 39000, last = 120000 - 78000 = 42000
+  // gold: returnPct=35 → expectedReturn = 105 000 for 300 000 paise
+  // 17.5% of 300000 = 52500, last = 105000 - 52500 = 52500 (sum-exact guard)
   const { investment } = await svc.createInvestment(u, { planKey: 'gold', amount: 300000 })
   const admin = await makeUser({ role: 'admin' })
 
   await svc.approveInvestment(investment._id, admin._id)
 
   const inv = await Investment.findById(investment._id)
-  expect(inv.installments).toHaveLength(3)
-  expect(inv.installments[0].amount).toBe(39000)
-  expect(inv.installments[1].amount).toBe(39000)
-  expect(inv.installments[2].amount).toBe(42000)
+  expect(inv.installments).toHaveLength(2)
+  expect(inv.installments[0].amount).toBe(52500)
+  expect(inv.installments[1].amount).toBe(52500)
   const total = inv.installments.reduce((s, i) => s + i.amount, 0)
-  expect(total).toBe(inv.expectedReturn) // 120 000
+  expect(total).toBe(inv.expectedReturn) // 105 000
 })
 
 test('approveInvestment with non-installment plan (legacy empty installmentPcts) still uses cycleDurationHours', async () => {

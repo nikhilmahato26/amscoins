@@ -181,7 +181,7 @@ test('POST /api/admin/investments/:id/installments/1/approve credits day 1 insta
   expect(fresh.installments[0].status).toBe('paid')
 
   const wallet = await Wallet.findOne({ user: user._id })
-  expect(wallet.balance).toBe(20000) // 10% of 200000
+  expect(wallet.balance).toBe(30000) // 15% of 200000 (day 1 of 50-50 over 48h)
 })
 
 // ── POST /api/admin/investments/:id/approve-break ─────────────────────────────

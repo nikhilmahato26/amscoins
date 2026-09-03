@@ -17,9 +17,11 @@ export function ReferralBanner({ className }: { className?: string }) {
       )}
     >
       <div className="flex min-w-0 flex-1 flex-col">
-        <h3 className="text-lg font-bold leading-[22.5px] text-asm-navy">Invite &amp; Level Up</h3>
+        <h3 className="text-lg font-bold leading-[22.5px] text-asm-navy">
+          Earn <span className="text-asm-greenInk">3% cash</span> per referral
+        </h3>
         <p className="pt-1 text-xs leading-[19.5px] text-asm-body">
-          Refer friends to unlock Gold (35%) and Diamond tiers with higher limits.
+          Get 3% of every friend&apos;s first deposit, straight to your wallet — plus unlock Gold (upto 35%) and Diamond tiers with higher limits.
         </p>
         <Link
           to="/app/referral"

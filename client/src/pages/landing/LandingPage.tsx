@@ -48,8 +48,8 @@ const TRUST_PILLS: { Icon: LucideIcon; label: string }[] = [
   { Icon: ShieldCheck, label: 'Admin Verified'       },
   { Icon: Zap,         label: '3-Hour Payouts'       },
   { Icon: Headphones,  label: 'Daily Support'        },
-  { Icon: TrendingUp,  label: '30%–35% Returns'      },
-  { Icon: Clock,       label: '72-Hour Cycles'       },
+  { Icon: TrendingUp,  label: 'Upto 35% Returns'     },
+  { Icon: Clock,       label: '24-Hour Cycles'       },
   { Icon: Wallet,      label: 'Direct UPI Payout'    },
 ]
 
@@ -82,9 +82,9 @@ const PLANS: {
   slug: string; name: string; returns: string; duration: string;
   min: string; max: string; unlockNote: string; accent: 'silver' | 'gold' | 'diamond'
 }[] = [
-  { slug: 'silver',  name: 'Silver Plan',  returns: '30%', duration: '72 Hours', min: '₹1,000', max: '₹10,000',   unlockNote: 'Default Tier',              accent: 'silver'  },
-  { slug: 'gold',    name: 'Gold Plan',    returns: '35%', duration: '72 Hours', min: '₹3,000', max: '₹3,00,000',  unlockNote: 'Unlocks with 21 referrals', accent: 'gold'    },
-  { slug: 'diamond', name: 'Diamond Plan', returns: '40%', duration: '72 Hours', min: '₹5,000', max: '₹5,00,000',  unlockNote: 'Unlocks with 52 referrals', accent: 'diamond' },
+  { slug: 'silver',  name: 'Silver Plan',  returns: '30%', duration: '24 Hrs', min: '₹1,000', max: '₹10,000',   unlockNote: 'Default Tier',              accent: 'silver'  },
+  { slug: 'gold',    name: 'Gold Plan',    returns: '35%', duration: '24 Hrs', min: '₹3,000', max: '₹3,00,000',  unlockNote: 'Unlocks with 21 referrals', accent: 'gold'    },
+  { slug: 'diamond', name: 'Diamond Plan', returns: '40%', duration: '24 Hrs', min: '₹5,000', max: '₹5,00,000',  unlockNote: 'Unlocks with 52 referrals', accent: 'diamond' },
 ]
 
 /* ── CountUp component (Task 2) ── */
@@ -311,23 +311,27 @@ export function LandingPage() {
         <div className="mx-auto w-full max-w-[1180px] pb-8">
           <MarketSnapshot />
           <PlansSection />
-          <HowItWorksSection />
 
-          {/* ── Invite & Level Up ── */}
+          {/* ── Invite & Level Up (referral offer — surfaced high & loud) ── */}
           <section
             id="referral"
             className="mx-4 mt-8 overflow-hidden rounded-2xl bg-gradient-to-br from-[#0B4FD8] to-[#0E6E32] ring-1 ring-transparent transition-colors lg:mx-8 dark:from-[#3a2e08] dark:to-[#0B0B0C] dark:ring-skin-line"
           >
-          <div className="relative px-5 py-6">
+          <div className="relative px-5 py-7">
             <div
               aria-hidden
               className="pointer-events-none absolute right-0 top-0 h-full w-[60%] opacity-10"
               style={{ background: 'radial-gradient(circle at 80% 30%, #fff 0%, transparent 70%)' }}
             />
-            <UserPlus className="mb-3 size-8 text-white/80" strokeWidth={1.8} aria-hidden />
-            <h2 className="text-[22px] font-extrabold leading-tight text-white">Invite &amp; Level Up</h2>
-            <p className="mt-1.5 max-w-[38ch] text-[13px] leading-relaxed text-white/75">
-              Refer members to unlock Gold (35%) and Diamond tiers with higher limits. Referrals credit when friends complete their first deposit.
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.1em] text-white ring-1 ring-white/25">
+              <UserPlus className="size-3.5" strokeWidth={2} aria-hidden />
+              Referral Bonus
+            </span>
+            <h2 className="mt-3 text-[26px] font-extrabold leading-[1.15] text-white sm:text-[30px]">
+              Earn <span className="text-[#F4C506]">3% cash</span> on every friend’s first deposit
+            </h2>
+            <p className="mt-2 max-w-[44ch] text-[13px] leading-relaxed text-white/80">
+              Paid straight to your wallet the moment they complete their first deposit — and every referral moves you toward Gold (upto 35%) and Diamond tiers with higher limits.
             </p>
             <Link
               to="/register"
@@ -347,6 +351,8 @@ export function LandingPage() {
             </Link>
           </div>
           </section>
+
+          <HowItWorksSection />
         </div>
       </main>
 
@@ -681,16 +687,20 @@ function PlansSection() {
                   {unlockNote}
                 </span>
 
-                {/* Return % — largest element on the card */}
+                {/* Return % — largest element on the card. "upto" is deliberately
+                   tiny so the headline figure carries the card. */}
                 <div className="flex flex-col items-center py-4">
-                  <span className={cn('font-jakarta text-[44px] font-extrabold leading-none', a.figure)}>
-                    {returns}
+                  <span className="flex items-start gap-0.5">
+                    <span className="mt-1 text-[10px] font-semibold lowercase tracking-tight text-skin-muted">upto</span>
+                    <span className={cn('font-jakarta text-[44px] font-extrabold leading-none', a.figure)}>
+                      {returns}
+                    </span>
                   </span>
-                  <span className="mt-1 text-[13px] font-semibold text-skin-muted">annual equivalent return</span>
+                  <span className="mt-1 text-[13px] font-semibold text-skin-muted">max return</span>
                 </div>
 
                 <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-skin-muted">Duration</p>
-                <p className="text-[13px] font-bold uppercase tabular-nums">{duration}</p>
+                <p className={cn('font-jakarta text-[18px] font-extrabold uppercase leading-none tabular-nums', a.figure)}>{duration}</p>
 
                 <dl className="mt-3.5 flex w-full items-start justify-between border-t border-skin-line pt-3">
                   <div className="flex flex-col">
