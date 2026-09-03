@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ChevronRight } from 'lucide-react'
 import { useApproveInstallment, useApproveBreak, useRejectBreak } from '@/hooks/queries'
 import type { AdminInvestment } from '@/services/api/admin'
 import type { Installment } from '@/services/api/investments'
@@ -70,43 +71,74 @@ function InstallmentPip({ inst }: { inst: Installment }) {
 
 // ── Running investments card list ─────────────────────────────────────────────
 
-function RunningInvestmentCard({ inv }: { inv: AdminInvestment }) {
+function RunningInvestmentCard({
+  inv,
+  expanded,
+  onToggle,
+}: {
+  inv: AdminInvestment
+  expanded: boolean
+  onToggle: () => void
+}) {
   const installments = inv.installments ?? []
   const paidCount = installments.filter((i) => i.status === 'paid').length
+  const readyCount = installments.filter((i) => i.status === 'available').length
 
   return (
-    <div className="rounded-xl border border-asm-line bg-white p-4 shadow-sm">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <p className="text-[13px] font-semibold text-asm-navy">{inv.user.name}</p>
-          <p className="text-[11px] text-asm-muted">{inv.user.email}</p>
+    <div className="rounded-xl border border-asm-line bg-white shadow-sm">
+      {/* Compact header — click to expand/collapse the day timeline. Collapsed by
+         default so the admin can scan many investments without endless scrolling. */}
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={expanded}
+        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+      >
+        <div className="flex min-w-0 items-center gap-2">
+          <ChevronRight
+            className={cn('size-4 shrink-0 text-asm-muted transition-transform', expanded && 'rotate-90')}
+            aria-hidden
+          />
+          <div className="min-w-0">
+            <p className="truncate text-[13px] font-semibold text-asm-navy">{inv.user.name}</p>
+            <p className="truncate text-[11px] text-asm-muted">{inv.user.email}</p>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <span className="inline-flex items-center rounded-md bg-asm-blue-tint px-2 py-0.5 text-[11px] font-semibold capitalize text-asm-blue">
             {inv.planKey}
           </span>
-          <span className="font-mono text-[12px] tabular-nums text-asm-body">
-            {inr(inv.amount)} principal
+          <span className="hidden font-mono text-[12px] tabular-nums text-asm-body sm:inline">
+            {inr(inv.amount)}
           </span>
+          {readyCount > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-asm-blue/10 px-2 py-0.5 text-[10px] font-bold text-asm-blue">
+              <span className="h-1.5 w-1.5 rounded-full bg-asm-blue" />
+              {readyCount} ready
+            </span>
+          )}
           <span className="rounded-full bg-asm-tint px-2 py-0.5 text-[11px] text-asm-muted">
             {paidCount}/{installments.length} paid
           </span>
         </div>
-      </div>
+      </button>
 
-      {/* Day timeline */}
-      <div className="mt-4 flex flex-wrap items-start gap-6">
-        {installments.map((inst, idx) => (
-          <div key={inst.day} className="flex items-start gap-6">
-            <InstallmentPip inst={inst} />
-            {idx < installments.length - 1 && (
-              <div className="mt-1 h-px w-8 self-center bg-asm-line" />
-            )}
+      {/* Day timeline — rendered only when the card is expanded */}
+      {expanded && (
+        <div className="border-t border-asm-line px-4 pb-4 pt-3">
+          <div className="flex flex-wrap items-start gap-6">
+            {installments.map((inst, idx) => (
+              <div key={inst.day} className="flex items-start gap-6">
+                <InstallmentPip inst={inst} />
+                {idx < installments.length - 1 && (
+                  <div className="mt-1 h-px w-8 self-center bg-asm-line" />
+                )}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-
-      <p className="mt-3 font-mono text-[10px] text-asm-muted">{inv.referenceCode}</p>
+          <p className="mt-3 font-mono text-[10px] text-asm-muted">{inv.referenceCode}</p>
+        </div>
+      )}
     </div>
   )
 }
@@ -122,6 +154,9 @@ export function InstallmentsTab({ data, isLoading, isError }: Props) {
   const [approvingBreakId, setApprovingBreakId] = useState<string | null>(null)
   const [rejectingBreakId, setRejectingBreakId] = useState<string | null>(null)
   const [statusMsg, setStatusMsg] = useState('')
+  // Running cards are collapsed by default; the admin expands only the ones they
+  // want to inspect. Tracks the set of expanded investment ids.
+  const [expandedCardIds, setExpandedCardIds] = useState<Set<string>>(new Set())
 
   // Bucket investments into three groups:
   // 1. pendingInstallments — installments that are 'available' (ready to pay out now)
@@ -148,6 +183,20 @@ export function InstallmentsTab({ data, isLoading, isError }: Props) {
 
   const approvingBreakInv = breakRequests.find((inv) => inv._id === approvingBreakId) ?? null
   const rejectingBreakInv = breakRequests.find((inv) => inv._id === rejectingBreakId) ?? null
+
+  const allRunningExpanded =
+    runningInvestments.length > 0 && runningInvestments.every((inv) => expandedCardIds.has(inv._id))
+  function toggleCard(id: string) {
+    setExpandedCardIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+  function toggleAllRunning() {
+    setExpandedCardIds(allRunningExpanded ? new Set() : new Set(runningInvestments.map((inv) => inv._id)))
+  }
 
   function handleApproveInstallment() {
     if (!approvingInstallment) return
@@ -342,14 +391,25 @@ export function InstallmentsTab({ data, isLoading, isError }: Props) {
 
         {/* ── 2. Running investments (all active — timeline view) ─────────── */}
         <section>
-          <h2 className="mb-3 text-sm font-semibold text-asm-navy">
-            Running Investments
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold text-asm-navy">
+              Running Investments
+              {runningInvestments.length > 0 && (
+                <span className="ml-2 text-[11px] font-normal text-asm-muted">
+                  {runningInvestments.length} active
+                </span>
+              )}
+            </h2>
             {runningInvestments.length > 0 && (
-              <span className="ml-2 text-[11px] font-normal text-asm-muted">
-                {runningInvestments.length} active
-              </span>
+              <button
+                type="button"
+                onClick={toggleAllRunning}
+                className="shrink-0 text-[12px] font-semibold text-asm-blue hover:underline"
+              >
+                {allRunningExpanded ? 'Collapse all' : 'Expand all'}
+              </button>
             )}
-          </h2>
+          </div>
 
           {isLoading ? (
             <div className="rounded-xl border border-asm-line bg-asm-tint p-6 text-center text-[13px] text-asm-muted">
@@ -367,7 +427,12 @@ export function InstallmentsTab({ data, isLoading, isError }: Props) {
           ) : (
             <div className="flex flex-col gap-3">
               {runningInvestments.map((inv) => (
-                <RunningInvestmentCard key={inv._id} inv={inv} />
+                <RunningInvestmentCard
+                  key={inv._id}
+                  inv={inv}
+                  expanded={expandedCardIds.has(inv._id)}
+                  onToggle={() => toggleCard(inv._id)}
+                />
               ))}
             </div>
           )}
