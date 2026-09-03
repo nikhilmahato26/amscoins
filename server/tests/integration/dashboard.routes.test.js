@@ -12,7 +12,7 @@ afterEach(clearDb)
 afterAll(teardownDb)
 
 async function registerToken(referralCode) {
-  const res = await request(app).post('/api/auth/register').send({ name: 'A', email: `a${Math.random()}@b.com`, password: 'secret1', referralCode })
+  const res = await request(app).post('/api/auth/register').send({ name: 'A', email: `a${Math.random()}@b.com`, password: 'secret12', referralCode })
   return res.body.token
 }
 
@@ -37,7 +37,7 @@ test('GET /api/dashboard with auth returns summary for user with no investments'
 
 test('GET /api/dashboard with one active investment returns correct totals', async () => {
   // Parse token to get user ID
-  const registerRes = await request(app).post('/api/auth/register').send({ name: 'B', email: `b${Math.random()}@b.com`, password: 'secret1' })
+  const registerRes = await request(app).post('/api/auth/register').send({ name: 'B', email: `b${Math.random()}@b.com`, password: 'secret12' })
   const userId = registerRes.body.user.id
   const token2 = registerRes.body.token
 
@@ -74,7 +74,7 @@ test('GET /api/dashboard with one active investment returns correct totals', asy
 })
 
 test('GET /api/dashboard includes wallet balance when wallet has balance', async () => {
-  const registerRes = await request(app).post('/api/auth/register').send({ name: 'C', email: `c${Math.random()}@b.com`, password: 'secret1' })
+  const registerRes = await request(app).post('/api/auth/register').send({ name: 'C', email: `c${Math.random()}@b.com`, password: 'secret12' })
   const userId = registerRes.body.user.id
   const token = registerRes.body.token
 

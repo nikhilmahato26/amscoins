@@ -21,7 +21,7 @@ async function adminToken() {
 }
 
 async function registerUser(name, email) {
-  const res = await request(app).post('/api/auth/register').send({ name, email, password: 'secret1' })
+  const res = await request(app).post('/api/auth/register').send({ name, email, password: 'secret12' })
   return res.body.user
 }
 

@@ -11,7 +11,7 @@ afterEach(clearDb)
 afterAll(teardownDb)
 
 async function registerFunded(balance) {
-  const reg = await request(app).post('/api/auth/register').send({ name: 'A', email: `a${Math.random()}@b.com`, password: 'secret1' })
+  const reg = await request(app).post('/api/auth/register').send({ name: 'A', email: `a${Math.random()}@b.com`, password: 'secret12' })
   const user = await User.findOne({ email: reg.body.user.email })
   await credit(user._id, balance, { type: 'adjustment', actor: 'admin' })
   return reg.body.token

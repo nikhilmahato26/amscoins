@@ -3,7 +3,11 @@ const { z } = require('zod')
 const registerSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
-  password: z.string().min(6),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Za-z]/, 'Password must contain a letter')
+    .regex(/\d/, 'Password must contain a number'),
   referralCode: z.string().trim().toUpperCase().optional(),
 })
 
@@ -79,7 +83,14 @@ const resolveTicketSchema = z.object({
 
 const forgotPasswordSchema = z.object({ email: z.string().email() })
 const verifyOtpSchema = z.object({ email: z.string().email(), otp: z.string().regex(/^\d{6}$/) })
-const resetPasswordSchema = z.object({ resetToken: z.string().min(10), password: z.string().min(6) })
+const resetPasswordSchema = z.object({
+  resetToken: z.string().min(10),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Za-z]/, 'Password must contain a letter')
+    .regex(/\d/, 'Password must contain a number'),
+})
 
 const updateSettingsSchema = z
   .object({

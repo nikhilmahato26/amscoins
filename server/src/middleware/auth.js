@@ -42,6 +42,14 @@ module.exports = async (req, _res, next) => {
       throw new ApiError(401, 'Invalid token')
     }
 
+    if (user.status === 'frozen') {
+      logger.warn('Frozen account attempted API access', {
+        userId: user._id,
+        url: req.originalUrl,
+      })
+      throw new ApiError(403, 'Account frozen')
+    }
+
     req.user = user
     next()
   } catch (e) {

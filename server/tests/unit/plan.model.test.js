@@ -14,17 +14,17 @@ test('seedPlans upserts the three tiers with correct terms', async () => {
   expect(plans).toHaveLength(3)
   const silver = await Plan.findOne({ key: 'silver' })
   expect(silver.returnPct).toBe(30)
-  expect(silver.installmentPcts).toEqual([10, 10, 10])
-  expect(silver.durationHours).toBe(72)
+  expect(silver.installmentPcts).toEqual([15, 15]) // 50-50 of 30% over 48h
+  expect(silver.durationHours).toBe(48)
   const gold = await Plan.findOne({ key: 'gold' })
-  expect(gold.returnPct).toBe(40)
-  expect(gold.installmentPcts).toEqual([13, 13, 14])
+  expect(gold.returnPct).toBe(35)
+  expect(gold.installmentPcts).toEqual([17.5, 17.5]) // 50-50 of 35% over 48h
   expect(gold.unlockReferrals).toBe(21)
   expect(gold.maxInvest).toBe(30000000)
-  expect(gold.durationHours).toBe(72)
+  expect(gold.durationHours).toBe(48)
   const diamond = await Plan.findOne({ key: 'diamond' })
   expect(diamond.returnPct).toBe(40)
-  expect(diamond.installmentPcts).toEqual([])
+  expect(diamond.installmentPcts).toEqual([20, 20]) // 50-50 of 40% over 48h
   expect(diamond.unlockReferrals).toBe(52)
   expect(diamond.active).toBe(false)
 })

@@ -26,7 +26,7 @@ async function makeAdminToken() {
 }
 
 async function register(referralCode) {
-  const res = await request(app).post('/api/auth/register').send({ name: 'U', email: `u${Math.random()}@b.com`, password: 'secret1', referralCode })
+  const res = await request(app).post('/api/auth/register').send({ name: 'U', email: `u${Math.random()}@b.com`, password: 'secret12', referralCode })
   return { token: res.body.token, user: res.body.user }
 }
 
@@ -62,11 +62,11 @@ test('full lifecycle: deposit -> approve -> referral tier unlock -> withdraw', a
 
   // 5. Lock-till-maturity: funds are NOT in the wallet at approval. Referral
   //    reward still fires. Then drive the investment to maturity + return so
-  //    the wallet is credited principal (200000) + return (25% = 50000).
+  //    the wallet is credited principal (200000) + return (30% = 60000).
   expect((await request(app).get('/api/wallet').set(bearer(U.token))).body.balance).toBe(0)
   expect((await User.findById(R.user.id)).referralCount).toBe(1)
 
-  // Silver now uses installments (installmentPcts=[10,10,10]), so runMature is
+  // Silver now uses installments (installmentPcts=[15,15]), so runMature is
   // correctly skipped for it. Drive the investment to matured+returned directly
   // via admin approvePayout (the admin "pay now" path), which works for any
   // active investment regardless of plan type.

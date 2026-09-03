@@ -6,13 +6,15 @@ const { updateProfileSchema, payoutMethodSchema } = require('../validation/schem
 const c = require('../controllers/userController')
 
 // In-memory storage: the buffer is streamed straight to Cloudinary, never
-// written to disk. 5 MB cap, images only.
+// written to disk. 5 MB cap, raster images only (SVG excluded — SVGs can
+// carry active script and would be stored as-is on Cloudinary).
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) return cb(null, true)
-    cb(new Error('Only image files are allowed'))
+    if (file.mimetype.startsWith('image/') && file.mimetype !== 'image/svg+xml')
+      return cb(null, true)
+    cb(new Error('Only raster image files are allowed (SVG not permitted)'))
   },
 })
 

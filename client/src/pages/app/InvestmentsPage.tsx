@@ -100,7 +100,7 @@ function InstallmentTimeline({
                 ? 'border-asm-green-tint bg-asm-green-tint text-asm-greenInk'
                 : inst.status === 'available'
                   ? 'border-amber-200 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400'
-                  : 'border-border bg-muted/40 text-muted-foreground'
+                  : 'border-slate-200 bg-slate-50 text-slate-600 dark:border-border dark:bg-muted/40 dark:text-muted-foreground'
             )}
           >
             <div>Day {inst.day}</div>
