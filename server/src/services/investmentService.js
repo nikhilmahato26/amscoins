@@ -914,6 +914,36 @@ async function rejectInstallment(investmentId, day, adminId, { reason = '', amou
   }
 }
 
+/**
+ * Approve many due days in one call. Each item is an { investmentId, day } pair
+ * because a single investment can have several days queued at once.
+ *
+ * Days are processed lowest-first within each investment: paying Day 2 before
+ * Day 1 is legal but wrong, and the last decided day is the one that returns the
+ * principal and closes the cycle. Failures are counted, not fatal — one bad row
+ * must not abandon the rest of the batch.
+ */
+async function bulkApproveInstallments(items, adminId) {
+  const ordered = [...items].sort((a, b) =>
+    String(a.investmentId) === String(b.investmentId)
+      ? a.day - b.day
+      : String(a.investmentId).localeCompare(String(b.investmentId))
+  )
+  let approved = 0
+  let failed = 0
+  for (const { investmentId, day } of ordered) {
+    try {
+      await approveInstallment(investmentId, day, adminId)
+      approved++
+    } catch (err) {
+      failed++
+      logger.warn('Bulk approve installments: item failed', { investmentId, day, error: err.message })
+    }
+  }
+  logger.info('Bulk approve installments complete', { approved, failed, adminId })
+  return { approved, failed }
+}
+
 async function requestBreak(investmentId, userId) {
   const inv = await Investment.findOneAndUpdate(
     { _id: investmentId, user: userId, status: 'active' },
@@ -1017,7 +1047,7 @@ module.exports = {
   approvePayout, rejectPayout,
   deleteInvestment,
   runAutoReject, runAutoDeposit, runMature,
-  runInstallment, approveInstallment, rejectInstallment,
+  runInstallment, approveInstallment, rejectInstallment, bulkApproveInstallments,
   requestBreak, approveBreak, rejectBreak,
   bulkApproveInvestments, bulkRejectInvestments,
   bulkApproveReturns, bulkRejectReturns,

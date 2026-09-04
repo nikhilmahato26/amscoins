@@ -2,7 +2,7 @@ const router = require('express').Router()
 const auth = require('../middleware/auth')
 const requireAdmin = require('../middleware/requireAdmin')
 const validate = require('../middleware/validate')
-const { adjustWalletSchema, resolveTicketSchema, returnRejectSchema, payoutRejectSchema, installmentRejectSchema, bulkApproveSchema, bulkRejectInvestmentsSchema, bulkRejectReturnsSchema } = require('../validation/schemas')
+const { adjustWalletSchema, resolveTicketSchema, returnRejectSchema, payoutRejectSchema, installmentRejectSchema, bulkApproveInstallmentsSchema, bulkApproveSchema, bulkRejectInvestmentsSchema, bulkRejectReturnsSchema } = require('../validation/schemas')
 const c = require('../controllers/adminController')
 const reportsRoutes = require('./reportsRoutes')
 
@@ -17,6 +17,9 @@ router.post('/investments/bulk-approve', validate(bulkApproveSchema), c.bulkAppr
 router.post('/investments/bulk-reject', validate(bulkRejectInvestmentsSchema), c.bulkRejectInvestments)
 router.post('/investments/bulk-approve-returns', validate(bulkApproveSchema), c.bulkApproveReturns)
 router.post('/investments/bulk-reject-returns', validate(bulkRejectReturnsSchema), c.bulkRejectReturns)
+// Approve many due installment days at once. Registered ahead of the '/:id'
+// routes so 'installments' can never be read as an investment id.
+router.post('/investments/installments/bulk-approve', validate(bulkApproveInstallmentsSchema), c.bulkApproveInstallments)
 router.post('/investments/:id/approve', c.approveInvestment)
 router.post('/investments/:id/reject', c.rejectInvestment)
 router.post('/investments/:id/return/approve', c.approveReturn)

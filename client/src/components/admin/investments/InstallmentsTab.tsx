@@ -6,6 +6,7 @@ import { ChevronRight } from 'lucide-react'
 import {
   useApproveInstallment,
   useRejectInstallment,
+  useBulkApproveInstallments,
   useApproveBreak,
   useRejectBreak,
 } from '@/hooks/queries'
@@ -301,6 +302,7 @@ function RunningInvestmentCard({
 export function InstallmentsTab({ data, isLoading, isError }: Props) {
   const approveInstallment = useApproveInstallment()
   const rejectInstallment = useRejectInstallment()
+  const bulkApproveInstallments = useBulkApproveInstallments()
   const approveBreak = useApproveBreak()
   const rejectBreak = useRejectBreak()
 
@@ -309,6 +311,15 @@ export function InstallmentsTab({ data, isLoading, isError }: Props) {
   const [approvingBreakId, setApprovingBreakId] = useState<string | null>(null)
   const [rejectingBreakId, setRejectingBreakId] = useState<string | null>(null)
   const [statusMsg, setStatusMsg] = useState('')
+  // Which day cohort is on screen. Day 1 and Day 2 payouts are different work —
+  // the admin normally clears one day across every user, not one user's whole
+  // plan — so the queue is split by day and defaults to showing every cohort.
+  const [dayFilter, setDayFilter] = useState<number | 'all'>('all')
+  // Selected rows, keyed `${investmentId}-d${day}`. Selection survives switching
+  // cohorts so a mixed batch can be assembled, and the bar always shows the total.
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set())
+  // Rows queued for a bulk approve, held while the confirm dialog is open.
+  const [bulkTarget, setBulkTarget] = useState<InstallmentRow[] | null>(null)
   // Running cards are collapsed by default; the admin expands only the ones they
   // want to inspect. Tracks the set of expanded investment ids.
   const [expandedCardIds, setExpandedCardIds] = useState<Set<string>>(new Set())
@@ -355,6 +366,65 @@ export function InstallmentsTab({ data, isLoading, isError }: Props) {
   pendingInstallments.sort(
     (a, b) => new Date(a.maturesAt).getTime() - new Date(b.maturesAt).getTime(),
   )
+
+  // Split into day cohorts. Each renders as its own table with its own
+  // approve-all, so "clear every Day 1" is a single decision.
+  const dayNumbers = [...new Set(pendingInstallments.map((r) => r.day))].sort((a, b) => a - b)
+  const cohorts = dayNumbers.map((day) => ({
+    day,
+    rows: pendingInstallments.filter((r) => r.day === day),
+  }))
+  const visibleCohorts = dayFilter === 'all' ? cohorts : cohorts.filter((c) => c.day === dayFilter)
+  const visibleRows = visibleCohorts.flatMap((c) => c.rows)
+
+  const rowKey = (r: InstallmentRow) => `${r.inv._id}-d${r.day}`
+  const selectedRows = pendingInstallments.filter((r) => selectedKeys.has(rowKey(r)))
+  const sumOf = (rows: InstallmentRow[]) => rows.reduce((s, r) => s + r.amount, 0)
+  const isBulkPending = bulkApproveInstallments.isPending
+  const isAnyPending = isBulkPending || approveInstallment.isPending || rejectInstallment.isPending
+
+  function toggleRow(key: string) {
+    setSelectedKeys((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+  // Header checkbox acts on the cohort it sits in, not the whole queue — the
+  // admin's mental unit here is "this day".
+  function toggleCohort(rows: InstallmentRow[]) {
+    const keys = rows.map(rowKey)
+    const allOn = keys.every((k) => selectedKeys.has(k))
+    setSelectedKeys((prev) => {
+      const next = new Set(prev)
+      keys.forEach((k) => (allOn ? next.delete(k) : next.add(k)))
+      return next
+    })
+  }
+
+  function handleBulkApprove() {
+    if (!bulkTarget?.length) return
+    const rows = bulkTarget
+    bulkApproveInstallments.mutate(
+      [rows.map((r) => ({ investmentId: r.inv._id, day: r.day }))],
+      {
+        onSuccess: ({ approved, failed }) => {
+          setStatusMsg(
+            failed > 0
+              ? `${approved} of ${rows.length} returns approved — ${failed} failed. Refresh to see what's left.`
+              : `${approved} return${approved === 1 ? '' : 's'} approved (${inr(sumOf(rows))} credited).`,
+          )
+          setSelectedKeys(new Set())
+          setBulkTarget(null)
+        },
+        onError: () => {
+          setStatusMsg('Bulk approval failed. No returns were credited.')
+          setBulkTarget(null)
+        },
+      },
+    )
+  }
 
   const approvingBreakInv = breakRequests.find((inv) => inv._id === approvingBreakId) ?? null
   const rejectingBreakInv = breakRequests.find((inv) => inv._id === rejectingBreakId) ?? null
@@ -432,6 +502,37 @@ export function InstallmentsTab({ data, isLoading, isError }: Props) {
         setRejectingBreakId(null)
       },
     })
+  }
+
+  // The header checkbox belongs to the cohort it sits in, so the column is built
+  // per table rather than shared.
+  function checkboxColumn(cohortRows: InstallmentRow[]): Column<InstallmentRow> {
+    const keys = cohortRows.map(rowKey)
+    const allOn = keys.length > 0 && keys.every((k) => selectedKeys.has(k))
+    const someOn = keys.some((k) => selectedKeys.has(k))
+    return {
+      key: 'select',
+      header: (
+        <input
+          type="checkbox"
+          className="h-4 w-4 cursor-pointer rounded border-asm-line accent-asm-blue"
+          checked={allOn}
+          ref={(el) => { if (el) el.indeterminate = someOn && !allOn }}
+          onChange={() => toggleCohort(cohortRows)}
+          aria-label="Select every return in this day"
+        />
+      ),
+      render: (r) => (
+        <input
+          type="checkbox"
+          className="h-4 w-4 cursor-pointer rounded border-asm-line accent-asm-blue"
+          checked={selectedKeys.has(rowKey(r))}
+          onChange={() => toggleRow(rowKey(r))}
+          onClick={(e) => e.stopPropagation()}
+          aria-label={`Select Day ${r.day} return for ${r.inv.user.name}`}
+        />
+      ),
+    }
   }
 
   const installmentColumns: Column<InstallmentRow>[] = [
@@ -590,29 +691,120 @@ export function InstallmentsTab({ data, isLoading, isError }: Props) {
       <StatusBanner message={statusMsg} />
 
       <div className="space-y-8">
-        {/* ── 1. Ready to pay out ─────────────────────────────────────────── */}
+        {/* ── 1. Ready to pay out — split per day cohort ──────────────────── */}
         {pendingInstallments.length > 0 && (
           <section>
-            <h2 className="text-sm font-semibold text-asm-navy">
-              Ready to Approve
-              <span className="ml-2 rounded-full bg-asm-blue px-2 py-0.5 text-[10px] font-bold text-white">
-                {pendingInstallments.length}
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+              <h2 className="text-sm font-semibold text-asm-navy">
+                Ready to Approve
+                <span className="ml-2 rounded-full bg-asm-blue px-2 py-0.5 text-[10px] font-bold text-white">
+                  {pendingInstallments.length}
+                </span>
+              </h2>
+              <span className="font-mono text-[12px] tabular-nums text-asm-body">
+                {inr(sumOf(pendingInstallments))} due
               </span>
-            </h2>
-            <p className="mb-3 mt-1 text-[12px] text-asm-muted">
-              One row per due day, longest-waiting first. Each day unlocks on its own 24h timer, so an investment can have
-              more than one day queued here — clear them in day order.
+            </div>
+            <p className="mt-1 text-[12px] text-asm-muted">
+              Each day unlocks on its own 24h timer, so one investment can have several days queued. Days are grouped
+              below and ordered longest-waiting first — clear a day at a time.
             </p>
-            <DataTable
-              columns={installmentColumns}
-              rows={pendingInstallments}
-              getRowKey={(r) => `${r.inv._id}-d${r.day}`}
-              isLoading={isLoading}
-              isError={isError}
-              errorMessage="Failed to load investments. Please refresh."
-              minWidth={700}
-              empty={<EmptyState title="No installments awaiting approval" description="All daily returns are paid or not yet due." />}
-            />
+
+            {/* Day cohort switcher — only worth showing once more than one day is due */}
+            {cohorts.length > 1 && (
+              <div
+                role="tablist"
+                aria-label="Filter by installment day"
+                className="mt-3 flex flex-wrap gap-1 rounded-xl border border-asm-line bg-asm-tint p-1"
+              >
+                {[{ day: 'all' as const, rows: pendingInstallments }, ...cohorts].map(({ day, rows }) => (
+                  <button
+                    key={day}
+                    role="tab"
+                    aria-selected={dayFilter === day}
+                    type="button"
+                    onClick={() => setDayFilter(day)}
+                    className={cn(
+                      'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-medium transition-colors',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-1',
+                      dayFilter === day
+                        ? 'bg-white text-asm-navy shadow-[0_1px_3px_rgba(16,42,92,0.08)]'
+                        : 'text-asm-muted hover:text-asm-body',
+                    )}
+                  >
+                    {day === 'all' ? 'All days' : `Day ${day}`}
+                    <span className="tabular-nums opacity-70">{rows.length}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Selection bar — the money total sits here so a bulk approve is never
+               confirmed blind */}
+            {selectedRows.length > 0 && (
+              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-asm-blue/25 bg-asm-blue-tint px-4 py-2.5">
+                <span className="text-[13px] font-semibold text-asm-navy">
+                  {selectedRows.length} selected
+                  <span className="ml-2 font-mono font-normal tabular-nums text-asm-body">
+                    {inr(sumOf(selectedRows))}
+                  </span>
+                </span>
+                <div className="flex gap-2">
+                  <AdminButton size="sm" variant="success" onClick={() => setBulkTarget(selectedRows)} disabled={isAnyPending}>
+                    Approve Selected
+                  </AdminButton>
+                  <AdminButton size="sm" variant="outline" onClick={() => setSelectedKeys(new Set())} disabled={isAnyPending}>
+                    Clear
+                  </AdminButton>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-4 flex flex-col gap-6">
+              {visibleCohorts.map(({ day, rows }) => {
+                const blockedCount = rows.filter((r) => r.blockedByDay !== null).length
+                return (
+                  <div key={day}>
+                    <div className="mb-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                      <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+                        <h3 className="text-[13px] font-semibold text-asm-navy">Day {day} returns</h3>
+                        <span className="text-[12px] text-asm-muted">
+                          {rows.length} due · <span className="font-mono tabular-nums">{inr(sumOf(rows))}</span>
+                        </span>
+                        {blockedCount > 0 && (
+                          <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
+                            {blockedCount} with an earlier day still open
+                          </span>
+                        )}
+                      </div>
+                      <AdminButton
+                        size="sm"
+                        variant="success"
+                        onClick={() => setBulkTarget(rows)}
+                        disabled={isAnyPending}
+                      >
+                        Approve all {rows.length} Day {day}
+                      </AdminButton>
+                    </div>
+                    <DataTable
+                      columns={[checkboxColumn(rows), ...installmentColumns]}
+                      rows={rows}
+                      getRowKey={rowKey}
+                      isLoading={isLoading}
+                      isError={isError}
+                      errorMessage="Failed to load investments. Please refresh."
+                      minWidth={780}
+                    />
+                  </div>
+                )
+              })}
+              {visibleRows.length === 0 && (
+                <EmptyState
+                  title={`No Day ${dayFilter} returns due`}
+                  description="Switch to another day to see what is waiting."
+                />
+              )}
+            </div>
           </section>
         )}
 
@@ -709,6 +901,36 @@ export function InstallmentsTab({ data, isLoading, isError }: Props) {
           isPending={approveInstallment.isPending}
           onConfirm={handleApproveInstallment}
           onCancel={() => setApprovingInstallment(null)}
+        />
+      )}
+
+      {bulkTarget && bulkTarget.length > 0 && (
+        <ConfirmDialog
+          title={`Approve ${bulkTarget.length} return${bulkTarget.length === 1 ? '' : 's'}?`}
+          body={
+            <>
+              Credit <strong className="font-semibold text-asm-navy">{inr(sumOf(bulkTarget))}</strong> across{' '}
+              <strong className="font-semibold text-asm-navy">{bulkTarget.length}</strong> due day
+              {bulkTarget.length === 1 ? '' : 's'} to{' '}
+              <strong className="font-semibold text-asm-navy">
+                {new Set(bulkTarget.map((r) => r.inv._id)).size}
+              </strong>{' '}
+              investment{new Set(bulkTarget.map((r) => r.inv._id)).size === 1 ? '' : 's'}. Days are paid lowest-first
+              within each investment. This cannot be undone.
+              {bulkTarget.some((r) => r.blockedByDay !== null) && (
+                <span className="mt-2 block rounded-lg bg-amber-50 px-2.5 py-2 text-[12px] text-amber-800">
+                  {bulkTarget.filter((r) => r.blockedByDay !== null).length} of these sit behind an earlier day that is
+                  not in this batch — those will be paid out of order.
+                </span>
+              )}
+            </>
+          }
+          confirmLabel={`Approve ${bulkTarget.length}`}
+          pendingLabel={`Approving ${bulkTarget.length}…`}
+          confirmVariant="success"
+          isPending={isBulkPending}
+          onConfirm={handleBulkApprove}
+          onCancel={() => setBulkTarget(null)}
         />
       )}
 

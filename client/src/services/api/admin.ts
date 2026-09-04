@@ -141,6 +141,18 @@ export interface InstallmentRejectBody {
 export const rejectInstallment = (id: string, day: number, body: InstallmentRejectBody) =>
   apiFetch<AdminInvestment>(`/admin/investments/${id}/installments/${day}/reject`, { method: 'POST', body })
 
+// Approve several due days in one request. One investment can have more than one
+// day queued, so each item carries its own day rather than just an id.
+export interface InstallmentRef {
+  investmentId: string
+  day: number
+}
+export const bulkApproveInstallments = (items: InstallmentRef[]) =>
+  apiFetch<{ approved: number; failed: number }>('/admin/investments/installments/bulk-approve', {
+    method: 'POST',
+    body: { items },
+  })
+
 export const approveBreak = (id: string) =>
   apiFetch<AdminInvestment>(`/admin/investments/${id}/approve-break`, { method: 'POST' })
 

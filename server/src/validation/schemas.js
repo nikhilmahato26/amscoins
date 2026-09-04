@@ -146,6 +146,20 @@ const installmentRejectSchema = z.object({
   amount: z.number().int().min(0),
 })
 
+// Bulk-approving due days. One investment can have several days queued, so each
+// item names its own day rather than just an investment id.
+const bulkApproveInstallmentsSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        investmentId: z.string().min(1),
+        day: z.number().int().min(1).max(3),
+      })
+    )
+    .min(1, 'At least one installment required')
+    .max(200, 'At most 200 installments per batch'),
+})
+
 const bulkApproveSchema = z.object({
   ids: z.array(z.string().min(1)).min(1, 'At least one ID required'),
 })
@@ -168,6 +182,7 @@ module.exports = {
   returnRejectSchema,
   payoutRejectSchema,
   installmentRejectSchema,
+  bulkApproveInstallmentsSchema,
   createWithdrawalSchema,
   payoutMethodSchema,
   updateProfileSchema,
