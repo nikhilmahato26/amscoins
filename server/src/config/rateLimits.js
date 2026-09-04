@@ -196,17 +196,13 @@ const otpVerifyLimiter = rateLimit({
   handler: createHandler('Too many attempts, please try again in 15 minutes'),
 })
 
-// 5. Investment Creation — User-ID based
-const investmentCreateLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,
-  limit: 3,
-  keyGenerator: keyByUserId,
-  store: makeStore('rl:inv:'),
-  skip: skipInTest,
-  standardHeaders: 'draft-7',
-  legacyHeaders: false,
-  handler: createHandler('Investment limit reached, please try again later'),
-})
+// Deposit creation is deliberately NOT rate-limited here. POST /investments is
+// called on every payment-method tap and on every open of the INR-QR / USDT-QR
+// screen, not once per deposit, so a per-user cap fired at users who were only
+// browsing payment options. Removed rather than left defined-but-unmounted, so
+// nobody reads this file and assumes deposits are still throttled. The deposit
+// gate, the unnotified-draft cleanup in createInvestment, and nginx's 10 r/s
+// per-IP cap on /api/ are the remaining bounds.
 
 // 6. Withdrawal Creation — User-ID based
 const withdrawalCreateLimiter = rateLimit({
@@ -261,7 +257,6 @@ module.exports = {
   loginLimiter,
   forgotPasswordLimiter,
   otpVerifyLimiter,
-  investmentCreateLimiter,
   withdrawalCreateLimiter,
   dashboardLimiter,
   walletLimiter,
