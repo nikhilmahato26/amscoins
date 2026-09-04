@@ -165,6 +165,11 @@ const rejectInstallment = asyncHandler(async (req, res) => {
   res.json(await invSvc.rejectInstallment(req.params.id, day, req.user._id, { reason, amount }))
 })
 
+const bulkApproveInstallments = asyncHandler(async (req, res) => {
+  const { items } = req.body
+  res.json(await invSvc.bulkApproveInstallments(items, req.user._id))
+})
+
 const approveBreak = asyncHandler(async (req, res) =>
   res.json(await invSvc.approveBreak(req.params.id, req.user._id))
 )
@@ -434,6 +439,7 @@ module.exports = {
   deleteInvestment,
   approveInstallment,
   rejectInstallment,
+  bulkApproveInstallments,
   approveBreak,
   rejectBreak,
   bulkApproveInvestments,

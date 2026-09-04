@@ -25,11 +25,13 @@ import {
   deleteInvestment,
   approveInstallment,
   rejectInstallment,
+  bulkApproveInstallments,
   approveBreak,
   rejectBreak,
   type RejectReturnBody,
   type PayoutRejectBody,
   type InstallmentRejectBody,
+  type InstallmentRef,
   type AdminInvestmentParams,
   type AdminUsersParams,
   adminWithdrawals,
@@ -187,6 +189,12 @@ export const useApproveInstallment = () =>
 export const useRejectInstallment = () =>
   useAdminMutation(
     (id: string, day: number, body: InstallmentRejectBody) => rejectInstallment(id, day, body),
+    [['admin', 'investments'], ['admin', 'stats']]
+  )
+
+export const useBulkApproveInstallments = () =>
+  useAdminMutation(
+    (items: InstallmentRef[]) => bulkApproveInstallments(items),
     [['admin', 'investments'], ['admin', 'stats']]
   )
 

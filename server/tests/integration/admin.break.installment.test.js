@@ -360,6 +360,128 @@ test('POST /api/admin/investments/:id/installments/:day/reject returns 403 for n
   expect(res.status).toBe(403)
 })
 
+// ── POST /api/admin/investments/installments/bulk-approve ─────────────────────
+
+test('bulk-approve credits every listed day across several investments', async () => {
+  const { admin, token } = await makeAdmin()
+  const userA = await makeUserWithWallet()
+  const userB = await makeUserWithWallet()
+  const invA = await makeActiveInstallmentInvestment(userA, admin)
+  const invB = await makeActiveInstallmentInvestment(userB, admin)
+  await makeDayAvailable(invA._id, 1)
+  await makeDayAvailable(invB._id, 1)
+
+  const res = await request(app)
+    .post('/api/admin/investments/installments/bulk-approve')
+    .set('Authorization', `Bearer ${token}`)
+    .send({
+      items: [
+        { investmentId: String(invA._id), day: 1 },
+        { investmentId: String(invB._id), day: 1 },
+      ],
+    })
+  expect(res.status).toBe(200)
+  expect(res.body).toEqual({ approved: 2, failed: 0 })
+
+  expect((await Wallet.findOne({ user: userA._id })).balance).toBe(30000)
+  expect((await Wallet.findOne({ user: userB._id })).balance).toBe(30000)
+})
+
+test('bulk-approve pays days lowest-first, so the last one closes the cycle', async () => {
+  const { admin, token } = await makeAdmin()
+  const user = await makeUserWithWallet()
+  const inv = await makeActiveInstallmentInvestment(user, admin)
+  await makeDayAvailable(inv._id, 1)
+  await makeDayAvailable(inv._id, 2)
+
+  // Deliberately pass day 2 first — the service must reorder.
+  const res = await request(app)
+    .post('/api/admin/investments/installments/bulk-approve')
+    .set('Authorization', `Bearer ${token}`)
+    .send({
+      items: [
+        { investmentId: String(inv._id), day: 2 },
+        { investmentId: String(inv._id), day: 1 },
+      ],
+    })
+  expect(res.status).toBe(200)
+  expect(res.body).toEqual({ approved: 2, failed: 0 })
+
+  const fresh = await Investment.findById(inv._id)
+  expect(fresh.installments.map((i) => i.status)).toEqual(['paid', 'paid'])
+  expect(fresh.status).toBe('returned')
+  expect(fresh.installments[0].creditedAt.getTime()).toBeLessThanOrEqual(
+    fresh.installments[1].creditedAt.getTime()
+  )
+
+  // Both days (30000 × 2) + principal (200000).
+  expect((await Wallet.findOne({ user: user._id })).balance).toBe(260000)
+})
+
+test('bulk-approve counts unapprovable days as failed without abandoning the batch', async () => {
+  const { admin, token } = await makeAdmin()
+  const userA = await makeUserWithWallet()
+  const userB = await makeUserWithWallet()
+  const invA = await makeActiveInstallmentInvestment(userA, admin)
+  const invB = await makeActiveInstallmentInvestment(userB, admin)
+  await makeDayAvailable(invA._id, 1)
+  // invB day 1 is left 'scheduled' — not approvable yet.
+
+  const res = await request(app)
+    .post('/api/admin/investments/installments/bulk-approve')
+    .set('Authorization', `Bearer ${token}`)
+    .send({
+      items: [
+        { investmentId: String(invA._id), day: 1 },
+        { investmentId: String(invB._id), day: 1 },
+      ],
+    })
+  expect(res.status).toBe(200)
+  expect(res.body).toEqual({ approved: 1, failed: 1 })
+
+  expect((await Wallet.findOne({ user: userA._id })).balance).toBe(30000)
+  expect((await Wallet.findOne({ user: userB._id })).balance).toBe(0)
+})
+
+test('bulk-approve rejects an empty batch', async () => {
+  const { token } = await makeAdmin()
+  const res = await request(app)
+    .post('/api/admin/investments/installments/bulk-approve')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ items: [] })
+  expect(res.status).toBe(400)
+})
+
+test('bulk-approve rejects a day outside 1-3', async () => {
+  const { admin, token } = await makeAdmin()
+  const user = await makeUserWithWallet()
+  const inv = await makeActiveInstallmentInvestment(user, admin)
+  const res = await request(app)
+    .post('/api/admin/investments/installments/bulk-approve')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ items: [{ investmentId: String(inv._id), day: 4 }] })
+  expect(res.status).toBe(400)
+})
+
+test('bulk-approve returns 403 for non-admin', async () => {
+  const code = await generateUniqueCode()
+  const passwordHash = await bcrypt.hash('pass123', 10)
+  const normalUser = await User.create({
+    name: 'N4',
+    email: `n4${Math.random()}@b.com`,
+    passwordHash,
+    referralCode: code,
+  })
+  const loginRes = await request(app)
+    .post('/api/auth/login')
+    .send({ email: normalUser.email, password: 'pass123' })
+  const res = await request(app)
+    .post('/api/admin/investments/installments/bulk-approve')
+    .set('Authorization', `Bearer ${loginRes.body.token}`)
+    .send({ items: [{ investmentId: String(new mongoose.Types.ObjectId()), day: 1 }] })
+  expect(res.status).toBe(403)
+})
+
 // ── POST /api/admin/investments/:id/approve-break ─────────────────────────────
 
 test('POST /api/admin/investments/:id/approve-break returns 403 for non-admin', async () => {
