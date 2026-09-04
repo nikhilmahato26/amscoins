@@ -5,10 +5,18 @@ const installmentSchema = new Schema(
     day:        { type: Number, required: true },  // 1, 2, or 3
     pct:        { type: Number, required: true },  // e.g. 10 for Silver day 1
     amount:     { type: Number, required: true },  // paise
-    status:     { type: String, enum: ['scheduled', 'available', 'paid'], default: 'scheduled' },
+    // scheduled → available (timer fired) → paid | rejected (admin decided).
+    // 'rejected' is a terminal decision for that one day; the remaining days
+    // keep running on their own timers.
+    status:     { type: String, enum: ['scheduled', 'available', 'paid', 'rejected'], default: 'scheduled' },
     maturesAt:  { type: Date, required: true },
     creditedAt: { type: Date },
     creditedBy: { type: Schema.Types.ObjectId, ref: 'User' }, // null = system auto-pay
+    // Set only when status === 'rejected'. creditedAmount below still counts any
+    // partial credit the admin chose to pay out on rejection, so the trace is kept.
+    rejectionReason: { type: String, default: '' },
+    rejectedAt:      { type: Date },
+    rejectedBy:      { type: Schema.Types.ObjectId, ref: 'User' },
   },
   { _id: false }
 )

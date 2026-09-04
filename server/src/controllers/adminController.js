@@ -143,12 +143,26 @@ const deleteInvestment = asyncHandler(async (req, res) =>
   res.json(await invSvc.deleteInvestment(req.params.id, req.user._id))
 )
 
+// Day comes from the URL, so it's validated here rather than by a body schema.
+// 3 is the largest installment count any plan has ever had (legacy Silver/Gold);
+// the service 404s on a day the investment itself doesn't have.
+function parseInstallmentDay(raw) {
+  const day = Number(raw)
+  if (!Number.isInteger(day) || day < 1 || day > 3) return null
+  return day
+}
+
 const approveInstallment = asyncHandler(async (req, res) => {
-  const day = Number(req.params.day)
-  if (!Number.isInteger(day) || day < 1 || day > 3) {
-    return res.status(400).json({ message: 'day must be 1, 2, or 3' })
-  }
+  const day = parseInstallmentDay(req.params.day)
+  if (day === null) return res.status(400).json({ message: 'day must be 1, 2, or 3' })
   res.json(await invSvc.approveInstallment(req.params.id, day, req.user._id))
+})
+
+const rejectInstallment = asyncHandler(async (req, res) => {
+  const day = parseInstallmentDay(req.params.day)
+  if (day === null) return res.status(400).json({ message: 'day must be 1, 2, or 3' })
+  const { reason, amount } = req.body
+  res.json(await invSvc.rejectInstallment(req.params.id, day, req.user._id, { reason, amount }))
 })
 
 const approveBreak = asyncHandler(async (req, res) =>
@@ -419,6 +433,7 @@ module.exports = {
   rejectPayout,
   deleteInvestment,
   approveInstallment,
+  rejectInstallment,
   approveBreak,
   rejectBreak,
   bulkApproveInvestments,

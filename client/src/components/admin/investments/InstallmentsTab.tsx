@@ -1,6 +1,14 @@
 import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { ChevronRight } from 'lucide-react'
-import { useApproveInstallment, useApproveBreak, useRejectBreak } from '@/hooks/queries'
+import {
+  useApproveInstallment,
+  useRejectInstallment,
+  useApproveBreak,
+  useRejectBreak,
+} from '@/hooks/queries'
 import type { AdminInvestment } from '@/services/api/admin'
 import type { Installment } from '@/services/api/investments'
 import { StatusBanner } from '@/components/admin/StatusBanner'
@@ -18,7 +26,137 @@ interface Props {
   isError: boolean
 }
 
-type InstallmentRow = { inv: AdminInvestment; day: number; amount: number }
+type InstallmentRow = {
+  inv: AdminInvestment
+  day: number
+  amount: number
+  /** When this day's payout became due — the queue is ordered by it. */
+  maturesAt: string
+  /** Lowest earlier day still undecided, if any. Approving out of order is legal
+   *  but almost always a mistake, so the row is flagged instead of hidden. */
+  blockedByDay: number | null
+}
+
+/**
+ * How long a day's return has been sitting unapproved. Days become 'available'
+ * on their own 24h timer regardless of whether earlier days were paid, so a
+ * quiet week leaves several days of one investment queued at once — this is the
+ * number that tells the admin which of them is actually the most overdue.
+ */
+function overdueLabel(maturesAt: string): string {
+  const ms = Date.now() - new Date(maturesAt).getTime()
+  if (ms < 0) return 'Not due yet'
+  const mins = Math.floor(ms / 60000)
+  if (mins < 60) return `${mins}m overdue`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours}h overdue`
+  const days = Math.floor(hours / 24)
+  return `${days}d ${hours % 24}h overdue`
+}
+
+/* ── Reject installment dialog (reason required + optional partial credit) ── */
+
+function makeRejectInstallmentSchema(maxRupees: number) {
+  return z.object({
+    reason: z.string().min(1, 'Reason is required'),
+    amountRupees: z
+      .number({ invalid_type_error: 'Enter a valid amount' })
+      .min(0, 'Amount must be at least ₹0')
+      .max(maxRupees, `Amount must not exceed ${inr(maxRupees * 100)}`),
+  })
+}
+
+type RejectInstallmentForm = z.infer<ReturnType<typeof makeRejectInstallmentSchema>>
+
+function RejectInstallmentDialog({
+  row,
+  isPending,
+  onConfirm,
+  onCancel,
+}: {
+  row: InstallmentRow
+  isPending: boolean
+  onConfirm: (reason: string, amountPaise: number) => void
+  onCancel: () => void
+}) {
+  const maxRupees = Math.floor(row.amount / 100)
+  const schema = makeRejectInstallmentSchema(maxRupees)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RejectInstallmentForm>({
+    resolver: zodResolver(schema),
+    defaultValues: { reason: '', amountRupees: 0 },
+  })
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/30 p-4 backdrop-blur-sm"
+      onClick={() => !isPending && onCancel()}
+    >
+      <div
+        className="my-auto flex max-h-[calc(100vh-2rem)] w-full max-w-sm flex-col overflow-y-auto rounded-2xl border border-asm-line bg-white p-6 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-[15px] font-bold text-asm-navy">Reject Day {row.day} return?</h2>
+        <p className="mt-2 text-[13px] text-asm-body">
+          Decline the <strong className="font-semibold text-asm-navy">{inr(row.amount)}</strong> Day {row.day} return for{' '}
+          <strong className="font-semibold text-asm-navy">{row.inv.user.name}</strong>. The remaining days keep running on
+          their own timers; the principal is returned once every day has been decided.
+        </p>
+
+        <form onSubmit={handleSubmit((v) => onConfirm(v.reason, Math.round(v.amountRupees * 100)))} className="mt-4 space-y-4">
+          <label className="block">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-asm-muted">Reason *</span>
+            <textarea
+              {...register('reason')}
+              rows={3}
+              placeholder="Why is this day's return being declined…"
+              aria-invalid={!!errors.reason}
+              className={cn(
+                'mt-1.5 w-full resize-none rounded-lg border bg-asm-tint px-3 py-2 text-[13px] text-asm-navy',
+                'placeholder:text-asm-muted focus:outline-none focus:ring-2 focus:ring-offset-1',
+                errors.reason ? 'border-asm-red focus:ring-asm-red' : 'border-asm-line focus:border-asm-blue focus:ring-asm-blue',
+              )}
+            />
+            {errors.reason && <p className="mt-1 text-[11px] text-asm-red">{errors.reason.message}</p>}
+          </label>
+
+          <label className="block">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-asm-muted">
+              Partial credit (rupees)
+            </span>
+            <input
+              type="number"
+              step="1"
+              {...register('amountRupees', { valueAsNumber: true })}
+              aria-invalid={!!errors.amountRupees}
+              className={cn(
+                'mt-1.5 w-full rounded-lg border bg-asm-tint px-3 py-2 font-mono text-[13px] tabular-nums text-asm-navy',
+                'focus:outline-none focus:ring-2 focus:ring-offset-1',
+                errors.amountRupees ? 'border-asm-red focus:ring-asm-red' : 'border-asm-line focus:border-asm-blue focus:ring-asm-blue',
+              )}
+            />
+            {errors.amountRupees && <p className="mt-1 text-[11px] text-asm-red">{errors.amountRupees.message}</p>}
+            <p className="mt-1 text-[11px] text-asm-muted">0 = credit nothing; max {inr(row.amount)} (this day's return).</p>
+          </label>
+
+          <div className="flex justify-end gap-2.5">
+            <AdminButton variant="outline" size="sm" onClick={onCancel} disabled={isPending}>
+              Cancel
+            </AdminButton>
+            <AdminButton type="submit" variant="danger" size="sm" disabled={isPending}>
+              {isPending ? 'Rejecting…' : `Reject Day ${row.day}`}
+            </AdminButton>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
 
 // ── Per-installment status pip ────────────────────────────────────────────────
 
@@ -26,6 +164,7 @@ function InstallmentPip({ inst }: { inst: Installment }) {
   const isScheduled = inst.status === 'scheduled'
   const isAvailable = inst.status === 'available'
   const isPaid = inst.status === 'paid'
+  const isRejected = inst.status === 'rejected'
 
   return (
     <div className="flex flex-col items-center gap-1 min-w-[90px]">
@@ -36,6 +175,7 @@ function InstallmentPip({ inst }: { inst: Installment }) {
           isPaid && 'bg-asm-greenInk',
           isAvailable && 'bg-asm-blue animate-pulse',
           isScheduled && 'bg-asm-line',
+          isRejected && 'bg-asm-red',
         )}
       />
       {/* Label */}
@@ -45,11 +185,13 @@ function InstallmentPip({ inst }: { inst: Installment }) {
           isPaid && 'text-asm-greenInk',
           isAvailable && 'text-asm-blue',
           isScheduled && 'text-asm-muted',
+          isRejected && 'text-asm-red',
         )}
       >
         Day {inst.day}
         {isPaid && ' ✓'}
         {isAvailable && ' Ready'}
+        {isRejected && ' ✕'}
       </span>
       {/* Amount */}
       <span className="font-mono text-[11px] tabular-nums text-asm-navy">{inr(inst.amount)}</span>
@@ -60,10 +202,15 @@ function InstallmentPip({ inst }: { inst: Installment }) {
         </span>
       )}
       {isAvailable && (
-        <span className="text-[10px] font-medium text-asm-blue">Awaiting approval</span>
+        <span className="text-[10px] font-medium text-asm-blue">{overdueLabel(inst.maturesAt)}</span>
       )}
       {isPaid && inst.creditedAt && (
         <span className="text-[10px] text-asm-muted">{fmt(inst.creditedAt)}</span>
+      )}
+      {isRejected && (
+        <span className="max-w-[110px] truncate text-[10px] text-asm-red" title={inst.rejectionReason || undefined}>
+          {inst.rejectionReason || 'Declined'}
+        </span>
       )}
     </div>
   )
@@ -82,6 +229,7 @@ function RunningInvestmentCard({
 }) {
   const installments = inv.installments ?? []
   const paidCount = installments.filter((i) => i.status === 'paid').length
+  const rejectedCount = installments.filter((i) => i.status === 'rejected').length
   const readyCount = installments.filter((i) => i.status === 'available').length
 
   return (
@@ -117,6 +265,11 @@ function RunningInvestmentCard({
               {readyCount} ready
             </span>
           )}
+          {rejectedCount > 0 && (
+            <span className="inline-flex items-center rounded-full bg-asm-red/10 px-2 py-0.5 text-[10px] font-bold text-asm-red">
+              {rejectedCount} rejected
+            </span>
+          )}
           <span className="rounded-full bg-asm-tint px-2 py-0.5 text-[11px] text-asm-muted">
             {paidCount}/{installments.length} paid
           </span>
@@ -147,10 +300,12 @@ function RunningInvestmentCard({
 
 export function InstallmentsTab({ data, isLoading, isError }: Props) {
   const approveInstallment = useApproveInstallment()
+  const rejectInstallment = useRejectInstallment()
   const approveBreak = useApproveBreak()
   const rejectBreak = useRejectBreak()
 
   const [approvingInstallment, setApprovingInstallment] = useState<InstallmentRow | null>(null)
+  const [rejectingInstallment, setRejectingInstallment] = useState<InstallmentRow | null>(null)
   const [approvingBreakId, setApprovingBreakId] = useState<string | null>(null)
   const [rejectingBreakId, setRejectingBreakId] = useState<string | null>(null)
   const [statusMsg, setStatusMsg] = useState('')
@@ -172,14 +327,34 @@ export function InstallmentsTab({ data, isLoading, isError }: Props) {
     } else if (inv.status === 'active' && inv.installments?.length) {
       // Always show the full card in "Running" so admin can see the timeline.
       runningInvestments.push(inv)
-      // Also surface individual days that are ready for approval.
-      for (const inst of inv.installments) {
-        if (inst.status === 'available') {
-          pendingInstallments.push({ inv, day: inst.day, amount: inst.amount })
-        }
+      // Also surface individual days that are ready for approval. Days go
+      // 'available' on independent 24h timers, so one investment can have
+      // several days queued at once — flag any whose earlier day is still
+      // undecided so they aren't paid out of order.
+      const byDay = [...inv.installments].sort((a, b) => a.day - b.day)
+      for (const inst of byDay) {
+        if (inst.status !== 'available') continue
+        const earlierUndecided = byDay.find(
+          (i) => i.day < inst.day && i.status !== 'paid' && i.status !== 'rejected',
+        )
+        pendingInstallments.push({
+          inv,
+          day: inst.day,
+          amount: inst.amount,
+          maturesAt: inst.maturesAt,
+          blockedByDay: earlierUndecided ? earlierUndecided.day : null,
+        })
       }
     }
   }
+
+  // Order the approval queue by how long each day has been waiting (oldest first)
+  // rather than by investment creation date. Without this the table interleaves
+  // Day 1s and Day 2s by user, which reads as random and buries the most overdue
+  // payouts partway down the list.
+  pendingInstallments.sort(
+    (a, b) => new Date(a.maturesAt).getTime() - new Date(b.maturesAt).getTime(),
+  )
 
   const approvingBreakInv = breakRequests.find((inv) => inv._id === approvingBreakId) ?? null
   const rejectingBreakInv = breakRequests.find((inv) => inv._id === rejectingBreakId) ?? null
@@ -208,6 +383,25 @@ export function InstallmentsTab({ data, isLoading, isError }: Props) {
       onError: () => {
         setStatusMsg('Failed to approve installment.')
         setApprovingInstallment(null)
+      },
+    })
+  }
+
+  function handleRejectInstallment(reason: string, amountPaise: number) {
+    if (!rejectingInstallment) return
+    const { inv, day } = rejectingInstallment
+    rejectInstallment.mutate([inv._id, day, { reason, amount: amountPaise }], {
+      onSuccess: () => {
+        setStatusMsg(
+          amountPaise > 0
+            ? `Day ${day} rejected for ${inv.user.name} — ${inr(amountPaise)} credited as a partial return.`
+            : `Day ${day} rejected for ${inv.user.name}. Nothing credited.`,
+        )
+        setRejectingInstallment(null)
+      },
+      onError: () => {
+        setStatusMsg('Failed to reject installment.')
+        setRejectingInstallment(null)
       },
     })
   }
@@ -270,8 +464,27 @@ export function InstallmentsTab({ data, isLoading, isError }: Props) {
       key: 'day',
       header: 'Day',
       render: (r) => (
-        <span className="font-semibold text-asm-navy">
-          Day {r.day} of {r.inv.installments?.length ?? 3}
+        <div className="flex flex-col gap-0.5">
+          <span className="font-semibold text-asm-navy">
+            Day {r.day} of {r.inv.installments?.length ?? 3}
+          </span>
+          {r.blockedByDay !== null && (
+            <span
+              className="inline-flex w-fit items-center rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800"
+              title={`Day ${r.blockedByDay} of this investment has not been paid or rejected yet`}
+            >
+              Day {r.blockedByDay} still open
+            </span>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'waiting',
+      header: 'Waiting',
+      render: (r) => (
+        <span className="whitespace-nowrap font-mono text-[11px] tabular-nums text-asm-muted">
+          {overdueLabel(r.maturesAt)}
         </span>
       ),
     },
@@ -287,14 +500,24 @@ export function InstallmentsTab({ data, isLoading, isError }: Props) {
       header: '',
       align: 'right',
       render: (r) => (
-        <AdminButton
-          size="sm"
-          variant="success"
-          onClick={() => setApprovingInstallment(r)}
-          disabled={approveInstallment.isPending}
-        >
-          Approve Day {r.day}
-        </AdminButton>
+        <div className="flex justify-end gap-2">
+          <AdminButton
+            size="sm"
+            variant="success"
+            onClick={() => setApprovingInstallment(r)}
+            disabled={approveInstallment.isPending || rejectInstallment.isPending}
+          >
+            Approve Day {r.day}
+          </AdminButton>
+          <AdminButton
+            size="sm"
+            variant="outline"
+            onClick={() => setRejectingInstallment(r)}
+            disabled={approveInstallment.isPending || rejectInstallment.isPending}
+          >
+            <span className="text-asm-red">Reject</span>
+          </AdminButton>
+        </div>
       ),
     },
   ]
@@ -370,12 +593,16 @@ export function InstallmentsTab({ data, isLoading, isError }: Props) {
         {/* ── 1. Ready to pay out ─────────────────────────────────────────── */}
         {pendingInstallments.length > 0 && (
           <section>
-            <h2 className="mb-3 text-sm font-semibold text-asm-navy">
+            <h2 className="text-sm font-semibold text-asm-navy">
               Ready to Approve
               <span className="ml-2 rounded-full bg-asm-blue px-2 py-0.5 text-[10px] font-bold text-white">
                 {pendingInstallments.length}
               </span>
             </h2>
+            <p className="mb-3 mt-1 text-[12px] text-asm-muted">
+              One row per due day, longest-waiting first. Each day unlocks on its own 24h timer, so an investment can have
+              more than one day queued here — clear them in day order.
+            </p>
             <DataTable
               columns={installmentColumns}
               rows={pendingInstallments}
@@ -468,6 +695,12 @@ export function InstallmentsTab({ data, isLoading, isError }: Props) {
               {approvingInstallment.day} return) to{' '}
               <strong className="font-semibold text-asm-navy">{approvingInstallment.inv.user.name}</strong>'s wallet. This
               cannot be undone.
+              {approvingInstallment.blockedByDay !== null && (
+                <span className="mt-2 block rounded-lg bg-amber-50 px-2.5 py-2 text-[12px] text-amber-800">
+                  Day {approvingInstallment.blockedByDay} of this investment is still unpaid — paying Day{' '}
+                  {approvingInstallment.day} first is out of order.
+                </span>
+              )}
             </>
           }
           confirmLabel={`Approve Day ${approvingInstallment.day}`}
@@ -476,6 +709,15 @@ export function InstallmentsTab({ data, isLoading, isError }: Props) {
           isPending={approveInstallment.isPending}
           onConfirm={handleApproveInstallment}
           onCancel={() => setApprovingInstallment(null)}
+        />
+      )}
+
+      {rejectingInstallment && (
+        <RejectInstallmentDialog
+          row={rejectingInstallment}
+          isPending={rejectInstallment.isPending}
+          onConfirm={handleRejectInstallment}
+          onCancel={() => setRejectingInstallment(null)}
         />
       )}
 

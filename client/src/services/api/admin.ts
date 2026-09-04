@@ -132,6 +132,15 @@ export const deleteInvestment = (id: string) =>
 export const approveInstallment = (id: string, day: number) =>
   apiFetch<AdminInvestment>(`/admin/investments/${id}/installments/${day}/approve`, { method: 'POST' })
 
+// Decline one day of an installment plan. reason is mandatory; amount is the
+// partial credit in paise (0 = pay nothing), capped server-side at that day's return.
+export interface InstallmentRejectBody {
+  reason: string
+  amount: number
+}
+export const rejectInstallment = (id: string, day: number, body: InstallmentRejectBody) =>
+  apiFetch<AdminInvestment>(`/admin/investments/${id}/installments/${day}/reject`, { method: 'POST', body })
+
 export const approveBreak = (id: string) =>
   apiFetch<AdminInvestment>(`/admin/investments/${id}/approve-break`, { method: 'POST' })
 

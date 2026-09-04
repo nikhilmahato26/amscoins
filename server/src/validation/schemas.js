@@ -138,6 +138,14 @@ const payoutRejectSchema = z.object({
   amount: z.number().int().min(0),
 })
 
+// Declining ONE day of an installment plan: a reason is mandatory (this is a
+// money decision that must be auditable), amount is the optional partial credit
+// in paise — the service caps it at that day's own return.
+const installmentRejectSchema = z.object({
+  reason: z.string().min(1).max(500),
+  amount: z.number().int().min(0),
+})
+
 const bulkApproveSchema = z.object({
   ids: z.array(z.string().min(1)).min(1, 'At least one ID required'),
 })
@@ -159,6 +167,7 @@ module.exports = {
   createInvestmentSchema,
   returnRejectSchema,
   payoutRejectSchema,
+  installmentRejectSchema,
   createWithdrawalSchema,
   payoutMethodSchema,
   updateProfileSchema,

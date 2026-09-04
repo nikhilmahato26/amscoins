@@ -2,7 +2,7 @@ const router = require('express').Router()
 const auth = require('../middleware/auth')
 const requireAdmin = require('../middleware/requireAdmin')
 const validate = require('../middleware/validate')
-const { adjustWalletSchema, resolveTicketSchema, returnRejectSchema, payoutRejectSchema, bulkApproveSchema, bulkRejectInvestmentsSchema, bulkRejectReturnsSchema } = require('../validation/schemas')
+const { adjustWalletSchema, resolveTicketSchema, returnRejectSchema, payoutRejectSchema, installmentRejectSchema, bulkApproveSchema, bulkRejectInvestmentsSchema, bulkRejectReturnsSchema } = require('../validation/schemas')
 const c = require('../controllers/adminController')
 const reportsRoutes = require('./reportsRoutes')
 
@@ -28,6 +28,8 @@ router.post('/investments/:id/approve-payout', c.approvePayout)
 router.post('/investments/:id/reject-payout', validate(payoutRejectSchema), c.rejectPayout)
 router.delete('/investments/:id', c.deleteInvestment)
 router.post('/investments/:id/installments/:day/approve', c.approveInstallment)
+// Decline one day's return — reason required, optional partial credit (trace kept).
+router.post('/investments/:id/installments/:day/reject', validate(installmentRejectSchema), c.rejectInstallment)
 router.post('/investments/:id/approve-break', c.approveBreak)
 router.post('/investments/:id/reject-break', c.rejectBreak)
 

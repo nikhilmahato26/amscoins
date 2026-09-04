@@ -778,9 +778,11 @@ async function approveInstallment(investmentId, day, adminId) {
       inv.installments[instIdx].creditedBy = adminId || null
       inv.creditedAmount = (inv.creditedAmount || 0) + installment.amount
 
-      // Check if this was the last unpaid installment.
+      // Check if this was the last undecided installment. A previously REJECTED
+      // day counts as decided — otherwise a single rejection would strand the
+      // investment 'active' forever and the principal would never come back.
       const isLastInstallment = inv.installments.every(
-        (i) => i.day === day || i.status === 'paid'
+        (i) => i.day === day || i.status === 'paid' || i.status === 'rejected'
       )
       if (isLastInstallment) {
         // Credit principal back and close the investment.
@@ -814,6 +816,97 @@ async function approveInstallment(investmentId, day, adminId) {
         `cache:wallet:${updated.user}`
       )
       logger.info('Installment approved', { investmentId, day, adminId })
+    }
+    return updated
+  } finally {
+    session.endSession()
+  }
+}
+
+/**
+ * Decline ONE day's return. The mirror of approveInstallment: the admin can
+ * still credit a partial amount (0 = nothing) and must give a reason, which is
+ * stored on the installment so the decision is auditable. Any credit is a normal
+ * settled transaction, so the user sees it in their history — the trace is kept.
+ *
+ * Only the named day is affected; the remaining days stay on their own timers.
+ * When this was the last undecided day, the principal is returned and the
+ * investment closes, exactly as approveInstallment does.
+ */
+async function rejectInstallment(investmentId, day, adminId, { reason = '', amount = 0 } = {}) {
+  const session = await mongoose.startSession()
+  try {
+    let updated
+    await session.withTransaction(async () => {
+      const inv = await Investment.findById(investmentId).session(session)
+      if (!inv) throw new ApiError(404, 'Investment not found')
+
+      const instIdx = inv.installments.findIndex((i) => i.day === day)
+      if (instIdx === -1) throw new ApiError(404, `Day ${day} installment not found`)
+      const installment = inv.installments[instIdx]
+      if (installment.status === 'paid')      throw new ApiError(409, 'Installment already paid')
+      if (installment.status === 'rejected')  throw new ApiError(409, 'Installment already rejected')
+      if (installment.status === 'scheduled') throw new ApiError(409, 'Installment not yet available')
+      // Never credit more than this day's own return — the principal is settled
+      // separately when the last day is decided.
+      if (amount < 0 || amount > installment.amount) throw new ApiError(400, 'Amount out of range')
+
+      if (amount > 0) {
+        await walletService.credit(
+          inv.user,
+          amount,
+          {
+            type: 'return',
+            actor: adminId ? 'admin' : 'system',
+            note: `Day ${day} partial return ${inv.referenceCode}${reason ? ': ' + reason : ''}`,
+            ref: inv._id,
+          },
+          session
+        )
+        inv.creditedAmount = (inv.creditedAmount || 0) + amount
+      }
+
+      inv.installments[instIdx].status = 'rejected'
+      inv.installments[instIdx].rejectionReason = reason
+      inv.installments[instIdx].rejectedAt = new Date()
+      inv.installments[instIdx].rejectedBy = adminId || null
+
+      // Same closing rule as approveInstallment — 'paid' and 'rejected' both count
+      // as decided, so the last decision returns the principal and ends the cycle.
+      const isLastInstallment = inv.installments.every(
+        (i) => i.day === day || i.status === 'paid' || i.status === 'rejected'
+      )
+      if (isLastInstallment) {
+        await walletService.credit(
+          inv.user,
+          inv.amount,
+          {
+            type: 'deposit',
+            actor: adminId ? 'admin' : 'system',
+            note: `Principal ${inv.referenceCode}`,
+            ref: inv._id,
+          },
+          session
+        )
+        inv.creditedAmount += inv.amount
+        inv.walletCredited = true
+        inv.status = 'returned'
+        inv.returnDecidedBy = adminId || null
+        inv.returnDecidedAt = new Date()
+      }
+
+      inv.markModified('installments')
+      await inv.save({ session })
+      updated = inv
+    })
+
+    if (updated) {
+      await cacheDel(
+        'cache:admin:stats',
+        `cache:dashboard:${updated.user}`,
+        `cache:wallet:${updated.user}`
+      )
+      logger.info('Installment rejected', { investmentId, day, adminId, amount, reason })
     }
     return updated
   } finally {
@@ -924,7 +1017,7 @@ module.exports = {
   approvePayout, rejectPayout,
   deleteInvestment,
   runAutoReject, runAutoDeposit, runMature,
-  runInstallment, approveInstallment,
+  runInstallment, approveInstallment, rejectInstallment,
   requestBreak, approveBreak, rejectBreak,
   bulkApproveInvestments, bulkRejectInvestments,
   bulkApproveReturns, bulkRejectReturns,

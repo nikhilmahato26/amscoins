@@ -184,6 +184,182 @@ test('POST /api/admin/investments/:id/installments/1/approve credits day 1 insta
   expect(wallet.balance).toBe(30000) // 15% of 200000 (day 1 of 50-50 over 48h)
 })
 
+// ── POST /api/admin/investments/:id/installments/:day/reject ──────────────────
+
+// Flip a day to 'available' the way the timer/sweep does.
+async function makeDayAvailable(invId, day) {
+  await Investment.updateOne(
+    { _id: invId, 'installments.day': day },
+    { $set: { 'installments.$.status': 'available' } }
+  )
+}
+
+test('POST /api/admin/investments/:id/installments/:day/reject requires a reason', async () => {
+  const { admin, token } = await makeAdmin()
+  const user = await makeUserWithWallet()
+  const inv = await makeActiveInstallmentInvestment(user, admin)
+  await makeDayAvailable(inv._id, 1)
+
+  const res = await request(app)
+    .post(`/api/admin/investments/${inv._id}/installments/1/reject`)
+    .set('Authorization', `Bearer ${token}`)
+    .send({ amount: 0 })
+  expect(res.status).toBe(400)
+})
+
+test('rejecting day 1 with amount 0 marks it rejected and credits nothing', async () => {
+  const { admin, token } = await makeAdmin()
+  const user = await makeUserWithWallet()
+  const inv = await makeActiveInstallmentInvestment(user, admin)
+  await makeDayAvailable(inv._id, 1)
+
+  const res = await request(app)
+    .post(`/api/admin/investments/${inv._id}/installments/1/reject`)
+    .set('Authorization', `Bearer ${token}`)
+    .send({ reason: 'fraud suspected', amount: 0 })
+  expect(res.status).toBe(200)
+
+  const fresh = await Investment.findById(inv._id)
+  expect(fresh.installments[0].status).toBe('rejected')
+  expect(fresh.installments[0].rejectionReason).toBe('fraud suspected')
+  expect(fresh.status).toBe('active') // day 2 still pending — cycle stays open
+
+  const wallet = await Wallet.findOne({ user: user._id })
+  expect(wallet.balance).toBe(0)
+})
+
+test('rejecting a day with a partial amount credits only that amount', async () => {
+  const { admin, token } = await makeAdmin()
+  const user = await makeUserWithWallet()
+  const inv = await makeActiveInstallmentInvestment(user, admin)
+  await makeDayAvailable(inv._id, 1)
+
+  const res = await request(app)
+    .post(`/api/admin/investments/${inv._id}/installments/1/reject`)
+    .set('Authorization', `Bearer ${token}`)
+    .send({ reason: 'partial settlement', amount: 10000 })
+  expect(res.status).toBe(200)
+
+  const wallet = await Wallet.findOne({ user: user._id })
+  expect(wallet.balance).toBe(10000)
+})
+
+test('rejecting a day cannot credit more than that day’s own return', async () => {
+  const { admin, token } = await makeAdmin()
+  const user = await makeUserWithWallet()
+  const inv = await makeActiveInstallmentInvestment(user, admin)
+  await makeDayAvailable(inv._id, 1)
+
+  // Day 1 of Silver on 200000 = 15% = 30000 paise.
+  const res = await request(app)
+    .post(`/api/admin/investments/${inv._id}/installments/1/reject`)
+    .set('Authorization', `Bearer ${token}`)
+    .send({ reason: 'too much', amount: 30001 })
+  expect(res.status).toBe(400)
+})
+
+test('rejecting a day that is not available yet returns 409', async () => {
+  const { admin, token } = await makeAdmin()
+  const user = await makeUserWithWallet()
+  const inv = await makeActiveInstallmentInvestment(user, admin)
+
+  const res = await request(app)
+    .post(`/api/admin/investments/${inv._id}/installments/1/reject`)
+    .set('Authorization', `Bearer ${token}`)
+    .send({ reason: 'too early', amount: 0 })
+  expect(res.status).toBe(409)
+})
+
+test('rejecting an already rejected day returns 409', async () => {
+  const { admin, token } = await makeAdmin()
+  const user = await makeUserWithWallet()
+  const inv = await makeActiveInstallmentInvestment(user, admin)
+  await makeDayAvailable(inv._id, 1)
+
+  const body = { reason: 'declined', amount: 0 }
+  await request(app)
+    .post(`/api/admin/investments/${inv._id}/installments/1/reject`)
+    .set('Authorization', `Bearer ${token}`)
+    .send(body)
+  const res = await request(app)
+    .post(`/api/admin/investments/${inv._id}/installments/1/reject`)
+    .set('Authorization', `Bearer ${token}`)
+    .send(body)
+  expect(res.status).toBe(409)
+})
+
+test('a rejected day still lets the last decision return the principal and close the cycle', async () => {
+  const { admin, token } = await makeAdmin()
+  const user = await makeUserWithWallet()
+  const inv = await makeActiveInstallmentInvestment(user, admin)
+
+  // Reject day 1 outright, then approve day 2 — the cycle must close.
+  await makeDayAvailable(inv._id, 1)
+  await request(app)
+    .post(`/api/admin/investments/${inv._id}/installments/1/reject`)
+    .set('Authorization', `Bearer ${token}`)
+    .send({ reason: 'declined', amount: 0 })
+
+  await makeDayAvailable(inv._id, 2)
+  const res = await request(app)
+    .post(`/api/admin/investments/${inv._id}/installments/2/approve`)
+    .set('Authorization', `Bearer ${token}`)
+  expect(res.status).toBe(200)
+
+  const fresh = await Investment.findById(inv._id)
+  expect(fresh.status).toBe('returned')
+  expect(fresh.walletCredited).toBe(true)
+
+  // Day 2 return (30000) + principal (200000); day 1 was declined with no credit.
+  const wallet = await Wallet.findOne({ user: user._id })
+  expect(wallet.balance).toBe(230000)
+})
+
+test('rejecting the final undecided day also returns the principal', async () => {
+  const { admin, token } = await makeAdmin()
+  const user = await makeUserWithWallet()
+  const inv = await makeActiveInstallmentInvestment(user, admin)
+
+  await makeDayAvailable(inv._id, 1)
+  await request(app)
+    .post(`/api/admin/investments/${inv._id}/installments/1/approve`)
+    .set('Authorization', `Bearer ${token}`)
+
+  await makeDayAvailable(inv._id, 2)
+  const res = await request(app)
+    .post(`/api/admin/investments/${inv._id}/installments/2/reject`)
+    .set('Authorization', `Bearer ${token}`)
+    .send({ reason: 'declined', amount: 0 })
+  expect(res.status).toBe(200)
+
+  const fresh = await Investment.findById(inv._id)
+  expect(fresh.status).toBe('returned')
+
+  // Day 1 return (30000) + principal (200000); day 2 declined with no credit.
+  const wallet = await Wallet.findOne({ user: user._id })
+  expect(wallet.balance).toBe(230000)
+})
+
+test('POST /api/admin/investments/:id/installments/:day/reject returns 403 for non-admin', async () => {
+  const code = await generateUniqueCode()
+  const passwordHash = await bcrypt.hash('pass123', 10)
+  const normalUser = await User.create({
+    name: 'N3',
+    email: `n3${Math.random()}@b.com`,
+    passwordHash,
+    referralCode: code,
+  })
+  const loginRes = await request(app)
+    .post('/api/auth/login')
+    .send({ email: normalUser.email, password: 'pass123' })
+  const id = new mongoose.Types.ObjectId()
+  const res = await request(app)
+    .post(`/api/admin/investments/${id}/installments/1/reject`)
+    .set('Authorization', `Bearer ${loginRes.body.token}`)
+    .send({ reason: 'nope', amount: 0 })
+  expect(res.status).toBe(403)
+})
+
 // ── POST /api/admin/investments/:id/approve-break ─────────────────────────────
 
 test('POST /api/admin/investments/:id/approve-break returns 403 for non-admin', async () => {
