@@ -5,9 +5,11 @@ export interface Installment {
   day: number
   pct: number
   amount: number // paise
-  status: 'scheduled' | 'available' | 'paid'
+  status: 'scheduled' | 'available' | 'paid' | 'rejected'
   maturesAt: string
   creditedAt?: string
+  rejectionReason?: string
+  rejectedAt?: string
 }
 
 export interface Investment {
