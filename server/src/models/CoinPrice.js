@@ -15,7 +15,7 @@ const { Schema, model } = require('mongoose')
  */
 const coinPriceSchema = new Schema(
   {
-    t: { type: Date, required: true, index: true },
+    t: { type: Date, required: true },
     price: { type: Number, required: true }, // paise
   },
   { timestamps: false }

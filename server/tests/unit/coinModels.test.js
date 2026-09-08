@@ -38,6 +38,14 @@ describe('CoinPrice', () => {
     const found = await CoinPrice.findOne({ t: at })
     expect(found.price).toBe(124780)
   })
+
+  it('initializes the model without duplicate index errors (regression test for TTL index bug)', async () => {
+    // This test verifies the fix for the bug where `index: true` on the `t` field
+    // conflicted with the explicit TTL index, causing "equivalent index already exists
+    // with the same name but different options" error.
+    // The fix removes `index: true`, leaving only the explicit TTL index.
+    await expect(CoinPrice.init()).resolves.not.toThrow()
+  })
 })
 
 describe('CoinAdminAction', () => {
