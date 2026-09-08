@@ -3,6 +3,7 @@
 const CoinIndexState = require('../models/CoinIndexState')
 const CoinPrice = require('../models/CoinPrice')
 const CoinAdminAction = require('../models/CoinAdminAction')
+const Investment = require('../models/Investment')
 const logger = require('../lib/logger').child({ service: 'coinIndex' })
 const { ApiError } = require('../middleware/errorHandler')
 
@@ -10,6 +11,7 @@ const BASELINE_PAISE = 124780 // ₹1,247.80
 const FLOOR_PAISE = 60000 // ₹600
 const CEILING_PAISE = 500000 // ₹5,000
 const TICK_MS = 30_000
+const ASMCOIN = 'asmcoin'
 
 // Percentage move applied by each admin nudge size.
 const MOVE_PCT = { small: 3, medium: 8, hard: 18 }
@@ -171,6 +173,77 @@ async function listActions({ limit = 25, skip = 0 } = {}) {
   return { rows, total }
 }
 
+/**
+ * Reduce a series to at most `maxPoints` by taking the last tick of each
+ * bucket. The final tick is always preserved so the end of the chart line
+ * matches the live price the user sees above it.
+ */
+function downsample(docs, maxPoints) {
+  if (docs.length <= maxPoints) return docs
+
+  const bucketSize = Math.ceil(docs.length / maxPoints)
+  const out = []
+  for (let i = 0; i < docs.length; i += bucketSize) {
+    out.push(docs[Math.min(i + bucketSize - 1, docs.length - 1)])
+  }
+
+  const last = docs[docs.length - 1]
+  if (out[out.length - 1] !== last) out.push(last)
+
+  return out
+}
+
+// The investor count is a collection-scan aggregate that changes slowly and is
+// requested by every client every 30s. A small in-process TTL cache keeps it
+// off the hot path without needing Redis (which is absent in test and in some
+// dev setups).
+let investorCountCache = { value: 0, at: 0 }
+const INVESTOR_COUNT_TTL_MS = 60_000
+
+async function getInvestorCount(now = Date.now()) {
+  if (now - investorCountCache.at < INVESTOR_COUNT_TTL_MS) return investorCountCache.value
+
+  const users = await Investment.distinct('user', {
+    planKey: ASMCOIN,
+    status: { $in: ['active', 'matured'] },
+  })
+
+  investorCountCache = { value: users.length, at: now }
+  return users.length
+}
+
+/** Test seam — the TTL cache would otherwise leak between test cases. */
+function _resetInvestorCountCache() {
+  investorCountCache = { value: 0, at: 0 }
+}
+
+async function getSeries(range = '24h') {
+  const cfg = RANGES[range]
+  if (!cfg) throw new ApiError(400, 'Invalid range')
+
+  const now = Date.now()
+  const [state, docs, dayDocs, investorCount] = await Promise.all([
+    CoinIndexState.getSingleton(),
+    CoinPrice.find({ t: { $gte: new Date(now - cfg.ms) } }).sort({ t: 1 }).lean(),
+    CoinPrice.find({ t: { $gte: new Date(now - RANGES['24h'].ms) } }).select('price').lean(),
+    getInvestorCount(now),
+  ])
+
+  const prices = dayDocs.map((d) => d.price)
+  const first = docs.length ? docs[0].price : state.currentPrice
+  const changePct = first === 0 ? 0 : ((state.currentPrice - first) / first) * 100
+
+  return {
+    range,
+    current: state.currentPrice,
+    changePct: Number(changePct.toFixed(2)),
+    high24h: prices.length ? Math.max(...prices) : state.currentPrice,
+    low24h: prices.length ? Math.min(...prices) : state.currentPrice,
+    investorCount,
+    series: downsample(docs, cfg.points).map((d) => ({ t: d.t, p: d.price })),
+  }
+}
+
 module.exports = {
   nextPrice,
   tick,
@@ -178,10 +251,15 @@ module.exports = {
   setVolatility,
   resetIndex,
   listActions,
+  downsample,
+  getSeries,
+  getInvestorCount,
+  _resetInvestorCountCache,
   BASELINE_PAISE,
   FLOOR_PAISE,
   CEILING_PAISE,
   TICK_MS,
   MOVE_PCT,
   RANGES,
+  ASMCOIN,
 }
