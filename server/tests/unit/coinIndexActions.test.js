@@ -72,14 +72,29 @@ describe('applyMove', () => {
     expect(rows[0].params.size).toBe('medium')
   })
 
-  it('drives the price toward the target across repeated ticks', async () => {
-    await CoinIndexState.getSingleton()
+  it('drives the price toward the target as the move window elapses', async () => {
+    // Isolate drift from noise: with volatility 0, nextPrice's noise term is
+    // provably zero (see coinIndexTick.test.js), so any price movement below
+    // can only come from the drift-toward-target term under test.
+    const state = await CoinIndexState.getSingleton()
+    state.volatility = 0
+    await state.save()
+
     await svc.applyMove({ action: 'pump', size: 'medium', durationMinutes: 1, adminId })
 
-    for (let i = 0; i < 10; i++) await svc.tick()
+    // Backdate the move's startedAt so a single real tick() call sees the
+    // window as mostly elapsed, instead of relying on how much real
+    // wall-clock time a loop of tick() calls happens to take. 45s into a 60s
+    // window is a fraction of 0.75 — enough for the drift term to move the
+    // price unambiguously above baseline in one tick.
+    const mid = await CoinIndexState.getSingleton()
+    mid.move.startedAt = new Date(Date.now() - 45_000)
+    await mid.save()
 
-    const state = await CoinIndexState.getSingleton()
-    expect(state.currentPrice).toBeGreaterThan(124780)
+    await svc.tick()
+
+    const after = await CoinIndexState.getSingleton()
+    expect(after.currentPrice).toBeGreaterThan(124780)
   })
 })
 
