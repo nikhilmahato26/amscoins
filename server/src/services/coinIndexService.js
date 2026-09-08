@@ -2,7 +2,9 @@
 
 const CoinIndexState = require('../models/CoinIndexState')
 const CoinPrice = require('../models/CoinPrice')
+const CoinAdminAction = require('../models/CoinAdminAction')
 const logger = require('../lib/logger').child({ service: 'coinIndex' })
+const { ApiError } = require('../middleware/errorHandler')
 
 const BASELINE_PAISE = 124780 // ₹1,247.80
 const FLOOR_PAISE = 60000 // ₹600
@@ -86,9 +88,96 @@ async function tick(now = new Date()) {
   return { price, at: now }
 }
 
+/**
+ * Record an admin action. Every mutation of the index goes through here — the
+ * audit trail is not optional.
+ */
+async function audit(action, params, priceBefore, priceAfter, adminId) {
+  await CoinAdminAction.create({
+    admin: adminId || null,
+    action,
+    params,
+    priceBefore,
+    priceAfter,
+  })
+}
+
+/**
+ * Start a pump or crash. The price is NOT changed here — a target is set and
+ * the drift in nextPrice() carries the price there across the window, so the
+ * move reads as a market move rather than a vertical jump.
+ */
+async function applyMove({ action, size, durationMinutes, adminId }) {
+  const pct = MOVE_PCT[size]
+  if (!pct) throw new ApiError(400, 'Invalid move size')
+  if (action !== 'pump' && action !== 'crash') throw new ApiError(400, 'Invalid move action')
+  if (!(durationMinutes > 0)) throw new ApiError(400, 'Duration must be positive')
+
+  const state = await CoinIndexState.getSingleton()
+  const startPrice = state.currentPrice
+  const multiplier = action === 'pump' ? 1 + pct / 100 : 1 - pct / 100
+  const targetPrice = clamp(startPrice * multiplier)
+
+  const startedAt = new Date()
+  state.move = {
+    action,
+    startPrice,
+    targetPrice,
+    startedAt,
+    endsAt: new Date(startedAt.getTime() + durationMinutes * 60_000),
+    admin: adminId || null,
+  }
+  await state.save()
+
+  await audit(action, { size, durationMinutes, targetPrice }, startPrice, targetPrice, adminId)
+  logger.info('Coin index move started', { action, size, durationMinutes, startPrice, targetPrice })
+
+  return state
+}
+
+async function setVolatility(value, adminId) {
+  if (typeof value !== 'number' || value < 0 || value > 100) {
+    throw new ApiError(400, 'Volatility must be between 0 and 100')
+  }
+  const state = await CoinIndexState.getSingleton()
+  state.volatility = value
+  await state.save()
+
+  await audit('volatility', { value }, state.currentPrice, state.currentPrice, adminId)
+  logger.info('Coin index volatility set', { value })
+
+  return state
+}
+
+async function resetIndex(adminId) {
+  const state = await CoinIndexState.getSingleton()
+  const before = state.currentPrice
+
+  state.currentPrice = BASELINE_PAISE
+  state.move = null
+  await state.save()
+
+  await audit('reset', {}, before, BASELINE_PAISE, adminId)
+  logger.info('Coin index reset to baseline', { before })
+
+  return state
+}
+
+async function listActions({ limit = 25, skip = 0 } = {}) {
+  const [rows, total] = await Promise.all([
+    CoinAdminAction.find().sort({ createdAt: -1 }).skip(skip).limit(limit).populate('admin', 'name email').lean(),
+    CoinAdminAction.countDocuments(),
+  ])
+  return { rows, total }
+}
+
 module.exports = {
   nextPrice,
   tick,
+  applyMove,
+  setVolatility,
+  resetIndex,
+  listActions,
   BASELINE_PAISE,
   FLOOR_PAISE,
   CEILING_PAISE,
