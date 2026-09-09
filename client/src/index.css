@@ -159,6 +159,9 @@
     transition: none;
     transform: none;
   }
+  svg animate {
+    display: none;
+  }
 }
 
 /* Hide scrollbar for tape */
