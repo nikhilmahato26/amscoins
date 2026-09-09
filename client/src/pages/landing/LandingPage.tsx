@@ -273,8 +273,9 @@ export function LandingPage() {
       <LandingMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
 
       <main>
-        {/* Hero constrained to max-width */}
-        <div className="mx-auto w-full max-w-[1180px]">
+        {/* Hero constrained to max-width — wider than the body sections so the
+            two-column composition has room; content still centers within it. */}
+        <div className="mx-auto w-full max-w-[1320px]">
           <Hero />
         </div>
 
@@ -365,7 +366,7 @@ export function LandingPage() {
 /* ── Hero (Task 1) ── */
 function Hero() {
   return (
-    <section className="relative px-4 pb-8 pt-7 lg:px-8">
+    <section className="relative px-4 pb-12 pt-7 lg:px-8 lg:pb-16 lg:pt-12">
       {/* Ambient top wash — full viewport width so it reads as light, not a box.
          Blue/green in light, warm gold in dark. */}
       <div
@@ -385,12 +386,17 @@ function Hero() {
         }}
       />
 
-      <motion.div variants={container} initial="hidden" animate="visible" className="relative">
-
-        {/* ASM Coin index — real, honestly-labeled data (replaces the old fake live pill) */}
-        <motion.div variants={fadeUp} className="mb-5">
-          <CoinIndexCard variant="hero" className="w-full max-w-[460px]" />
-        </motion.div>
+      {/* Two columns from lg: the argument (headline, promise, actions) reads
+          left, the evidence (the live index) sits right and fills what used to
+          be dead space. Below lg they stack, headline first — on a phone the
+          promise should be read before the proof. */}
+      <motion.div
+        variants={container}
+        initial="hidden"
+        animate="visible"
+        className="relative grid items-center gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)] lg:gap-14"
+      >
+        <div>
 
         {/* Headline */}
         <motion.h1
@@ -437,6 +443,15 @@ function Hero() {
             <dd className="text-[18px] font-bold text-skin-text">None</dd>
           </div>
         </motion.dl>
+
+        </div>
+
+        {/* ASM Coin index — the evidence behind the promise on the left.
+            Ordered first in the DOM below lg would put proof before promise,
+            so it stays second and simply stacks under the headline on phones. */}
+        <motion.div variants={fadeUp} className="min-w-0">
+          <CoinIndexCard variant="hero" />
+        </motion.div>
 
       </motion.div>
     </section>

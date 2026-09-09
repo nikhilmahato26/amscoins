@@ -18,7 +18,7 @@ export function CoinPriceTicker({
 }: {
   paise: number
   changePct: number
-  size?: 'sm' | 'lg'
+  size?: 'sm' | 'lg' | 'xl'
 }) {
   const previous = useRef(paise)
   const [flash, setFlash] = useState<'up' | 'down' | null>(null)
@@ -39,7 +39,11 @@ export function CoinPriceTicker({
         aria-live="polite"
         className={cn(
           'font-bold tabular-nums tracking-tight transition-colors duration-500',
-          size === 'lg' ? 'text-[34px] leading-none' : 'text-[20px] leading-none',
+          // Stays on one line with the change % beside it at 375px, then
+          // scales up into hero weight once there's room.
+          size === 'xl' && 'text-[30px] leading-none sm:text-[42px] lg:text-[52px]',
+          size === 'lg' && 'text-[34px] leading-none',
+          size === 'sm' && 'text-[20px] leading-none',
           flash === 'up' && 'text-asm-greenInk',
           flash === 'down' && 'text-asm-red',
           !flash && 'text-asm-navy',
@@ -50,7 +54,9 @@ export function CoinPriceTicker({
       <span
         className={cn(
           'font-semibold tabular-nums',
-          size === 'lg' ? 'text-[15px]' : 'text-[13px]',
+          size === 'xl' && 'text-[14px] sm:text-[17px]',
+          size === 'lg' && 'text-[15px]',
+          size === 'sm' && 'text-[13px]',
           positive ? 'text-asm-greenInk' : 'text-asm-red',
         )}
       >
