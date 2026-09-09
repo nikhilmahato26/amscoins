@@ -49,7 +49,7 @@ function nextPrice(state, now = Date.now(), rand = Math.random) {
   const { currentPrice, volatility, move } = state
 
   const sigma = (volatility / 100) * MAX_STEP_FRACTION
-  // Add a small positive bias (+0.3× sigma) so the idle random walk trends
+  // Add a small positive bias (+0.25× sigma) so the idle random walk trends
   // slightly upward — the graph stays "a little green" without admin action.
   const UPWARD_BIAS = 0.25
   const noise = (rand() * 2 - 1 + UPWARD_BIAS) * sigma

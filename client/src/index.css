@@ -134,6 +134,17 @@
   border-radius: 6px;
 }
 
+html.dark .skeleton,
+.app-shell-dark .skeleton {
+  background: linear-gradient(
+    90deg,
+    #18181b 0px,
+    #27272a 80px,
+    #18181b 160px
+  );
+  background-size: 800px 100%;
+}
+
 /* Tappable card elevation — adds press feel + smooth hover lift */
 .elevate {
   transition: box-shadow 0.18s ease, transform 0.18s ease;
@@ -150,12 +161,14 @@
 /* ASM Coin chart — live-end pulse, indicating the chart is a live index. */
 @keyframes coin-chart-pulse {
   0%, 100% {
+    transform: scale(0.85);
+    opacity: 0.35;
     r: 6;
-    opacity: 0.28;
   }
   50% {
-    r: 14;
+    transform: scale(2.2);
     opacity: 0;
+    r: 14;
   }
 }
 .coin-chart-pulse {
@@ -309,6 +322,25 @@ html.dark {
   --dk-green:      #30d158;
   --dk-amber:      #ffd426;
   --dk-red:        #ff453a;
+
+  /* Shadcn / portal tokens (dialogs, popovers, select dropdowns) */
+  --background: 240 6% 4%;
+  --foreground: 0 0% 99%;
+  --card: 240 5% 9%;
+  --card-foreground: 0 0% 99%;
+  --popover: 240 5% 9%;
+  --popover-foreground: 0 0% 99%;
+  --primary: 48 95% 49%;
+  --primary-foreground: 240 6% 4%;
+  --secondary: 240 5% 12%;
+  --secondary-foreground: 0 0% 99%;
+  --muted: 240 5% 12%;
+  --muted-foreground: 220 8% 58%;
+  --accent: 240 5% 12%;
+  --accent-foreground: 0 0% 99%;
+  --border: 240 5% 15%;
+  --input: 240 5% 15%;
+  --ring: 48 95% 49%;
 }
 
 html.dark body {
@@ -351,8 +383,8 @@ html.dark ::-webkit-scrollbar-thumb:hover { background-color: #48484a; }
    No !important needed; specificity (.app-shell-dark .X) beats (.X).
    ════════════════════════════════════════════════════════════════ */
 
-/* ── Page background ── */
-.app-shell-dark .bg-asm-tint { background-color: var(--dk0); }
+/* ── Page background / Tinted surfaces ── */
+.app-shell-dark .bg-asm-tint { background-color: var(--dk2); }
 
 /* ── Cards — gradient L1 elevation ── */
 .app-shell-dark .bg-white {
@@ -398,6 +430,7 @@ html.dark ::-webkit-scrollbar-thumb:hover { background-color: #48484a; }
 }
 
 /* ── Tinted containers ── */
+.app-shell-dark .bg-asm-tint       { background-color: var(--dk2); }
 .app-shell-dark .bg-asm-blue-tint  { background-color: rgba(244, 197, 6, 0.12); }
 .app-shell-dark .bg-asm-green-tint { background-color: rgba(48, 209, 88, 0.12); }
 .app-shell-dark .bg-amber-50       { background-color: rgba(255, 212, 38, 0.10); }
@@ -405,8 +438,13 @@ html.dark ::-webkit-scrollbar-thumb:hover { background-color: #48484a; }
 .app-shell-dark .bg-green-50       { background-color: rgba(48, 209, 88, 0.10); }
 .app-shell-dark .bg-violet-50      { background-color: rgba(244, 197, 6, 0.10); }
 .app-shell-dark .bg-sky-50         { background-color: rgba(100, 210, 255, 0.10); }
+.app-shell-dark .bg-pink-50        { background-color: rgba(236, 72, 153, 0.12); }
+.app-shell-dark .text-pink-600     { color: #f472b6; }
+.app-shell-dark .text-orange-600,
+.app-shell-dark .text-orange-500   { color: #ff9f43; }
 .app-shell-dark .bg-asm-navy       { background-color: var(--dk2); }
 .app-shell-dark .rounded-xl.bg-asm-tint { background-color: var(--dk2); }
+.app-shell-dark .rounded-2xl.bg-asm-tint { background-color: var(--dk2); }
 
 /* ── Nav hover states ── */
 .app-shell-dark .hover\:bg-asm-tint:hover {

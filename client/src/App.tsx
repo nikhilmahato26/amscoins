@@ -103,6 +103,9 @@ const AdminSettings = lazy(() =>
 const AdminReports = lazy(() =>
   import('./pages/admin/AdminReports').then((m) => ({ default: m.AdminReports }))
 )
+const AdminCoin = lazy(() =>
+  import('./pages/admin/AdminCoin').then((m) => ({ default: m.AdminCoin }))
+)
 
 /** Shown while a route chunk downloads. Announced, so it is not a silent gap. */
 function RouteFallback() {
@@ -295,6 +298,7 @@ export default function App() {
         >
           <Route index element={<AdminDashboard />} />
           <Route path="investments" element={<AdminInvestments />} />
+          <Route path="coin" element={<AdminCoin />} />
           <Route path="withdrawals" element={<AdminWithdrawals />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="users/:id" element={<AdminUserDetail />} />

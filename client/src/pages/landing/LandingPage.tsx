@@ -18,6 +18,7 @@ import { Link } from 'react-router'
 import asmCoin from '@/assets/asm.jpeg'
 import btcCoin from '@/assets/btc.jpeg'
 import goldCoin from '@/assets/gold.jpeg'
+import asmcoinMedallion from '@/assets/plans/asmcoin.png'
 import diamondMedallion from '@/assets/plans/diamond.png'
 import goldMedallion from '@/assets/plans/gold.png'
 import silverMedallion from '@/assets/plans/silver.png'
@@ -28,6 +29,8 @@ import {
   LandingHeader,
   LandingMenu,
 } from '@/components/landing/LandingChrome'
+import { useCoinIndex } from '@/hooks/queries'
+import { formatCoinChange, formatCoinPrice } from '@/lib/coinFormat'
 import { cn } from '@/lib/utils'
 
 /* ── Framer Motion variants ── */
@@ -49,8 +52,8 @@ const TRUST_PILLS: { Icon: LucideIcon; label: string }[] = [
   { Icon: ShieldCheck, label: 'Admin Verified'       },
   { Icon: Zap,         label: '3-Hour Payouts'       },
   { Icon: Headphones,  label: 'Daily Support'        },
-  { Icon: TrendingUp,  label: 'Upto 35% Returns'     },
-  { Icon: Clock,       label: '24-Hour Cycles'       },
+  { Icon: TrendingUp,  label: 'Upto 40% Returns'     },
+  { Icon: Clock,       label: 'Flexible Cycles'      },
   { Icon: Wallet,      label: 'Direct UPI Payout'    },
 ]
 
@@ -59,33 +62,17 @@ type MarketRow = {
   positive: boolean; series: number[]; icon: string
 }
 
-const ASM_BASE_PRICE = 12_850
-
-const MARKET_STATIC: MarketRow[] = [
-  { symbol: 'ASM',  pair: 'INR',  price: '₹12,850.00',    change: '+10.79%', positive: true,  series: [40,42,41,46,48,45,50,54,57,60,63,68], icon: asmCoin  },
-  { symbol: 'BTC',  pair: 'USDT', price: '₹58,36,245.60', change: '+2.35%',  positive: true,  series: [38,41,39,44,43,48,46,52,55,53,58,62], icon: btcCoin  },
-  { symbol: 'GOLD', pair: 'XAU',  price: '₹6,795.35',     change: '+1.82%',  positive: true,  series: [30,33,31,36,38,35,40,42,41,46,48,51], icon: goldCoin },
-]
-
-function genMarketSeries(up: boolean, len = 12): number[] {
-  const s: number[] = [50]
-  for (let i = 1; i < len; i++) {
-    s.push(Math.max(10, Math.min(90, s[i - 1] + (Math.random() - (up ? 0.35 : 0.65)) * 10)))
-  }
-  return s
-}
-
 function fmtLandingINR(n: number): string {
   return '₹' + Math.round(n).toLocaleString('en-IN') + '.00'
 }
 
 const PLANS: {
   slug: string; name: string; returns: string; duration: string;
-  min: string; max: string; unlockNote: string; accent: 'silver' | 'gold' | 'diamond'
+  min: string; max: string; unlockNote: string; accent: 'silver' | 'gold' | 'asmcoin' | 'diamond'
 }[] = [
-  { slug: 'silver',  name: 'Silver Plan',  returns: '30%', duration: '24 Hrs', min: '₹1,000', max: '₹10,000',   unlockNote: 'Default Tier',              accent: 'silver'  },
-  { slug: 'gold',    name: 'Gold Plan',    returns: '35%', duration: '24 Hrs', min: '₹3,000', max: '₹3,00,000',  unlockNote: 'Unlocks with 21 referrals', accent: 'gold'    },
-  { slug: 'diamond', name: 'Diamond Plan', returns: '40%', duration: '24 Hrs', min: '₹5,000', max: '₹5,00,000',  unlockNote: 'Unlocks with 52 referrals', accent: 'diamond' },
+  { slug: 'silver',  name: 'Silver Plan',    returns: '30%', duration: '24 Hrs', min: '₹1,000', max: '₹10,000',   unlockNote: 'Default Tier',                  accent: 'silver'  },
+  { slug: 'gold',    name: 'Gold Plan',      returns: '35%', duration: '24 Hrs', min: '₹3,000', max: '₹3,00,000',  unlockNote: 'Unlocks with 21 referrals',     accent: 'gold'    },
+  { slug: 'asmcoin', name: 'ASM Coin Plan',  returns: '40%', duration: '7 Days', min: '₹5,000', max: '₹5,00,000',  unlockNote: 'Open to everyone · 0 referrals', accent: 'asmcoin' },
 ]
 
 /* ── CountUp component (Task 2) ── */
@@ -201,7 +188,7 @@ const HOW_STEPS = [
   {
     n: '02',
     title: 'Pick your plan',
-    body: 'Choose Silver (30%), Gold (35%), or Diamond (40%) based on your investment amount.',
+    body: 'Choose Silver (30%), Gold (35%), or flagship ASM Coin (40%) based on your goals.',
     icon: TrendingUp,
     tone: 'green' as const,
   },
@@ -333,7 +320,7 @@ export function LandingPage() {
               Earn <span className="text-[#F4C506]">3% cash</span> on every friend’s first deposit
             </h2>
             <p className="mt-2 max-w-[44ch] text-[13px] leading-relaxed text-white/80">
-              Paid straight to your wallet the moment they complete their first deposit — and every referral moves you toward Gold (upto 35%) and Diamond tiers with higher limits.
+              Paid straight to your wallet the moment they complete their first deposit — and every referral moves you toward higher tiers with higher limits.
             </p>
             <Link
               to="/register"
@@ -490,8 +477,27 @@ function TrustMarquee() {
 
 /* ── Market Snapshot ── */
 function MarketSnapshot() {
-  const [rows, setRows] = useState<MarketRow[]>(MARKET_STATIC)
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const { data: asmData } = useCoinIndex('24h')
+
+  const [cryptoData, setCryptoData] = useState<{
+    btcPrice: string
+    btcChange: string
+    btcPositive: boolean
+    btcSeries: number[]
+    goldPrice: string
+    goldChange: string
+    goldPositive: boolean
+    goldSeries: number[]
+  }>({
+    btcPrice: '₹75,64,043.00',
+    btcChange: '+1.89%',
+    btcPositive: true,
+    btcSeries: [7420000, 7450000, 7435000, 7480000, 7510000, 7490000, 7530000, 7550000, 7540000, 7560000, 7555000, 7564043],
+    goldPrice: '₹4,20,977.00',
+    goldChange: '+0.62%',
+    goldPositive: true,
+    goldSeries: [417000, 417500, 418000, 418500, 418200, 419000, 419500, 419200, 419800, 420100, 420300, 420977],
+  })
 
   useEffect(() => {
     let cancelled = false
@@ -499,60 +505,89 @@ function MarketSnapshot() {
     async function load() {
       try {
         const res = await fetch(
-          'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,pax-gold&vs_currencies=inr&include_24hr_change=true',
+          'https://api.coingecko.com/api/v3/coins/markets?vs_currency=inr&ids=bitcoin,pax-gold&sparkline=true',
           { signal: AbortSignal.timeout(10_000) }
         )
         if (!res.ok || cancelled) return
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const d: any = await res.json()
+        const list: any[] = await res.json()
+        const btc = list.find((c) => c.id === 'bitcoin')
+        const gold = list.find((c) => c.id === 'pax-gold')
 
-        const btcINR: number  = d?.bitcoin?.inr              ?? 5_836_245
-        const btcPct: number  = d?.bitcoin?.inr_24h_change   ?? 2.35
-        const goldINR: number = d?.['pax-gold']?.inr         ?? 6_795
-        const goldPct: number = d?.['pax-gold']?.inr_24h_change ?? 1.82
+        const btcINR = btc?.current_price ?? 7564043
+        const btcPct = btc?.price_change_percentage_24h ?? 1.89
+        const btcSpark = btc?.sparkline_in_7d?.price?.slice(-24) ?? cryptoData.btcSeries
 
-        const maxCompetitor = Math.max(btcPct, goldPct)
-        const asmPct = Math.max(maxCompetitor + 3 + Math.random() * 3, 5)
+        const goldINR = gold?.current_price ?? 420977
+        const goldPct = gold?.price_change_percentage_24h ?? 0.62
+        const goldSpark = gold?.sparkline_in_7d?.price?.slice(-24) ?? cryptoData.goldSeries
 
-        const sign = (n: number) => n >= 0 ? '+' : ''
+        const sign = (n: number) => (n >= 0 ? '+' : '')
 
         if (!cancelled) {
-          setRows([
-            {
-              symbol: 'ASM', pair: 'INR',
-              price: fmtLandingINR(ASM_BASE_PRICE),
-              change: `${sign(asmPct)}${asmPct.toFixed(2)}%`,
-              positive: true, series: genMarketSeries(true), icon: asmCoin,
-            },
-            {
-              symbol: 'BTC', pair: 'USDT',
-              price: fmtLandingINR(btcINR),
-              change: `${sign(btcPct)}${btcPct.toFixed(2)}%`,
-              positive: btcPct >= 0, series: genMarketSeries(btcPct >= 0), icon: btcCoin,
-            },
-            {
-              symbol: 'GOLD', pair: 'XAU',
-              price: fmtLandingINR(goldINR),
-              change: `${sign(goldPct)}${goldPct.toFixed(2)}%`,
-              positive: goldPct >= 0, series: genMarketSeries(goldPct >= 0), icon: goldCoin,
-            },
-          ])
+          setCryptoData({
+            btcPrice: fmtLandingINR(btcINR),
+            btcChange: `${sign(btcPct)}${btcPct.toFixed(2)}%`,
+            btcPositive: btcPct >= 0,
+            btcSeries: btcSpark,
+            goldPrice: fmtLandingINR(goldINR),
+            goldChange: `${sign(goldPct)}${goldPct.toFixed(2)}%`,
+            goldPositive: goldPct >= 0,
+            goldSeries: goldSpark,
+          })
         }
       } catch {
-        // network/timeout — keep current rows
-      }
-
-      if (!cancelled) {
-        timerRef.current = setTimeout(load, 60_000)
+        // network/timeout — keep fallback or current values
       }
     }
 
     void load()
+    const timer = setInterval(load, 60_000)
     return () => {
       cancelled = true
-      if (timerRef.current) clearTimeout(timerRef.current)
+      clearInterval(timer)
     }
   }, [])
+
+  const asmPrice = asmData ? `₹${formatCoinPrice(asmData.current)}` : '₹1,250.00'
+  const asmChange = asmData
+    ? `${asmData.changePct >= 0 ? '+' : ''}${formatCoinChange(asmData.changePct)}`
+    : '+5.62%'
+  const asmPositive = asmData ? asmData.changePct >= 0 : true
+  const asmSeries =
+    asmData?.series && asmData.series.length > 1
+      ? asmData.series.map((p) => p.p)
+      : [1220, 1225, 1230, 1228, 1235, 1240, 1238, 1245, 1248, 1246, 1250, 1251]
+
+  const rows: MarketRow[] = [
+    {
+      symbol: 'ASM',
+      pair: 'INR',
+      price: asmPrice,
+      change: asmChange,
+      positive: asmPositive,
+      series: asmSeries,
+      icon: asmCoin,
+    },
+    {
+      symbol: 'BTC',
+      pair: 'INR',
+      price: cryptoData.btcPrice,
+      change: cryptoData.btcChange,
+      positive: cryptoData.btcPositive,
+      series: cryptoData.btcSeries,
+      icon: btcCoin,
+    },
+    {
+      symbol: 'GOLD',
+      pair: 'INR',
+      price: cryptoData.goldPrice,
+      change: cryptoData.goldChange,
+      positive: cryptoData.goldPositive,
+      series: cryptoData.goldSeries,
+      icon: goldCoin,
+    },
+  ]
 
   return (
     <section
@@ -612,7 +647,7 @@ function MarketSnapshot() {
               </td>
               <td className="hidden px-4 py-3.5 sm:table-cell">
                 <span className="flex justify-end">
-                  <Sparkline values={series} positive={positive} />
+                  <Sparkline values={series} positive={positive} width={80} height={28} />
                 </span>
               </td>
             </tr>
@@ -640,6 +675,14 @@ const PLAN_ACCENT = {
     figure: 'text-asm-greenInk dark:text-[#F4C506]',
     button: 'bg-asm-greenInk hover:bg-[#0E6E32] dark:bg-[#F4C506] dark:hover:bg-[#FFD700]',
     badge: 'bg-amber-50 text-amber-700 dark:bg-[#F4C506]/15 dark:text-[#F4C506]',
+  },
+  asmcoin: {
+    ring: 'ring-[#0B4FD8]/40 dark:ring-[#1E93FE]/40',
+    strip: 'from-[#0B4FD8] via-[#1E93FE] to-[#00D26A]',
+    medallion: asmcoinMedallion,
+    figure: 'text-skin-accent dark:text-[#5AB0FF]',
+    button: 'bg-skin-accent hover:bg-skin-accent-hover dark:bg-[#1E93FE] dark:hover:bg-[#3AA5FF]',
+    badge: 'bg-skin-tint text-skin-accent dark:bg-[#1E93FE]/15 dark:text-[#7DD3FC]',
   },
   diamond: {
     ring: 'ring-[#7DD3FC]/50',

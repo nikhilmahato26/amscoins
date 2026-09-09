@@ -38,6 +38,20 @@ dist-ssr
 backups/
 deploy/mongo/keyfile
 
+# Local VPS credentials (never commit)
+scripts/.prod-ssh
+scripts/seed-prod.sh
+docs/invoice*.md
+
+# Root-level scripts with hardcoded credentials (Supabase ANON_KEY, SSH passphrase)
+stress-test.mjs
+stress-test-signup.mjs
+security-audit.mjs
+security-audit-phase2.mjs
+security-audit-readonly.mjs
+check-profiles-leak.mjs
+make-admin.mjs
+
 # agent skill install artifacts
 .agents/
 skills-lock.json

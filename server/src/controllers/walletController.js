@@ -22,7 +22,10 @@ const summary = asyncHandler(async (req, res) => {
   const transactions = await Transaction.find({ user: req.user._id, status: 'settled' })
     .sort('-createdAt')
     .limit(20)
-  const result = { balance: w.balance, transactions }
+  // tdsExemptPaise lets the withdraw screen preview the same TDS the server
+  // will actually charge — ASM Coin money is withdrawn tax-free, so a preview
+  // computed from the tier rate alone would over-state the deduction.
+  const result = { balance: w.balance, tdsExemptPaise: w.tdsExemptPaise || 0, transactions }
 
   await cacheSet(cacheKey, JSON.stringify(result), 10)
   res.json(result)

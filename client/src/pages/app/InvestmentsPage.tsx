@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 
 import { AppShell } from '@/components/app/AppShell'
-import { TierBadge, type Tier } from '@/components/app/TierBadge'
+import { TierBadge, planLabel } from '@/components/app/TierBadge'
 import { useInvestments, useRequestBreak } from '@/hooks/queries'
 import type { Investment, Installment } from '@/services/api/investments'
 import { inr } from '@/lib/format'
@@ -165,7 +165,7 @@ function formatDate(iso?: string) {
 }
 
 function InvestmentCard({ inv }: { inv: Investment }) {
-  const tier = inv.planKey as Tier
+  const planKey = inv.planKey
   const creditedAmount = inv.creditedAmount
 
   return (
@@ -175,10 +175,10 @@ function InvestmentCard({ inv }: { inv: Investment }) {
     >
       {/* Header row */}
       <div className="flex items-center gap-3">
-        <TierBadge tier={tier} size={44} className="shrink-0" />
+        <TierBadge tier={planKey} size={44} className="shrink-0" />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="text-[14px] font-extrabold capitalize leading-tight text-asm-navy">
-            {tier} Plan
+          <span className="text-[14px] font-extrabold leading-tight text-asm-navy">
+            {planLabel(planKey)} Plan
           </span>
           <span className="font-mono text-[10px] text-asm-muted">{inv.referenceCode}</span>
         </div>

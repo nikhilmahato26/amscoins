@@ -267,3 +267,31 @@ export interface ActivityEvent {
 }
 
 export const adminActivity = () => apiFetch<ActivityEvent[]>('/admin/activity')
+
+// ── ASM Coin index controls ──
+
+export type CoinMoveSize = 'small' | 'medium' | 'hard'
+
+export interface CoinAdminActionRow {
+  _id: string
+  admin: { _id: string; name: string; email: string } | null
+  action: 'pump' | 'crash' | 'volatility' | 'reset'
+  params: Record<string, unknown>
+  priceBefore: number // paise
+  priceAfter: number // paise
+  createdAt: string
+}
+
+export const coinPump = (body: { size: CoinMoveSize; durationMinutes: number }) =>
+  apiFetch('/admin/coin/pump', { method: 'POST', body })
+
+export const coinCrash = (body: { size: CoinMoveSize; durationMinutes: number }) =>
+  apiFetch('/admin/coin/crash', { method: 'POST', body })
+
+export const coinVolatility = (body: { value: number }) =>
+  apiFetch('/admin/coin/volatility', { method: 'POST', body })
+
+export const coinReset = () => apiFetch('/admin/coin/reset', { method: 'POST', body: {} })
+
+export const coinActions = () =>
+  apiFetch<{ rows: CoinAdminActionRow[]; total: number }>('/admin/coin/actions')

@@ -1,8 +1,9 @@
 const { Schema, model } = require('mongoose')
+const { PLAN_KEYS } = require('../services/tierService')
 
 const planSchema = new Schema(
   {
-    key: { type: String, enum: ['silver', 'gold', 'diamond'], unique: true, required: true },
+    key: { type: String, enum: PLAN_KEYS, unique: true, required: true },
     name: { type: String, required: true },
     returnPct: { type: Number, required: true },
     installmentPcts: { type: [Number], default: [] }, // daily breakdown; empty = single-payout

@@ -75,3 +75,12 @@ export function payoutView(w: PayoutSource): PayoutView {
     sentence: `to bank account ${acct} (IFSC ${ifsc}${w.accountName ? `, ${w.accountName}` : ''})`,
   }
 }
+
+/**
+ * A plan's term, phrased the way a term is spoken: "48 hours" for a two-day
+ * cycle, "7 days" for ASM Coin's 168h. Anything shorter than a day, or not a
+ * whole number of days, stays in hours.
+ */
+export function durationLabel(hours: number): string {
+  return hours >= 48 && hours % 24 === 0 ? `${hours / 24} days` : `${hours} hours`
+}

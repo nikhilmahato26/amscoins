@@ -19,7 +19,27 @@ function tdsPctForTier(tier) {
 
 const planRank = (key) => TIER_ORDER.indexOf(key)
 const tierRank = (tier) => TIER_ORDER.indexOf(tier)
-const canAccessPlan = (userTier, planKey) => tierRank(userTier) >= planRank(planKey)
+
+// Plans that anyone can invest in regardless of tier or referral count.
+// ASM Coin is deliberately ungated — that is its entire pitch. Without this,
+// an unknown plan key would fall through planRank's indexOf (-1) and become
+// accessible by accident; this makes the exemption explicit instead.
+const UNGATED_PLANS = new Set(['asmcoin'])
+
+// Every valid plan key: the loyalty tiers plus the ungated plans. This is the
+// single source of truth — the Plan and Investment schemas and the request
+// validator all read it, so adding a plan cannot leave one of them behind
+// (which is exactly how 'asmcoin' passed the models but failed validation).
+const PLAN_KEYS = [...TIER_ORDER, ...UNGATED_PLANS]
+
+const canAccessPlan = (userTier, planKey) => {
+  if (UNGATED_PLANS.has(planKey)) return true
+  const rank = planRank(planKey)
+  // An unrecognised key ranks -1, which every tier would out-rank. Deny it
+  // outright rather than granting access to a plan nobody has vetted.
+  if (rank === -1) return false
+  return tierRank(userTier) >= rank
+}
 
 module.exports = {
   TIER_ORDER,
@@ -29,5 +49,7 @@ module.exports = {
   tdsPctForTier,
   planRank,
   tierRank,
+  UNGATED_PLANS,
+  PLAN_KEYS,
   canAccessPlan,
 }

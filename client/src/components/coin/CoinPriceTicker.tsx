@@ -46,14 +46,16 @@ export function CoinPriceTicker({
           size === 'sm' && 'text-[20px] leading-none',
           flash === 'up' && 'text-asm-greenInk',
           flash === 'down' && 'text-asm-red',
-          !flash && 'text-asm-navy',
+          !flash && 'text-asm-navy dark:text-skin-text',
         )}
       >
         ₹{formatCoinPrice(paise)}
       </span>
       <span
         className={cn(
-          'font-semibold tabular-nums',
+          // The arrow and the percentage are one reading unit — without this
+          // they split across lines when the price is long at 375px.
+          'whitespace-nowrap font-semibold tabular-nums',
           size === 'xl' && 'text-[14px] sm:text-[17px]',
           size === 'lg' && 'text-[15px]',
           size === 'sm' && 'text-[13px]',

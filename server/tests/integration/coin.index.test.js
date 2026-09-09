@@ -14,6 +14,7 @@ const svc = require('../../src/services/coinIndexService')
 
 beforeAll(setupDb)
 afterEach(clearDb)
+afterEach(() => require('../../src/services/coinIndexService')._resetInvestorCountCache())
 afterAll(teardownDb)
 
 async function makeUser() {
@@ -148,7 +149,29 @@ describe('GET /api/coin/index', () => {
       .set('Authorization', `Bearer ${token}`)
       .expect(200)
 
-    // Nothing is an asmcoin investment yet — the plan arrives in Phase 4.
+    // These investments are 'silver', not 'asmcoin' — they must not count.
     expect(res.body.investorCount).toBe(0)
+  })
+
+  it('counts a user holding an active ASM Coin investment', async () => {
+    const { token } = await makeUser()
+    await CoinIndexState.getSingleton()
+    await seedTicks(5)
+    const a = await makeUser()
+    const b = await makeUser()
+
+    await Investment.create([
+      { user: a.user._id, planKey: 'asmcoin', amount: 500000, returnPct: 40, expectedReturn: 700000, referenceCode: 'A1', status: 'active' },
+      { user: b.user._id, planKey: 'asmcoin', amount: 500000, returnPct: 40, expectedReturn: 700000, referenceCode: 'B1', status: 'active' },
+      { user: b.user._id, planKey: 'asmcoin', amount: 500000, returnPct: 40, expectedReturn: 700000, referenceCode: 'B2', status: 'active' },
+    ])
+    require('../../src/services/coinIndexService')._resetInvestorCountCache()
+
+    const res = await request(app)
+      .get('/api/coin/index')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200)
+
+    expect(res.body.investorCount).toBe(2) // two distinct users, not three investments
   })
 })

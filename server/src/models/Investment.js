@@ -1,4 +1,5 @@
 const { Schema, model } = require('mongoose')
+const { PLAN_KEYS } = require('../services/tierService')
 
 const installmentSchema = new Schema(
   {
@@ -24,12 +25,18 @@ const installmentSchema = new Schema(
 const investmentSchema = new Schema(
   {
     user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    planKey: { type: String, enum: ['silver', 'gold', 'diamond'], required: true },
+    planKey: { type: String, enum: PLAN_KEYS, required: true },
     amount: { type: Number, required: true }, // paise
     returnPct: { type: Number, required: true },
     // Snapshotted from Plan.installmentPcts at deposit creation time.
     // Empty array means single-payout (old Diamond or legacy) — uses runMature path.
     installmentPcts: { type: [Number], default: [] },
+    // Snapshotted from Plan.durationHours at deposit creation time. Only consulted
+    // on the single-payout (empty installmentPcts) maturity path — see
+    // approveInvestment. Left unset on investments created before this field
+    // existed (and on hand-built test fixtures), which fall back to the admin's
+    // global Settings.cycleDurationHours, preserving their prior behaviour.
+    durationHours: { type: Number },
     expectedReturn: { type: Number, required: true }, // paise
     referenceCode: { type: String, required: true, unique: true },
     referralCodeUsed: { type: String, default: null },

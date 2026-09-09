@@ -52,6 +52,11 @@ import {
   getInvestmentStats,
   adminActivity,
   type ActivityEvent,
+  coinPump,
+  coinCrash,
+  coinVolatility,
+  coinReset,
+  coinActions,
 } from '@/services/api/admin'
 
 // ── User queries ──
@@ -299,3 +304,28 @@ export function useAdminActivity() {
     refetchInterval: 60_000, // auto-refresh every minute
   })
 }
+
+// ── ASM Coin index controls ──
+
+export const useCoinActions = () =>
+  useQuery({ queryKey: ['admin-coin-actions'], queryFn: coinActions })
+
+/**
+ * Every coin mutation invalidates both the audit log and the live index, so the
+ * admin sees the effect of their own click without a manual refresh.
+ */
+function useCoinMutation<TBody>(fn: (body: TBody) => Promise<unknown>) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: fn,
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['admin-coin-actions'] })
+      void qc.invalidateQueries({ queryKey: ['coin-index'] })
+    },
+  })
+}
+
+export const useCoinPump = () => useCoinMutation(coinPump)
+export const useCoinCrash = () => useCoinMutation(coinCrash)
+export const useCoinVolatility = () => useCoinMutation(coinVolatility)
+export const useCoinReset = () => useCoinMutation(() => coinReset())

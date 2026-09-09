@@ -1,4 +1,5 @@
 const { z } = require('zod')
+const { PLAN_KEYS } = require('../services/tierService')
 
 const registerSchema = z.object({
   name: z.string().min(1),
@@ -17,7 +18,7 @@ const loginSchema = z.object({
 })
 
 const createInvestmentSchema = z.object({
-  planKey: z.enum(['silver', 'gold', 'diamond']),
+  planKey: z.enum(PLAN_KEYS),
   amount: z.number().int().positive(), // paise
   referralCode: z.string().trim().toUpperCase().optional(),
 })

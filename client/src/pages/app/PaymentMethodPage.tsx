@@ -35,10 +35,10 @@ import { createInvestment, notifyPayment } from '@/services/api/investments'
 import type { DepositGate, Investment } from '@/services/api/investments'
 
 import type { PublicSettings } from '@/services/api/settings'
-import type { Tier } from '@/types'
+import type { PlanKey } from '@/types'
 
 interface LocationState {
-  planKey: Tier
+  planKey: PlanKey
   amount: number // paise
 }
 
@@ -65,7 +65,7 @@ export function PaymentMethodPage() {
   // Resolve the selection from the URL query first, then router state, so a
   // refresh or a shared/deep link keeps the chosen plan and amount instead of
   // collapsing to "— / ₹0".
-  const planKey = (params.get('plan') as Tier | null) ?? state?.planKey ?? null
+  const planKey = (params.get('plan') as PlanKey | null) ?? state?.planKey ?? null
   const amountPaise = Number(params.get('amt')) || state?.amount || 0
   const hasSelection = Boolean(planKey) && amountPaise > 0
 

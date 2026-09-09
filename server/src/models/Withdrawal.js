@@ -6,6 +6,9 @@ const withdrawalSchema = new Schema(
     gross: { type: Number, required: true }, // paise requested
     tds: { type: Number, required: true }, // paise
     net: { type: Number, required: true }, // paise paid to bank
+    // How much of `gross` was drawn from the wallet's TDS-exempt (ASM Coin)
+    // sub-balance. Recorded so a rejection can put it back.
+    tdsExemptUsed: { type: Number, default: 0 }, // paise
     method: { type: String, enum: ['upi', 'bank'], default: 'upi' },
     // Present when method === 'upi'.
     upiId: { type: String, required: function () { return this.method === 'upi' } },

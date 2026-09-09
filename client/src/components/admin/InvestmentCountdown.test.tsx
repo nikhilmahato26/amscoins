@@ -19,4 +19,10 @@ describe('InvestmentCountdown', () => {
     render(<InvestmentCountdown maturesAt={maturesAt} />)
     expect(screen.getByText('Matured')).toBeInTheDocument()
   })
+
+  it('renders a 7-day (168h) remaining duration as days, not "168h" or NaN', () => {
+    const maturesAt = new Date(Date.now() + 168 * 3600_000).toISOString() // ASM Coin's full term
+    render(<InvestmentCountdown maturesAt={maturesAt} />)
+    expect(screen.getByText('7d 00:00:00')).toBeInTheDocument()
+  })
 })

@@ -11,7 +11,7 @@ afterAll(teardownDb)
 test('seedPlans upserts the three tiers with correct terms', async () => {
   await seedPlans()
   const plans = await Plan.find().sort('returnPct')
-  expect(plans).toHaveLength(3)
+  expect(plans).toHaveLength(4)
   const silver = await Plan.findOne({ key: 'silver' })
   expect(silver.returnPct).toBe(30)
   expect(silver.installmentPcts).toEqual([15, 15]) // 50-50 of 30% over 48h
@@ -27,10 +27,16 @@ test('seedPlans upserts the three tiers with correct terms', async () => {
   expect(diamond.installmentPcts).toEqual([20, 20]) // 50-50 of 40% over 48h
   expect(diamond.unlockReferrals).toBe(52)
   expect(diamond.active).toBe(false)
+  const asmcoin = await Plan.findOne({ key: 'asmcoin' })
+  expect(asmcoin.returnPct).toBe(40)
+  expect(asmcoin.installmentPcts).toEqual([])
+  expect(asmcoin.unlockReferrals).toBe(0)
+  expect(asmcoin.durationHours).toBe(168)
+  expect(asmcoin.active).toBe(true)
 })
 
 test('seedPlans is idempotent', async () => {
   await seedPlans()
   await seedPlans()
-  expect(await Plan.countDocuments()).toBe(3)
+  expect(await Plan.countDocuments()).toBe(4)
 })

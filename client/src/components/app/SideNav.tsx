@@ -21,7 +21,7 @@ export function SideNav({ className }: { className?: string }) {
       {/* Gradient accent at top matching AppHeader */}
       <div
         aria-hidden
-        className="absolute inset-x-0 top-0 h-[2.5px] bg-gradient-to-r from-asm-blue via-asm-blue to-asm-greenInk opacity-80"
+        className="absolute inset-x-0 top-0 h-[2.5px] bg-gradient-to-r from-asm-blue via-asm-blue to-asm-greenInk opacity-80 dark:from-[#F4C506] dark:via-[#F59E0B] dark:to-[#10B981] dark:opacity-90"
       />
 
       {/* Logo */}
