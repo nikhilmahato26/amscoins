@@ -137,7 +137,9 @@ export function WithdrawPage() {
   /* Mirror of the server's split: exempt slice first, tier TDS on the rest. */
   const exemptUsedPaise = Math.min(validPaise, tdsExemptPaise)
   const taxablePaise = validPaise - exemptUsedPaise
-  const tdsPaise = Math.round(taxablePaise * tdsFraction)
+  // Mirror server/src/services/money.js#computeTds exactly — it rounds the NET
+  // and derives TDS from it, so rounding the TDS directly can differ by a paisa.
+  const tdsPaise = taxablePaise - Math.round(taxablePaise * (1 - tdsFraction))
   const netPaise = validPaise - tdsPaise
   /* The rate actually charged — a part-exempt withdrawal lands below the tier rate. */
   const effectiveTdsPct = validPaise > 0 ? (tdsPaise / validPaise) * 100 : tdsPct
