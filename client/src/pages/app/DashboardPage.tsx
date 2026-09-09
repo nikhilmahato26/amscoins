@@ -213,9 +213,9 @@ export function DashboardPage() {
         </motion.div>
 
         {/* ── ASM Coin index ── */}
-        <motion.div variants={fadeUp} aria-label="ASM Coin index">
+        <motion.section variants={fadeUp} aria-label="ASM Coin index">
           <CoinIndexCard variant="home" />
-        </motion.div>
+        </motion.section>
 
         {/* ── Wallet balance hero (tier-themed) ── */}
         {(() => {
