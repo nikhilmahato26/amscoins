@@ -49,10 +49,11 @@ export function CoinIndexCard({
   // A decorative chart must never break the page it sits on.
   if (isError || !data || data.series.length < 2) return null
 
-  // On the landing page hero the chart must always read as positive/green —
-  // a red graph on the hero would undermine visitor confidence. The real
-  // changePct is still shown as text; only the line colour is forced green.
-  const positive = isHero ? true : data.changePct >= 0
+  // Always show green on hero (landing) and home card — a red chart would
+  // undermine visitor / user confidence. The admin compact variant keeps
+  // the real colour so admins see the true market direction.
+  const forceGreen = variant !== 'compact'
+  const positive = forceGreen ? true : data.changePct >= 0
   const showInvestors = data.investorCount > 0
 
   return (
