@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router'
 import { ArrowRight, Award, Lock, TrendingUp, Wallet } from 'lucide-react'
 
-// vault.png / vault_dark.png live in /public — absolute URL, no import needed
+import { CoinIndexCard } from '@/components/coin/CoinIndexCard'
 import { AppShell } from '@/components/app/AppShell'
 import { MarketTicker } from '@/components/app/MarketTicker'
 import { ReferralBanner } from '@/components/app/ReferralBanner'
@@ -158,7 +158,8 @@ export function HomePage() {
             ))}
           </motion.div> */}
 
-          {/* Hero coin image — gentle float, full-width */}
+          {/* ASM Coin index — replaces the former vault image as the hero.
+              Decorative: the line has no bearing on any payout. */}
           <motion.div
             variants={fadeUp}
             className="relative mt-2 w-full max-w-[420px] self-center"
@@ -172,20 +173,7 @@ export function HomePage() {
                   : 'radial-gradient(circle at 50% 55%, rgba(21,128,61,0.07) 0%, transparent 72%)',
               }}
             />
-            <motion.img
-              src={isDark ? '/vault_dark.png' : '/vault.png'}
-              alt=""
-              width={600}
-              height={548}
-              className={isDark
-                ? 'relative w-full object-contain drop-shadow-[0_16px_48px_rgba(0,200,160,0.22)]'
-                : 'relative w-full object-contain drop-shadow-[0_12px_40px_rgba(21,128,61,0.15)]'
-              }
-              fetchPriority="high"
-              decoding="async"
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-            />
+            <CoinIndexCard variant="home" className="relative" />
           </motion.div>
 
            {/* Subtitle — hidden on mobile to cut clutter; the "40% returns" claim
@@ -193,7 +181,7 @@ export function HomePage() {
           <motion.p variants={fadeUp} className="mt-2 hidden max-w-[310px] text-[15px] leading-relaxed text-asm-body sm:block">
             Up to{' '}
             <span className="font-bold text-asm-greenInk">40% returns</span>
-            {' '}in 48 hours.{' '}
+            {' '}in 7 days.{' '}
             <span className="font-semibold text-asm-navy">ASM COIN</span> is where smart money moves.
           </motion.p>
         </section>
