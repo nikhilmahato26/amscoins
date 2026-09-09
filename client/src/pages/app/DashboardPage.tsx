@@ -213,7 +213,7 @@ export function DashboardPage() {
         </motion.div>
 
         {/* ── ASM Coin index ── */}
-        <motion.div variants={fadeUp}>
+        <motion.div variants={fadeUp} aria-label="ASM Coin index">
           <CoinIndexCard variant="home" />
         </motion.div>
 
