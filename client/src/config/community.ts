@@ -1,12 +1,18 @@
 /**
- * Community channel config, sourced from build-time env (VITE_COMMUNITY_*).
- * Mirrors the derive/isConfigured shape of config/payment.ts: env is the source
- * of truth, and unset/invalid links are simply omitted so the UI never renders
- * a dead card.
+ * Community channel config. WhatsApp and Telegram prefer the admin-editable
+ * "website settings" document (the same `whatsappNumber` / `telegramUsername`
+ * used for payment/support links, see config/payment.ts) so an admin filling
+ * those in from Admin → Settings shows up here without a redeploy. Instagram
+ * has no DB field, so it stays on the build-time `VITE_COMMUNITY_*` env vars
+ * — which also still work as a fallback for WhatsApp/Telegram when the DB
+ * fields are empty.
  *
  * Env is read inside communityChannels() (not at module load) so the value is
  * always current — this also lets tests drive it with vi.stubEnv().
  */
+
+import { deriveTelegram, deriveWhatsapp } from '@/config/payment'
+import type { PublicSettings } from '@/services/api/settings'
 
 export type CommunityChannelId = 'instagram' | 'whatsapp' | 'telegram'
 
@@ -47,11 +53,22 @@ const CHANNEL_META: Record<
 const ORDER: readonly CommunityChannelId[] = ['instagram', 'whatsapp', 'telegram']
 
 /** The configured channels, in display order. Unset/invalid links are omitted. */
-export function communityChannels(): CommunityChannel[] {
+export function communityChannels(settings?: PublicSettings): CommunityChannel[] {
   const env = import.meta.env as Record<string, string | undefined>
+
+  const dbUrl: Partial<Record<CommunityChannelId, string>> = settings
+    ? {
+        whatsapp: (() => {
+          const { number } = deriveWhatsapp(settings)
+          return number ? `https://wa.me/${number}` : ''
+        })(),
+        telegram: deriveTelegram(settings).url,
+      }
+    : {}
+
   return ORDER.flatMap((id) => {
     const meta = CHANNEL_META[id]
-    const url = cleanUrl(env[meta.envKey])
+    const url = dbUrl[id] || cleanUrl(env[meta.envKey])
     if (!url) return []
     return [{ id, label: meta.label, description: meta.description, url }]
   })

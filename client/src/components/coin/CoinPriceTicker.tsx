@@ -44,8 +44,8 @@ export function CoinPriceTicker({
           size === 'xl' && 'text-[30px] leading-none sm:text-[42px] lg:text-[52px]',
           size === 'lg' && 'text-[34px] leading-none',
           size === 'sm' && 'text-[20px] leading-none',
-          flash === 'up' && 'text-asm-greenInk',
-          flash === 'down' && 'text-asm-red',
+          flash === 'up' && 'text-asm-greenInk dark:text-[#30d158]',
+          flash === 'down' && 'text-asm-red dark:text-[#ff453a]',
           !flash && 'text-asm-navy dark:text-skin-text',
         )}
       >
@@ -59,7 +59,7 @@ export function CoinPriceTicker({
           size === 'xl' && 'text-[14px] sm:text-[17px]',
           size === 'lg' && 'text-[15px]',
           size === 'sm' && 'text-[13px]',
-          positive ? 'text-asm-greenInk' : 'text-asm-red',
+          positive ? 'text-asm-greenInk dark:text-[#30d158]' : 'text-asm-red dark:text-[#ff453a]',
         )}
       >
         {positive ? '▲' : '▼'} {formatCoinChange(changePct)}

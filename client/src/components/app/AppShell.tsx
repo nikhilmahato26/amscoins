@@ -11,6 +11,7 @@ import { BottomNav } from '@/components/app/BottomNav'
 import { GridBackdrop } from '@/components/app/GridBackdrop'
 import { APP_NAV_LINKS } from '@/components/app/navLinks'
 import { SideNav } from '@/components/app/SideNav'
+import { TelegramJoinPrompt } from '@/components/app/TelegramJoinPrompt'
 import { TierUpgradeCelebration } from '@/components/app/TierUpgradeCelebration'
 import { useTierUpgrade } from '@/hooks/useTierUpgrade'
 import { cn } from '@/lib/utils'
@@ -289,6 +290,9 @@ export function AppShell({
 
       {/* Tier upgrade celebration — fixed overlay, plays once per upgrade */}
       <TierUpgradeCelebration tier={celebrationTier} onDismiss={dismiss} />
+
+      {/* Telegram join nudge — shown once per browser on first app visit */}
+      <TelegramJoinPrompt />
 
       {/* Mobile drawer */}
       <MobileDrawer open={drawerOpen} onClose={closeDrawer} triggerRef={hamburgerRef} />

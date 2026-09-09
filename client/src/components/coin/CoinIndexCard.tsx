@@ -81,7 +81,7 @@ export function CoinIndexCard({
             >
               ASM
             </span>
-            <span className="rounded-full bg-asm-tint dark:bg-white/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-asm-muted dark:text-skin-muted">
+            <span className="rounded-full bg-asm-tint dark:bg-white/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-asm-muted dark:text-white/70">
               indicative
             </span>
           </div>
