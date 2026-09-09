@@ -55,49 +55,54 @@ export function CoinIndexChart({
   const [lastX, lastY] = points[points.length - 1]
 
   return (
-    <svg
-      viewBox={`0 0 ${width} ${height}`}
-      preserveAspectRatio="none"
-      className={cn('w-full overflow-visible', className)}
-      style={{ height }}
-      aria-hidden
-      focusable="false"
-    >
-      <defs>
-        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={stroke} stopOpacity="0.28" />
-          <stop offset="100%" stopColor={stroke} stopOpacity="0" />
-        </linearGradient>
-      </defs>
+    <div className={cn('relative w-full overflow-visible', className)} style={{ height }}>
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        preserveAspectRatio="none"
+        className="size-full overflow-visible"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <defs>
+          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={stroke} stopOpacity="0.28" />
+            <stop offset="100%" stopColor={stroke} stopOpacity="0" />
+          </linearGradient>
+        </defs>
 
-      <path d={area} fill={`url(#${gradientId})`} />
-      <path
-        d={line}
-        fill="none"
-        stroke={stroke}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        vectorEffect="non-scaling-stroke"
-      />
+        <path d={area} fill={`url(#${gradientId})`} />
+        <path
+          d={line}
+          fill="none"
+          stroke={stroke}
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
+        />
+      </svg>
 
       {showDot && (
-        <g>
-          {/* The pulse is what makes the chart read as live. CSS-driven
-              (see .coin-chart-pulse in index.css) so that
-              prefers-reduced-motion can reliably disable it — SMIL
-              <animate> does not consistently honor CSS `display: none`. */}
-          <circle
-            cx={lastX}
-            cy={lastY}
-            r="6"
-            fill={stroke}
-            opacity="0.28"
-            className="coin-chart-pulse"
-          />
-          <circle cx={lastX} cy={lastY} r="4" fill={stroke} />
-        </g>
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
+          style={{
+            left: `${(lastX / width) * 100}%`,
+            top: `${(lastY / height) * 100}%`,
+          }}
+        >
+          <span className="relative flex size-3 items-center justify-center">
+            <span
+              className="coin-chart-pulse absolute size-5 rounded-full"
+              style={{ backgroundColor: stroke }}
+            />
+            <span
+              className="relative size-2.5 rounded-full ring-2 ring-white shadow-sm dark:ring-[#141416]"
+              style={{ backgroundColor: stroke }}
+            />
+          </span>
+        </div>
       )}
-    </svg>
+    </div>
   )
 }

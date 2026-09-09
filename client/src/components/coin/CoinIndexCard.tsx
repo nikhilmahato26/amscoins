@@ -66,7 +66,7 @@ export function CoinIndexCard({
         // hero itself rather than a card floating on top of it.
         isHero
           ? 'w-full'
-          : 'rounded-2xl border border-asm-line bg-white p-4 shadow-sm',
+          : 'rounded-2xl border border-asm-line bg-white p-4 shadow-sm dark:border-skin-line dark:bg-skin-surface',
         className,
       )}
     >
@@ -75,13 +75,13 @@ export function CoinIndexCard({
           <div className="flex items-center gap-2">
             <span
               className={cn(
-                'font-bold tracking-wide text-asm-navy',
+                'font-bold tracking-wide text-asm-navy dark:text-skin-text',
                 isHero ? 'text-[15px]' : 'text-[13px]',
               )}
             >
               ASM
             </span>
-            <span className="rounded-full bg-asm-tint px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-asm-muted">
+            <span className="rounded-full bg-asm-tint dark:bg-white/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-asm-muted dark:text-skin-muted">
               indicative
             </span>
           </div>
@@ -105,8 +105,8 @@ export function CoinIndexCard({
                 className={cn(
                   'rounded-md px-2 py-1 text-[11px] font-semibold transition-colors',
                   range === r
-                    ? 'bg-asm-blue-tint text-asm-blue'
-                    : 'text-asm-muted hover:bg-asm-tint',
+                    ? 'bg-asm-blue-tint text-asm-blue dark:bg-skin-accent dark:text-skin-on-accent'
+                    : 'text-asm-muted hover:bg-asm-tint dark:text-skin-muted dark:hover:bg-white/10',
                 )}
               >
                 {r}
@@ -133,15 +133,15 @@ export function CoinIndexCard({
             // Hero stats sit left-aligned under the chart with a hairline rule
             // instead of a boxed footer, so they read as caption, not as a card row.
             isHero
-              ? 'mt-4 border-t border-asm-line/60 pt-4 text-left'
-              : 'mt-3 border-t border-asm-line pt-3 text-center',
+              ? 'mt-4 border-t border-asm-line/60 dark:border-skin-line/60 pt-4 text-left'
+              : 'mt-3 border-t border-asm-line dark:border-skin-line pt-3 text-center',
           )}
         >
           <div>
-            <dt className="text-[10px] uppercase tracking-wide text-asm-muted">24h high</dt>
+            <dt className="text-[10px] uppercase tracking-wide text-asm-muted dark:text-skin-muted">24h high</dt>
             <dd
               className={cn(
-                'font-semibold tabular-nums text-asm-navy',
+                'font-semibold tabular-nums text-asm-navy dark:text-skin-text',
                 isHero ? 'text-[15px]' : 'text-[13px]',
               )}
             >
@@ -149,10 +149,10 @@ export function CoinIndexCard({
             </dd>
           </div>
           <div>
-            <dt className="text-[10px] uppercase tracking-wide text-asm-muted">24h low</dt>
+            <dt className="text-[10px] uppercase tracking-wide text-asm-muted dark:text-skin-muted">24h low</dt>
             <dd
               className={cn(
-                'font-semibold tabular-nums text-asm-navy',
+                'font-semibold tabular-nums text-asm-navy dark:text-skin-text',
                 isHero ? 'text-[15px]' : 'text-[13px]',
               )}
             >
@@ -161,10 +161,10 @@ export function CoinIndexCard({
           </div>
           {showInvestors && (
             <div>
-              <dt className="text-[10px] uppercase tracking-wide text-asm-muted">Investors</dt>
+              <dt className="text-[10px] uppercase tracking-wide text-asm-muted dark:text-skin-muted">Investors</dt>
               <dd
                 className={cn(
-                  'font-semibold tabular-nums text-asm-navy',
+                  'font-semibold tabular-nums text-asm-navy dark:text-skin-text',
                   isHero ? 'text-[15px]' : 'text-[13px]',
                 )}
               >

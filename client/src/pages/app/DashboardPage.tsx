@@ -70,35 +70,35 @@ function PortfolioHeroCard({ totalValue, isLoading }: { totalValue: number | nul
       variants={fadeUp}
       aria-label="Portfolio total value"
       aria-live="polite"
-      className="relative overflow-hidden rounded-2xl px-5 py-6"
-      style={{
-        background: 'linear-gradient(135deg, #102A5C 0%, #1A4FCC 60%, #0B4FD8 100%)',
-        boxShadow: '0 8px 32px -8px rgba(16, 42, 92, 0.45)',
-      }}
+      className={cn(
+        'relative overflow-hidden rounded-2xl px-5 py-6 transition-all duration-200',
+        'bg-gradient-to-br from-[#102A5C] via-[#1A4FCC] to-[#0B4FD8] shadow-[0_8px_32px_-8px_rgba(16,42,92,0.45)]',
+        'dark:from-[#2a2207] dark:via-[#1a1605] dark:to-[#111113] dark:border dark:border-[rgba(244,197,6,0.24)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.7)]'
+      )}
     >
       {/* Radial highlight */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0"
+        className="pointer-events-none absolute inset-0 opacity-100 dark:opacity-40"
         style={{
-          background: 'radial-gradient(ellipse at 80% 15%, rgba(100, 160, 255, 0.28) 0%, transparent 60%)',
+          background: 'radial-gradient(ellipse at 80% 15%, rgba(244, 197, 6, 0.22) 0%, transparent 60%)',
         }}
       />
       <div className="relative flex flex-col gap-1">
-        <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-200/70">
+        <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-200/80 dark:text-[#f4c506]/90">
           Total Portfolio Value
         </span>
         {isLoading ? (
-          <span className="mt-1 h-10 w-44 animate-pulse rounded-lg bg-white/10" />
+          <span className="mt-1 h-10 w-44 animate-pulse rounded-lg bg-white/10 dark:bg-white/5" />
         ) : (
           <motion.span
-            className="font-mono tabular-nums leading-none text-white"
+            className="font-mono tabular-nums leading-none text-white dark:text-[#fcfcfc]"
             style={{ fontSize: 'clamp(2.5rem, 7vw, 3rem)', fontWeight: 800 }}
           >
             {formatted}
           </motion.span>
         )}
-        <p className="mt-1 text-[11px] text-blue-200/60">Principal + expected returns</p>
+        <p className="mt-1 text-[11px] text-blue-200/70 dark:text-[#8b8f99]">Principal + expected returns</p>
       </div>
     </motion.section>
   )

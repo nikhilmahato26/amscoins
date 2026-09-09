@@ -46,7 +46,7 @@ export function CoinPriceTicker({
           size === 'sm' && 'text-[20px] leading-none',
           flash === 'up' && 'text-asm-greenInk',
           flash === 'down' && 'text-asm-red',
-          !flash && 'text-asm-navy',
+          !flash && 'text-asm-navy dark:text-skin-text',
         )}
       >
         ₹{formatCoinPrice(paise)}

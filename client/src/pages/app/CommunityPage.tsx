@@ -22,11 +22,10 @@ const ICON: Record<CommunityChannelId, (props: { className?: string }) => ReactN
   telegram: TelegramIcon,
 }
 
-// Per-channel accent classes (bg tint + icon color), kept inline so no new tokens are needed.
 const ACCENT: Record<CommunityChannelId, string> = {
-  instagram: 'bg-pink-50 text-pink-600',
-  whatsapp: 'bg-asm-green-tint text-asm-greenInk',
-  telegram: 'bg-asm-blue-tint text-asm-blue',
+  instagram: 'bg-pink-50 text-pink-600 dark:bg-pink-950/40 dark:text-pink-400',
+  whatsapp: 'bg-asm-green-tint text-asm-greenInk dark:bg-emerald-950/40 dark:text-emerald-400',
+  telegram: 'bg-asm-blue-tint text-asm-blue dark:bg-[rgba(244,197,6,0.14)] dark:text-[#f4c506]',
 }
 
 export function CommunityPage() {

@@ -10,7 +10,7 @@ const TIER_IMG: Record<PlanKey, string> = {
   silver:  '/silver_pakage.png',
   gold:    '/gold_pakage.png',
   diamond: '/diamond_pakage.png',
-  asmcoin: '/asm.png',
+  asmcoin: '/asmcoin_pakage.png',
 }
 
 const TIER_LABEL: Record<PlanKey, string> = {

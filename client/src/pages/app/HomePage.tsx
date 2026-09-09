@@ -3,14 +3,13 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router'
 import { ArrowRight, Award, Lock, TrendingUp, Wallet } from 'lucide-react'
 
-import { CoinIndexCard } from '@/components/coin/CoinIndexCard'
+import { CoinFeatureHero } from '@/components/home/CoinFeatureHero'
 import { AppShell } from '@/components/app/AppShell'
 import { MarketTicker } from '@/components/app/MarketTicker'
 import { ReferralBanner } from '@/components/app/ReferralBanner'
 import { TierBadge, planLabel, type Tier } from '@/components/app/TierBadge'
 import { useDashboard, useWallet } from '@/hooks/queries'
 import { useAuth } from '@/auth/AuthContext'
-import { useTheme } from '@/context/ThemeContext'
 import { inr } from '@/lib/format'
 import { ordinal } from '@/lib/tiers'
 import { cn } from '@/lib/utils'
@@ -81,7 +80,6 @@ const PLANS: { tier: Tier; name: string; returns: string; duration: string; min:
 /* ── Page ───────────────────────────────────────────────────────── */
 
 export function HomePage() {
-  const { isDark } = useTheme()
   const { user } = useAuth()
   const dashQuery   = useDashboard()
   const walletQuery = useWallet()
@@ -107,90 +105,16 @@ export function HomePage() {
         animate="visible"
       >
 
-        {/* ── Hero ── */}
-        <section className="flex flex-col px-5 pb-6 pt-5">
-
-          {/* Live price pill */}
-          <motion.div variants={fadeUp} className=" mb-3 self-start">
-            <div className="inline-flex items-center gap-2 rounded-full border border-asm-greenInk/20 bg-asm-green-tint px-3.5 py-1.5">
-              <span className="relative flex size-[7px] shrink-0">
-                <span className="absolute inline-flex h-full w-full animate-[live-pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite] rounded-full bg-asm-greenInk opacity-60" />
-                <span className="relative inline-flex size-[7px] rounded-full bg-asm-greenInk" />
-              </span>
-              <span className="font-jakarta text-[11px] font-bold uppercase tracking-[0.14em] text-asm-greenInk">
-                Live · ASM COIN ₹12,850
-              </span>
-            </div>
+        {/* ── Flagship Feature: Live ASM Coin Graph & Market Terminal ── */}
+        <section className="flex flex-col px-4 pb-6 pt-4 sm:px-6">
+          <motion.div variants={fadeUp} className="w-full">
+            <CoinFeatureHero />
           </motion.div>
-
-         
-          {/* Stat cards */}
-          {/* <motion.div variants={fadeUp} className="mt-2 grid w-full max-w-sm grid-cols-2 gap-2">
-            {STATS.map(({ label, value, Icon, color }) => (
-              <div
-                key={label}
-                className="flex items-center gap-3 rounded-2xl border border-asm-line bg-white px-4 py-3 shadow-[0_2px_12px_-4px_rgba(16,42,92,0.1)]"
-              >
-                <span
-                  className={cn(
-                    'flex size-10 shrink-0 items-center justify-center rounded-xl',
-                    color === 'blue' ? 'bg-asm-blue-tint' : 'bg-asm-green-tint'
-                  )}
-                >
-                  <Icon
-                    className={cn(
-                      'size-[18px]',
-                      color === 'blue' ? 'text-asm-blue' : 'text-asm-greenInk'
-                    )}
-                    strokeWidth={2}
-                    aria-hidden
-                  />
-                </span>
-                <div className="flex min-w-0 flex-col">
-                  <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-asm-muted">
-                    {label}
-                  </span>
-                  <span className="mt-0.5 font-mono text-[18px] font-bold tabular-nums leading-none text-asm-navy">
-                    {value}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </motion.div> */}
-
-          {/* ASM Coin index — replaces the former vault image as the hero.
-              Decorative: the line has no bearing on any payout. */}
-          <motion.div
-            variants={fadeUp}
-            className="relative mt-2 w-full max-w-[420px] self-center"
-          >
-            <div
-              aria-hidden
-              className="absolute inset-0 -z-0 mx-auto rounded-full"
-              style={{
-                background: isDark
-                  ? 'radial-gradient(circle at 50% 55%, rgba(0,200,160,0.10) 0%, transparent 72%)'
-                  : 'radial-gradient(circle at 50% 55%, rgba(21,128,61,0.07) 0%, transparent 72%)',
-              }}
-            />
-            <CoinIndexCard variant="home" className="relative" />
-          </motion.div>
-
-           {/* Subtitle — hidden on mobile to cut clutter; the "40% returns" claim
-               is redundant with the plan cards below on small screens. */}
-          <motion.p variants={fadeUp} className="mt-2 hidden max-w-[310px] text-[15px] leading-relaxed text-asm-body sm:block">
-            Up to{' '}
-            <span className="font-bold text-asm-greenInk">40% returns</span>
-            {' '}in 7 days.{' '}
-            <span className="font-semibold text-asm-navy">ASM COIN</span> is where smart money moves.
-          </motion.p>
         </section>
 
-        {/* ── Portfolio snapshot ──
-            order-first on mobile so returning investors see their portfolio
-            before the marketing hero; restored to natural order on sm+. */}
+        {/* ── Portfolio snapshot ── */}
         {(user || isLoadingDash) && (
-          <motion.section variants={fadeUp} className="order-first px-5 pb-2 pt-2 sm:order-none sm:pt-0" aria-live="polite" aria-label="Portfolio summary">
+          <motion.section variants={fadeUp} className="px-5 pb-2 pt-2 sm:pt-0" aria-live="polite" aria-label="Portfolio summary">
             {firstName && (
               <p className="mb-3 text-[13px] font-semibold text-asm-body">
                 Hey {firstName}, here's your portfolio

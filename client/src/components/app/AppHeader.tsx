@@ -53,12 +53,12 @@ export function AppHeader({
       {/* Gradient accent bar at the very top of the header */}
       <div
         aria-hidden
-        className="absolute inset-x-0 top-0 h-[2.5px] bg-gradient-to-r from-asm-blue via-asm-blue to-asm-greenInk opacity-80"
+        className="absolute inset-x-0 top-0 h-[2.5px] bg-gradient-to-r from-asm-blue via-asm-blue to-asm-greenInk opacity-80 dark:from-[#F4C506] dark:via-[#F59E0B] dark:to-[#10B981] dark:opacity-90"
       />
       {/* Subtle bottom separator */}
       <div
         aria-hidden
-        className="absolute inset-x-0 bottom-0 h-px bg-asm-line/70"
+        className="absolute inset-x-0 bottom-0 h-px bg-asm-line/70 dark:bg-[rgba(244,197,6,0.10)]"
       />
 
       <div
@@ -75,13 +75,25 @@ export function AppHeader({
             type="button"
             onClick={() => (backTo ? navigate(backTo) : navigate(-1))}
             aria-label="Go back"
-            className="flex size-11 items-center justify-start rounded-lg text-asm-body transition-colors hover:text-asm-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue"
+            className="flex size-11 items-center justify-start rounded-lg text-asm-body transition-colors hover:text-asm-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue dark:text-[#b0b4bd] dark:hover:text-[#fcfcfc]"
           >
             <ChevronLeft className="size-6" strokeWidth={2.5} />
           </button>
         ) : null}
 
-        {/* The side rail carries the wordmark from lg up, so avoid showing it twice. */}
+        {/* The side rail carries the wordmark from lg up, so show status badge on lg */}
+        {variant === 'root' && (
+          <div className="hidden items-center gap-2 lg:flex">
+            <div className="flex items-center gap-2 rounded-full border border-asm-line/80 bg-asm-tint/70 px-3.5 py-1 text-[11px] font-semibold text-asm-muted dark:border-[rgba(244,197,6,0.12)] dark:bg-[#18181b] dark:text-[#8b8f99]">
+              <span className="size-1.5 rounded-full bg-asm-greenInk dark:bg-[#30d158]" />
+              <span className="font-semibold text-asm-navy dark:text-[#fcfcfc]">ASM Ecosystem</span>
+              <span className="text-asm-muted/60 dark:text-[#3a3a3e]">·</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-asm-greenInk dark:text-[#30d158]">Live</span>
+            </div>
+          </div>
+        )}
+
+        {/* Mobile Logo on the left */}
         <div className="flex select-none items-center gap-2 lg:hidden">
           <div className="relative">
             <img
@@ -91,19 +103,19 @@ export function AppHeader({
               decoding="async"
             />
           </div>
-          <span className="font-jakarta text-[20px] font-extrabold tracking-tight text-asm-navy">ASM</span>
-          <span className="font-script text-[22px] text-asm-greenInk">Coins</span>
+          <span className="font-jakarta text-[20px] font-extrabold tracking-tight text-asm-navy dark:text-[#fcfcfc]">ASM</span>
+          <span className="font-script text-[22px] text-asm-greenInk dark:text-[#f4c506]">Coins</span>
         </div>
 
-        <div className="flex items-center justify-end gap-1.5">
+        <div className="flex items-center justify-end gap-3">
           {/* Sky day/night toggle — passes origin coords for circle-reveal */}
           <div className="flex flex-col items-center gap-0.5 lg:hidden">
             <SkyToggle checked={isDark} onChange={(x, y) => toggle(x, y)} />
-            <span className="text-[9px] font-semibold uppercase tracking-wide text-asm-muted">{isDark ? 'Dark Mode' : 'Light Mode'}</span>
+            <span className="text-[9px] font-semibold uppercase tracking-wider text-asm-muted dark:text-[#8b8f99]">{isDark ? 'Dark' : 'Light'}</span>
           </div>
           <div className="hidden flex-col items-center gap-0.5 lg:flex">
             <SkyToggle checked={isDark} onChange={(x, y) => toggle(x, y)} />
-            <span className="text-[9px] font-semibold uppercase tracking-wide text-asm-muted">{isDark ? 'Dark Mode' : 'Light Mode'}</span>
+            <span className="text-[9px] font-semibold uppercase tracking-wider text-asm-muted dark:text-[#8b8f99]">{isDark ? 'Dark Mode' : 'Light Mode'}</span>
           </div>
 
           {variant === 'detail' ? (

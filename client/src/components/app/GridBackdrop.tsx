@@ -20,8 +20,8 @@ export function GridBackdrop({ className }: { className?: string }) {
             'linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 55%, transparent 100%)',
         }}
       />
-      {/* Soft blue ambient blob replacing the dark-theme violet glow */}
-      <div className="absolute -left-20 -top-32 h-[420px] w-[520px] rounded-full bg-asm-blue/[0.06] blur-3xl" />
+      {/* Soft ambient blob — blue in light, warm gold in dark */}
+      <div className="absolute -left-20 -top-32 h-[420px] w-[520px] rounded-full bg-asm-blue/[0.06] blur-3xl dark:bg-[rgba(244,197,6,0.04)]" />
     </div>
   )
 }
