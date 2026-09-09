@@ -83,22 +83,18 @@ export function CoinIndexChart({
 
       {showDot && (
         <g>
-          {/* The pulse is what makes the chart read as live. Respect
-              prefers-reduced-motion by disabling only the animation. */}
-          <circle cx={lastX} cy={lastY} r="10" fill={stroke} opacity="0.18">
-            <animate
-              attributeName="r"
-              values="6;14;6"
-              dur="2.4s"
-              repeatCount="indefinite"
-            />
-            <animate
-              attributeName="opacity"
-              values="0.28;0;0.28"
-              dur="2.4s"
-              repeatCount="indefinite"
-            />
-          </circle>
+          {/* The pulse is what makes the chart read as live. CSS-driven
+              (see .coin-chart-pulse in index.css) so that
+              prefers-reduced-motion can reliably disable it — SMIL
+              <animate> does not consistently honor CSS `display: none`. */}
+          <circle
+            cx={lastX}
+            cy={lastY}
+            r="6"
+            fill={stroke}
+            opacity="0.28"
+            className="coin-chart-pulse"
+          />
           <circle cx={lastX} cy={lastY} r="4" fill={stroke} />
         </g>
       )}
