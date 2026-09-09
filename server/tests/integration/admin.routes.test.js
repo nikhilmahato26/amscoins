@@ -8,6 +8,7 @@ const User = require('../../src/models/User')
 const Wallet = require('../../src/models/Wallet')
 const { generateUniqueCode } = require('../../src/services/referralCode')
 const { seedPlans } = require('../../src/seed/seedPlans')
+const cloudinaryConfig = require('../../src/config/cloudinary')
 
 beforeAll(setupDb)
 beforeEach(seedPlans)
@@ -34,10 +35,23 @@ test('non-admin is blocked from admin routes with 403', async () => {
 })
 
 test('admin approves a deposit; funds stay locked and referrer incremented', async () => {
+  const isConfiguredSpy = jest.spyOn(cloudinaryConfig, 'isConfigured').mockReturnValue(true)
+  const uploadSpy = jest
+    .spyOn(cloudinaryConfig, 'uploadImage')
+    .mockResolvedValue({ secure_url: 'https://res.cloudinary.com/demo/proof.png' })
+
   const referrer = await registerToken()
   const { token: userToken } = await registerToken(referrer.user.referralCode)
   const inv = await request(app).post('/api/investments').set('Authorization', `Bearer ${userToken}`).send({ planKey: 'silver', amount: 200000 })
+  // A screenshot must be attached before the deposit can be submitted.
+  await request(app)
+    .post(`/api/investments/${inv.body.investment._id}/screenshot`)
+    .set('Authorization', `Bearer ${userToken}`)
+    .attach('file', Buffer.from('fakepng'), 'proof.png')
   await request(app).post(`/api/investments/${inv.body.investment._id}/notify`).set('Authorization', `Bearer ${userToken}`)
+
+  isConfiguredSpy.mockRestore()
+  uploadSpy.mockRestore()
 
   const aToken = await adminToken()
   const pending = await request(app).get('/api/admin/investments?status=pending').set('Authorization', `Bearer ${aToken}`)

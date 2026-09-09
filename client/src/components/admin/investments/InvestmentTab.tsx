@@ -420,6 +420,28 @@ export function InvestmentTab({ data, isLoading, isError }: TabDataProps) {
                 </div>
               </dl>
 
+              <div>
+                <dt className="text-[11px] font-semibold uppercase tracking-wide text-asm-muted">Payment screenshot</dt>
+                {selectedInv.paymentScreenshotUrl ? (
+                  <a
+                    href={selectedInv.paymentScreenshotUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1.5 block w-fit overflow-hidden rounded-lg border border-asm-line"
+                  >
+                    <img
+                      src={selectedInv.paymentScreenshotUrl}
+                      alt="Payment screenshot"
+                      loading="lazy"
+                      decoding="async"
+                      className="max-h-48 w-auto object-contain"
+                    />
+                  </a>
+                ) : (
+                  <p className="mt-1 text-[12px] text-asm-muted">Not provided</p>
+                )}
+              </div>
+
               {selectedInv.status === 'pending' && (
                 <div>
                   <label htmlFor="inv-panel-note" className="block text-[11px] font-semibold uppercase tracking-wide text-asm-muted mb-1">

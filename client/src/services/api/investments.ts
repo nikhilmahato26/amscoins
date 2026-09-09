@@ -1,5 +1,7 @@
-import { apiFetch } from '@/lib/api'
+import { apiFetch, ApiError, getToken } from '@/lib/api'
 import type { PlanKey } from '@/types'
+
+const BASE = import.meta.env.VITE_API_URL ?? '/api'
 
 export interface Installment {
   day: number
@@ -28,6 +30,8 @@ export interface Investment {
   startAt?: string
   maturesAt?: string
   createdAt: string
+  /** Proof-of-payment screenshot, uploaded from the pay screen. Empty until set. */
+  paymentScreenshotUrl?: string
 }
 
 export interface CreateInvestmentInput {
@@ -58,6 +62,30 @@ export const notifyPayment = (id: string) =>
 export const getInvestments = () => apiFetch<Investment[]>('/investments')
 
 export const getInvestment = (id: string) => apiFetch<Investment>(`/investments/${id}`)
+
+/**
+ * Upload a proof-of-payment screenshot for a pending deposit. Uses raw fetch
+ * (not apiFetch) because the body is multipart FormData, which must not be
+ * JSON-stringified or given a manual Content-Type — the browser sets the
+ * multipart boundary itself.
+ */
+export async function uploadPaymentScreenshot(id: string, file: File): Promise<Investment> {
+  const form = new FormData()
+  form.append('file', file)
+
+  const token = getToken()
+  const res = await fetch(`${BASE}/investments/${id}/screenshot`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+  })
+
+  const data = res.status === 204 ? null : await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new ApiError(res.status, (data as { error?: string } | null)?.error ?? res.statusText)
+  }
+  return (data as { investment: Investment }).investment
+}
 
 export const requestBreak = (id: string) =>
   apiFetch<Investment>(`/investments/${id}/break`, { method: 'POST' })
