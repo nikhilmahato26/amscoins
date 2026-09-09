@@ -26,6 +26,12 @@ const tierRank = (tier) => TIER_ORDER.indexOf(tier)
 // accessible by accident; this makes the exemption explicit instead.
 const UNGATED_PLANS = new Set(['asmcoin'])
 
+// Every valid plan key: the loyalty tiers plus the ungated plans. This is the
+// single source of truth — the Plan and Investment schemas and the request
+// validator all read it, so adding a plan cannot leave one of them behind
+// (which is exactly how 'asmcoin' passed the models but failed validation).
+const PLAN_KEYS = [...TIER_ORDER, ...UNGATED_PLANS]
+
 const canAccessPlan = (userTier, planKey) => {
   if (UNGATED_PLANS.has(planKey)) return true
   const rank = planRank(planKey)
@@ -44,5 +50,6 @@ module.exports = {
   planRank,
   tierRank,
   UNGATED_PLANS,
+  PLAN_KEYS,
   canAccessPlan,
 }

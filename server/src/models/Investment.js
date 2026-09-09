@@ -1,4 +1,5 @@
 const { Schema, model } = require('mongoose')
+const { PLAN_KEYS } = require('../services/tierService')
 
 const installmentSchema = new Schema(
   {
@@ -24,7 +25,7 @@ const installmentSchema = new Schema(
 const investmentSchema = new Schema(
   {
     user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    planKey: { type: String, enum: ['silver', 'gold', 'diamond', 'asmcoin'], required: true },
+    planKey: { type: String, enum: PLAN_KEYS, required: true },
     amount: { type: Number, required: true }, // paise
     returnPct: { type: Number, required: true },
     // Snapshotted from Plan.installmentPcts at deposit creation time.

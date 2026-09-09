@@ -49,11 +49,20 @@ test('a referral-less user invests in ASM Coin and withdraws the proceeds tax-fr
   expect(coinPlan.returnPct).toBe(40)
   expect(coinPlan.durationHours).toBe(168)
 
-  // ── Invest ₹5,000.
-  const created = await invSvc.createInvestment(user, { planKey: 'asmcoin', amount: 500000 })
-  await invSvc.approveInvestment(created.investment._id, admin._id)
+  // ── Invest ₹5,000 through the real endpoint, so request validation is
+  //    covered too — calling the service directly once hid a zod schema that
+  //    still rejected 'asmcoin' and failed every real deposit with
+  //    "Validation failed".
+  const deposit = await request(app)
+    .post('/api/investments')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ planKey: 'asmcoin', amount: 500000 })
+    .expect(201)
+  expect(deposit.body.investment.planKey).toBe('asmcoin')
 
-  let inv = await Investment.findById(created.investment._id)
+  await invSvc.approveInvestment(deposit.body.investment._id, admin._id)
+
+  let inv = await Investment.findById(deposit.body.investment._id)
   expect(inv.status).toBe('active')
   expect(new Date(inv.maturesAt) - new Date(inv.startAt)).toBe(168 * 3600 * 1000)
 
