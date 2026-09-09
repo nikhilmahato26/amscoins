@@ -1,16 +1,24 @@
 import { useId } from 'react'
 
 import { cn } from '@/lib/utils'
-import type { CoinPoint } from '@/services/api/coin'
+import type { CoinCandle } from '@/services/api/coin'
+
+const UP_COLOR = '#17A34A'
+const DOWN_COLOR = '#DC2626'
 
 /**
- * The ASM Coin index line. Hand-rolled SVG, following the Sparkline pattern
- * already in this codebase — a charting library would cost more bundle than
- * this entire feature.
+ * The ASM Coin index, as a candlestick chart. Hand-rolled SVG, following the
+ * Sparkline pattern already in this codebase — a charting library would cost
+ * more bundle than this entire feature.
+ *
+ * Each candle is one bucket of several real price ticks (see server
+ * coinIndexService#bucketOHLC), so the wick is genuine intra-bucket
+ * high/low, not decoration — that's what makes it read as a real market
+ * chart instead of a smoothed line pretending to be one.
  *
  * The chart is decorative and aria-hidden: the price and change are announced
  * as live text by CoinPriceTicker, so a screen reader gets the information
- * without having to interpret a path.
+ * without having to interpret it.
  */
 export function CoinIndexChart({
   series,
@@ -19,7 +27,7 @@ export function CoinIndexChart({
   className,
   showDot = true,
 }: {
-  series: CoinPoint[]
+  series: CoinCandle[]
   positive?: boolean
   height?: number
   className?: string
@@ -27,32 +35,29 @@ export function CoinIndexChart({
 }) {
   const gradientId = useId()
 
-  if (series.length < 2) return null
+  if (series.length < 1) return null
 
   // A fixed viewBox with preserveAspectRatio="none" lets the SVG stretch to any
   // container width without recalculating on resize.
   const width = 600
   const pad = 6
+  const innerHeight = height - pad * 2
 
-  const values = series.map((point) => point.p)
-  const min = Math.min(...values)
-  const max = Math.max(...values)
+  const highs = series.map((c) => c.h)
+  const lows = series.map((c) => c.l)
+  const min = Math.min(...lows)
+  const max = Math.max(...highs)
   const span = max - min || 1
-  const stepX = width / (series.length - 1)
 
-  const points = values.map((value, index) => {
-    const x = index * stepX
-    const y = pad + (1 - (value - min) / span) * (height - pad * 2)
-    return [x, y] as const
-  })
+  const toY = (value: number) => pad + (1 - (value - min) / span) * innerHeight
 
-  const line = points
-    .map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(2)} ${y.toFixed(2)}`)
-    .join(' ')
-  const area = `${line} L${width} ${height} L0 ${height} Z`
+  const slot = width / series.length
+  const bodyWidth = Math.max(1, slot * 0.62)
 
-  const stroke = positive ? '#17A34A' : '#DC2626'
-  const [lastX, lastY] = points[points.length - 1]
+  const last = series[series.length - 1]
+  const lastX = (series.length - 0.5) * slot
+  const lastY = toY(last.c)
+  const dotColor = positive ? UP_COLOR : DOWN_COLOR
 
   return (
     <div className={cn('relative w-full overflow-visible', className)} style={{ height }}>
@@ -65,19 +70,56 @@ export function CoinIndexChart({
       >
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={stroke} stopOpacity="0.28" />
-            <stop offset="100%" stopColor={stroke} stopOpacity="0" />
+            <stop offset="0%" stopColor={dotColor} stopOpacity="0.12" />
+            <stop offset="100%" stopColor={dotColor} stopOpacity="0" />
           </linearGradient>
         </defs>
 
-        <path d={area} fill={`url(#${gradientId})`} />
+        {/* A faint fill under the close-price line gives the chart a floor to
+            sit on, the same role the old line chart's area fill played. */}
         <path
-          d={line}
-          fill="none"
-          stroke={stroke}
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+          d={`M0 ${height} ${series.map((c, i) => `L${(i + 0.5) * slot} ${toY(c.c)}`).join(' ')} L${width} ${height} Z`}
+          fill={`url(#${gradientId})`}
+        />
+
+        {series.map((candle, i) => {
+          const x = (i + 0.5) * slot
+          const up = candle.c >= candle.o
+          const color = up ? UP_COLOR : DOWN_COLOR
+          const yHigh = toY(candle.h)
+          const yLow = toY(candle.l)
+          const yOpen = toY(candle.o)
+          const yClose = toY(candle.c)
+          const bodyTop = Math.min(yOpen, yClose)
+          const bodyHeight = Math.max(1, Math.abs(yClose - yOpen))
+
+          return (
+            <g key={candle.t}>
+              <line
+                x1={x} y1={yHigh} x2={x} y2={yLow}
+                stroke={color}
+                strokeWidth={1}
+                vectorEffect="non-scaling-stroke"
+              />
+              <rect
+                x={x - bodyWidth / 2}
+                y={bodyTop}
+                width={bodyWidth}
+                height={bodyHeight}
+                fill={color}
+              />
+            </g>
+          )
+        })}
+
+        {/* Dashed current-price line, matching the "MID" reference line
+            convention of a real trading terminal. */}
+        <line
+          x1="0" y1={lastY} x2={width} y2={lastY}
+          stroke={dotColor}
+          strokeWidth="1"
+          strokeDasharray="4 4"
+          strokeOpacity="0.55"
           vectorEffect="non-scaling-stroke"
         />
       </svg>
@@ -94,11 +136,11 @@ export function CoinIndexChart({
           <span className="relative flex size-3 items-center justify-center">
             <span
               className="coin-chart-pulse absolute size-5 rounded-full"
-              style={{ backgroundColor: stroke }}
+              style={{ backgroundColor: dotColor }}
             />
             <span
               className="relative size-2.5 rounded-full ring-2 ring-white shadow-sm dark:ring-[#141416]"
-              style={{ backgroundColor: stroke }}
+              style={{ backgroundColor: dotColor }}
             />
           </span>
         </div>

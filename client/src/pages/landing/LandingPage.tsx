@@ -556,7 +556,7 @@ function MarketSnapshot() {
   const asmPositive = asmData ? asmData.changePct >= 0 : true
   const asmSeries =
     asmData?.series && asmData.series.length > 1
-      ? asmData.series.map((p) => p.p)
+      ? asmData.series.map((candle) => candle.c)
       : [1220, 1225, 1230, 1228, 1235, 1240, 1238, 1245, 1248, 1246, 1250, 1251]
 
   const rows: MarketRow[] = [

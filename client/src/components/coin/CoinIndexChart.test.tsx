@@ -5,10 +5,9 @@ import { CoinIndexChart } from './CoinIndexChart'
 import { formatCoinPrice } from '@/lib/coinFormat'
 
 const series = [
-  { t: '2026-09-09T10:00:00Z', p: 124780 },
-  { t: '2026-09-09T10:01:00Z', p: 125200 },
-  { t: '2026-09-09T10:02:00Z', p: 124100 },
-  { t: '2026-09-09T10:03:00Z', p: 126000 },
+  { t: '2026-09-09T10:00:00Z', o: 124780, h: 125300, l: 124500, c: 125200 },
+  { t: '2026-09-09T10:01:00Z', o: 125200, h: 125600, l: 123900, c: 124100 },
+  { t: '2026-09-09T10:02:00Z', o: 124100, h: 126200, l: 124000, c: 126000 },
 ]
 
 describe('formatCoinPrice', () => {
@@ -26,16 +25,30 @@ describe('formatCoinPrice', () => {
 })
 
 describe('CoinIndexChart', () => {
-  it('renders nothing when there are fewer than two points', () => {
-    const { container } = render(<CoinIndexChart series={[series[0]]} />)
+  it('renders nothing for an empty series', () => {
+    const { container } = render(<CoinIndexChart series={[]} />)
     expect(container.querySelector('svg')).toBeNull()
   })
 
-  it('draws a path for a valid series', () => {
+  it('draws a candle (wick + body) per data point, plus the close-price fill and dashed reference line', () => {
     const { container } = render(<CoinIndexChart series={series} />)
-    const paths = container.querySelectorAll('path')
-    // One area fill, one line stroke.
-    expect(paths.length).toBeGreaterThanOrEqual(2)
+    expect(container.querySelectorAll('rect')).toHaveLength(series.length) // one body per candle
+    // One wick line per candle, plus the dashed current-price line.
+    expect(container.querySelectorAll('line')).toHaveLength(series.length + 1)
+    expect(container.querySelectorAll('path')).toHaveLength(1) // the area-under-close fill
+  })
+
+  it('colors each candle by its own open/close, not by the positive prop', () => {
+    const { container } = render(<CoinIndexChart series={series} positive={false} />)
+    const rects = container.querySelectorAll('rect')
+    // Candle 0: close > open → up color. Candle 1: close < open → down color.
+    expect(rects[0].getAttribute('fill')).toBe('#17A34A')
+    expect(rects[1].getAttribute('fill')).toBe('#DC2626')
+  })
+
+  it('renders a single candle without crashing', () => {
+    const { container } = render(<CoinIndexChart series={[series[0]]} />)
+    expect(container.querySelectorAll('rect')).toHaveLength(1)
   })
 
   it('is hidden from assistive tech, since the price is announced separately', () => {

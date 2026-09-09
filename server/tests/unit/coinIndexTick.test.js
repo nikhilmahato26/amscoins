@@ -105,4 +105,105 @@ describe('tick', () => {
 
     expect((await CoinIndexState.getSingleton()).move).toBeNull()
   })
+
+  it('advances the trend anchor alongside the price', async () => {
+    await CoinIndexState.getSingleton()
+
+    await svc.tick()
+
+    const state = await CoinIndexState.getSingleton()
+    expect(typeof state.trendPrice).toBe('number')
+  })
+})
+
+describe('nextTrend', () => {
+  it('is frozen at volatility 0, matching nextPrice\'s flat guarantee', () => {
+    expect(svc.nextTrend(140000, 0, maxUp)).toBe(140000)
+    expect(svc.nextTrend(140000, 0, maxDown)).toBe(140000)
+  })
+
+  it('moves in both directions when volatility is above zero', () => {
+    expect(svc.nextTrend(124780, 100, maxUp)).toBeGreaterThan(124780)
+    expect(svc.nextTrend(124780, 100, maxDown)).toBeLessThan(124780)
+  })
+
+  it('never returns a price below the floor or above the ceiling', () => {
+    for (let i = 0; i < 500; i++) {
+      expect(svc.nextTrend(svc.FLOOR_PAISE, 100, maxDown)).toBeGreaterThanOrEqual(svc.FLOOR_PAISE)
+      expect(svc.nextTrend(svc.CEILING_PAISE, 100, maxUp)).toBeLessThanOrEqual(svc.CEILING_PAISE)
+    }
+  })
+
+  it('pulls a displaced anchor back toward baseline over many neutral-noise ticks', () => {
+    let trend = 200000 // well above baseline
+    for (let i = 0; i < 200; i++) trend = svc.nextTrend(trend, 50, noNoise)
+    expect(trend).toBeLessThan(200000)
+    expect(Math.abs(trend - svc.BASELINE_PAISE)).toBeLessThan(Math.abs(200000 - svc.BASELINE_PAISE))
+  })
+})
+
+describe('nextPrice mean reversion', () => {
+  it('is a no-op when the caller omits trendPrice (back-compat: target defaults to currentPrice)', () => {
+    const state = { currentPrice: 124780, volatility: 50, move: null }
+    expect(svc.nextPrice(state, Date.now(), noNoise)).toBe(124780)
+  })
+
+  it('pulls the price toward an explicit trendPrice even with neutral noise', () => {
+    const above = svc.nextPrice(
+      { currentPrice: 140000, volatility: 100, move: null, trendPrice: 124780 }, Date.now(), noNoise
+    )
+    expect(above).toBeLessThan(140000)
+
+    const below = svc.nextPrice(
+      { currentPrice: 110000, volatility: 100, move: null, trendPrice: 124780 }, Date.now(), noNoise
+    )
+    expect(below).toBeGreaterThan(110000)
+  })
+
+  it('stays frozen even with a trendPrice set, when volatility is 0', () => {
+    const state = { currentPrice: 100000, volatility: 0, move: null, trendPrice: 200000 }
+    expect(svc.nextPrice(state, Date.now(), noNoise)).toBe(100000)
+  })
+})
+
+// A tiny deterministic PRNG (mulberry32) so the regression test below is
+// reproducible — a real Math.random source would make an occasional false
+// pass/fail possible, however unlikely, and testing-principles calls for
+// determinism over "very probably fine".
+function mulberry32(seed) {
+  let a = seed
+  return function rand() {
+    a |= 0; a = (a + 0x6d2b79f5) | 0
+    let t = Math.imul(a ^ (a >>> 15), 1 | a)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+describe('regression: the index does not just climb forever', () => {
+  it('simulating a day of ticks produces a path that both rises above and falls below its starting price', () => {
+    const rand = mulberry32(42)
+    let currentPrice = svc.BASELINE_PAISE
+    let trendPrice = svc.BASELINE_PAISE
+    const volatility = 50
+    let now = Date.now()
+
+    let sawAbove = false
+    let sawBelow = false
+
+    // 2,880 ticks at 30s each ≈ 24 simulated hours.
+    for (let i = 0; i < 2880; i++) {
+      trendPrice = svc.nextTrend(trendPrice, volatility, rand)
+      currentPrice = svc.nextPrice({ currentPrice, volatility, move: null, trendPrice }, now, rand)
+      now += 30_000
+
+      if (currentPrice > svc.BASELINE_PAISE) sawAbove = true
+      if (currentPrice < svc.BASELINE_PAISE) sawBelow = true
+    }
+
+    // The old constant-upward-bias design could only ever produce sawAbove
+    // (or, at the floor, get stuck) — it had no mechanism to turn around.
+    expect(sawAbove).toBe(true)
+    expect(sawBelow).toBe(true)
+  })
 })

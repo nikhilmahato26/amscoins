@@ -39,22 +39,42 @@ async function seedTicks(count, priceFn = () => 124780) {
   await CoinPrice.insertMany(docs)
 }
 
-describe('downsample', () => {
-  it('returns the input untouched when it is already short enough', () => {
-    const docs = [{ p: 1 }, { p: 2 }, { p: 3 }]
-    expect(svc.downsample(docs, 10)).toHaveLength(3)
+describe('bucketOHLC', () => {
+  it('turns each tick into its own candle when already short enough', () => {
+    const docs = [{ t: 1, price: 1 }, { t: 2, price: 2 }, { t: 3, price: 3 }]
+    const out = svc.bucketOHLC(docs, 10)
+    expect(out).toHaveLength(3)
+    expect(out[0]).toMatchObject({ o: 1, h: 1, l: 1, c: 1 })
   })
 
-  it('reduces a long series to at most maxPoints plus the final tick', () => {
-    const docs = Array.from({ length: 1000 }, (_, i) => ({ p: i }))
-    const out = svc.downsample(docs, 100)
-    expect(out.length).toBeLessThanOrEqual(101)
+  it('reduces a long series to at most maxPoints candles', () => {
+    const docs = Array.from({ length: 1000 }, (_, i) => ({ t: i, price: i }))
+    const out = svc.bucketOHLC(docs, 100)
+    expect(out.length).toBeLessThanOrEqual(100)
   })
 
-  it('always preserves the very last tick so the chart end matches the live price', () => {
-    const docs = Array.from({ length: 1000 }, (_, i) => ({ p: i }))
-    const out = svc.downsample(docs, 100)
-    expect(out[out.length - 1].p).toBe(999)
+  it('always closes the last candle with the very last tick, so the chart end matches the live price', () => {
+    const docs = Array.from({ length: 1000 }, (_, i) => ({ t: i, price: i }))
+    const out = svc.bucketOHLC(docs, 100)
+    expect(out[out.length - 1].c).toBe(999)
+  })
+
+  it('aggregates open/high/low/close across the whole bucket, not just its two endpoints', () => {
+    // A bucket whose extremes sit in the middle, not at either end — a
+    // downsample that only kept endpoints would miss both.
+    const docs = [
+      { t: 1, price: 100 },
+      { t: 2, price: 150 }, // high
+      { t: 3, price: 80 }, // low
+      { t: 4, price: 110 },
+    ]
+    const out = svc.bucketOHLC(docs, 1)
+    expect(out).toHaveLength(1)
+    expect(out[0]).toMatchObject({ o: 100, h: 150, l: 80, c: 110 })
+  })
+
+  it('returns an empty array for an empty series', () => {
+    expect(svc.bucketOHLC([], 100)).toEqual([])
   })
 })
 
@@ -79,7 +99,10 @@ describe('GET /api/coin/index', () => {
     expect(Array.isArray(res.body.series)).toBe(true)
     expect(res.body.series.length).toBeGreaterThan(0)
     expect(res.body.series[0]).toHaveProperty('t')
-    expect(res.body.series[0]).toHaveProperty('p')
+    expect(res.body.series[0]).toHaveProperty('o')
+    expect(res.body.series[0]).toHaveProperty('h')
+    expect(res.body.series[0]).toHaveProperty('l')
+    expect(res.body.series[0]).toHaveProperty('c')
   })
 
   it('rejects an unknown range', async () => {

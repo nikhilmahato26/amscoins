@@ -17,9 +17,12 @@ const ASMCOIN = 'asmcoin'
 const MOVE_PCT = { small: 3, medium: 8, hard: 18 }
 
 const RANGES = {
-  '1h': { ms: 3_600_000, points: 120 },
-  '24h': { ms: 86_400_000, points: 180 },
-  '7d': { ms: 604_800_000, points: 200 },
+  // Deliberately fewer points than raw ticks (a tick every 30s): each
+  // candle then spans several ticks, so it has real high/low wicks instead
+  // of a flat open === close body. See bucketOHLC.
+  '1h': { ms: 3_600_000, points: 30 }, // ~4 ticks/candle
+  '24h': { ms: 86_400_000, points: 180 }, // ~16 ticks/candle
+  '7d': { ms: 604_800_000, points: 200 }, // ~100 ticks/candle
 }
 
 // Volatility 100 produces at most a 0.6% step per tick. At a 30s tick that is
@@ -31,29 +34,78 @@ const MAX_STEP_FRACTION = 0.006
 // still curving rather than snapping.
 const DRIFT_PULL = 0.5
 
+// How much of the gap between the fast price and the slow trend anchor
+// closes per tick, at full volatility. ~9 ticks (4-5 min) to close half the
+// gap — fast enough to feel alive, slow enough to still look like a curve.
+const REVERT_PULL = 0.08
+
+// The trend anchor's own step size — smaller than the price's, so it wanders
+// rather than jumping — and how much of its gap to baseline closes per tick.
+// ~70 ticks (35 min) to close half the gap: long enough that the index holds
+// a "mood" (rising, falling, flat) for a visible stretch before it turns.
+const TREND_STEP_FRACTION = 0.002
+const TREND_PULL = 0.01
+
 const clamp = (p) => Math.min(CEILING_PAISE, Math.max(FLOOR_PAISE, Math.round(p)))
+
+/**
+ * Advance the slow trend anchor by one tick. Pure and synchronous, same
+ * determinism seam as nextPrice. This is what keeps the index from settling
+ * into a one-way climb or fall: nextPrice mean-reverts the fast price toward
+ * this anchor, and the anchor itself only ever wanders a bounded distance
+ * from baseline before its own pull drags it back — so the index drifts up
+ * for a while, then back down, then up again, the way a real thin-liquidity
+ * market idles.
+ *
+ * Frozen at volatility 0, matching nextPrice's "provably flat" guarantee —
+ * a trend anchor that kept crawling back to baseline on its own would make
+ * that guarantee a lie.
+ */
+function nextTrend(trendPrice, volatility, rand = Math.random) {
+  if (volatility <= 0) return trendPrice
+
+  const sigma = (volatility / 100) * TREND_STEP_FRACTION
+  const noise = (rand() * 2 - 1) * sigma
+  let trend = trendPrice * (1 + noise)
+  trend += (BASELINE_PAISE - trend) * TREND_PULL
+
+  return clamp(trend)
+}
 
 /**
  * Compute the next index price. Pure and synchronous so it can be tested
  * exhaustively without a database — `rand` is injected for determinism.
  *
- * Two components:
+ * Three components:
  *   1. Noise — a random step scaled by volatility. Volatility 0 means no noise
  *      at all, which produces a provably flat line.
- *   2. Drift — if an admin move is active, the price is pulled toward a target
+ *   2. Reversion — pulled toward `trendPrice`, the slow-wandering anchor from
+ *      nextTrend. This is what turns a pure random walk (which drifts away
+ *      forever) into something that oscillates: noise pushes the price away
+ *      from the trend, reversion pulls it back, so it overshoots and
+ *      undershoots in both directions instead of only ever compounding one
+ *      way. `trendPrice` is optional — callers that omit it (existing tests,
+ *      callers not tracking a trend) get `currentPrice` as the target, which
+ *      makes the reversion term a no-op.
+ *   3. Drift — if an admin move is active, the price is pulled toward a target
  *      that itself slides from startPrice to targetPrice across the window.
+ *      This still dominates reversion during a move: DRIFT_PULL (0.5) is
+ *      several times REVERT_PULL (0.08 at most), and it applies after
+ *      reversion has already been folded in, so a pump or crash still reads
+ *      as a deliberate market move rather than being fought by the drift back
+ *      to trend.
  *
  * The result is always clamped and always an integer.
  */
 function nextPrice(state, now = Date.now(), rand = Math.random) {
-  const { currentPrice, volatility, move } = state
+  const { currentPrice, volatility, move, trendPrice = currentPrice } = state
 
   const sigma = (volatility / 100) * MAX_STEP_FRACTION
-  // Add a small positive bias (+0.25× sigma) so the idle random walk trends
-  // slightly upward — the graph stays "a little green" without admin action.
-  const UPWARD_BIAS = 0.25
-  const noise = (rand() * 2 - 1 + UPWARD_BIAS) * sigma
+  const noise = (rand() * 2 - 1) * sigma
   let price = currentPrice * (1 + noise)
+
+  const revertFraction = REVERT_PULL * (volatility / 100)
+  price += (trendPrice - price) * revertFraction
 
   if (move) {
     const startedAt = new Date(move.startedAt).getTime()
@@ -79,14 +131,16 @@ async function tick(now = new Date()) {
     state.move = null
   }
 
+  const trendPrice = nextTrend(state.trendPrice ?? state.currentPrice, state.volatility)
   const price = nextPrice(
-    { currentPrice: state.currentPrice, volatility: state.volatility, move: state.move },
+    { currentPrice: state.currentPrice, volatility: state.volatility, move: state.move, trendPrice },
     now.getTime()
   )
 
   await CoinPrice.create({ t: now, price })
 
   state.currentPrice = price
+  state.trendPrice = trendPrice
   state.lastTickAt = now
   await state.save()
 
@@ -159,6 +213,7 @@ async function resetIndex(adminId) {
   const before = state.currentPrice
 
   state.currentPrice = BASELINE_PAISE
+  state.trendPrice = BASELINE_PAISE
   state.move = null
   await state.save()
 
@@ -177,22 +232,30 @@ async function listActions({ limit = 25, skip = 0 } = {}) {
 }
 
 /**
- * Reduce a series to at most `maxPoints` by taking the last tick of each
- * bucket. The final tick is always preserved so the end of the chart line
- * matches the live price the user sees above it.
+ * Aggregate a time-ordered run of price ticks into at most `maxPoints` OHLC
+ * candles. Each candle covers a contiguous run of ticks: open is the
+ * bucket's first price, close its last, high/low the extremes across the
+ * whole bucket — not just its two endpoints — so a candle's wick reflects
+ * real intra-bucket movement instead of two points joined by a straight
+ * line. The final tick's price always closes the last candle, so the
+ * chart's right edge matches the live price shown above it.
  */
-function downsample(docs, maxPoints) {
-  if (docs.length <= maxPoints) return docs
+function bucketOHLC(docs, maxPoints) {
+  if (docs.length === 0) return []
 
-  const bucketSize = Math.ceil(docs.length / maxPoints)
+  const bucketSize = Math.max(1, Math.ceil(docs.length / maxPoints))
   const out = []
   for (let i = 0; i < docs.length; i += bucketSize) {
-    out.push(docs[Math.min(i + bucketSize - 1, docs.length - 1)])
+    const bucket = docs.slice(i, i + bucketSize)
+    const prices = bucket.map((d) => d.price)
+    out.push({
+      t: bucket[bucket.length - 1].t,
+      o: bucket[0].price,
+      h: Math.max(...prices),
+      l: Math.min(...prices),
+      c: bucket[bucket.length - 1].price,
+    })
   }
-
-  const last = docs[docs.length - 1]
-  if (out[out.length - 1] !== last) out.push(last)
-
   return out
 }
 
@@ -243,18 +306,19 @@ async function getSeries(range = '24h') {
     high24h: prices.length ? Math.max(...prices) : state.currentPrice,
     low24h: prices.length ? Math.min(...prices) : state.currentPrice,
     investorCount,
-    series: downsample(docs, cfg.points).map((d) => ({ t: d.t, p: d.price })),
+    series: bucketOHLC(docs, cfg.points),
   }
 }
 
 module.exports = {
   nextPrice,
+  nextTrend,
   tick,
   applyMove,
   setVolatility,
   resetIndex,
   listActions,
-  downsample,
+  bucketOHLC,
   getSeries,
   getInvestorCount,
   _resetInvestorCountCache,
