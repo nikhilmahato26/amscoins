@@ -22,10 +22,13 @@ const RANGES: CoinRange[] = ['1h', '24h', '7d']
 export function CoinIndexCard({
   variant = 'home',
   showRanges = true,
+  showCta = true,
   className,
 }: {
   variant?: 'home' | 'hero' | 'compact'
   showRanges?: boolean
+  /** The admin preview steers the index rather than buying into it. */
+  showCta?: boolean
   className?: string
 }) {
   const [range, setRange] = useState<CoinRange>('24h')
@@ -174,7 +177,7 @@ export function CoinIndexCard({
 
       {/* The hero carries its own CTAs — a third button here would compete
           with them. Only the standalone card needs its own way in. */}
-      {variant === 'home' && (
+      {variant === 'home' && showCta && (
         <Link
           to="/plans"
           className="mt-4 flex w-full items-center justify-center rounded-xl bg-asm-blue px-4 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-asm-blue/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-2"
