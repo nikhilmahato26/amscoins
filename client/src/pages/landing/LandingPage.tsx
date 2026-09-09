@@ -70,8 +70,8 @@ const PLANS: {
   slug: string; name: string; returns: string; duration: string;
   min: string; max: string; unlockNote: string; accent: 'silver' | 'gold' | 'asmcoin' | 'diamond'
 }[] = [
-  { slug: 'silver',  name: 'Silver Plan',    returns: '30%', duration: '24 Hrs', min: '₹1,000', max: '₹10,000',   unlockNote: 'Default Tier',                  accent: 'silver'  },
-  { slug: 'gold',    name: 'Gold Plan',      returns: '35%', duration: '24 Hrs', min: '₹3,000', max: '₹3,00,000',  unlockNote: 'Unlocks with 21 referrals',     accent: 'gold'    },
+  { slug: 'silver',  name: 'Silver Plan',    returns: '30%', duration: '48 Hrs', min: '₹1,000', max: '₹10,000',   unlockNote: 'Default Tier',                  accent: 'silver'  },
+  { slug: 'gold',    name: 'Gold Plan',      returns: '35%', duration: '48 Hrs', min: '₹3,000', max: '₹3,00,000',  unlockNote: 'Unlocks with 21 referrals',     accent: 'gold'    },
   { slug: 'asmcoin', name: 'ASM Coin Plan',  returns: '40%', duration: '7 Days', min: '₹5,000', max: '₹5,00,000',  unlockNote: 'Open to everyone · 0 referrals', accent: 'asmcoin' },
 ]
 
@@ -556,7 +556,7 @@ function MarketSnapshot() {
   const asmPositive = asmData ? asmData.changePct >= 0 : true
   const asmSeries =
     asmData?.series && asmData.series.length > 1
-      ? asmData.series.map((p) => p.p)
+      ? asmData.series.map((candle) => candle.c)
       : [1220, 1225, 1230, 1228, 1235, 1240, 1238, 1245, 1248, 1246, 1250, 1251]
 
   const rows: MarketRow[] = [

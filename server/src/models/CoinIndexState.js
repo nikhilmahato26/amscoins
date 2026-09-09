@@ -29,6 +29,12 @@ const coinIndexStateSchema = new Schema(
   {
     key: { type: String, default: 'global', unique: true },
     currentPrice: { type: Number, default: BASELINE_PAISE }, // paise
+    // A slow-wandering anchor the fast price mean-reverts toward — see
+    // coinIndexService#nextTrend. Without this, a pure random walk with any
+    // constant bias compounds into a one-way trend over enough ticks; a
+    // second, slower-moving target is what makes the index actually turn
+    // around instead of climbing (or falling) forever.
+    trendPrice: { type: Number, default: BASELINE_PAISE }, // paise
     volatility: { type: Number, default: DEFAULT_VOLATILITY, min: 0, max: 100 },
     move: { type: moveSchema, default: null },
     lastTickAt: { type: Date, default: null },
