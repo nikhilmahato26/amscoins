@@ -17,7 +17,7 @@ type Tab = 'investments' | 'returns' | 'installments' | 'history'
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'investments', label: 'Investments' },
-  { id: 'returns', label: 'Returns' },
+  { id: 'returns', label: 'ASM Coins Return' },
   { id: 'installments', label: 'Installments' },
   { id: 'history', label: 'History' },
 ]
