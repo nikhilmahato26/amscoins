@@ -7,12 +7,13 @@ import {
 } from 'lucide-react'
 
 import { AppShell } from '@/components/app/AppShell'
-import { TierBadge, type Tier } from '@/components/app/TierBadge'
+import { TierBadge, planLabel } from '@/components/app/TierBadge'
 import { CoinIndexCard } from '@/components/coin/CoinIndexCard'
 import { useDashboard, useWallet } from '@/hooks/queries'
 import { useAuth } from '@/auth/AuthContext'
 import { inr } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import type { Tier } from '@/types'
 
 /* ── Motion variants ── */
 const container = {
@@ -368,7 +369,7 @@ export function DashboardPage() {
               </div>
             ) : (
               activeInvests.map((inv) => {
-                const planTier = inv.planKey as Tier
+                const planKey = inv.planKey
                 const matLabel = maturityLabel(inv.maturesAt)
                 const profit   = inv.expectedReturn - inv.amount
 
@@ -377,10 +378,10 @@ export function DashboardPage() {
                     key={inv.id}
                     className="elevate flex items-center gap-3 rounded-2xl border border-asm-line bg-white px-4 py-3.5 shadow-card"
                   >
-                    <TierBadge tier={planTier} size={44} className="shrink-0" />
+                    <TierBadge tier={planKey} size={44} className="shrink-0" />
 
                     <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                      <span className="text-[13px] font-bold capitalize text-asm-navy">{planTier} Plan</span>
+                      <span className="text-[13px] font-bold text-asm-navy">{planLabel(planKey)} Plan</span>
                       {matLabel && (
                         <span className={matLabel === 'Matured'
                           ? 'text-[11px] font-semibold text-asm-greenInk'

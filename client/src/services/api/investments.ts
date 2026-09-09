@@ -1,5 +1,5 @@
 import { apiFetch } from '@/lib/api'
-import type { Tier } from '@/types'
+import type { PlanKey } from '@/types'
 
 export interface Installment {
   day: number
@@ -14,7 +14,7 @@ export interface Installment {
 
 export interface Investment {
   _id: string
-  planKey: Tier
+  planKey: PlanKey
   amount: number // paise
   returnPct: number
   installmentPcts: number[]
@@ -31,7 +31,7 @@ export interface Investment {
 }
 
 export interface CreateInvestmentInput {
-  planKey: Tier
+  planKey: PlanKey
   amount: number
   referralCode?: string
 }

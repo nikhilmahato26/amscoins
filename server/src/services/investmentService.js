@@ -152,6 +152,7 @@ async function createInvestment(user, { planKey, amount, referralCode }) {
     amount,
     returnPct: plan.returnPct,
     installmentPcts: plan.installmentPcts || [],
+    durationHours: plan.durationHours,
     expectedReturn: Math.round((amount * plan.returnPct) / 100),
     referenceCode: await uniqueRef(),
     referralCodeUsed: isFirstDeposit && referralCode ? referralCode : null,
@@ -238,7 +239,11 @@ async function approveInvestment(investmentId, adminId, { auto = false } = {}) {
         // maturesAt on the investment = when the last installment fires
         inv.maturesAt = inv.installments[inv.installments.length - 1].maturesAt
       } else {
-        inv.maturesAt = new Date(now.getTime() + settings.cycleDurationHours * 3600 * 1000)
+        // Prefer the plan's own snapshotted duration (e.g. ASM Coin's fixed 7-day
+        // term) over the admin's global cycle-duration setting; only investments
+        // predating this field (or hand-built fixtures) fall back to the setting.
+        const hours = inv.durationHours ?? settings.cycleDurationHours
+        inv.maturesAt = new Date(now.getTime() + hours * 3600 * 1000)
       }
       // auto = the auto-deposit timeout approved this (adminId is null); flag it
       // so admin History can distinguish an automated approval from a manual one.

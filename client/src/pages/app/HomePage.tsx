@@ -7,7 +7,7 @@ import { CoinIndexCard } from '@/components/coin/CoinIndexCard'
 import { AppShell } from '@/components/app/AppShell'
 import { MarketTicker } from '@/components/app/MarketTicker'
 import { ReferralBanner } from '@/components/app/ReferralBanner'
-import { TierBadge, type Tier } from '@/components/app/TierBadge'
+import { TierBadge, planLabel, type Tier } from '@/components/app/TierBadge'
 import { useDashboard, useWallet } from '@/hooks/queries'
 import { useAuth } from '@/auth/AuthContext'
 import { useTheme } from '@/context/ThemeContext'
@@ -320,16 +320,16 @@ export function HomePage() {
             </div>
             <div className="flex flex-col gap-2.5">
               {activeInvests.slice(0, 3).map((inv) => {
-                const planTier = inv.planKey as Tier
+                const planKey = inv.planKey
                 const profit   = inv.expectedReturn - inv.amount
                 return (
                   <div
                     key={inv.id}
                     className="elevate flex items-center gap-3 rounded-2xl border border-asm-line bg-white px-4 py-3 shadow-card"
                   >
-                    <TierBadge tier={planTier} size={40} className="shrink-0" />
+                    <TierBadge tier={planKey} size={40} className="shrink-0" />
                     <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                      <span className="text-[13px] font-bold capitalize text-asm-navy">{planTier} Plan</span>
+                      <span className="text-[13px] font-bold text-asm-navy">{planLabel(planKey)} Plan</span>
                       {inv.maturesAt && <TimeRemaining maturesAt={inv.maturesAt} />}
                     </div>
                     <div className="flex shrink-0 flex-col items-end">

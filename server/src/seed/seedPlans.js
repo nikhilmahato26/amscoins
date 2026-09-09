@@ -37,6 +37,19 @@ const DEFAULTS = [
     durationHours: 48,
     active: false,        // disabled — no new investments allowed
   },
+  // ASM Coin — the flagship. Diamond-level returns with no referral gate.
+  // Single payout at maturity (installmentPcts empty), 7-day term.
+  {
+    key: 'asmcoin',
+    name: 'ASM Coin',
+    returnPct: 40,
+    installmentPcts: [],
+    minInvest: 500000,     // ₹5,000
+    maxInvest: 50000000,   // ₹5,00,000
+    unlockReferrals: 0,
+    durationHours: 168,    // 7 days
+    active: true,
+  },
 ]
 
 async function seedPlans() {

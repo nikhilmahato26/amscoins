@@ -1,8 +1,8 @@
 import { apiFetch } from '@/lib/api'
-import type { Tier } from '@/types'
+import type { PlanKey } from '@/types'
 
 export interface Plan {
-  key: Tier
+  key: PlanKey
   name: string
   returnPct: number
   minInvest: number // paise

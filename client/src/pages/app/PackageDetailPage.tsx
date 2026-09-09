@@ -5,30 +5,32 @@ import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 
 import { AppShell } from '@/components/app/AppShell'
 import { ReferralBanner } from '@/components/app/ReferralBanner'
-import { TierBadge } from '@/components/app/TierBadge'
+import { TierBadge, planLabel } from '@/components/app/TierBadge'
 import { usePlans } from '@/hooks/queries'
-import { inr } from '@/lib/format'
+import { durationLabel, inr } from '@/lib/format'
 import { ordinal } from '@/lib/tiers'
 import { cn } from '@/lib/utils'
-import type { Tier } from '@/types'
+import type { PlanKey } from '@/types'
 import { useTheme } from '@/context/ThemeContext'
 
-const TIER_BAND = {
+const TIER_BAND: Record<PlanKey, { bg: string; text: string }> = {
   silver:  { bg: 'bg-gradient-to-br from-[#CED5E1] to-[#9CA8B8]', text: 'text-asm-navy' },
   gold:    { bg: 'bg-gradient-to-br from-[#F4C506] to-[#E8A000]', text: 'text-white'    },
   diamond: { bg: 'bg-gradient-to-br from-asm-blue to-[#1E93FE]',   text: 'text-white'    },
-} as const
+  asmcoin: { bg: 'bg-gradient-to-br from-asm-blue to-[#0B4FD8]',   text: 'text-white'    },
+}
 
-const TIER_BAND_DARK = {
+const TIER_BAND_DARK: Record<PlanKey, { bg: string; text: string }> = {
   silver:  { bg: 'bg-gradient-to-br from-[#28282e] to-[#1c1c20]', text: 'text-[#a8b0bc]' },
   gold:    { bg: 'bg-gradient-to-br from-[#3a2800] to-[#261a00]', text: 'text-[#ffc840]' },
   diamond: { bg: 'bg-gradient-to-br from-[#1a3a6e] to-[#0f2348]', text: 'text-[#7ab4ff]' },
-} as const
+  asmcoin: { bg: 'bg-gradient-to-br from-[#0f2348] to-[#0a1830]', text: 'text-[#7ab4ff]' },
+}
 
-const RETURN_BY_TIER = { silver: '30%', gold: '35%', diamond: '40%' } as const
+const RETURN_BY_TIER: Record<PlanKey, string> = { silver: '30%', gold: '35%', diamond: '40%', asmcoin: '40%' }
 
 interface LocationState {
-  planKey?: Tier
+  planKey?: PlanKey
 }
 
 const BENEFITS: { Icon: LucideIcon; title: string; subtitle: string }[] = [
@@ -40,12 +42,12 @@ const BENEFITS: { Icon: LucideIcon; title: string; subtitle: string }[] = [
   {
     Icon: TrendingUp,
     title: 'Structured Returns',
-    subtitle: 'Calculated and paid at term maturity (48 hours)',
+    subtitle: 'Calculated and paid out at the plan\'s term maturity',
   },
 ]
 
-/** Quick-pick presets tailored per tier in rupees */
-const TIER_QUICK_PICKS: Record<Tier, { id: string; label: string; rupees: number; popular?: boolean }[]> = {
+/** Quick-pick presets tailored per plan in rupees */
+const TIER_QUICK_PICKS: Record<PlanKey, { id: string; label: string; rupees: number; popular?: boolean }[]> = {
   silver: [
     { id: 's1', label: 'Min Entry', rupees: 1000 },
     { id: 's2', label: 'Starter', rupees: 2000 },
@@ -64,6 +66,13 @@ const TIER_QUICK_PICKS: Record<Tier, { id: string; label: string; rupees: number
     { id: 'd3', label: 'Growth', rupees: 50000, popular: true },
     { id: 'd4', label: 'Max Limit', rupees: 500000 },
   ],
+  // Same investable range as Diamond (₹5,000–₹5,00,000), no referral gate.
+  asmcoin: [
+    { id: 'a1', label: 'Min Entry', rupees: 5000 },
+    { id: 'a2', label: 'Starter', rupees: 25000 },
+    { id: 'a3', label: 'Growth', rupees: 50000, popular: true },
+    { id: 'a4', label: 'Max Limit', rupees: 500000 },
+  ],
 }
 
 export function PackageDetailPage() {
@@ -77,14 +86,14 @@ export function PackageDetailPage() {
 
   // Resolve the plan to display: from ?plan= query, then router state, then
   // first unlocked, then silver.
-  const planParam = params.get('plan') as Tier | null
+  const planParam = params.get('plan') as PlanKey | null
   const plan =
     plans?.find((p) => p.key === planParam) ??
     plans?.find((p) => p.key === state?.planKey) ??
     plans?.find((p) => p.unlocked) ??
     plans?.find((p) => p.key === 'silver')
 
-  const planKey = (plan?.key ?? 'silver') as Tier
+  const planKey = plan?.key ?? 'silver'
   const quickPicks = TIER_QUICK_PICKS[planKey] ?? TIER_QUICK_PICKS.silver
 
   // rupee string in the custom input
@@ -182,18 +191,18 @@ export function PackageDetailPage() {
         {plan && plan.unlocked && (
           <>
             {/* Tier hero band */}
-            {TIER_BAND[planKey as keyof typeof TIER_BAND] && (() => {
-              const band = (isDark ? TIER_BAND_DARK : TIER_BAND)[planKey as keyof typeof TIER_BAND]
+            {(() => {
+              const band = (isDark ? TIER_BAND_DARK : TIER_BAND)[planKey]
               return (
                 <div className={cn('rounded-2xl px-5 py-8 text-center', band.bg)}>
                   <span className={cn('font-jakarta text-[13px] font-bold uppercase tracking-[0.12em] opacity-80', band.text)}>
-                    {planKey.charAt(0).toUpperCase() + planKey.slice(1)} Plan
+                    {planLabel(planKey)} Plan
                   </span>
                   <div className={cn('mt-1 font-jakarta text-[48px] font-extrabold leading-none', band.text)}>
-                    {RETURN_BY_TIER[planKey as keyof typeof RETURN_BY_TIER]}
+                    {RETURN_BY_TIER[planKey]}
                   </div>
                   <div className={cn('mt-1 text-[14px] font-semibold opacity-80', band.text)}>
-                    return in 48 hours
+                    return in {durationLabel(plan.durationHours)}
                   </div>
                 </div>
               )

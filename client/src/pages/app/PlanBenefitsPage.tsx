@@ -1,31 +1,34 @@
-import { Gem, Medal, ShieldCheck, Trophy, Unlock, Users, Zap } from 'lucide-react'
+import { Coins, Gem, Medal, ShieldCheck, Trophy, Unlock, Users, Zap } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 import { AppShell } from '@/components/app/AppShell'
-import { type Tier } from '@/components/app/TierBadge'
 import { usePlans } from '@/hooks/queries'
-import { inr } from '@/lib/format'
+import { durationLabel, inr } from '@/lib/format'
 import type { Plan } from '@/services/api/plans'
+import type { PlanKey } from '@/types'
 import { cn } from '@/lib/utils'
 
-const TIER_BAND = {
+const TIER_BAND: Record<PlanKey, { bg: string; text: string }> = {
   silver:  { bg: 'bg-gradient-to-br from-[#CED5E1] to-[#9CA8B8]', text: 'text-asm-navy' },
   gold:    { bg: 'bg-gradient-to-br from-[#F4C506] to-[#E8A000]', text: 'text-white'    },
   diamond: { bg: 'bg-gradient-to-br from-asm-blue to-[#1E93FE]',   text: 'text-white'    },
-} as const
+  asmcoin: { bg: 'bg-gradient-to-br from-asm-blue to-[#0B4FD8]',   text: 'text-white'    },
+}
 
-const RETURN_BY_TIER = { silver: '30%', gold: '35%', diamond: '40%' } as const
+const RETURN_BY_TIER: Record<PlanKey, string> = { silver: '30%', gold: '35%', diamond: '40%', asmcoin: '40%' }
 
-const TIER_ICONS: Record<Tier, LucideIcon> = {
+const TIER_ICONS: Record<PlanKey, LucideIcon> = {
   silver: Medal,
   gold: Trophy,
   diamond: Gem,
+  asmcoin: Coins,
 }
 
-const PLAN_DESCRIPTIONS: Record<Tier, string> = {
+const PLAN_DESCRIPTIONS: Record<PlanKey, string> = {
   silver: 'Start your journey with Silver package',
   gold: 'Accelerate returns with Gold package',
   diamond: 'Maximum growth with Diamond package',
+  asmcoin: 'No referrals needed — invest in ASM Coin today',
 }
 
 export function PlanBenefitsPage() {
@@ -80,7 +83,7 @@ function FeatureCard({ plan }: { plan: Plan }) {
     { label: 'Secure', value: '100%', Icon: ShieldCheck },
   ]
 
-  const band = TIER_BAND[plan.key as keyof typeof TIER_BAND]
+  const band = TIER_BAND[plan.key]
 
   return (
     <article className="relative overflow-hidden rounded-[20px] border border-asm-line bg-white shadow-[0_2px_16px_-6px_rgba(16,42,92,0.1)]">
@@ -91,10 +94,10 @@ function FeatureCard({ plan }: { plan: Plan }) {
             {plan.name} Plan
           </span>
           <div className={cn('mt-1 font-jakarta text-[48px] font-extrabold leading-none', band.text)}>
-            {RETURN_BY_TIER[plan.key as keyof typeof RETURN_BY_TIER]}
+            {RETURN_BY_TIER[plan.key]}
           </div>
           <div className={cn('mt-1 text-[14px] font-semibold opacity-80', band.text)}>
-            return in {plan.durationHours} hours
+            return in {durationLabel(plan.durationHours)}
           </div>
         </div>
       )}

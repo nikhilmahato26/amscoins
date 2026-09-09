@@ -3,11 +3,12 @@ import { Clock, Lock } from 'lucide-react'
 import { Link, useNavigate } from 'react-router'
 
 import { AppShell } from '@/components/app/AppShell'
-import { TierBadge, type Tier } from '@/components/app/TierBadge'
+import { TierBadge } from '@/components/app/TierBadge'
 import { usePlans } from '@/hooks/queries'
 import { inr } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import type { Plan } from '@/services/api/plans'
+import type { PlanKey } from '@/types'
 
 /**
  * Packages / Plans gallery — the authoritative light theme (`theme-light-home`):
@@ -15,11 +16,12 @@ import type { Plan } from '@/services/api/plans'
  * Mirrors the plan cards on the app home so the two never read as two products.
  */
 
-/** Per-tier accent, matching the home plan cards. */
-const PLAN_STYLE: Record<Tier, { ring: string; figure: string; glow: string }> = {
+/** Per-plan accent, matching the home plan cards. */
+const PLAN_STYLE: Record<PlanKey, { ring: string; figure: string; glow: string }> = {
   silver:  { ring: 'ring-[#CED5E1]',      figure: 'text-[#868B95]', glow: 'rgba(134,139,149,0.14)' },
   gold:    { ring: 'ring-[#FF9E45]/50',   figure: 'text-[#F37400]', glow: 'rgba(243,116,0,0.14)' },
   diamond: { ring: 'ring-asm-blue/30',    figure: 'text-asm-blue',  glow: 'rgba(11,79,216,0.14)' },
+  asmcoin: { ring: 'ring-asm-blue/30',    figure: 'text-asm-blue',  glow: 'rgba(11,79,216,0.14)' },
 }
 
 const fadeUp = {
@@ -85,8 +87,7 @@ export function PlansPage() {
 
 function PlanCard({ plan }: { plan: Plan }) {
   const navigate = useNavigate()
-  const tier = plan.key as Tier
-  const s = PLAN_STYLE[tier] ?? PLAN_STYLE.silver
+  const s = PLAN_STYLE[plan.key] ?? PLAN_STYLE.silver
   const unlocked = plan.unlocked
 
   return (
@@ -101,7 +102,7 @@ function PlanCard({ plan }: { plan: Plan }) {
       )}
     >
       <div className={cn('flex w-full flex-col items-center transition-all duration-300', !unlocked && 'pointer-events-none select-none opacity-50 blur-[1.5px]')}>
-        <TierBadge tier={tier} size={92} />
+        <TierBadge tier={plan.key} size={92} />
 
         <div className="mt-3 flex flex-col items-center gap-0.5">
           <span className={cn('text-[34px] font-extrabold leading-none tabular-nums', s.figure)}>{plan.returnPct}%</span>

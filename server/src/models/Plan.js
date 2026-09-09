@@ -2,7 +2,7 @@ const { Schema, model } = require('mongoose')
 
 const planSchema = new Schema(
   {
-    key: { type: String, enum: ['silver', 'gold', 'diamond'], unique: true, required: true },
+    key: { type: String, enum: ['silver', 'gold', 'diamond', 'asmcoin'], unique: true, required: true },
     name: { type: String, required: true },
     returnPct: { type: Number, required: true },
     installmentPcts: { type: [Number], default: [] }, // daily breakdown; empty = single-payout

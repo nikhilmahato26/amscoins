@@ -5,10 +5,10 @@ import { AppShell } from '@/components/app/AppShell'
 import { usePlans } from '@/hooks/queries'
 import { inr } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import type { Tier } from '@/types'
+import type { PlanKey } from '@/types'
 
 interface LocationState {
-  planKey?: Tier
+  planKey?: PlanKey
   amount?: number // paise
 }
 
@@ -28,7 +28,7 @@ export function InvestSummaryPage() {
 
   const { data: plans, isLoading, isError } = usePlans()
 
-  const planKey = (params.get('plan') as Tier | null) ?? state?.planKey ?? null
+  const planKey = (params.get('plan') as PlanKey | null) ?? state?.planKey ?? null
   const amountPaise = Number(params.get('amt')) || state?.amount || 0
   const hasSelection = Boolean(planKey) && amountPaise > 0
 

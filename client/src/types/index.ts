@@ -1,5 +1,8 @@
 export type Role = 'user' | 'admin'
+/** A user's loyalty tier. */
 export type Tier = 'silver' | 'gold' | 'diamond'
+/** A plan's identifier. Every tier is a plan, plus the ungated ASM Coin. */
+export type PlanKey = Tier | 'asmcoin'
 export type PayoutType = 'upi' | 'bank'
 
 /** A saved payout destination on the user's profile. */

@@ -9,7 +9,7 @@ import { SuccessBurst } from '@/components/app/SuccessBurst'
 import { WhatsAppIcon, TelegramIcon } from '@/components/app/icons'
 
 const TIER_LABEL: Record<string, string> = {
-  silver: 'Silver', gold: 'Gold', platinum: 'Platinum',
+  silver: 'Silver', gold: 'Gold', platinum: 'Platinum', asmcoin: 'ASM Coin',
 }
 
 function StatusPill({ status }: { status: string }) {
