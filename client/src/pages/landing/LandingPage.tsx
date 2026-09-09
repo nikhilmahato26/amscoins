@@ -21,6 +21,7 @@ import goldCoin from '@/assets/gold.jpeg'
 import diamondMedallion from '@/assets/plans/diamond.png'
 import goldMedallion from '@/assets/plans/gold.png'
 import silverMedallion from '@/assets/plans/silver.png'
+import { CoinIndexCard } from '@/components/coin/CoinIndexCard'
 import { Sparkline } from '@/components/home/Sparkline'
 import {
   LandingFooter,
@@ -386,17 +387,9 @@ function Hero() {
 
       <motion.div variants={container} initial="hidden" animate="visible" className="relative">
 
-        {/* Live price pill */}
-        <motion.div variants={fadeUp} className="mb-5 inline-flex">
-          <div className="inline-flex items-center gap-2 rounded-full border border-asm-greenInk/20 bg-skin-tint px-3.5 py-1.5">
-            <span className="relative flex size-[7px] shrink-0" aria-hidden>
-              <span className="absolute inline-flex h-full w-full animate-[live-pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite] rounded-full bg-asm-greenInk opacity-60" />
-              <span className="relative inline-flex size-[7px] rounded-full bg-asm-greenInk" />
-            </span>
-            <span className="font-jakarta text-[11px] font-bold uppercase tracking-[0.14em] text-asm-greenInk">
-              Live · ASM COIN ₹12,850 &nbsp;+10.79%
-            </span>
-          </div>
+        {/* ASM Coin index — real, honestly-labeled data (replaces the old fake live pill) */}
+        <motion.div variants={fadeUp} className="mb-5">
+          <CoinIndexCard variant="hero" className="w-full max-w-[460px]" />
         </motion.div>
 
         {/* Headline */}
@@ -428,6 +421,22 @@ function Hero() {
             See Plans
           </a>
         </motion.div>
+
+        {/* Terms at a glance */}
+        <motion.dl variants={fadeUp} className="mt-6 grid max-w-[460px] grid-cols-3 gap-3 text-center">
+          <div className="rounded-xl border border-skin-line bg-skin-surface p-3">
+            <dt className="text-[11px] uppercase tracking-wide text-skin-muted">Return</dt>
+            <dd className="text-[18px] font-bold text-asm-greenInk">40%</dd>
+          </div>
+          <div className="rounded-xl border border-skin-line bg-skin-surface p-3">
+            <dt className="text-[11px] uppercase tracking-wide text-skin-muted">Term</dt>
+            <dd className="text-[18px] font-bold text-skin-text">7 days</dd>
+          </div>
+          <div className="rounded-xl border border-skin-line bg-skin-surface p-3">
+            <dt className="text-[11px] uppercase tracking-wide text-skin-muted">Referrals</dt>
+            <dd className="text-[18px] font-bold text-skin-text">None</dd>
+          </div>
+        </motion.dl>
 
       </motion.div>
     </section>
