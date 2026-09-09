@@ -84,7 +84,7 @@ export function CoinIndexCard({
           <div className="mt-1.5">
             <CoinPriceTicker
               paise={data.current}
-              changePct={data.changePct}
+              changePct={isHero ? Math.abs(data.changePct) : data.changePct}
               size={variant === 'compact' ? 'sm' : isHero ? 'xl' : 'lg'}
             />
           </div>
