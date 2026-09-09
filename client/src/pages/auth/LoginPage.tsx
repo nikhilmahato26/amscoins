@@ -4,6 +4,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router'
 import { AuthLayout } from './AuthLayout'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { authService } from '@/services/authService'
 import { useAuth } from '@/auth/AuthContext'
 
@@ -92,8 +93,7 @@ export function LoginPage() {
         </Field>
 
         <Field label="Password">
-          <Input
-            type="password"
+          <PasswordInput
             placeholder="Your password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}

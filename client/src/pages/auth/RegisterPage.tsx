@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router'
 import { AuthLayout } from './AuthLayout'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Button } from '@/components/ui/button'
 import { authService } from '@/services/authService'
 import { useAuth } from '@/auth/AuthContext'
@@ -145,24 +146,24 @@ export function RegisterPage() {
         </Field>
         
         <Field label="Password">
-          <Input 
-            type="password" 
-            placeholder="Create a strong password" 
+          <PasswordInput
+            placeholder="Create a strong password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="h-11 border-skin-line bg-skin-surface text-skin-text placeholder:text-skin-muted focus-visible:border-skin-accent focus-visible:ring-skin-accent/30"
             required
+            autoComplete="new-password"
           />
         </Field>
-        
+
         <Field label="Confirm Password">
-          <Input 
-            type="password" 
-            placeholder="Confirm your password" 
+          <PasswordInput
+            placeholder="Confirm your password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             className="h-11 border-skin-line bg-skin-surface text-skin-text placeholder:text-skin-muted focus-visible:border-skin-accent focus-visible:ring-skin-accent/30"
             required
+            autoComplete="new-password"
           />
         </Field>
         
