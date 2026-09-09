@@ -21,11 +21,15 @@ const RANGES: CoinRange[] = ['1h', '24h', '7d']
  */
 export function CoinIndexCard({
   variant = 'home',
+  chartVariant = 'compact',
   showRanges = true,
   showCta = true,
   className,
 }: {
   variant?: 'home' | 'hero' | 'compact'
+  /** Passed straight through to CoinIndexChart. The admin control page is
+   * the only caller that wants 'full' — every other surface stays compact. */
+  chartVariant?: 'compact' | 'full'
   showRanges?: boolean
   /** The admin preview steers the index rather than buying into it. */
   showCta?: boolean
@@ -35,9 +39,11 @@ export function CoinIndexCard({
   const { data, isLoading, isError } = useCoinIndex(range)
 
   // In the hero the chart is the composition, not a widget inside it, so it
-  // gets real height and drops the card chrome entirely.
+  // gets real height and drops the card chrome entirely. The full chart
+  // variant needs its own headroom for the price/time axes and legend, so
+  // it gets a taller default than the plain 'home' card too.
   const isHero = variant === 'hero'
-  const chartHeight = isHero ? 300 : variant === 'compact' ? 64 : 160
+  const chartHeight = isHero ? 300 : variant === 'compact' ? 64 : chartVariant === 'full' ? 320 : 160
 
   if (isLoading) {
     return (
@@ -119,7 +125,13 @@ export function CoinIndexCard({
       {/* pr-2 gives the live end-dot room to pulse without clipping on the
           container edge — it sits exactly at the last point's x. */}
       <div className={isHero ? 'mt-4 pr-2' : 'mt-3'}>
-        <CoinIndexChart series={data.series} positive={positive} height={chartHeight} />
+        <CoinIndexChart
+          series={data.series}
+          positive={positive}
+          height={chartHeight}
+          variant={chartVariant}
+          rangeLabel={range}
+        />
       </div>
 
       {variant !== 'compact' && (

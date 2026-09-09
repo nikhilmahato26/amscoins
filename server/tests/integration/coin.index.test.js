@@ -76,6 +76,30 @@ describe('bucketOHLC', () => {
   it('returns an empty array for an empty series', () => {
     expect(svc.bucketOHLC([], 100)).toEqual([])
   })
+
+  it('falls back to price for legacy docs written before o/h/l existed', () => {
+    const docs = [
+      { t: 1, price: 100 },
+      { t: 2, price: 90 },
+      { t: 3, price: 105 },
+    ]
+    const out = svc.bucketOHLC(docs, 1)
+    expect(out).toHaveLength(1)
+    expect(out[0]).toMatchObject({ o: 100, h: 105, l: 90, c: 105 })
+  })
+
+  it("widens a bucket's high/low using each tick's own h/l, beyond what the bucket's endpoint prices alone would give", () => {
+    // Endpoint prices alone would suggest a range of [100, 110], but a
+    // middle tick's own intra-tick high/low reaches further both ways.
+    const docs = [
+      { t: 1, price: 100, o: 100, h: 102, l: 98 },
+      { t: 2, price: 105, o: 100, h: 130, l: 70 },
+      { t: 3, price: 110, o: 105, h: 111, l: 104 },
+    ]
+    const out = svc.bucketOHLC(docs, 1)
+    expect(out).toHaveLength(1)
+    expect(out[0]).toMatchObject({ o: 100, h: 130, l: 70, c: 110 })
+  })
 })
 
 describe('GET /api/coin/index', () => {

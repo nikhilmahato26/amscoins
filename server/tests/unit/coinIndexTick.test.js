@@ -70,11 +70,76 @@ describe('nextPrice', () => {
     const endsAt = new Date('2026-09-09T10:10:00Z')
     let price = 100000
     const move = { action: 'pump', startPrice: 100000, targetPrice: 120000, startedAt, endsAt }
-    // Repeated ticks at the end of the window converge on the target.
+    // Repeated ticks at the end of the window converge on the target. `now`
+    // advances by a tick each call, matching how tick() actually invokes
+    // this (real time moves forward) — nextCandle's sub-steps read the
+    // drift target at instants leading up to `now`, so a `now` frozen at
+    // exactly endsAt would leave the earliest sub-steps of every call still
+    // just inside the window and short of full convergence.
+    let now = endsAt.getTime()
     for (let i = 0; i < 40; i++) {
-      price = svc.nextPrice({ currentPrice: price, volatility: 0, move }, endsAt.getTime(), noNoise)
+      price = svc.nextPrice({ currentPrice: price, volatility: 0, move }, now, noNoise)
+      now += svc.TICK_MS
     }
     expect(price).toBe(120000)
+  })
+})
+
+describe('nextCandle', () => {
+  it('opens at the passed currentPrice', () => {
+    const state = { currentPrice: 124780, volatility: 80, move: null }
+    expect(svc.nextCandle(state, Date.now(), Math.random).o).toBe(124780)
+  })
+
+  it('keeps high >= max(open, close) and low <= min(open, close), fuzzed over 500 seeded candles', () => {
+    const rand = mulberry32(7)
+    let currentPrice = svc.BASELINE_PAISE
+    let trendPrice = svc.BASELINE_PAISE
+    for (let i = 0; i < 500; i++) {
+      const candle = svc.nextCandle({ currentPrice, volatility: 90, move: null, trendPrice }, Date.now(), rand)
+      expect(candle.h).toBeGreaterThanOrEqual(Math.max(candle.o, candle.c))
+      expect(candle.l).toBeLessThanOrEqual(Math.min(candle.o, candle.c))
+      currentPrice = candle.c
+    }
+  })
+
+  it('collapses to a single flat point (o === h === l === c) at volatility 0 with no move', () => {
+    const state = { currentPrice: 124780, volatility: 0, move: null }
+    const candle = svc.nextCandle(state, Date.now(), Math.random)
+    expect(candle.o).toBe(124780)
+    expect(candle.h).toBe(124780)
+    expect(candle.l).toBe(124780)
+    expect(candle.c).toBe(124780)
+  })
+
+  it('produces wicks that out-measure bodies on average at full volatility — the property nextCandle exists for', () => {
+    const rand = mulberry32(99)
+    let currentPrice = svc.BASELINE_PAISE
+    let trendPrice = svc.BASELINE_PAISE
+    let totalWick = 0
+    let totalBody = 0
+    const iterations = 300
+    for (let i = 0; i < iterations; i++) {
+      const candle = svc.nextCandle({ currentPrice, volatility: 100, move: null, trendPrice }, Date.now(), rand)
+      totalWick += candle.h - candle.l
+      totalBody += Math.abs(candle.c - candle.o)
+      currentPrice = candle.c
+    }
+    expect(totalWick / iterations).toBeGreaterThan(totalBody / iterations)
+  })
+
+  it('always returns four integers within the floor/ceiling bounds', () => {
+    const rand = mulberry32(13)
+    let currentPrice = svc.FLOOR_PAISE
+    for (let i = 0; i < 200; i++) {
+      const candle = svc.nextCandle({ currentPrice, volatility: 100, move: null }, Date.now(), rand)
+      for (const v of [candle.o, candle.h, candle.l, candle.c]) {
+        expect(Number.isInteger(v)).toBe(true)
+        expect(v).toBeGreaterThanOrEqual(svc.FLOOR_PAISE)
+        expect(v).toBeLessThanOrEqual(svc.CEILING_PAISE)
+      }
+      currentPrice = candle.c
+    }
   })
 })
 

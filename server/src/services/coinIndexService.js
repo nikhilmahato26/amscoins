@@ -17,12 +17,15 @@ const ASMCOIN = 'asmcoin'
 const MOVE_PCT = { small: 3, medium: 8, hard: 18 }
 
 const RANGES = {
-  // Deliberately fewer points than raw ticks (a tick every 30s): each
-  // candle then spans several ticks, so it has real high/low wicks instead
-  // of a flat open === close body. See bucketOHLC.
-  '1h': { ms: 3_600_000, points: 30 }, // ~4 ticks/candle
-  '24h': { ms: 86_400_000, points: 180 }, // ~16 ticks/candle
-  '7d': { ms: 604_800_000, points: 200 }, // ~100 ticks/candle
+  // Candle counts, not tick counts. Every tick now carries its own high and
+  // low (see nextCandle), so a candle no longer needs to span many ticks to
+  // have a wick — which frees the counts to be chosen for legibility instead.
+  // Around 60-120 candles is what a real terminal shows: dense enough to read
+  // as a market, wide enough that a single candle is still distinguishable at
+  // the 375px mobile base.
+  '1h': { ms: 3_600_000, points: 60 }, // ~2 ticks/candle
+  '24h': { ms: 86_400_000, points: 96 }, // ~30 ticks/candle
+  '7d': { ms: 604_800_000, points: 120 }, // ~168 ticks/candle
 }
 
 // Volatility 100 produces at most a 0.6% step per tick. At a 30s tick that is
@@ -46,7 +49,34 @@ const REVERT_PULL = 0.08
 const TREND_STEP_FRACTION = 0.002
 const TREND_PULL = 0.01
 
+// A tick is a path, not a jump. The price walks through SUB_STEPS smaller
+// moves inside the 30s and the extremes of that walk become the tick's high
+// and low — twelve sub-steps is a move every 2.5s.
+//
+// This is what makes a wick mean something. A candle built only from tick
+// endpoints has a high/low drawn from a handful of samples, and the expected
+// range of a random walk grows with the square root of its sample count — so
+// four samples produce a stubby nub where a real candle, whose high and low
+// come from thousands of trades, shows a wick that routinely outruns its body.
+const SUB_STEPS = 12
+
+// Diffusion scaling. SUB_STEPS independent steps of sigma/sqrt(SUB_STEPS) sum
+// to the same standard deviation as one step of sigma, so splitting a tick
+// into sub-steps changes its texture and nothing else. Without this factor the
+// index would silently get sqrt(12) ≈ 3.5x wilder.
+const SUB_SIGMA_SCALE = 1 / Math.sqrt(SUB_STEPS)
+
+// Convert a per-tick pull into the per-sub-step pull that compounds to it:
+// 1 - (1 - subPull(p))^SUB_STEPS === p. Applying the whole-tick pull twelve
+// times over would make every admin move snap almost instantly instead of
+// ramping.
+const subPull = (whole) => 1 - Math.pow(1 - whole, 1 / SUB_STEPS)
+
 const clamp = (p) => Math.min(CEILING_PAISE, Math.max(FLOOR_PAISE, Math.round(p)))
+
+// Same bounds without the rounding — used inside the sub-step loop, where
+// rounding twelve times would accumulate a bias the model never asked for.
+const bound = (p) => Math.min(CEILING_PAISE, Math.max(FLOOR_PAISE, p))
 
 /**
  * Advance the slow trend anchor by one tick. Pure and synchronous, same
@@ -73,50 +103,80 @@ function nextTrend(trendPrice, volatility, rand = Math.random) {
 }
 
 /**
- * Compute the next index price. Pure and synchronous so it can be tested
+ * Where the drift target sits at a given instant within an active move's
+ * window: the fraction of the window elapsed at `at`, clamped to [0, 1] so a
+ * sub-step evaluated before the window opens or after it closes still lands
+ * on start/target rather than extrapolating past them, lerped from
+ * startPrice to targetPrice.
+ */
+function driftTargetAt(move, at) {
+  const startedAt = new Date(move.startedAt).getTime()
+  const endsAt = new Date(move.endsAt).getTime()
+  const span = endsAt - startedAt
+  const fraction = span <= 0 ? 1 : Math.min(1, Math.max(0, (at - startedAt) / span))
+  return move.startPrice + (move.targetPrice - move.startPrice) * fraction
+}
+
+/**
+ * Compute the next index candle. Pure and synchronous so it can be tested
  * exhaustively without a database — `rand` is injected for determinism.
  *
- * Three components:
- *   1. Noise — a random step scaled by volatility. Volatility 0 means no noise
- *      at all, which produces a provably flat line.
+ * A tick is not one jump, it's a walk: SUB_STEPS smaller steps inside the
+ * tick, each applying the same three forces nextPrice always has —
+ *   1. Noise — a random step scaled by volatility, split across sub-steps at
+ *      SUB_SIGMA_SCALE so the aggregate variance matches a single full-size
+ *      step (see SUB_SIGMA_SCALE's own comment).
  *   2. Reversion — pulled toward `trendPrice`, the slow-wandering anchor from
- *      nextTrend. This is what turns a pure random walk (which drifts away
- *      forever) into something that oscillates: noise pushes the price away
- *      from the trend, reversion pulls it back, so it overshoots and
- *      undershoots in both directions instead of only ever compounding one
- *      way. `trendPrice` is optional — callers that omit it (existing tests,
- *      callers not tracking a trend) get `currentPrice` as the target, which
- *      makes the reversion term a no-op.
- *   3. Drift — if an admin move is active, the price is pulled toward a target
- *      that itself slides from startPrice to targetPrice across the window.
- *      This still dominates reversion during a move: DRIFT_PULL (0.5) is
- *      several times REVERT_PULL (0.08 at most), and it applies after
- *      reversion has already been folded in, so a pump or crash still reads
- *      as a deliberate market move rather than being fought by the drift back
- *      to trend.
+ *      nextTrend. `trendPrice` is optional — callers that omit it get
+ *      `currentPrice` as the target, which makes reversion a no-op.
+ *   3. Drift — if an admin move is active, each sub-step reads the drift
+ *      target at its own instant (via driftTargetAt) rather than the one
+ *      target for the whole tick, so a move ramps smoothly through the
+ *      candle instead of trying to reach the same stale point twelve times.
  *
- * The result is always clamped and always an integer.
+ * The running max/min of the walk becomes the candle's high/low — this is
+ * the whole reason nextCandle exists instead of just nextPrice: a wick drawn
+ * from twelve samples routinely outruns the body, where one drawn from a
+ * single tick endpoint pair cannot.
  */
-function nextPrice(state, now = Date.now(), rand = Math.random) {
+function nextCandle(state, now = Date.now(), rand = Math.random) {
   const { currentPrice, volatility, move, trendPrice = currentPrice } = state
 
-  const sigma = (volatility / 100) * MAX_STEP_FRACTION
-  const noise = (rand() * 2 - 1) * sigma
-  let price = currentPrice * (1 + noise)
+  const sigma = (volatility / 100) * MAX_STEP_FRACTION * SUB_SIGMA_SCALE
+  const revert = subPull(REVERT_PULL * (volatility / 100))
+  const drift = subPull(DRIFT_PULL)
 
-  const revertFraction = REVERT_PULL * (volatility / 100)
-  price += (trendPrice - price) * revertFraction
+  const open = bound(currentPrice)
+  let price = open
+  let high = open
+  let low = open
 
-  if (move) {
-    const startedAt = new Date(move.startedAt).getTime()
-    const endsAt = new Date(move.endsAt).getTime()
-    const span = endsAt - startedAt
-    const fraction = span <= 0 ? 1 : Math.min(1, Math.max(0, (now - startedAt) / span))
-    const driftTarget = move.startPrice + (move.targetPrice - move.startPrice) * fraction
-    price += (driftTarget - price) * DRIFT_PULL
+  for (let step = 1; step <= SUB_STEPS; step++) {
+    const noise = (rand() * 2 - 1) * sigma
+    price = price * (1 + noise)
+    price += (trendPrice - price) * revert
+    if (move) {
+      // Sub-steps lead up to `now`, each reading the drift target at its own
+      // instant, so a move stays a ramp instead of twelve pulls toward one
+      // stale target.
+      const at = now - TICK_MS + (step / SUB_STEPS) * TICK_MS
+      price += (driftTargetAt(move, at) - price) * drift
+    }
+    price = bound(price)
+    if (price > high) high = price
+    if (price < low) low = price
   }
 
-  return clamp(price)
+  return { o: Math.round(open), h: Math.round(high), l: Math.round(low), c: clamp(price) }
+}
+
+/**
+ * Back-compat wrapper: every existing caller and test only ever wanted the
+ * close. Kept so the rest of the codebase (and coinIndexTick.test.js's
+ * `nextPrice` suite) doesn't have to change shape for a chart feature.
+ */
+function nextPrice(state, now = Date.now(), rand = Math.random) {
+  return nextCandle(state, now, rand).c
 }
 
 /**
@@ -132,19 +192,19 @@ async function tick(now = new Date()) {
   }
 
   const trendPrice = nextTrend(state.trendPrice ?? state.currentPrice, state.volatility)
-  const price = nextPrice(
+  const candle = nextCandle(
     { currentPrice: state.currentPrice, volatility: state.volatility, move: state.move, trendPrice },
     now.getTime()
   )
 
-  await CoinPrice.create({ t: now, price })
+  await CoinPrice.create({ t: now, price: candle.c, o: candle.o, h: candle.h, l: candle.l })
 
-  state.currentPrice = price
+  state.currentPrice = candle.c
   state.trendPrice = trendPrice
   state.lastTickAt = now
   await state.save()
 
-  return { price, at: now }
+  return { price: candle.c, at: now }
 }
 
 /**
@@ -234,11 +294,17 @@ async function listActions({ limit = 25, skip = 0 } = {}) {
 /**
  * Aggregate a time-ordered run of price ticks into at most `maxPoints` OHLC
  * candles. Each candle covers a contiguous run of ticks: open is the
- * bucket's first price, close its last, high/low the extremes across the
- * whole bucket — not just its two endpoints — so a candle's wick reflects
- * real intra-bucket movement instead of two points joined by a straight
- * line. The final tick's price always closes the last candle, so the
- * chart's right edge matches the live price shown above it.
+ * bucket's first tick's own open, close its last tick's price, high/low the
+ * extremes of every tick's own high/low across the whole bucket — not just
+ * the bucket's two endpoint prices — so a candle's wick reflects real
+ * intra-tick movement (from nextCandle's sub-step walk) on top of real
+ * intra-bucket movement. Ticks written before sub-steps existed carry only
+ * `price`; those fall back to it for o/h/l alike. The final tick's price
+ * always closes the last candle, so the chart's right edge matches the live
+ * price shown above it.
+ *
+ * A plain loop, not `Math.max(...array)`, because a 7d bucket can hold ~168
+ * docs and a spread argument list scales worse than a loop as buckets grow.
  */
 function bucketOHLC(docs, maxPoints) {
   if (docs.length === 0) return []
@@ -247,12 +313,19 @@ function bucketOHLC(docs, maxPoints) {
   const out = []
   for (let i = 0; i < docs.length; i += bucketSize) {
     const bucket = docs.slice(i, i + bucketSize)
-    const prices = bucket.map((d) => d.price)
+    let high = -Infinity
+    let low = Infinity
+    for (const d of bucket) {
+      const h = d.h ?? d.price
+      const l = d.l ?? d.price
+      if (h > high) high = h
+      if (l < low) low = l
+    }
     out.push({
       t: bucket[bucket.length - 1].t,
-      o: bucket[0].price,
-      h: Math.max(...prices),
-      l: Math.min(...prices),
+      o: bucket[0].o ?? bucket[0].price,
+      h: high,
+      l: low,
       c: bucket[bucket.length - 1].price,
     })
   }
@@ -291,20 +364,31 @@ async function getSeries(range = '24h') {
   const [state, docs, dayDocs, investorCount] = await Promise.all([
     CoinIndexState.getSingleton(),
     CoinPrice.find({ t: { $gte: new Date(now - cfg.ms) } }).sort({ t: 1 }).lean(),
-    CoinPrice.find({ t: { $gte: new Date(now - RANGES['24h'].ms) } }).select('price').lean(),
+    CoinPrice.find({ t: { $gte: new Date(now - RANGES['24h'].ms) } }).select('price o h l').lean(),
     getInvestorCount(now),
   ])
 
-  const prices = dayDocs.map((d) => d.price)
-  const first = docs.length ? docs[0].price : state.currentPrice
+  // Intra-tick extremes, not just tick closes — a 24h high built only from
+  // `price` would miss a spike that happened between two ticks and reverted
+  // before either was written.
+  let high24h = -Infinity
+  let low24h = Infinity
+  for (const d of dayDocs) {
+    const h = d.h ?? d.price
+    const l = d.l ?? d.price
+    if (h > high24h) high24h = h
+    if (l < low24h) low24h = l
+  }
+
+  const first = docs.length ? docs[0].o ?? docs[0].price : state.currentPrice
   const changePct = first === 0 ? 0 : ((state.currentPrice - first) / first) * 100
 
   return {
     range,
     current: state.currentPrice,
     changePct: Number(changePct.toFixed(2)),
-    high24h: prices.length ? Math.max(...prices) : state.currentPrice,
-    low24h: prices.length ? Math.min(...prices) : state.currentPrice,
+    high24h: dayDocs.length ? high24h : state.currentPrice,
+    low24h: dayDocs.length ? low24h : state.currentPrice,
     investorCount,
     series: bucketOHLC(docs, cfg.points),
   }
@@ -312,6 +396,7 @@ async function getSeries(range = '24h') {
 
 module.exports = {
   nextPrice,
+  nextCandle,
   nextTrend,
   tick,
   applyMove,
