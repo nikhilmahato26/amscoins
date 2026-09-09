@@ -58,8 +58,10 @@ describe('downsample', () => {
 })
 
 describe('GET /api/coin/index', () => {
-  it('rejects an unauthenticated request', async () => {
-    await request(app).get('/api/coin/index').expect(401)
+  it('succeeds without authentication (public endpoint)', async () => {
+    await CoinIndexState.getSingleton()
+    const res = await request(app).get('/api/coin/index').expect(200)
+    expect(res.body.current).toBeDefined()
   })
 
   it('returns the current price and a series', async () => {
