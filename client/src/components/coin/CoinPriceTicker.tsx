@@ -53,7 +53,9 @@ export function CoinPriceTicker({
       </span>
       <span
         className={cn(
-          'font-semibold tabular-nums',
+          // The arrow and the percentage are one reading unit — without this
+          // they split across lines when the price is long at 375px.
+          'whitespace-nowrap font-semibold tabular-nums',
           size === 'xl' && 'text-[14px] sm:text-[17px]',
           size === 'lg' && 'text-[15px]',
           size === 'sm' && 'text-[13px]',

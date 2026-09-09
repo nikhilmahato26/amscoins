@@ -1,11 +1,12 @@
 import { motion } from 'framer-motion'
-import { Clock, Lock } from 'lucide-react'
+import { Clock, Lock, ShieldCheck, Unlock, Zap } from 'lucide-react'
 import { Link, useNavigate } from 'react-router'
 
 import { AppShell } from '@/components/app/AppShell'
 import { TierBadge } from '@/components/app/TierBadge'
+import { CoinIndexCard } from '@/components/coin/CoinIndexCard'
 import { usePlans } from '@/hooks/queries'
-import { inr } from '@/lib/format'
+import { durationLabel, inr } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import type { Plan } from '@/services/api/plans'
 import type { PlanKey } from '@/types'
@@ -31,6 +32,12 @@ const fadeUp = {
 
 export function PlansPage() {
   const { data: plans, isLoading, isError } = usePlans()
+
+  // ASM Coin is not a peer of the tier trio — it is ungated, it has a live
+  // index, and it is the one plan anyone can enter today. Putting it in the
+  // same equal-cards grid would argue the opposite, so it leads on its own.
+  const coin = plans?.find((p) => p.key === 'asmcoin')
+  const tierPlans = plans?.filter((p) => p.key !== 'asmcoin') ?? []
 
   return (
     <AppShell headerVariant="root" width="wide">
@@ -64,17 +71,30 @@ export function PlansPage() {
         </p>
       )}
 
-      {plans && (
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          transition={{ staggerChildren: 0.08 }}
-          className="grid gap-6 pt-12 sm:grid-cols-2 lg:grid-cols-3"
-        >
-          {plans.map((plan) => (
-            <PlanCard key={plan.key} plan={plan} />
-          ))}
-        </motion.div>
+      {coin && <FeaturedCoinPlan plan={coin} />}
+
+      {plans && tierPlans.length > 0 && (
+        <>
+          {coin && (
+            <h2 className="pt-12 text-[11px] font-extrabold uppercase tracking-[0.14em] text-asm-muted">
+              Tier packages
+            </h2>
+          )}
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            transition={{ staggerChildren: 0.08 }}
+            className={cn(
+              'grid gap-6 sm:grid-cols-2',
+              tierPlans.length > 2 && 'lg:grid-cols-3',
+              coin ? 'pt-5' : 'pt-12',
+            )}
+          >
+            {tierPlans.map((plan) => (
+              <PlanCard key={plan.key} plan={plan} />
+            ))}
+          </motion.div>
+        </>
       )}
 
       <p className="mt-10 text-center text-[12px] leading-relaxed text-asm-muted">
@@ -82,6 +102,101 @@ export function PlansPage() {
         <span className="text-asm-body">Read the full terms before you invest.</span>
       </p>
     </AppShell>
+  )
+}
+
+/**
+ * The ASM Coin band. Carries the live index because the index is the reason
+ * anyone stops here — the terms alone read like every other package.
+ *
+ * The chart is indicative and never affects a payout; the return is the fixed
+ * plan term shown beside it.
+ */
+function FeaturedCoinPlan({ plan }: { plan: Plan }) {
+  const navigate = useNavigate()
+
+  const points = [
+    { Icon: Unlock, label: 'No referrals needed to invest' },
+    { Icon: Zap, label: `${plan.returnPct}% paid in one payout at maturity` },
+    { Icon: ShieldCheck, label: 'Withdraw your returns with no TDS' },
+  ]
+
+  return (
+    <motion.section
+      variants={fadeUp}
+      initial="hidden"
+      animate="visible"
+      aria-label={`${plan.name} package`}
+      className="mt-12 overflow-hidden rounded-[24px] bg-gradient-to-br from-asm-blue-tint to-asm-blue-tint/25 p-6 sm:p-8"
+    >
+      {/* Three children, in the order a phone should read them: what it is,
+          the proof, then the ask. At lg the first and third stack in the left
+          column and the chart takes the right, so the ask still sits under the
+          pitch rather than below a full-height chart. */}
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)] lg:items-center lg:gap-12">
+        <div className="flex flex-col items-start lg:col-start-1 lg:row-start-1">
+          <span className="inline-flex items-center gap-2 rounded-full bg-asm-blue px-3 py-1">
+            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-white">
+              Open to everyone
+            </span>
+          </span>
+
+          <div className="mt-4 flex items-center gap-3">
+            <TierBadge tier="asmcoin" size={56} />
+            <div className="flex flex-col">
+              <h2 className="text-[26px] font-extrabold leading-none tracking-tight text-asm-navy sm:text-[32px]">
+                {plan.name}
+              </h2>
+              <span className="mt-1 text-[13px] text-asm-body">
+                {plan.returnPct}% in {durationLabel(plan.durationHours)}
+              </span>
+            </div>
+          </div>
+
+          <ul className="mt-6 flex flex-col gap-2.5">
+            {points.map(({ Icon, label }) => (
+              <li key={label} className="flex items-center gap-2.5 text-[14px] text-asm-body">
+                <Icon className="size-4 shrink-0 text-asm-blue" aria-hidden />
+                {label}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* The band carries its own CTA below, so the card must not add a second. */}
+        <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-center">
+          <CoinIndexCard variant="home" showCta={false} />
+        </div>
+
+        <div className="flex flex-col items-start lg:col-start-1 lg:row-start-2">
+          <dl className="flex items-stretch gap-6">
+            <div>
+              <dt className="text-[9px] font-bold uppercase tracking-widest text-asm-muted">Min</dt>
+              <dd className="mt-0.5 font-mono text-[16px] font-bold tabular-nums text-asm-navy">{inr(plan.minInvest)}</dd>
+            </div>
+            <span className="w-px self-stretch bg-asm-line" />
+            <div>
+              <dt className="text-[9px] font-bold uppercase tracking-widest text-asm-muted">Max</dt>
+              <dd className="mt-0.5 font-mono text-[16px] font-bold tabular-nums text-asm-navy">{inr(plan.maxInvest)}</dd>
+            </div>
+          </dl>
+
+          <button
+            type="button"
+            onClick={() => navigate(`/app/invest?plan=${plan.key}`, { state: { planKey: plan.key } })}
+            aria-label={`Invest in the ${plan.name} package`}
+            className={cn(
+              'mt-5 flex min-h-[50px] w-full items-center justify-center rounded-xl bg-asm-blue px-6 sm:w-auto',
+              'text-[13px] font-bold uppercase tracking-[0.08em] text-white',
+              'transition-colors hover:bg-asm-blue-dark active:scale-[0.98]',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-blue focus-visible:ring-offset-2'
+            )}
+          >
+            Invest in {plan.name}
+          </button>
+        </div>
+      </div>
+    </motion.section>
   )
 }
 
@@ -111,7 +226,7 @@ function PlanCard({ plan }: { plan: Plan }) {
 
         <div className="mt-3 flex items-center gap-2">
           <Clock className="size-4 text-asm-blue" aria-hidden />
-          <span className="text-[15px] font-bold text-asm-navy">{plan.durationHours} Hours</span>
+          <span className="text-[15px] font-bold capitalize text-asm-navy">{durationLabel(plan.durationHours)}</span>
         </div>
 
         <div className="mt-4 flex w-full items-stretch justify-between rounded-xl bg-asm-tint px-4 py-2.5">
