@@ -6,6 +6,7 @@ import { AppShell } from '@/components/app/AppShell'
 import { InstagramIcon, TelegramIcon, WhatsAppIcon } from '@/components/app/icons'
 import { communityChannels } from '@/config/community'
 import type { CommunityChannelId } from '@/config/community'
+import { useSettings } from '@/hooks/queries'
 
 const container = {
   hidden: {},
@@ -29,7 +30,8 @@ const ACCENT: Record<CommunityChannelId, string> = {
 }
 
 export function CommunityPage() {
-  const channels = communityChannels()
+  const { data: settings } = useSettings()
+  const channels = communityChannels(settings)
 
   return (
     <AppShell backTo="/app">

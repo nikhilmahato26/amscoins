@@ -642,7 +642,7 @@ function MarketSnapshot() {
                 </span>
               </th>
               <td className="px-2 py-3.5 text-right text-[13px] font-semibold tabular-nums">{price}</td>
-              <td className={cn('px-3 py-3.5 text-right text-[12px] font-bold tabular-nums sm:px-2', positive ? 'text-asm-greenInk' : 'text-asm-red')}>
+              <td className={cn('px-3 py-3.5 text-right text-[12px] font-bold tabular-nums sm:px-2', positive ? 'text-asm-greenInk dark:text-[#30d158]' : 'text-asm-red dark:text-[#ff453a]')}>
                 {change}
               </td>
               <td className="hidden px-4 py-3.5 sm:table-cell">

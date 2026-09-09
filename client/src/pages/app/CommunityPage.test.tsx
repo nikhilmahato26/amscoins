@@ -9,8 +9,14 @@ vi.mock('@/components/app/AppShell', () => ({
   AppShell: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }))
 
+let settingsData: Record<string, unknown> = {}
+vi.mock('@/hooks/queries', () => ({
+  useSettings: () => ({ data: settingsData }),
+}))
+
 afterEach(() => {
   vi.unstubAllEnvs()
+  settingsData = {}
 })
 
 describe('CommunityPage', () => {
@@ -47,5 +53,16 @@ describe('CommunityPage', () => {
 
     expect(screen.queryByRole('link')).toBeNull()
     expect(screen.getByText(/coming soon/i)).toBeInTheDocument()
+  })
+
+  it('renders the Telegram link from admin-configured settings even with no env vars set', () => {
+    vi.stubEnv('VITE_COMMUNITY_INSTAGRAM_URL', '')
+    vi.stubEnv('VITE_COMMUNITY_WHATSAPP_URL', '')
+    vi.stubEnv('VITE_COMMUNITY_TELEGRAM_URL', '')
+    settingsData = { telegramUsername: 'asmcoins_support', whatsappNumber: '' }
+
+    render(<CommunityPage />)
+
+    expect(screen.getByRole('link', { name: /telegram/i })).toHaveAttribute('href', 'https://t.me/asmcoins_support')
   })
 })
