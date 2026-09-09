@@ -5,6 +5,7 @@ const { connectDb } = require('./config/db')
 const { seedPlans } = require('./seed/seedPlans')
 const { seedAdmin } = require('./seed/seedAdmin')
 const { startInvestmentWorker } = require('./jobs/investmentWorker')
+const { startCoinTicker, isTickerEnabled } = require('./jobs/coinTicker')
 
 // ---------------------------------------------------------------------------
 // Global crash handlers — catch anything that slips past try/catch blocks.
@@ -30,6 +31,7 @@ connectDb()
     await seedPlans()
     await seedAdmin()
     startInvestmentWorker().catch((err) => logger.warn('Worker failed to start', { error: err.message }))
+    if (isTickerEnabled()) startCoinTicker()
     app.listen(env.PORT, () => logger.info(`ASM Coins API on :${env.PORT}`))
   })
   .catch((err) => {

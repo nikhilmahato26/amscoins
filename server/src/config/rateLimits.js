@@ -252,6 +252,18 @@ const leaderboardLimiter = rateLimit({
   handler: createHandler('Too many requests, please try again shortly'),
 })
 
+// 10. Coin Index — IP based (public endpoint, no user session to key by)
+const coinIndexLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 30,
+  keyGenerator: (req) => ipKeyGenerator(req),
+  store: makeStore('rl:coin:'),
+  skip: skipInTest,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  handler: createHandler('Too many requests, please try again shortly'),
+})
+
 module.exports = {
   registerLimiter,
   loginLimiter,
@@ -261,4 +273,5 @@ module.exports = {
   dashboardLimiter,
   walletLimiter,
   leaderboardLimiter,
+  coinIndexLimiter,
 }

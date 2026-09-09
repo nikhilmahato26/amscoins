@@ -9,6 +9,7 @@ const invSvc = require('../services/investmentService')
 const wdSvc = require('../services/withdrawalService')
 const supportSvc = require('../services/supportService')
 const walletService = require('../services/walletService')
+const coinIndexService = require('../services/coinIndexService')
 const secretBox = require('../lib/secretBox')
 const { cacheGet, cacheSet, cacheDel } = require('../config/redis')
 
@@ -427,6 +428,41 @@ const getActivity = asyncHandler(async (_req, res) => {
   res.json(events.slice(0, LIMIT))
 })
 
+// ── ASM Coin index ──
+const coinPump = asyncHandler(async (req, res) => {
+  const state = await coinIndexService.applyMove({
+    action: 'pump',
+    size: req.body.size,
+    durationMinutes: req.body.durationMinutes,
+    adminId: req.user._id,
+  })
+  res.json(state)
+})
+
+const coinCrash = asyncHandler(async (req, res) => {
+  const state = await coinIndexService.applyMove({
+    action: 'crash',
+    size: req.body.size,
+    durationMinutes: req.body.durationMinutes,
+    adminId: req.user._id,
+  })
+  res.json(state)
+})
+
+const coinVolatility = asyncHandler(async (req, res) => {
+  res.json(await coinIndexService.setVolatility(req.body.value, req.user._id))
+})
+
+const coinReset = asyncHandler(async (req, res) => {
+  res.json(await coinIndexService.resetIndex(req.user._id))
+})
+
+const coinActions = asyncHandler(async (req, res) => {
+  const limit = Math.min(Number(req.query.limit) || 25, 100)
+  const skip = Number(req.query.skip) || 0
+  res.json(await coinIndexService.listActions({ limit, skip }))
+})
+
 module.exports = {
   listInvestments,
   getInvestmentStats,
@@ -460,4 +496,9 @@ module.exports = {
   resolveSupport,
   getStats,
   getActivity,
+  coinPump,
+  coinCrash,
+  coinVolatility,
+  coinReset,
+  coinActions,
 }

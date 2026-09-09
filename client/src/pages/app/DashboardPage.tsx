@@ -8,6 +8,7 @@ import {
 
 import { AppShell } from '@/components/app/AppShell'
 import { TierBadge, type Tier } from '@/components/app/TierBadge'
+import { CoinIndexCard } from '@/components/coin/CoinIndexCard'
 import { useDashboard, useWallet } from '@/hooks/queries'
 import { useAuth } from '@/auth/AuthContext'
 import { inr } from '@/lib/format'
@@ -210,6 +211,11 @@ export function DashboardPage() {
             {firstName} {tier && <span className="capitalize text-asm-blue">· {tier}</span>}
           </h1>
         </motion.div>
+
+        {/* ── ASM Coin index ── */}
+        <motion.section variants={fadeUp} aria-label="ASM Coin index">
+          <CoinIndexCard variant="home" />
+        </motion.section>
 
         {/* ── Wallet balance hero (tier-themed) ── */}
         {(() => {

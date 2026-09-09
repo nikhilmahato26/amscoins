@@ -3,6 +3,7 @@ import { getPlans } from '@/services/api/plans'
 import { getWallet } from '@/services/api/wallet'
 import { getReferral } from '@/services/api/referral'
 import { getDashboard } from '@/services/api/dashboard'
+import { getCoinIndex, type CoinRange } from '@/services/api/coin'
 import { getInvestment, getInvestments, getDepositGate, requestBreak } from '@/services/api/investments'
 import { getWithdrawals, createWithdrawal, type WithdrawalInput } from '@/services/api/withdrawals'
 import { getLeaderboard, type LeaderboardPeriod } from '@/services/api/leaderboard'
@@ -58,6 +59,19 @@ export const usePlans = () => useQuery({ queryKey: ['plans'], queryFn: getPlans 
 export const useWallet = () => useQuery({ queryKey: ['wallet'], queryFn: getWallet })
 export const useReferral = () => useQuery({ queryKey: ['referral'], queryFn: getReferral })
 export const useDashboard = () => useQuery({ queryKey: ['dashboard'], queryFn: getDashboard })
+/**
+ * Live ASM Coin index. Polls on the same 30s cadence the server ticks at, and
+ * keeps polling in the background so the number is fresh when a user returns
+ * to the tab.
+ */
+export const useCoinIndex = (range: CoinRange = '24h') =>
+  useQuery({
+    queryKey: ['coin-index', range],
+    queryFn: () => getCoinIndex(range),
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: false,
+    staleTime: 15_000,
+  })
 export const useInvestments = () => useQuery({ queryKey: ['investments'], queryFn: getInvestments })
 export function useInvestment(id: string) {
   return useQuery({
