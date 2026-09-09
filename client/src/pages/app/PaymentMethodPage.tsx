@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import type { ChangeEvent } from 'react'
 import { motion } from 'framer-motion'
 import {
   AlertCircle,
@@ -10,10 +11,12 @@ import {
   Copy,
   ExternalLink,
   Hourglass,
+  ImagePlus,
   IndianRupee,
   Info,
   Loader2,
   ShieldCheck,
+  X,
 } from 'lucide-react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 
@@ -31,7 +34,7 @@ import { useDepositGate, usePlans, useSettings } from '@/hooks/queries'
 import { ApiError } from '@/lib/api'
 import { inr } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import { createInvestment, notifyPayment } from '@/services/api/investments'
+import { createInvestment, notifyPayment, uploadPaymentScreenshot } from '@/services/api/investments'
 import type { DepositGate, Investment } from '@/services/api/investments'
 
 import type { PublicSettings } from '@/services/api/settings'
@@ -590,6 +593,10 @@ function PayStep({
   const { investment, method, network } = payStep
   const { copied, copy } = useCopy()
   const { rate: usdtRateInr, live: rateIsLive } = useLiveUsdtRate(settings.usdtRateInr || 96)
+  // "I've paid" stays locked until proof of payment is uploaded — the whole
+  // point of collecting it is to have it in hand before the deposit is
+  // submitted for review, not after.
+  const [screenshotUploaded, setScreenshotUploaded] = useState(false)
 
   // For USDT, resolve the wallet for the tapped chain (fall back to the first
   // configured wallet so the screen is never empty).
@@ -659,8 +666,8 @@ function PayStep({
               items={[
                 `Scan the QR with any UPI app and pay exactly ${inr(amountPaise)}.`,
                 `Add your reference code ${investment.referenceCode} in the payment note.`,
-                'Take a screenshot of the successful payment.',
-                'Tap "I’ve paid" below, then share the screenshot for faster approval.',
+                'Take a screenshot of the successful payment and upload it below.',
+                'Tap "I’ve paid" once you’re done.',
               ]}
             />
           </motion.section>
@@ -749,18 +756,30 @@ function PayStep({
           </motion.section>
         )}
 
+        {/* ── Payment screenshot ── */}
+        <motion.div variants={fadeUp}>
+          <PaymentScreenshotUpload
+            investmentId={investment._id}
+            onUploadedChange={setScreenshotUploaded}
+          />
+        </motion.div>
+
         {/* ── I've paid ── */}
         <motion.button
           variants={fadeUp}
           type="button"
           onClick={onPaid}
-          disabled={confirming}
+          disabled={confirming || !screenshotUploaded}
           className={cn(
-            'flex h-14 w-full items-center justify-center gap-2 rounded-2xl',
-            'bg-asm-green text-base font-bold text-white',
-            'shadow-[0_4px_20px_-4px_rgba(16,150,84,0.5)] transition-opacity hover:opacity-90',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-asm-green focus-visible:ring-offset-2',
-            'disabled:pointer-events-none disabled:opacity-45'
+            'flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-base font-bold transition-colors',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+            'disabled:pointer-events-none',
+            screenshotUploaded
+              ? [
+                  'bg-asm-green text-white hover:opacity-90',
+                  'shadow-[0_4px_20px_-4px_rgba(16,150,84,0.5)] focus-visible:ring-asm-green',
+                ]
+              : 'border-2 border-dashed border-asm-line bg-asm-tint text-asm-muted focus-visible:ring-asm-line'
           )}
         >
           {confirming ? (
@@ -774,11 +793,125 @@ function PayStep({
         </motion.button>
 
         <motion.p variants={fadeUp} className="text-center text-[12px] leading-relaxed text-asm-muted">
-          Only tap this after you&rsquo;ve completed the payment. We&rsquo;ll email your deposit
-          summary and take you to the confirmation screen to share your screenshot.
+          {screenshotUploaded
+            ? 'Only tap this after you’ve completed the payment. We’ll email your deposit summary and take you to the confirmation screen.'
+            : 'Upload a payment screenshot above to unlock this button.'}
         </motion.p>
       </motion.div>
     </AppShell>
+  )
+}
+
+/**
+ * Proof-of-payment upload, shown on the pay screen above "I've paid" — that
+ * button stays locked (see `screenshotUploaded` in PayStep) until this
+ * succeeds, so the admin always has a screenshot in hand before a deposit is
+ * submitted for review. Uploads immediately on selection (no separate "save"
+ * step) so there's no extra tap once the payment proof is in.
+ */
+function PaymentScreenshotUpload({
+  investmentId,
+  onUploadedChange,
+}: {
+  investmentId: string
+  onUploadedChange: (uploaded: boolean) => void
+}) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [uploadedUrl, setUploadedUrl] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // Revoke the local object URL when it's replaced or the component unmounts,
+  // so we don't leak blob: URLs while the user is mid-flow.
+  useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl) }, [previewUrl])
+
+  async function handleChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = '' // let the user re-pick the same file (e.g. after removing it)
+    if (!file) return
+
+    setError(null)
+    setPreviewUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return URL.createObjectURL(file) })
+    setUploading(true)
+    try {
+      const investment = await uploadPaymentScreenshot(investmentId, file)
+      setUploadedUrl(investment.paymentScreenshotUrl ?? null)
+      onUploadedChange(Boolean(investment.paymentScreenshotUrl))
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not upload screenshot')
+      setPreviewUrl(null)
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  function handleRemove() {
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setPreviewUrl(null)
+    setUploadedUrl(null)
+    setError(null)
+    onUploadedChange(false)
+  }
+
+  return (
+    <div className="flex flex-col gap-2 rounded-2xl border border-asm-line bg-white p-4 shadow-[0_4px_20px_-8px_rgba(16,42,92,0.12)]">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[13px] font-bold text-asm-navy">Payment screenshot</span>
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-asm-blue">Required</span>
+      </div>
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleChange}
+        aria-label="Upload payment screenshot"
+      />
+
+      {previewUrl ? (
+        <div className="relative w-fit">
+          <img
+            src={previewUrl}
+            alt="Payment screenshot preview"
+            className="max-h-56 rounded-xl border border-asm-line object-contain"
+          />
+          {uploading && (
+            <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/40">
+              <Loader2 className="size-6 animate-spin text-white" aria-hidden />
+            </div>
+          )}
+          {!uploading && uploadedUrl && (
+            <span className="absolute -right-2 -top-2 flex size-6 items-center justify-center rounded-full bg-asm-green text-white shadow-[0_2px_8px_-2px_rgba(16,150,84,0.6)]">
+              <CheckCircle2 className="size-4" aria-hidden />
+            </span>
+          )}
+          {!uploading && (
+            <button
+              type="button"
+              onClick={handleRemove}
+              aria-label="Remove screenshot"
+              className="absolute -left-2 -top-2 flex size-6 items-center justify-center rounded-full bg-asm-navy text-white shadow-[0_2px_8px_-2px_rgba(16,42,92,0.4)]"
+            >
+              <X className="size-3.5" aria-hidden />
+            </button>
+          )}
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          className="flex flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-asm-line bg-asm-tint px-4 py-6 text-center transition-colors hover:border-asm-blue hover:bg-asm-blue-tint"
+        >
+          <ImagePlus className="size-5 text-asm-muted" aria-hidden />
+          <span className="text-[12px] font-semibold text-asm-navy">Add a screenshot</span>
+          <span className="text-[11px] text-asm-muted">Required to submit your deposit</span>
+        </button>
+      )}
+
+      {error && <p className="text-[11px] font-medium text-asm-red">{error}</p>}
+    </div>
   )
 }
 

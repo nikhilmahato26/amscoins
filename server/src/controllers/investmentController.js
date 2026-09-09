@@ -1,6 +1,13 @@
 const asyncHandler = require('../middleware/asyncHandler')
+const { ApiError } = require('../middleware/errorHandler')
 const Investment = require('../models/Investment')
-const { createInvestment, notifyPaymentSubmitted, getDepositGate, requestBreak: requestBreakSvc } = require('../services/investmentService')
+const {
+  createInvestment,
+  notifyPaymentSubmitted,
+  attachPaymentScreenshot,
+  getDepositGate,
+  requestBreak: requestBreakSvc,
+} = require('../services/investmentService')
 
 const create = asyncHandler(async (req, res) => {
   const { investment, telegramLink, whatsappLink } = await createInvestment(req.user, req.body)
@@ -21,6 +28,15 @@ const notify = asyncHandler(async (req, res) => {
     req.params.id
   )
   res.json({ investment, telegramLink, whatsappLink })
+})
+
+// Screenshot of the payment, uploaded from the pay screen — before (or in
+// place of) tapping "I've paid" — so the admin can see proof in the review
+// panel ahead of approving.
+const uploadScreenshot = asyncHandler(async (req, res) => {
+  if (!req.file) throw new ApiError(400, 'No image file provided')
+  const investment = await attachPaymentScreenshot(req.user, req.params.id, req.file.buffer)
+  res.json({ investment })
 })
 
 const mine = asyncHandler(async (req, res) =>
@@ -44,4 +60,4 @@ const requestBreak = asyncHandler(async (req, res) =>
   res.json(await requestBreakSvc(req.params.id, req.user._id))
 )
 
-module.exports = { create, notify, mine, getOne, depositGate, requestBreak }
+module.exports = { create, notify, uploadScreenshot, mine, getOne, depositGate, requestBreak }

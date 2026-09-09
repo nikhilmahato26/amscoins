@@ -60,6 +60,10 @@ const investmentSchema = new Schema(
     autoRejected: { type: Boolean, default: false },
     autoApproved: { type: Boolean, default: false },
     paymentNotified: { type: Boolean, default: false },
+    // Uploaded by the user on the pay screen, before (or instead of) tapping
+    // "I've paid" — lets an admin see proof of payment without leaving the
+    // review panel. Optional: absence just means the user skipped it.
+    paymentScreenshotUrl: { type: String, default: '' },
     deletedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     deletedAt: { type: Date },
     // Installment-plan fields

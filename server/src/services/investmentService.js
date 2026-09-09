@@ -17,6 +17,7 @@ const { cacheDel } = require('../config/redis')
 const email = require('./emailService')
 const Settings = require('../models/Settings')
 const queue = require('../config/queue')
+const cloudinaryConfig = require('../config/cloudinary')
 
 /**
  * Credit a user from one of their investments.
@@ -201,6 +202,10 @@ async function createInvestment(user, { planKey, amount, referralCode }) {
 async function notifyPaymentSubmitted(user, investmentId) {
   const investment = await Investment.findOne({ _id: investmentId, user: user._id })
   if (!investment) throw new ApiError(404, 'Investment not found')
+  // The client locks the "I've paid" button until a screenshot is attached,
+  // but that's a UI convenience, not a security boundary — enforce it here
+  // too, since a deposit can otherwise be submitted straight from the API.
+  if (!investment.paymentScreenshotUrl) throw new ApiError(400, 'Upload a payment screenshot before submitting')
 
   // Mark as submitted — this is the moment the deposit enters the admin queue.
   // Idempotent: calling again on an already-notified investment is harmless.
@@ -217,6 +222,32 @@ async function notifyPaymentSubmitted(user, investmentId) {
 
   const { whatsappLink, telegramLink } = await buildSupportLinks(investment)
   return { investment, telegramLink, whatsappLink }
+}
+
+/**
+ * Attaches a proof-of-payment screenshot to a deposit, uploaded from the pay
+ * screen before (or instead of) tapping "I've paid" — so the admin sees it in
+ * the review panel without leaving the app. Deterministic publicId means a
+ * re-upload just overwrites the previous screenshot rather than piling up
+ * orphans on Cloudinary. Only allowed while the deposit is still pending and
+ * un-notified — once it's submitted or decided, the proof is fixed.
+ */
+async function attachPaymentScreenshot(user, investmentId, buffer) {
+  const investment = await Investment.findOne({ _id: investmentId, user: user._id })
+  if (!investment) throw new ApiError(404, 'Investment not found')
+  if (investment.status !== 'pending') throw new ApiError(400, 'This deposit is no longer pending')
+  if (!cloudinaryConfig.isConfigured()) throw new ApiError(503, 'Image uploads are not available right now')
+
+  const result = await cloudinaryConfig.uploadImage(buffer, {
+    folder: 'asmcoins/payment-screenshots',
+    publicId: String(investment._id),
+    // Payment proof must stay uncropped and legible — no face gravity, no square crop.
+    transformation: [{ width: 1600, crop: 'limit' }],
+  })
+
+  investment.paymentScreenshotUrl = result.secure_url
+  await investment.save()
+  return investment
 }
 
 async function approveInvestment(investmentId, adminId, { auto = false } = {}) {
@@ -1060,7 +1091,7 @@ async function rejectBreak(investmentId, adminId) {
 }
 
 module.exports = {
-  getDepositGate, createInvestment, notifyPaymentSubmitted,
+  getDepositGate, createInvestment, notifyPaymentSubmitted, attachPaymentScreenshot,
   approveInvestment, rejectInvestment,
   approveReturn, rejectReturn,
   approvePayout, rejectPayout,

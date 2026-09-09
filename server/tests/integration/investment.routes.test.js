@@ -4,6 +4,7 @@ const request = require('supertest')
 const { setupDb, clearDb, teardownDb } = require('../helpers/db')
 const app = require('../../src/app')
 const { seedPlans } = require('../../src/seed/seedPlans')
+const cloudinaryConfig = require('../../src/config/cloudinary')
 
 beforeAll(setupDb)
 beforeEach(seedPlans)
@@ -48,27 +49,42 @@ test('referral overview returns own code and next tier target 21', async () => {
 })
 
 test('deposit-gate is open for a new user, pending after a deposit, and blocks a 2nd deposit (409)', async () => {
-  const token = await registerToken()
+  const isConfiguredSpy = jest.spyOn(cloudinaryConfig, 'isConfigured').mockReturnValue(true)
+  const uploadSpy = jest
+    .spyOn(cloudinaryConfig, 'uploadImage')
+    .mockResolvedValue({ secure_url: 'https://res.cloudinary.com/demo/proof.png' })
 
-  // Open before any deposit.
-  const open = await request(app).get('/api/investments/deposit-gate').set('Authorization', `Bearer ${token}`)
-  expect(open.status).toBe(200)
-  expect(open.body.status).toBe('open')
+  try {
+    const token = await registerToken()
 
-  // First deposit succeeds.
-  const first = await request(app).post('/api/investments').set('Authorization', `Bearer ${token}`).send({ planKey: 'silver', amount: 200000 })
-  expect(first.status).toBe(201)
-  // Notify payment submitted so the gate sees this deposit as blocking.
-  await request(app).post(`/api/investments/${first.body.investment._id}/notify`).set('Authorization', `Bearer ${token}`)
+    // Open before any deposit.
+    const open = await request(app).get('/api/investments/deposit-gate').set('Authorization', `Bearer ${token}`)
+    expect(open.status).toBe(200)
+    expect(open.body.status).toBe('open')
 
-  // Gate now reports pending, and a second deposit is refused with 409.
-  const gated = await request(app).get('/api/investments/deposit-gate').set('Authorization', `Bearer ${token}`)
-  expect(gated.body.status).toBe('pending')
-  expect(gated.body.pendingInvestmentId).toBe(first.body.investment._id)
+    // First deposit succeeds.
+    const first = await request(app).post('/api/investments').set('Authorization', `Bearer ${token}`).send({ planKey: 'silver', amount: 200000 })
+    expect(first.status).toBe(201)
+    // A screenshot must be attached before the deposit can be submitted.
+    await request(app)
+      .post(`/api/investments/${first.body.investment._id}/screenshot`)
+      .set('Authorization', `Bearer ${token}`)
+      .attach('file', Buffer.from('fakepng'), 'proof.png')
+    // Notify payment submitted so the gate sees this deposit as blocking.
+    await request(app).post(`/api/investments/${first.body.investment._id}/notify`).set('Authorization', `Bearer ${token}`)
 
-  const second = await request(app).post('/api/investments').set('Authorization', `Bearer ${token}`).send({ planKey: 'silver', amount: 200000 })
-  expect(second.status).toBe(409)
-  expect(second.body.error).toMatch(/awaiting approval/i)
+    // Gate now reports pending, and a second deposit is refused with 409.
+    const gated = await request(app).get('/api/investments/deposit-gate').set('Authorization', `Bearer ${token}`)
+    expect(gated.body.status).toBe('pending')
+    expect(gated.body.pendingInvestmentId).toBe(first.body.investment._id)
+
+    const second = await request(app).post('/api/investments').set('Authorization', `Bearer ${token}`).send({ planKey: 'silver', amount: 200000 })
+    expect(second.status).toBe(409)
+    expect(second.body.error).toMatch(/awaiting approval/i)
+  } finally {
+    isConfiguredSpy.mockRestore()
+    uploadSpy.mockRestore()
+  }
 })
 
 test("returns 404 when fetching another user's investment by id", async () => {
