@@ -21,9 +21,20 @@ async function credit(userId, amount, meta, session) {
     throw new ApiError(400, 'Amount must be positive')
   }
 
+  // meta.tdsExemptPaise is the portion of THIS credit that must not be taxed
+  // when it is later withdrawn (ASM Coin returns, and the restore leg of a
+  // rejected withdrawal). It rides along as a sub-balance of the same wallet.
+  const exempt = meta.tdsExemptPaise || 0
+  if (exempt < 0 || exempt > amount) {
+    logger.warn('Credit rejected — invalid exempt portion', { userId, amount, exempt })
+    throw new ApiError(400, 'Invalid exempt portion')
+  }
+
+  const inc = exempt > 0 ? { balance: amount, tdsExemptPaise: exempt } : { balance: amount }
+
   const w = await Wallet.findOneAndUpdate(
     { user: userId },
-    { $inc: { balance: amount } },
+    { $inc: inc },
     { returnDocument: 'after', upsert: true, session }
   )
 
@@ -51,14 +62,30 @@ async function debit(userId, amount, meta, session) {
     throw new ApiError(400, 'Amount must be positive')
   }
 
+  // meta.tdsExemptUsed is how much of this debit is drawn from the TDS-exempt
+  // sub-balance. Decremented in the SAME atomic update as the balance, and
+  // guarded by $gte, so two concurrent withdrawals cannot spend it twice.
+  const exemptUsed = meta.tdsExemptUsed || 0
+  if (exemptUsed < 0 || exemptUsed > amount) {
+    logger.warn('Debit rejected — invalid exempt portion', { userId, amount, exemptUsed })
+    throw new ApiError(400, 'Invalid exempt portion')
+  }
+
+  const filter = { user: userId, balance: { $gte: amount } }
+  const dec = { balance: -amount }
+  if (exemptUsed > 0) {
+    filter.tdsExemptPaise = { $gte: exemptUsed }
+    dec.tdsExemptPaise = -exemptUsed
+  }
+
   const w = await Wallet.findOneAndUpdate(
-    { user: userId, balance: { $gte: amount } },
-    { $inc: { balance: -amount } },
+    filter,
+    { $inc: dec },
     { returnDocument: 'after', session }
   )
 
   if (!w) {
-    logger.warn('Debit rejected — insufficient balance', { userId, amount })
+    logger.warn('Debit rejected — insufficient balance', { userId, amount, exemptUsed })
     throw new ApiError(400, 'Insufficient balance')
   }
 

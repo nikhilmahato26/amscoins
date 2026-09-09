@@ -18,6 +18,20 @@ const email = require('./emailService')
 const Settings = require('../models/Settings')
 const queue = require('../config/queue')
 
+/**
+ * Credit a user from one of their investments.
+ *
+ * ASM Coin pays out TDS-free — principal and profit alike — so any money
+ * leaving an ASM Coin investment is tagged as an exempt sub-balance, which
+ * the withdrawal path then spends before taxing anything. Routing every
+ * investment credit through here means a new payout path inherits the rule
+ * instead of having to remember it.
+ */
+async function creditFromInvestment(inv, amount, meta, session) {
+  const exempt = inv.planKey === 'asmcoin' ? { tdsExemptPaise: amount } : {}
+  return walletService.credit(inv.user, amount, { ...meta, ...exempt }, session)
+}
+
 async function uniqueRef() {
   for (let i = 0; i < 10; i++) {
     const ref = `ASM-${randomCode(8)}`
@@ -348,18 +362,18 @@ async function approveReturn(investmentId, adminId) {
       const wasCredited = inv.walletCredited
       let credited = 0
       if (!wasCredited) {
-        await walletService.credit(
-          inv.user, inv.amount,
+        await creditFromInvestment(
+          inv, inv.amount,
           { type: 'deposit', actor: adminId ? 'admin' : 'system', note: `Principal ${inv.referenceCode}`, ref: inv._id },
           session
         )
         credited += inv.amount
       }
-      // Guard >0: walletService.credit throws on non-positive amounts, so a
+      // Guard >0: the wallet credit throws on non-positive amounts, so a
       // future 0% plan (expectedReturn === 0) must not abort the transaction.
       if (inv.expectedReturn > 0) {
-        await walletService.credit(
-          inv.user, inv.expectedReturn,
+        await creditFromInvestment(
+          inv, inv.expectedReturn,
           { type: 'return', actor: adminId ? 'admin' : 'system', note: `Return ${inv.referenceCode}`, ref: inv._id },
           session
         )
@@ -397,8 +411,8 @@ async function rejectReturn(investmentId, adminId, { reason, amount }) {
       if (amount < 0 || amount > max) throw new ApiError(400, 'Amount out of range')
 
       if (amount > 0) {
-        await walletService.credit(
-          inv.user, amount,
+        await creditFromInvestment(
+          inv, amount,
           { type: 'adjustment', actor: 'admin', note: `Return reject ${inv.referenceCode}: ${reason}`, ref: inv._id },
           session
         )
@@ -445,16 +459,16 @@ async function approvePayout(investmentId, adminId) {
 
       let credited = 0
       if (!inv.walletCredited) {
-        await walletService.credit(
-          inv.user, inv.amount,
+        await creditFromInvestment(
+          inv, inv.amount,
           { type: 'deposit', actor: adminId ? 'admin' : 'system', note: `Principal ${inv.referenceCode}`, ref: inv._id },
           session
         )
         credited += inv.amount
       }
       if (inv.expectedReturn > 0) {
-        await walletService.credit(
-          inv.user, inv.expectedReturn,
+        await creditFromInvestment(
+          inv, inv.expectedReturn,
           { type: 'return', actor: adminId ? 'admin' : 'system', note: `Return ${inv.referenceCode}`, ref: inv._id },
           session
         )
@@ -502,8 +516,8 @@ async function rejectPayout(investmentId, adminId, { reason = '', amount = 0 } =
       if (amount < 0 || amount > max) throw new ApiError(400, 'Amount out of range')
 
       if (amount > 0 && !inv.walletCredited) {
-        await walletService.credit(
-          inv.user, amount,
+        await creditFromInvestment(
+          inv, amount,
           { type: 'return', actor: adminId ? 'admin' : 'system', note: `Reject payout ${inv.referenceCode}${reason ? ': ' + reason : ''}`, ref: inv._id },
           session
         )
@@ -766,8 +780,8 @@ async function approveInstallment(investmentId, day, adminId) {
       if (installment.status === 'scheduled') throw new ApiError(409, 'Installment not yet available')
 
       // Credit this day's return amount.
-      await walletService.credit(
-        inv.user,
+      await creditFromInvestment(
+        inv,
         installment.amount,
         {
           type: 'return',
@@ -791,8 +805,8 @@ async function approveInstallment(investmentId, day, adminId) {
       )
       if (isLastInstallment) {
         // Credit principal back and close the investment.
-        await walletService.credit(
-          inv.user,
+        await creditFromInvestment(
+          inv,
           inv.amount,
           {
             type: 'deposit',
@@ -857,8 +871,8 @@ async function rejectInstallment(investmentId, day, adminId, { reason = '', amou
       if (amount < 0 || amount > installment.amount) throw new ApiError(400, 'Amount out of range')
 
       if (amount > 0) {
-        await walletService.credit(
-          inv.user,
+        await creditFromInvestment(
+          inv,
           amount,
           {
             type: 'return',
@@ -882,8 +896,8 @@ async function rejectInstallment(investmentId, day, adminId, { reason = '', amou
         (i) => i.day === day || i.status === 'paid' || i.status === 'rejected'
       )
       if (isLastInstallment) {
-        await walletService.credit(
-          inv.user,
+        await creditFromInvestment(
+          inv,
           inv.amount,
           {
             type: 'deposit',
@@ -977,8 +991,8 @@ async function approveBreak(investmentId, adminId) {
       for (let i = 0; i < inv.installments.length; i++) {
         const inst = inv.installments[i]
         if (inst.status !== 'paid' && (inst.maturesAt <= breakAt || inst.status === 'available')) {
-          await walletService.credit(
-            inv.user,
+          await creditFromInvestment(
+            inv,
             inst.amount,
             {
               type: 'return',
@@ -996,8 +1010,8 @@ async function approveBreak(investmentId, adminId) {
       }
 
       // Always credit principal on break.
-      await walletService.credit(
-        inv.user,
+      await creditFromInvestment(
+        inv,
         inv.amount,
         {
           type: 'deposit',

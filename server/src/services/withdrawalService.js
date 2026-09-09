@@ -92,15 +92,27 @@ async function initiateWithdrawal(user, body) {
   }
   await assertWithdrawalCooldown(user._id)
   const dest = resolveDestination(user, body)
-  // TDS rate depends on the user's tier (silver 5% / gold 3% / diamond 0%).
-  const { tds, net } = computeTds(amount, tdsPctForTier(user.tier))
+
+  // ASM Coin returns are TDS-free. The wallet carries that money as a
+  // sub-balance, and a withdrawal spends it FIRST — so a user withdrawing
+  // only ASM Coin profit pays no TDS regardless of tier, and one withdrawing
+  // more pays tier TDS on the remainder only.
+  const wallet = await walletService.getOrCreateWallet(user._id)
+  const tdsExemptUsed = Math.min(amount, wallet.tdsExemptPaise || 0)
+  const taxable = amount - tdsExemptUsed
+
+  // TDS rate depends on the user's tier (silver 5% / gold 3% / diamond 0%),
+  // but it is charged on the taxable slice only. `net` is still what actually
+  // leaves for the bank: the full gross less whatever TDS was charged.
+  const { tds } = computeTds(taxable, tdsPctForTier(user.tier))
+  const net = amount - tds
   const session = await mongoose.startSession()
   let withdrawal
   try {
     await session.withTransaction(async () => {
       // Create the withdrawal first so the ledger entry can reference it.
       ;[withdrawal] = await Withdrawal.create(
-        [{ user: user._id, gross: amount, tds, net, status: 'pending', ...dest }],
+        [{ user: user._id, gross: amount, tds, net, tdsExemptUsed, status: 'pending', ...dest }],
         { session }
       )
       // Deduct the gross immediately (money leaves the wallet on init), but the
@@ -109,7 +121,7 @@ async function initiateWithdrawal(user, body) {
       await walletService.debit(
         user._id,
         amount,
-        { type: 'withdrawal', actor: 'user', note: `Withdrawal to ${destinationLabel(dest)}`, ref: withdrawal._id, status: 'pending' },
+        { type: 'withdrawal', actor: 'user', note: `Withdrawal to ${destinationLabel(dest)}`, ref: withdrawal._id, status: 'pending', tdsExemptUsed },
         session
       )
     })
@@ -133,6 +145,7 @@ async function initiateWithdrawal(user, body) {
     gross: amount,
     tds,
     net,
+    tdsExemptUsed,
     method: dest.method,
     destination: destinationLabel(dest),
   })
@@ -185,7 +198,9 @@ async function rejectWithdrawal(id, adminId, note = '') {
       await walletService.credit(
         w.user,
         w.gross,
-        { type: 'refund', actor: 'admin', note: `Refund ${note}`, ref: w._id, status: 'rejected' },
+        // Put the TDS-exempt slice back exactly as it was spent, so a rejected
+        // withdrawal does not quietly convert exempt money into taxable money.
+        { type: 'refund', actor: 'admin', note: `Refund ${note}`, ref: w._id, status: 'rejected', tdsExemptPaise: w.tdsExemptUsed || 0 },
         session
       )
       w.status = 'rejected'

@@ -342,6 +342,26 @@ ${DARK_RULES.replace(/^ {4}\./gm, '    [data-ogsc] .')}
 </html>`
 }
 
+/**
+ * The TDS line's label for a specific withdrawal.
+ *
+ * The rate is never a constant: it varies by tier (silver 5% / gold 3% /
+ * diamond 0%), and an ASM Coin withdrawal is exempt on the slice drawn from
+ * its TDS-free sub-balance, so the effective rate can be anything in between.
+ * Deriving it from the withdrawal's own numbers keeps the email honest for
+ * every case instead of asserting a 5% that may not have been charged.
+ */
+function tdsRateLabel(w) {
+  const gross = w.gross || 0
+  const tds = w.tds || 0
+  if (gross <= 0 || tds <= 0) return 'TDS'
+  const pct = (tds / gross) * 100
+  // Whole percentages print clean ("TDS (5%)"); a partial exemption lands on
+  // a fraction, so show one decimal rather than rounding away the difference.
+  const shown = Number.isInteger(Number(pct.toFixed(2))) ? pct.toFixed(0) : pct.toFixed(1)
+  return `TDS (${shown}%)`
+}
+
 async function sendMail({ to, subject, html, text }) {
   try {
     logger.info('Sending email', { to, subject })
@@ -368,6 +388,7 @@ const withdrawalInitiated = (user, w) => {
   const inrAmountPrefix = formatInrPrefix(w.gross)
   const inrNetSuffix = formatInrSuffix(w.net || w.gross) // net = gross - TDS
   const tdsSuffix = formatInrSuffix(w.tds || 0)
+  const tdsLabel = tdsRateLabel(w)
   const dateStr = fmtDate(w.initiatedAt || w.createdAt || new Date())
   const accountText = formatAccount(w.upiId)
 
@@ -396,7 +417,7 @@ const withdrawalInitiated = (user, w) => {
         <td class="asm-cell asm-accent" style="padding:11px 16px;border-bottom:1px solid ${C.line};color:${C.accent};font-size:14px;font-weight:700;">${inrNetSuffix}</td>
       </tr>
       <tr>
-        <td class="asm-cell asm-text" style="padding:11px 16px;border-bottom:1px solid ${C.line};border-right:1px solid ${C.line};color:${C.text};font-size:14px;">TDS (5%)</td>
+        <td class="asm-cell asm-text" style="padding:11px 16px;border-bottom:1px solid ${C.line};border-right:1px solid ${C.line};color:${C.text};font-size:14px;">${tdsLabel}</td>
         <td class="asm-cell asm-heading" style="padding:11px 16px;border-bottom:1px solid ${C.line};color:${C.heading};font-size:14px;">${tdsSuffix}</td>
       </tr>
       <tr>
@@ -430,6 +451,7 @@ const withdrawalCompleted = (user, w) => {
   const inrAmountPrefix = formatInrPrefix(w.gross)
   const inrNetSuffix = formatInrSuffix(w.net || w.gross) // net = gross - TDS
   const tdsSuffix = formatInrSuffix(w.tds || 0)
+  const tdsLabel = tdsRateLabel(w)
   const dateObj = w.completedAt || w.updatedAt || new Date()
   const dateStr = fmtDate(dateObj)
   const accountText = formatAccount(w.upiId)
@@ -491,7 +513,7 @@ const withdrawalCompleted = (user, w) => {
         <td class="asm-cell asm-accent" style="padding:11px 16px;border-bottom:1px solid ${C.line};color:${C.accent};font-size:14px;font-weight:700;">${inrNetSuffix}</td>
       </tr>
       <tr>
-        <td class="asm-cell asm-text" style="padding:11px 16px;border-bottom:1px solid ${C.line};border-right:1px solid ${C.line};color:${C.text};font-size:14px;">TDS (5%)</td>
+        <td class="asm-cell asm-text" style="padding:11px 16px;border-bottom:1px solid ${C.line};border-right:1px solid ${C.line};color:${C.text};font-size:14px;">${tdsLabel}</td>
         <td class="asm-cell asm-heading" style="padding:11px 16px;border-bottom:1px solid ${C.line};color:${C.heading};font-size:14px;">${tdsSuffix}</td>
       </tr>
       <tr>

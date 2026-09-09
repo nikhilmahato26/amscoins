@@ -99,9 +99,13 @@ export function WithdrawPage() {
   const balanceRs    = balancePaise / 100
   const maxWithdrawalRs = MAX_WITHDRAWAL_BY_TIER[user?.tier ?? 'silver']
 
-  /* TDS rate is tier-based (silver 5% / gold 3% / diamond 0%). */
+  /* TDS rate is tier-based (silver 5% / gold 3% / diamond 0%)... */
   const tdsPct = tdsPctForTier(user?.tier)
   const tdsFraction = tdsPct / 100
+  /* ...but ASM Coin money withdraws tax-free. The server spends that exempt
+     sub-balance first and charges the tier rate on the remainder only, so the
+     preview below mirrors that rather than taxing the whole amount. */
+  const tdsExemptPaise = walletData?.tdsExemptPaise ?? 0
   /* Higher tiers the user can still unlock, with the TDS/return they'd get. */
   const upgrades = user ? upgradeHints(user.tier, user.referralCount) : []
 
@@ -130,6 +134,16 @@ export function WithdrawPage() {
   const parsedRs  = Number.parseFloat(amount)
   const validRs   = Number.isFinite(parsedRs) && parsedRs > 0 ? parsedRs : 0
   const validPaise = Math.round(validRs * 100)
+  /* Mirror of the server's split: exempt slice first, tier TDS on the rest. */
+  const exemptUsedPaise = Math.min(validPaise, tdsExemptPaise)
+  const taxablePaise = validPaise - exemptUsedPaise
+  const tdsPaise = Math.round(taxablePaise * tdsFraction)
+  const netPaise = validPaise - tdsPaise
+  /* The rate actually charged — a part-exempt withdrawal lands below the tier rate. */
+  const effectiveTdsPct = validPaise > 0 ? (tdsPaise / validPaise) * 100 : tdsPct
+  const tdsPctLabel = Number.isInteger(Number(effectiveTdsPct.toFixed(2)))
+    ? effectiveTdsPct.toFixed(0)
+    : effectiveTdsPct.toFixed(1)
   const upiDisabled = validRs > UPI_MAX_RS
 
   /* Auto-switch away from UPI when disabled */
@@ -415,18 +429,23 @@ export function WithdrawPage() {
           </h2>
           <div className="mt-3 flex items-center justify-between">
             <span className="flex items-center gap-2 text-[13px] text-asm-body">
-              TDS ({tdsPct}%)
+              TDS ({tdsPctLabel}%)
               <Info className="size-3.5 text-asm-muted" aria-hidden />
             </span>
             <span className="font-mono text-[13px] font-bold tabular-nums text-red-600">
-              {validRs > 0 ? (tdsPct > 0 ? `− ${inr(Math.round(validPaise * tdsFraction))}` : '₹0') : '−'}
+              {validRs > 0 ? (tdsPaise > 0 ? `− ${inr(tdsPaise)}` : '₹0') : '−'}
             </span>
           </div>
+          {exemptUsedPaise > 0 && validRs > 0 && (
+            <p className="mt-1.5 text-[11px] text-asm-greenInk">
+              {inr(exemptUsedPaise)} of this is ASM Coin returns — withdrawn without TDS.
+            </p>
+          )}
           <span className="my-3 block h-px w-full bg-asm-line" />
           <div className="flex items-center justify-between">
             <span className="text-[14px] font-bold text-asm-navy">You will get</span>
             <span className="font-mono text-lg font-bold tabular-nums text-asm-greenInk">
-              {validRs > 0 ? inr(Math.round(validPaise * (1 - tdsFraction))) : '₹0'}
+              {validRs > 0 ? inr(netPaise) : '₹0'}
             </span>
           </div>
           <p className="mt-2 text-[11px] text-asm-muted">

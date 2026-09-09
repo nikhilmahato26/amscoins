@@ -12,5 +12,11 @@ export interface LedgerTxn {
   createdAt: string
 }
 
-export const getWallet = () =>
-  apiFetch<{ balance: number; transactions: LedgerTxn[] }>('/wallet')
+export interface WalletSummary {
+  balance: number // paise
+  /** The slice of `balance` that came from ASM Coin and withdraws TDS-free. */
+  tdsExemptPaise: number // paise
+  transactions: LedgerTxn[]
+}
+
+export const getWallet = () => apiFetch<WalletSummary>('/wallet')
