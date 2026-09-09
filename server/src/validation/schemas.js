@@ -175,6 +175,16 @@ const bulkRejectReturnsSchema = z.object({
   amount: z.number().int().min(0).optional().default(0),
 })
 
+// ── ASM Coin admin index controls ──
+const coinMoveSchema = z.object({
+  size: z.enum(['small', 'medium', 'hard']),
+  durationMinutes: z.number().int().min(1).max(720),
+})
+
+const coinVolatilitySchema = z.object({
+  value: z.number().min(0).max(100),
+})
+
 module.exports = {
   registerSchema,
   loginSchema,
@@ -196,4 +206,6 @@ module.exports = {
   bulkApproveSchema,
   bulkRejectInvestmentsSchema,
   bulkRejectReturnsSchema,
+  coinMoveSchema,
+  coinVolatilitySchema,
 }

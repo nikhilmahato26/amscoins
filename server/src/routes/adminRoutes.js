@@ -2,7 +2,7 @@ const router = require('express').Router()
 const auth = require('../middleware/auth')
 const requireAdmin = require('../middleware/requireAdmin')
 const validate = require('../middleware/validate')
-const { adjustWalletSchema, resolveTicketSchema, returnRejectSchema, payoutRejectSchema, installmentRejectSchema, bulkApproveInstallmentsSchema, bulkApproveSchema, bulkRejectInvestmentsSchema, bulkRejectReturnsSchema } = require('../validation/schemas')
+const { adjustWalletSchema, resolveTicketSchema, returnRejectSchema, payoutRejectSchema, installmentRejectSchema, bulkApproveInstallmentsSchema, bulkApproveSchema, bulkRejectInvestmentsSchema, bulkRejectReturnsSchema, coinMoveSchema, coinVolatilitySchema } = require('../validation/schemas')
 const c = require('../controllers/adminController')
 const reportsRoutes = require('./reportsRoutes')
 
@@ -51,6 +51,12 @@ router.post('/wallets/:userId/adjust', validate(adjustWalletSchema), c.adjustWal
 
 router.get('/support', c.listSupport)
 router.post('/support/:id/resolve', validate(resolveTicketSchema), c.resolveSupport)
+
+router.post('/coin/pump', validate(coinMoveSchema), c.coinPump)
+router.post('/coin/crash', validate(coinMoveSchema), c.coinCrash)
+router.post('/coin/volatility', validate(coinVolatilitySchema), c.coinVolatility)
+router.post('/coin/reset', c.coinReset)
+router.get('/coin/actions', c.coinActions)
 
 router.use('/reports', reportsRoutes)
 
