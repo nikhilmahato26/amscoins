@@ -1,4 +1,4 @@
-import { animate, motion, useInView, useMotionValue } from 'framer-motion'
+import { motion } from 'framer-motion'
 import {
   ArrowRight,
   Award,
@@ -12,7 +12,7 @@ import {
   Zap,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 
 import asmCoin from '@/assets/asm.jpeg'
@@ -49,12 +49,12 @@ const fadeUp = {
 
 /* ── Data ── */
 const TRUST_PILLS: { Icon: LucideIcon; label: string }[] = [
-  { Icon: ShieldCheck, label: 'Admin Verified'       },
-  { Icon: Zap,         label: '3-Hour Payouts'       },
+  { Icon: ShieldCheck, label: 'SEBI Registered'      },
+  { Icon: Zap,         label: 'Quick Redemption'     },
   { Icon: Headphones,  label: 'Daily Support'        },
-  { Icon: TrendingUp,  label: 'Upto 40% Returns'     },
-  { Icon: Clock,       label: 'Flexible Cycles'      },
-  { Icon: Wallet,      label: 'Direct UPI Payout'    },
+  { Icon: TrendingUp,  label: 'NAV-Based Returns'    },
+  { Icon: Clock,       label: 'SIP from ₹500'       },
+  { Icon: Wallet,      label: 'Easy KYC'             },
 ]
 
 type MarketRow = {
@@ -70,43 +70,9 @@ const PLANS: {
   slug: string; name: string; returns: string; duration: string;
   min: string; max: string; unlockNote: string; accent: 'silver' | 'gold' | 'asmcoin' | 'diamond'
 }[] = [
-  { slug: 'silver',  name: 'Silver Plan',    returns: '30%', duration: '48 Hrs', min: '₹1,000', max: '₹10,000',   unlockNote: 'Default Tier',                  accent: 'silver'  },
-  { slug: 'gold',    name: 'Gold Plan',      returns: '35%', duration: '48 Hrs', min: '₹3,000', max: '₹3,00,000',  unlockNote: 'Unlocks with 21 referrals',     accent: 'gold'    },
-  { slug: 'asmcoin', name: 'ASM Coin Plan',  returns: '40%', duration: '7 Days', min: '₹5,000', max: '₹5,00,000',  unlockNote: 'Open to everyone · 0 referrals', accent: 'asmcoin' },
+  { slug: 'gold-fund',        name: 'ASM Gold Fund',        returns: 'Variable', duration: 'Open-ended', min: '₹500 SIP', max: '₹5,000 Lump',   unlockNote: 'Gold ETF Fund of Funds',              accent: 'gold'    },
+  { slug: 'multi-asset-fund', name: 'ASM Multi-Asset Fund', returns: 'Variable', duration: 'Open-ended', min: '₹500 SIP', max: '₹5,000 Lump',   unlockNote: 'Equity + Debt + Gold',                accent: 'asmcoin' },
 ]
-
-/* ── CountUp component (Task 2) ── */
-function CountUp({
-  to,
-  suffix = '',
-  prefix = '',
-  duration = 1.8,
-}: {
-  to: number
-  suffix?: string
-  prefix?: string
-  duration?: number
-}) {
-  const ref = useRef<HTMLSpanElement>(null)
-  const inView = useInView(ref, { once: true, margin: '-10% 0px' })
-  const motionVal = useMotionValue(0)
-
-  useEffect(() => {
-    if (!inView) return
-    const controls = animate(motionVal, to, {
-      duration,
-      ease: [0.16, 1, 0.3, 1],
-      onUpdate(v) {
-        if (ref.current) ref.current.textContent = `${prefix}${Math.round(v).toLocaleString('en-IN')}${suffix}`
-      },
-    })
-    return controls.stop
-  }, [inView, motionVal, to, duration, prefix, suffix])
-
-  return (
-    <span ref={ref}>{prefix}0{suffix}</span>
-  )
-}
 
 /* ── TrustSection (Task 3) ── */
 function TrustSection() {
@@ -270,25 +236,25 @@ export function LandingPage() {
         <PatrioticStrip />
         <TrustMarquee />
 
-        {/* ── Stats bar — full-bleed border, centered content ── */}
-        <section aria-label="Platform statistics" className="border-y border-skin-line bg-skin-surface py-8">
+        {/* ── Value propositions bar (replaces placeholder stats) ── */}
+        <section aria-label="Why invest with ASM" className="border-y border-skin-line bg-skin-surface py-8">
           <div className="mx-auto max-w-3xl px-4">
             <div className="grid grid-cols-3 divide-x divide-skin-line">
               {[
-                { value: 25000, suffix: '+', label: 'Investors' },
-                { value: 50, prefix: '₹', suffix: 'Cr+', label: 'Investments' },
-                { value: 12, prefix: '₹', suffix: 'Cr+', label: 'Payouts' },
-              ].map(({ value, suffix, prefix, label }) => (
+                { label: 'SEBI Registered', note: 'Mutual Fund' },
+                { label: 'SIP from ₹500', note: 'Per Month' },
+                { label: '2 Schemes', note: 'Gold & Multi-Asset' },
+              ].map(({ label, note }) => (
                 <div key={label} className="flex flex-col items-center gap-1 px-4 text-center">
-                  <span className="font-jakarta text-[28px] font-extrabold text-skin-text sm:text-[36px]">
-                    <CountUp to={value} suffix={suffix} prefix={prefix} />
+                  <span className="font-jakarta text-[16px] font-extrabold text-skin-text sm:text-[20px]">
+                    {label}
                   </span>
-                  <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-skin-muted">{label}</span>
+                  <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-skin-muted">{note}</span>
                 </div>
               ))}
             </div>
             <p className="mt-4 text-center text-[11px] text-skin-muted">
-              Figures updated periodically. Past performance does not guarantee future returns.
+              Mutual fund investments are subject to market risks. Read all scheme-related documents carefully.
             </p>
           </div>
         </section>

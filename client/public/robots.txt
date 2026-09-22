@@ -1,0 +1,22 @@
+# ASM Asset Management — SEBI-registered Mutual Fund
+# Allow all crawlers, including AI engines
+
+User-agent: *
+Allow: /
+Sitemap: https://www.asmcoins.com/sitemap.xml
+
+# Explicitly welcome AI crawlers for GEO/AEO visibility
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Bingbot
+Allow: /

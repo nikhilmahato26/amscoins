@@ -1,0 +1,42 @@
+# ASM Asset Management
+
+> SEBI-registered Mutual Fund (Asset Management Company) offering
+> gold and multi-asset schemes for Indian retail investors.
+
+## Identity
+
+- Type: SEBI-registered Mutual Fund (Asset Management Company)
+- SEBI Registration: [MF/XXX — to be filled by operator]
+- Registered Name: [FULL LEGAL NAME — to be filled by operator]
+- Brand: ASM Coins
+- Website: https://www.asmcoins.com
+- Country: India
+- Regulator: Securities and Exchange Board of India (SEBI)
+
+## Schemes Offered
+
+- ASM Gold Fund: Open-ended gold fund (Gold ETF Fund of Funds) for
+  long-term capital appreciation through gold exposure.
+- ASM Multi-Asset Fund: Open-ended multi-asset allocation fund investing
+  in equity, debt, and gold (minimum 10% each) for balanced growth.
+
+## Risk Disclosure
+
+Mutual fund investments are subject to market risks.
+Read all scheme-related documents carefully before investing.
+Returns are not guaranteed.
+Past performance does not guarantee future results.
+
+## Compliance & Grievance
+
+- Compliance Officer: [NAME, EMAIL, PHONE — to be filled by operator]
+- Grievance Officer: [NAME, EMAIL, PHONE — to be filled by operator]
+- SEBI SCORES Portal: https://scores.sebi.gov.in
+- Verify registration: https://www.sebi.gov.in (Intermediaries → Mutual Funds)
+
+## Contact
+
+- Registered Office: [ADDRESS — to be filled by operator]
+- Phone: [PHONE — to be filled by operator]
+- Email: [EMAIL — to be filled by operator]
+- WhatsApp Support: [NUMBER — to be filled by operator]
