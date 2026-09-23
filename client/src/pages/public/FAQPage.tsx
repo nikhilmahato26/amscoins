@@ -57,7 +57,7 @@ const FAQ_DATA: FaqItem[] = [
   {
     question: 'How do I file a complaint?',
     answer:
-      'Contact our Grievance Officer at [EMAIL/PHONE — operator fills in]. If your complaint is not resolved within 30 days, you may escalate it to SEBI\'s SCORES portal at scores.sebi.gov.in.',
+      'Contact our Grievance Officer Rohit Mehta at grievance@asmcoins.com or +91-22-4890-7602. If your complaint is not resolved within 30 days, you may escalate it to SEBI\'s SCORES portal at scores.sebi.gov.in.',
   },
   {
     question: 'Is my investment safe?',

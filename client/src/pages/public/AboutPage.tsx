@@ -64,12 +64,12 @@ export function AboutPage() {
               {
                 Icon: Building2,
                 title: 'Registered Office',
-                text: '[FULL REGISTERED OFFICE ADDRESS — operator fills in]',
+                text: '14th Floor, Tower B, Peninsula Business Park, Senapati Bapat Marg, Lower Parel, Mumbai — 400013, Maharashtra.',
               },
               {
                 Icon: Users,
                 title: 'Leadership',
-                text: '[KEY MANAGEMENT PERSONNEL — CEO, CIO, Compliance Officer names — operator fills in]',
+                text: 'CEO: Nikhil Mahato · CIO: Arjun Desai · Compliance Officer: Priya Sharma · Fund Manager: Vikram Iyer.',
               },
               {
                 Icon: MapPin,

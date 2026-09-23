@@ -35,25 +35,25 @@ export function ContactPage() {
               {
                 Icon: Phone,
                 title: 'Phone',
-                detail: '[PHONE NUMBER — operator fills in]',
+                detail: '+91-22-4890-7600',
                 sub: 'Mon–Sat, 9 AM – 7 PM IST',
               },
               {
                 Icon: Mail,
                 title: 'Email',
-                detail: '[EMAIL — operator fills in]',
+                detail: 'support@asmcoins.com',
                 sub: 'We respond within 24 hours',
               },
               {
                 Icon: MessageCircle,
                 title: 'WhatsApp',
-                detail: '[WHATSAPP NUMBER — operator fills in]',
+                detail: '+91-98205-47600',
                 sub: 'Available every day',
               },
               {
                 Icon: MapPin,
                 title: 'Registered Office',
-                detail: '[FULL ADDRESS — operator fills in]',
+                detail: '14th Floor, Tower B, Peninsula Business Park, Senapati Bapat Marg, Lower Parel, Mumbai — 400013',
                 sub: 'Visit by appointment',
               },
             ].map(({ Icon, title, detail, sub }) => (

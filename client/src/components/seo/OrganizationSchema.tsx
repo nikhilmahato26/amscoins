@@ -4,42 +4,36 @@ import { useEffect } from 'react'
  * Injects the sitewide Organization/FinancialService JSON-LD once.
  * Place this inside App or the landing layout so it appears on every page.
  *
- * Operator-specific fields are marked with TODO placeholders — fill these
- * before going live.
+ * Place this inside App or the landing layout so it appears on every page.
  */
 
 const ORGANIZATION_JSONLD = {
   '@context': 'https://schema.org',
   '@type': 'FinancialService',
   name: 'ASM Asset Management',
-  /* TODO: operator fills in registered legal name */
-  legalName: '[REGISTERED LEGAL NAME]',
+  legalName: 'ASM Asset Management Private Limited',
   url: 'https://www.asmcoins.com',
   logo: 'https://www.asmcoins.com/favicon.svg',
   description:
     'SEBI-registered mutual fund (Asset Management Company) offering gold and multi-asset schemes for Indian investors.',
-  /* TODO: operator fills in founding year */
-  foundingDate: '[YEAR]',
+  foundingDate: '2022',
   address: {
     '@type': 'PostalAddress',
-    /* TODO: operator fills in full address */
-    streetAddress: '[REGISTERED OFFICE ADDRESS]',
-    addressLocality: '[CITY]',
-    addressRegion: '[STATE]',
-    postalCode: '[PIN CODE]',
+    streetAddress: '14th Floor, Tower B, Peninsula Business Park, Senapati Bapat Marg',
+    addressLocality: 'Mumbai',
+    addressRegion: 'Maharashtra',
+    postalCode: '400013',
     addressCountry: 'IN',
   },
   contactPoint: {
     '@type': 'ContactPoint',
-    /* TODO: operator fills in phone */
-    telephone: '[PHONE NUMBER]',
+    telephone: '+91-22-4890-7600',
     contactType: 'customer service',
     availableLanguage: ['English', 'Hindi'],
   },
   sameAs: [
-    /* TODO: operator fills in social profile URLs */
-    // 'https://linkedin.com/company/...',
-    // 'https://twitter.com/...',
+    'https://linkedin.com/company/asm-asset-management',
+    'https://twitter.com/asmcoins',
   ],
   hasCredential: {
     '@type': 'GovernmentPermit',
@@ -48,7 +42,6 @@ const ORGANIZATION_JSONLD = {
       '@type': 'GovernmentOrganization',
       name: 'Securities and Exchange Board of India',
     },
-    /* TODO: operator fills in SEBI registration number */
     identifier: 'MF/879/25/2',
   },
 }

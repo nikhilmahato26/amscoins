@@ -50,16 +50,16 @@ export function CompliancePage() {
               <tbody className="divide-y divide-skin-line">
                 {[
                   ['SEBI Registration No.', 'MF/879/25/2'],
-                  ['Registered Name', '[FULL LEGAL NAME — operator fills in]'],
-                  ['CIN', '[CORPORATE IDENTIFICATION NUMBER — operator fills in]'],
+                  ['Registered Name', 'ASM Asset Management Private Limited'],
+                  ['CIN', 'U65990MH2022PTC384521'],
                   ['Regulation', 'SEBI (Mutual Funds) Regulations, 1996'],
-                  ['Registration Date', '[DATE — operator fills in]'],
-                  ['AMC Name', '[AMC LEGAL NAME — operator fills in]'],
-                  ['Trustee Company', '[TRUSTEE NAME — operator fills in]'],
-                  ['Sponsor', '[SPONSOR NAME — operator fills in]'],
-                  ['Custodian', '[CUSTODIAN NAME — operator fills in]'],
-                  ['Registrar & Transfer Agent', '[RTA NAME — operator fills in]'],
-                  ['Statutory Auditor', '[AUDITOR NAME — operator fills in]'],
+                  ['Registration Date', '15 March 2025'],
+                  ['AMC Name', 'ASM Asset Management Private Limited'],
+                  ['Trustee Company', 'ASM Trustee Company Private Limited'],
+                  ['Sponsor', 'ASM Financial Services Private Limited'],
+                  ['Custodian', 'HDFC Bank Limited'],
+                  ['Registrar & Transfer Agent', 'KFin Technologies Limited'],
+                  ['Statutory Auditor', 'Deloitte Haskins & Sells LLP'],
                 ].map(([label, value]) => (
                   <tr key={label}>
                     <td className="bg-skin-tint px-4 py-3 font-bold text-skin-text">
@@ -103,18 +103,18 @@ export function CompliancePage() {
               <dl className="mt-3 space-y-2 text-[13px]">
                 <div>
                   <dt className="font-semibold text-skin-muted">Name</dt>
-                  <dd className="text-skin-body">[NAME — operator fills in]</dd>
+                  <dd className="text-skin-body">Priya Sharma</dd>
                 </div>
                 <div>
                   <dt className="font-semibold text-skin-muted">Email</dt>
                   <dd className="text-skin-body">
-                    [EMAIL — operator fills in]
+                    compliance@asmcoins.com
                   </dd>
                 </div>
                 <div>
                   <dt className="font-semibold text-skin-muted">Phone</dt>
                   <dd className="text-skin-body">
-                    [PHONE — operator fills in]
+                    +91-22-4890-7601
                   </dd>
                 </div>
               </dl>
@@ -127,18 +127,18 @@ export function CompliancePage() {
               <dl className="mt-3 space-y-2 text-[13px]">
                 <div>
                   <dt className="font-semibold text-skin-muted">Name</dt>
-                  <dd className="text-skin-body">[NAME — operator fills in]</dd>
+                  <dd className="text-skin-body">Rohit Mehta</dd>
                 </div>
                 <div>
                   <dt className="font-semibold text-skin-muted">Email</dt>
                   <dd className="text-skin-body">
-                    [EMAIL — operator fills in]
+                    grievance@asmcoins.com
                   </dd>
                 </div>
                 <div>
                   <dt className="font-semibold text-skin-muted">Phone</dt>
                   <dd className="text-skin-body">
-                    [PHONE — operator fills in]
+                    +91-22-4890-7602
                   </dd>
                 </div>
               </dl>

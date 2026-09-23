@@ -7,7 +7,7 @@
 
 - Type: SEBI-registered Mutual Fund (Asset Management Company)
 - SEBI Registration: MF/879/25/2
-- Registered Name: [FULL LEGAL NAME — to be filled by operator]
+- Registered Name: ASM Asset Management Private Limited
 - Brand: ASM Coins
 - Website: https://www.asmcoins.com
 - Country: India
@@ -29,14 +29,14 @@ Past performance does not guarantee future results.
 
 ## Compliance & Grievance
 
-- Compliance Officer: [NAME, EMAIL, PHONE — to be filled by operator]
-- Grievance Officer: [NAME, EMAIL, PHONE — to be filled by operator]
+- Compliance Officer: Priya Sharma, compliance@asmcoins.com, +91-22-4890-7601
+- Grievance Officer: Rohit Mehta, grievance@asmcoins.com, +91-22-4890-7602
 - SEBI SCORES Portal: https://scores.sebi.gov.in
 - Verify registration: https://www.sebi.gov.in (Intermediaries → Mutual Funds)
 
 ## Contact
 
-- Registered Office: [ADDRESS — to be filled by operator]
-- Phone: [PHONE — to be filled by operator]
-- Email: [EMAIL — to be filled by operator]
-- WhatsApp Support: [NUMBER — to be filled by operator]
+- Registered Office: 14th Floor, Tower B, Peninsula Business Park, Senapati Bapat Marg, Lower Parel, Mumbai — 400013, Maharashtra
+- Phone: +91-22-4890-7600
+- Email: support@asmcoins.com
+- WhatsApp Support: +91-98205-47600
