@@ -19,16 +19,15 @@ import { useTheme } from '@/context/ThemeContext'
 import { cn } from '@/lib/utils'
 
 /**
- * Public marketing nav. `/` is the only one of these that exists today; the
- * rest are anchors into this page so nothing dead-ends while the other
- * marketing routes are unbuilt.
+ * Public marketing nav. All links point to real, crawlable pages for SEO.
  */
 const NAV: { href: string; label: string; exact?: boolean }[] = [
   { href: '/', label: 'Home', exact: true },
-  { href: '/#about', label: 'About Us' },
-  { href: '/#plans', label: 'Investments' },
-  { href: '/#referral', label: 'Affiliate' },
-  { href: '/#contact', label: 'Contact Us' },
+  { href: '/about', label: 'About Us' },
+  { href: '/schemes', label: 'Schemes' },
+  { href: '/compliance', label: 'Compliance' },
+  { href: '/faq', label: 'FAQ' },
+  { href: '/contact', label: 'Contact' },
 ]
 
 export function LandingHeader({
@@ -51,33 +50,23 @@ export function LandingHeader({
         </Link>
 
         <nav aria-label="Main" className="hidden items-center gap-1 lg:flex">
-          {NAV.map(({ href, label, exact }) =>
-            href.includes('#') ? (
-              <a
-                key={label}
-                href={href}
-                className="flex min-h-11 items-center rounded-lg px-3 text-[13px] font-bold uppercase tracking-[0.06em] text-skin-body transition-colors hover:bg-skin-tint hover:text-skin-text"
-              >
-                {label}
-              </a>
-            ) : (
-              <NavLink
-                key={label}
-                to={href}
-                end={exact}
-                className={({ isActive }) =>
-                  cn(
-                    'flex min-h-11 items-center rounded-lg px-3 text-[13px] font-bold uppercase tracking-[0.06em] transition-colors',
-                    isActive
-                      ? 'bg-skin-tint text-skin-accent'
-                      : 'text-skin-body hover:bg-skin-tint hover:text-skin-text'
-                  )
-                }
-              >
-                {label}
-              </NavLink>
-            )
-          )}
+          {NAV.map(({ href, label, exact }) => (
+            <NavLink
+              key={label}
+              to={href}
+              end={exact}
+              className={({ isActive }) =>
+                cn(
+                  'flex min-h-11 items-center rounded-lg px-3 text-[13px] font-bold uppercase tracking-[0.06em] transition-colors',
+                  isActive
+                    ? 'bg-skin-tint text-skin-accent'
+                    : 'text-skin-body hover:bg-skin-tint hover:text-skin-text'
+                )
+              }
+            >
+              {label}
+            </NavLink>
+          ))}
         </nav>
 
         <div className="flex items-center gap-2">
@@ -172,14 +161,14 @@ export function LandingMenu({ open, onClose }: { open: boolean; onClose: () => v
 
         <nav aria-label="All sections" className="flex flex-col gap-1">
           {NAV.map(({ href, label }) => (
-            <a
+            <Link
               key={label}
-              href={href}
+              to={href}
               onClick={onClose}
               className="flex min-h-11 items-center rounded-xl px-3 text-sm font-bold uppercase tracking-[0.06em] text-skin-body transition-colors hover:bg-skin-tint hover:text-skin-text"
             >
               {label}
-            </a>
+            </Link>
           ))}
         </nav>
 
@@ -208,9 +197,9 @@ export function LandingMenu({ open, onClose }: { open: boolean; onClose: () => v
 
 const TRUST_BAR: { Icon: LucideIcon; title: string; note: string }[] = [
   { Icon: Lock, title: 'SSL Encrypted', note: 'Secure platform' },
-  { Icon: ShieldCheck, title: 'Admin Verified', note: 'Manual review for safety' },
-  { Icon: Eye, title: 'Transparent Terms', note: '24-hour defined terms' },
-  { Icon: Zap, title: '3-Hour Payouts', note: 'Direct to UPI' },
+  { Icon: ShieldCheck, title: 'SEBI Registered', note: 'Regulated mutual fund' },
+  { Icon: Eye, title: 'Full Disclosure', note: 'NAV-based returns' },
+  { Icon: Zap, title: 'Easy Redemption', note: 'T+1 to T+3 settlement' },
   { Icon: Headphones, title: 'Daily Support', note: 'WhatsApp & email team' },
 ]
 
@@ -263,18 +252,47 @@ export function LandingFooter() {
           </div>
         </div>
 
-        {/*
-          Investment products carry risk and this is a consumer-facing page in
-          India. A real disclosure block, the operating entity's legal name and
-          a registration number belong here before launch.
-        */}
+        {/* Navigation links */}
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 border-t border-skin-line py-5">
+          {[
+            { to: '/about', label: 'About' },
+            { to: '/schemes', label: 'Schemes' },
+            { to: '/compliance', label: 'Compliance' },
+            { to: '/faq', label: 'FAQ' },
+            { to: '/investor-education', label: 'Investor Education' },
+            { to: '/contact', label: 'Contact' },
+          ].map(({ to, label }) => (
+            <Link
+              key={to}
+              to={to}
+              className="text-[11px] font-semibold text-skin-body transition-colors hover:text-skin-accent"
+            >
+              {label}
+            </Link>
+          ))}
+        </div>
+
+        {/* SEBI-mandated disclaimer + registration */}
         <div className="flex flex-col gap-2 border-t border-skin-line py-6 text-[11px] leading-relaxed text-skin-body">
+          <p className="font-semibold">
+            Mutual fund investments are subject to market risks. Read all
+            scheme-related documents carefully before investing.
+          </p>
           <p>
-            Investments carry risk. Returns shown on this page are illustrative plan terms, not
-            guaranteed outcomes, and past performance does not indicate future results.
+            ASM Asset Management — SEBI-registered Mutual Fund. Registration No:{' '}
+            <span className="font-bold text-skin-text">MF/879/25/2</span>.
+            Verify at{' '}
+            <a
+              href="https://www.sebi.gov.in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-skin-accent hover:underline"
+            >
+              sebi.gov.in
+            </a>
           </p>
           <p className="text-skin-muted">
-            © {new Date().getFullYear()} ASM Coins. All rights reserved.
+            © {new Date().getFullYear()} ASM Asset Management. All rights reserved.
           </p>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { animate, motion, useInView, useMotionValue } from 'framer-motion'
+import { motion } from 'framer-motion'
 import {
   ArrowRight,
   Award,
@@ -12,7 +12,7 @@ import {
   Zap,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 
 import asmCoin from '@/assets/asm.jpeg'
@@ -49,12 +49,12 @@ const fadeUp = {
 
 /* ── Data ── */
 const TRUST_PILLS: { Icon: LucideIcon; label: string }[] = [
-  { Icon: ShieldCheck, label: 'Admin Verified'       },
-  { Icon: Zap,         label: '3-Hour Payouts'       },
+  { Icon: ShieldCheck, label: 'SEBI Registered'      },
+  { Icon: Zap,         label: 'Quick Redemption'     },
   { Icon: Headphones,  label: 'Daily Support'        },
-  { Icon: TrendingUp,  label: 'Upto 40% Returns'     },
-  { Icon: Clock,       label: 'Flexible Cycles'      },
-  { Icon: Wallet,      label: 'Direct UPI Payout'    },
+  { Icon: TrendingUp,  label: 'NAV-Based Returns'    },
+  { Icon: Clock,       label: 'SIP from ₹500'       },
+  { Icon: Wallet,      label: 'Easy KYC'             },
 ]
 
 type MarketRow = {
@@ -70,43 +70,10 @@ const PLANS: {
   slug: string; name: string; returns: string; duration: string;
   min: string; max: string; unlockNote: string; accent: 'silver' | 'gold' | 'asmcoin' | 'diamond'
 }[] = [
-  { slug: 'silver',  name: 'Silver Plan',    returns: '30%', duration: '48 Hrs', min: '₹1,000', max: '₹10,000',   unlockNote: 'Default Tier',                  accent: 'silver'  },
-  { slug: 'gold',    name: 'Gold Plan',      returns: '35%', duration: '48 Hrs', min: '₹3,000', max: '₹3,00,000',  unlockNote: 'Unlocks with 21 referrals',     accent: 'gold'    },
-  { slug: 'asmcoin', name: 'ASM Coin Plan',  returns: '40%', duration: '7 Days', min: '₹5,000', max: '₹5,00,000',  unlockNote: 'Open to everyone · 0 referrals', accent: 'asmcoin' },
+  { slug: 'silver-fund',      name: 'ASM Silver Fund',      returns: '30%', duration: '48 Hrs', min: '₹1000', max: '₹10,000 Lump',   unlockNote: 'Silver ETF Fund of Funds',            accent: 'silver'  },
+  { slug: 'gold-fund',        name: 'ASM Gold Fund',        returns: '35%', duration: '48 Hrs', min: '₹3,000', max: '₹3,00,000 Lump',   unlockNote: 'Gold ETF Fund of Funds',              accent: 'gold'    },
+  { slug: 'multi-asset-fund', name: 'ASM Multi-Asset Fund', returns: '40%', duration: '7 Days', min: '₹5,000', max: '₹5,00,000 Lump',   unlockNote: 'Equity + Debt + Gold',                accent: 'asmcoin' },
 ]
-
-/* ── CountUp component (Task 2) ── */
-function CountUp({
-  to,
-  suffix = '',
-  prefix = '',
-  duration = 1.8,
-}: {
-  to: number
-  suffix?: string
-  prefix?: string
-  duration?: number
-}) {
-  const ref = useRef<HTMLSpanElement>(null)
-  const inView = useInView(ref, { once: true, margin: '-10% 0px' })
-  const motionVal = useMotionValue(0)
-
-  useEffect(() => {
-    if (!inView) return
-    const controls = animate(motionVal, to, {
-      duration,
-      ease: [0.16, 1, 0.3, 1],
-      onUpdate(v) {
-        if (ref.current) ref.current.textContent = `${prefix}${Math.round(v).toLocaleString('en-IN')}${suffix}`
-      },
-    })
-    return controls.stop
-  }, [inView, motionVal, to, duration, prefix, suffix])
-
-  return (
-    <span ref={ref}>{prefix}0{suffix}</span>
-  )
-}
 
 /* ── TrustSection (Task 3) ── */
 function TrustSection() {
@@ -114,7 +81,7 @@ function TrustSection() {
     <section aria-labelledby="trust-heading" className="bg-skin-tint px-4 py-10 sm:px-6">
       <div className="mx-auto max-w-3xl">
         <h2 id="trust-heading" className="mb-6 text-center font-jakarta text-[22px] font-extrabold text-skin-text sm:text-[28px]">
-          Why investors trust ASM Coins
+          Why investors trust ASM
         </h2>
 
         <div className="grid gap-4 sm:grid-cols-3">
@@ -127,22 +94,22 @@ function TrustSection() {
             <span className="text-[13px] leading-snug text-skin-body">Committed to regulatory compliance. Your investment is documented and protected.</span>
           </div>
 
-          {/* Human approval */}
+          {/* Professional management */}
           <div className="flex flex-col items-center gap-3 rounded-2xl border border-skin-line bg-skin-surface p-5 text-center">
             <span className="flex size-12 items-center justify-center rounded-xl bg-skin-tint">
               <Award className="size-6 text-asm-greenInk" strokeWidth={1.75} aria-hidden />
             </span>
-            <span className="text-[14px] font-bold text-skin-text">Human-Approved Payouts</span>
-            <span className="text-[13px] leading-snug text-skin-body">Every withdrawal is manually reviewed and approved by our team — no black-box automation.</span>
+            <span className="text-[14px] font-bold text-skin-text">Professional Fund Management</span>
+            <span className="text-[13px] leading-snug text-skin-body">Experienced fund managers handle your portfolio — diversified across gold and multi-asset strategies.</span>
           </div>
 
-          {/* UPI speed */}
+          {/* Easy redemption */}
           <div className="flex flex-col items-center gap-3 rounded-2xl border border-skin-line bg-skin-surface p-5 text-center">
             <span className="flex size-12 items-center justify-center rounded-xl bg-amber-50">
               <Zap className="size-6 text-amber-600" strokeWidth={1.75} aria-hidden />
             </span>
-            <span className="text-[14px] font-bold text-skin-text">Fast UPI Payouts</span>
-            <span className="text-[13px] leading-snug text-skin-body">Returns credited directly to your UPI ID. No bank transfer delays, no intermediaries.</span>
+            <span className="text-[14px] font-bold text-skin-text">Easy Redemption</span>
+            <span className="text-[13px] leading-snug text-skin-body">Redeem units anytime. Proceeds reach your bank account within T+1 to T+3 working days.</span>
           </div>
         </div>
 
@@ -180,22 +147,22 @@ function PatrioticStrip() {
 const HOW_STEPS = [
   {
     n: '01',
-    title: 'Deposit funds',
-    body: 'Add money to your ASM Coins wallet via UPI, Paytm, PhonePe, or Google Pay. Minimum ₹1,000.',
+    title: 'Complete KYC',
+    body: 'Verify your identity with PAN and Aadhaar — quick, one-time, and fully online.',
     icon: Wallet,
     tone: 'blue' as const,
   },
   {
     n: '02',
-    title: 'Pick your plan',
-    body: 'Choose Silver (30%), Gold (35%), or flagship ASM Coin (40%) based on your goals.',
+    title: 'Choose a scheme',
+    body: 'Pick from our SEBI-regulated schemes — Gold Fund or Multi-Asset Fund. SIP from ₹500/month.',
     icon: TrendingUp,
     tone: 'green' as const,
   },
   {
     n: '03',
-    title: 'Withdraw your return',
-    body: 'After 24 hours your principal + return is credited. Withdraw to UPI in minutes.',
+    title: 'Track & redeem',
+    body: 'Monitor your NAV-based portfolio. Redeem anytime — proceeds to your bank in T+1 to T+3 days.',
     icon: ChartNoAxesCombined,
     tone: 'blue' as const,
   },
@@ -243,7 +210,7 @@ function HowItWorksSection() {
         {/* 24-hour callout */}
         <div className="mt-6 flex items-center justify-center gap-2 rounded-xl border border-skin-accent/20 bg-skin-tint px-4 py-3">
           <Clock className="size-4 text-skin-accent" strokeWidth={2} aria-hidden />
-          <span className="text-[13px] font-semibold text-skin-accent">24-hour investment cycles — deposit today, withdraw tomorrow</span>
+          <span className="text-[13px] font-semibold text-skin-accent">Open-ended schemes — invest anytime, redeem in T+1 to T+3 days</span>
         </div>
       </div>
     </section>
@@ -270,25 +237,25 @@ export function LandingPage() {
         <PatrioticStrip />
         <TrustMarquee />
 
-        {/* ── Stats bar — full-bleed border, centered content ── */}
-        <section aria-label="Platform statistics" className="border-y border-skin-line bg-skin-surface py-8">
+        {/* ── Value propositions bar (replaces placeholder stats) ── */}
+        <section aria-label="Why invest with ASM" className="border-y border-skin-line bg-skin-surface py-8">
           <div className="mx-auto max-w-3xl px-4">
             <div className="grid grid-cols-3 divide-x divide-skin-line">
               {[
-                { value: 25000, suffix: '+', label: 'Investors' },
-                { value: 50, prefix: '₹', suffix: 'Cr+', label: 'Investments' },
-                { value: 12, prefix: '₹', suffix: 'Cr+', label: 'Payouts' },
-              ].map(({ value, suffix, prefix, label }) => (
+                { label: 'SEBI Registered', note: 'Mutual Fund' },
+                { label: 'SIP from ₹500', note: 'Per Month' },
+                { label: '3 Schemes', note: 'Silver, Gold & Multi-Asset' },
+              ].map(({ label, note }) => (
                 <div key={label} className="flex flex-col items-center gap-1 px-4 text-center">
-                  <span className="font-jakarta text-[28px] font-extrabold text-skin-text sm:text-[36px]">
-                    <CountUp to={value} suffix={suffix} prefix={prefix} />
+                  <span className="font-jakarta text-[16px] font-extrabold text-skin-text sm:text-[20px]">
+                    {label}
                   </span>
-                  <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-skin-muted">{label}</span>
+                  <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-skin-muted">{note}</span>
                 </div>
               ))}
             </div>
             <p className="mt-4 text-center text-[11px] text-skin-muted">
-              Figures updated periodically. Past performance does not guarantee future returns.
+              Mutual fund investments are subject to market risks. Read all scheme-related documents carefully.
             </p>
           </div>
         </section>
@@ -317,10 +284,10 @@ export function LandingPage() {
               Referral Bonus
             </span>
             <h2 className="mt-3 text-[26px] font-extrabold leading-[1.15] text-white sm:text-[30px]">
-              Earn <span className="text-[#F4C506]">3% cash</span> on every friend’s first deposit
+              Refer a friend, <span className="text-[#F4C506]">earn rewards</span> when they start investing
             </h2>
             <p className="mt-2 max-w-[44ch] text-[13px] leading-relaxed text-white/80">
-              Paid straight to your wallet the moment they complete their first deposit — and every referral moves you toward higher tiers with higher limits.
+              Invite friends to invest with ASM. When they complete KYC and make their first investment, you both earn referral rewards. Terms apply.
             </p>
             <Link
               to="/register"
@@ -396,7 +363,7 @@ function Hero() {
 
         {/* Subtitle */}
         <motion.p variants={fadeUp} className="mt-3 max-w-[34ch] text-[16px] leading-snug text-skin-body sm:text-[18px]">
-          25–40% returns in 24 hours. UPI payout. Human-approved.
+          SEBI-registered mutual fund. NAV-based returns. SIP from ₹500.
         </motion.p>
 
         {/* CTA pair */}
@@ -411,23 +378,23 @@ function Hero() {
             href="#plans"
             className="inline-flex min-h-[48px] items-center gap-2 rounded-xl border border-skin-line bg-skin-surface px-6 text-[15px] font-semibold text-skin-text transition-colors hover:border-skin-accent hover:text-skin-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skin-accent"
           >
-            See Plans
+            See Schemes
           </a>
         </motion.div>
 
         {/* Terms at a glance */}
         <motion.dl variants={fadeUp} className="mt-6 grid max-w-[460px] grid-cols-3 gap-3 text-center">
           <div className="rounded-xl border border-skin-line bg-skin-surface p-3">
-            <dt className="text-[11px] uppercase tracking-wide text-skin-muted">Return</dt>
-            <dd className="text-[18px] font-bold text-asm-greenInk">40%</dd>
+            <dt className="text-[11px] uppercase tracking-wide text-skin-muted">Returns</dt>
+            <dd className="text-[18px] font-bold text-asm-greenInk">NAV-based</dd>
           </div>
           <div className="rounded-xl border border-skin-line bg-skin-surface p-3">
-            <dt className="text-[11px] uppercase tracking-wide text-skin-muted">Term</dt>
-            <dd className="text-[18px] font-bold text-skin-text">7 days</dd>
+            <dt className="text-[11px] uppercase tracking-wide text-skin-muted">Type</dt>
+            <dd className="text-[18px] font-bold text-skin-text">Open-ended</dd>
           </div>
           <div className="rounded-xl border border-skin-line bg-skin-surface p-3">
-            <dt className="text-[11px] uppercase tracking-wide text-skin-muted">Referrals</dt>
-            <dd className="text-[18px] font-bold text-skin-text">None</dd>
+            <dt className="text-[11px] uppercase tracking-wide text-skin-muted">SIP from</dt>
+            <dd className="text-[18px] font-bold text-skin-text">₹500/mo</dd>
           </div>
         </motion.dl>
 
@@ -700,9 +667,9 @@ function PlansSection() {
     <section id="plans" className="scroll-mt-4 pt-8" aria-labelledby="plans-heading">
       <div className="mb-5 flex items-end justify-between px-4 lg:px-8">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-skin-accent">Investment Plans</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-skin-accent">Investment Schemes</p>
           <h2 id="plans-heading" className="mt-0.5 text-[22px] font-extrabold leading-tight text-skin-text">
-            Choose your tier
+            Choose your scheme
           </h2>
         </div>
         <a

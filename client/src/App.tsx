@@ -24,6 +24,26 @@ const PlansPage = lazy(() => import('./pages/plans/PlansPage').then((m) => ({ de
 const GalleryPage = lazy(() =>
   import('./pages/gallery/GalleryPage').then((m) => ({ default: m.GalleryPage }))
 )
+
+// ── Public (non-auth) SEO pages ──
+const AboutPage = lazy(() =>
+  import('./pages/public/AboutPage').then((m) => ({ default: m.AboutPage }))
+)
+const SchemesPage = lazy(() =>
+  import('./pages/public/SchemesPage').then((m) => ({ default: m.SchemesPage }))
+)
+const CompliancePage = lazy(() =>
+  import('./pages/public/CompliancePage').then((m) => ({ default: m.CompliancePage }))
+)
+const FAQPage = lazy(() =>
+  import('./pages/public/FAQPage').then((m) => ({ default: m.FAQPage }))
+)
+const InvestorEducationPage = lazy(() =>
+  import('./pages/public/InvestorEducationPage').then((m) => ({ default: m.InvestorEducationPage }))
+)
+const ContactPage = lazy(() =>
+  import('./pages/public/ContactPage').then((m) => ({ default: m.ContactPage }))
+)
 const HomePage = lazy(() => import('./pages/app/HomePage').then((m) => ({ default: m.HomePage })))
 const PaymentMethodPage = lazy(() =>
   import('./pages/app/PaymentMethodPage').then((m) => ({ default: m.PaymentMethodPage }))
@@ -142,6 +162,14 @@ export default function App() {
           }
         />
         <Route path="/gallery" element={<GalleryPage />} />
+
+        {/* ── Public SEO pages (no auth required, crawlable) ── */}
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/schemes" element={<SchemesPage />} />
+        <Route path="/compliance" element={<CompliancePage />} />
+        <Route path="/faq" element={<FAQPage />} />
+        <Route path="/investor-education" element={<InvestorEducationPage />} />
+        <Route path="/contact" element={<ContactPage />} />
 
         <Route
           path="/app/payment"
