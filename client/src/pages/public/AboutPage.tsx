@@ -69,7 +69,7 @@ export function AboutPage() {
               {
                 Icon: Users,
                 title: 'Leadership',
-                text: 'CEO: Nikhil Mahato · CIO: Arjun Desai · Compliance Officer: Priya Sharma · Fund Manager: Vikram Iyer.',
+                text: 'CEO: Nikhil Mahato · CIO: James Carter · Compliance Officer: Sarah Mitchell · Fund Manager: Daniel Brooks.',
               },
               {
                 Icon: MapPin,

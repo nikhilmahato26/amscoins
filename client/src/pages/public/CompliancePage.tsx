@@ -103,7 +103,7 @@ export function CompliancePage() {
               <dl className="mt-3 space-y-2 text-[13px]">
                 <div>
                   <dt className="font-semibold text-skin-muted">Name</dt>
-                  <dd className="text-skin-body">Priya Sharma</dd>
+                  <dd className="text-skin-body">Sarah Mitchell</dd>
                 </div>
                 <div>
                   <dt className="font-semibold text-skin-muted">Email</dt>
@@ -127,7 +127,7 @@ export function CompliancePage() {
               <dl className="mt-3 space-y-2 text-[13px]">
                 <div>
                   <dt className="font-semibold text-skin-muted">Name</dt>
-                  <dd className="text-skin-body">Rohit Mehta</dd>
+                  <dd className="text-skin-body">Daniel Brooks</dd>
                 </div>
                 <div>
                   <dt className="font-semibold text-skin-muted">Email</dt>
