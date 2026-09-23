@@ -138,7 +138,7 @@ test('user detail: reject credits a custom amount to the user', async ({ page })
   await page.getByTestId('reject-payout').click()
   const dialog = page.getByRole('dialog', { name: /reject investment/i })
   await expect(dialog).toBeVisible({ timeout: 10_000 })
-  await dialog.getByRole('spinbutton').fill('500') // ₹500 credited back
+  await dialog.getByRole('spinbutton').fill('5000') // ₹500 credited back
   await dialog.getByRole('button', { name: /^reject$/i }).click()
 
   // Buttons disappear once it's rejected.

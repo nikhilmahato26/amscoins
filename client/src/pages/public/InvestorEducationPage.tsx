@@ -22,7 +22,7 @@ const ARTICLES: Article[] = [
     content: [
       'A mutual fund is a professionally managed investment vehicle that pools money from multiple investors to purchase a diversified portfolio of stocks, bonds, gold, or other securities. In India, all mutual funds are regulated by the Securities and Exchange Board of India (SEBI).',
       'When you invest in a mutual fund, you buy "units" at the fund\'s Net Asset Value (NAV). The NAV is calculated daily based on the market value of the fund\'s total holdings, minus expenses, divided by the total units outstanding.',
-      'Mutual funds offer several advantages: professional management, diversification, liquidity, and accessibility (you can start with as little as ₹500/month via SIP). However, returns are not guaranteed and are subject to market risks.',
+      'Mutual funds offer several advantages: professional management, diversification, liquidity, and accessibility (you can start with as little as ₹5000via SIP). However, returns are not guaranteed and are subject to market risks.',
       'In India, mutual funds are structured with three entities: the Sponsor (who sets up the fund), the Trustee (who oversees it on behalf of investors), and the Asset Management Company or AMC (who manages the investments). SEBI regulates all three.',
     ],
   },

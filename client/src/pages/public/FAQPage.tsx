@@ -37,7 +37,7 @@ const FAQ_DATA: FaqItem[] = [
   {
     question: 'What is the minimum investment amount?',
     answer:
-      'You can start a Systematic Investment Plan (SIP) from as low as ₹500 per month. Lumpsum investments have a minimum of ₹5,000 per scheme. Check individual scheme pages for specific details.',
+      'You can start a Systematic Investment Plan (SIP) from as low as ₹5000 per month. Lumpsum investments have a minimum of ₹5,000 per scheme. Check individual scheme pages for specific details.',
   },
   {
     question: 'How do I complete KYC?',

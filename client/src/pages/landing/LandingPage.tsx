@@ -53,7 +53,6 @@ const TRUST_PILLS: { Icon: LucideIcon; label: string }[] = [
   { Icon: Zap,         label: 'Quick Redemption'     },
   { Icon: Headphones,  label: 'Daily Support'        },
   { Icon: TrendingUp,  label: 'NAV-Based Returns'    },
-  { Icon: Clock,       label: 'SIP from ₹500'       },
   { Icon: Wallet,      label: 'Easy KYC'             },
 ]
 
@@ -155,7 +154,7 @@ const HOW_STEPS = [
   {
     n: '02',
     title: 'Choose a scheme',
-    body: 'Pick from our SEBI-regulated schemes — Gold Fund or Multi-Asset Fund. SIP from ₹500/month.',
+    body: 'Pick from our SEBI-regulated schemes — Gold Fund or Multi-Asset Fund. ',
     icon: TrendingUp,
     tone: 'green' as const,
   },
@@ -243,7 +242,6 @@ export function LandingPage() {
             <div className="grid grid-cols-3 divide-x divide-skin-line">
               {[
                 { label: 'SEBI Registered', note: 'Mutual Fund' },
-                { label: 'SIP from ₹500', note: 'Per Month' },
                 { label: '3 Schemes', note: 'Silver, Gold & Multi-Asset' },
               ].map(({ label, note }) => (
                 <div key={label} className="flex flex-col items-center gap-1 px-4 text-center">
@@ -363,7 +361,7 @@ function Hero() {
 
         {/* Subtitle */}
         <motion.p variants={fadeUp} className="mt-3 max-w-[34ch] text-[16px] leading-snug text-skin-body sm:text-[18px]">
-          SEBI-registered mutual fund. NAV-based returns. SIP from ₹500.
+          SEBI-registered mutual fund. NAV-based returns. 
         </motion.p>
 
         {/* CTA pair */}
