@@ -17,7 +17,7 @@ const FAQ_DATA: FaqItem[] = [
   {
     question: 'Is ASM Asset Management a legitimate, regulated company?',
     answer:
-      'Yes. ASM Asset Management is registered with the Securities and Exchange Board of India (SEBI) as a Mutual Fund under the SEBI (Mutual Funds) Regulations, 1996. Registration No: [MF/XXX — operator fills in]. You can verify this independently on SEBI\'s website at sebi.gov.in under Intermediaries → Mutual Funds.',
+      'Yes. ASM Asset Management is registered with the Securities and Exchange Board of India (SEBI) as a Mutual Fund under the SEBI (Mutual Funds) Regulations, 1996. Registration No: MF/879/25/2. You can verify this independently on SEBI\'s website at sebi.gov.in under Intermediaries → Mutual Funds.',
   },
   {
     question: 'Who regulates ASM Asset Management?',

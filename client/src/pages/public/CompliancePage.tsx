@@ -49,7 +49,7 @@ export function CompliancePage() {
             <table className="w-full text-left text-[13px]">
               <tbody className="divide-y divide-skin-line">
                 {[
-                  ['SEBI Registration No.', '[MF/XXX — operator fills in]'],
+                  ['SEBI Registration No.', 'MF/879/25/2'],
                   ['Registered Name', '[FULL LEGAL NAME — operator fills in]'],
                   ['CIN', '[CORPORATE IDENTIFICATION NUMBER — operator fills in]'],
                   ['Regulation', 'SEBI (Mutual Funds) Regulations, 1996'],

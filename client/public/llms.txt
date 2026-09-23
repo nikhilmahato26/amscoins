@@ -6,7 +6,7 @@
 ## Identity
 
 - Type: SEBI-registered Mutual Fund (Asset Management Company)
-- SEBI Registration: [MF/XXX — to be filled by operator]
+- SEBI Registration: MF/879/25/2
 - Registered Name: [FULL LEGAL NAME — to be filled by operator]
 - Brand: ASM Coins
 - Website: https://www.asmcoins.com

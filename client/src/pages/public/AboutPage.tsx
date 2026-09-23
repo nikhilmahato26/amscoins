@@ -59,7 +59,7 @@ export function AboutPage() {
               {
                 Icon: ShieldCheck,
                 title: 'SEBI Registered',
-                text: 'Registered as a Mutual Fund under SEBI (Mutual Funds) Regulations, 1996. Registration No: [MF/XXX — operator fills in].',
+                text: 'Registered as a Mutual Fund under SEBI (Mutual Funds) Regulations, 1996. Registration No: MF/879/25/2.',
               },
               {
                 Icon: Building2,

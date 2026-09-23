@@ -49,7 +49,7 @@ const ORGANIZATION_JSONLD = {
       name: 'Securities and Exchange Board of India',
     },
     /* TODO: operator fills in SEBI registration number */
-    identifier: '[MF/XXX]',
+    identifier: 'MF/879/25/2',
   },
 }
 

@@ -198,7 +198,7 @@ export function LandingMenu({ open, onClose }: { open: boolean; onClose: () => v
 const TRUST_BAR: { Icon: LucideIcon; title: string; note: string }[] = [
   { Icon: Lock, title: 'SSL Encrypted', note: 'Secure platform' },
   { Icon: ShieldCheck, title: 'SEBI Registered', note: 'Regulated mutual fund' },
-  { Icon: Eye, title: 'Full Disclosure', note: 'NAV-based, variable returns' },
+  { Icon: Eye, title: 'Full Disclosure', note: 'NAV-based returns' },
   { Icon: Zap, title: 'Easy Redemption', note: 'T+1 to T+3 settlement' },
   { Icon: Headphones, title: 'Daily Support', note: 'WhatsApp & email team' },
 ]
@@ -280,7 +280,7 @@ export function LandingFooter() {
           </p>
           <p>
             ASM Asset Management — SEBI-registered Mutual Fund. Registration No:{' '}
-            <span className="font-bold text-skin-text">[MF/XXX — operator fills in]</span>.
+            <span className="font-bold text-skin-text">MF/879/25/2</span>.
             Verify at{' '}
             <a
               href="https://www.sebi.gov.in"
